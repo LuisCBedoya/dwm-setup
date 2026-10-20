@@ -241,8 +241,11 @@ resolve_target_user() {
       TARGET_USER="$SUDO_USER"
     elif [[ "$EUID" -ne 0 ]]; then
       TARGET_USER=$(id -un)
+    elif [[ "$DRY_RUN" != "1" && "$ASSUME_YES" != "1" && -t 0 ]]; then
+      read -r -p "Usuario destino (no root): " TARGET_USER
+      [[ -n "$TARGET_USER" ]] || die "No hay usuario destino."
     else
-      die "No hay usuario destino. Ejecuta con --user <usuario> (no se instala un escritorio para root)."
+      die "No hay usuario destino. Ejecuta como usuario normal o usa --user <usuario>."
     fi
   fi
   if [[ "$TARGET_USER" == "root" ]]; then

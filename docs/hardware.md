@@ -126,24 +126,25 @@ El equipo es híbrido Intel + NVIDIA MX330. El instalador:
 - instala `nvidia-driver`, `nvidia-settings`, `nvidia-vaapi-driver` y
   `linux-headers-amd64` para NVIDIA solo si se cumple la política;
 - `nvidia-driver` está en `non-free`; `nvidia-settings` está en `contrib`.
-  Si falta `contrib`, el preflight avisa y omite solo `nvidia-settings`; el
-  driver puede instalarse igual.
+  Si falta `contrib`, el preflight avisa y ofrece añadirlo con autorización;
+  si se continúa sin él, solo se omite `nvidia-settings` y el driver puede
+  instalarse igual.
 - no instala CUDA;
 - no escribe un `xorg.conf` de PRIME.
 
-Política NVIDIA:
+Política NVIDIA (`./install.sh`, sin flags):
 
 | Situación | Acción por defecto |
 |---|---|
-| `--no-nvidia` | no instala driver |
-| Secure Boot activo | omite y avisa (usar `--nvidia` tras MOK) |
-| VM | omite y avisa (usar `--nvidia` para forzar) |
-| NVIDIA + Secure Boot off | instala driver |
-| `--nvidia` | fuerza la instalación |
+| NVIDIA + Secure Boot off + no VM | instala driver |
+| Secure Boot activo | omite y avisa; `--nvidia` avanzado tras configurar MOK |
+| Secure Boot indeterminado | omite por precaución |
+| VM | omite y avisa; `--nvidia` avanzado para forzar |
+| `--no-nvidia` avanzado | no instala driver |
 
-Si Secure Boot está desactivado, se usa `--nvidia` si hay GPU NVIDIA. Con
-Secure Boot `enabled`/indeterminado, el driver propietario se omite por defecto,
-excepto con `--nvidia`.
+En uso normal no hay que decidir nada: la política se aplica automáticamente.
+Con Secure Boot `enabled`/indeterminado, el driver propietario se omite por
+defecto, excepto con `--nvidia`.
 
 La iGPU Intel se usa para el escritorio. Para probar una app con la NVIDIA:
 

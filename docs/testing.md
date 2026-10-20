@@ -13,14 +13,17 @@ Fecha: 2026-10-20. Estos checks son solo del código/configuración en local; no
 sustituyen una instalación real.
 
 - `bash -n` / `sh -n` en `install.sh`, `lib/*.sh` y scripts de sesión.
-- Dry-run real con `--yes --user "$USER"` y comprobación de residuos en un home
-  de prueba: sin rutas de host ni placeholders sin renderizar.
+- Dry-run real con `./install.sh --dry-run` y comprobación de residuos en un
+  home de prueba: sin rutas de host ni placeholders sin renderizar.
 - Opciones inválidas (`--font-size`, `--keymap`, `--resolution`, `--home`,
   flags vacías y desconocidas) detienen antes de `sudo`.
 - chadwm `config.h.in`: verificado con headers extraídos de Debian.
 - eww v0.6.0: `cargo check --locked --no-default-features --features x11`
   con Debian Rust 1.85 tras fijar `time 0.3.35`.
 - dunst 1.12.2, picom 12.5, rofi 1.7.5 y kitty: parseo/init check local.
+- Preflight APT y auto-add probados con fixtures temporales: detección de
+  componentes, menú, backup, edición limitada a Debian 13, `main` ausente,
+  `--dry-run`/`--yes` sin cambios e idempotencia.
 
 ## 1. Preparar la VM
 
@@ -62,7 +65,7 @@ Tomar snapshot. Copiar el repositorio a la VM (scp, rsync o git) y entrar:
 ```sh
 cd ~/dwm-setup
 chmod +x install.sh bin/dwm-safe bin/dwm-doctor
-./install.sh --dry-run --user "$USER" --no-nvidia
+./install.sh --dry-run
 ```
 
 El dry-run no debe crear archivos ni ejecutar `apt`, `usermod`, `systemctl`,
@@ -76,24 +79,51 @@ descargas ni compilaciones. Revisar:
 - rutas de backup y log.
 
 Prueba específica del preflight: en una copia/snapshot, deshabilita temporalmente
-`contrib`, `non-free` o `non-free-firmware` y repite el dry-run. Debe avisar
+`contrib` (con GPU NVIDIA o `--nvidia`), `non-free` o `non-free-firmware` y
+repite el dry-run. Debe avisar
 antes de la sección de paquetes, explicar qué se omite y no debe preguntar ni
-modificar nada. En una instalación real, la confirmación debe indicar que
-faltan componentes APT.
+modificar nada. En una instalación interactiva debe aparecer el menú:
+
+```text
+1) Añadirlos automáticamente (backup + apt update + comprobar)
+2) Continuar sin ellos
+3) Cancelar
+```
+
+Comprobar también:
+
+- opción 1: crea backup en `/var/backups/dwm-setup/<timestamp>/`, modifica solo
+  entradas oficiales de Debian 13 y ejecuta `apt update` antes de recheck;
+- opción 2: continúa y avisa de los paquetes que se omitirán;
+- opción 3: sale sin instalar;
+- `--dry-run`: no muestra menú ni modifica fuentes;
+- `--yes`: no muestra menú y no modifica fuentes;
+- si falta `main`, aborta sin ofrecer auto-add.
+
+Para probar la edición de fuentes sin tocar `/etc/apt`, usar fixtures temporales
+`.list` y `.sources` y verificar que no se tocan repositorios de terceros ni
+entradas con `Enabled: no`. El auto-add solo edita hosts `*.debian.org`; con un
+mirror propio hay que editar las fuentes a mano.
 
 ## 2. Instalación real
 
 Con snapshot limpio:
 
 ```sh
-sudo ./install.sh --user "$USER" --yes
+./install.sh
 ```
 
-Si se está probando NVIDIA en la VM, no usar `--nvidia` (la política la omite
-en VM). Para una pasada forzada, solo en hardware real:
+Para una ejecución no interactiva (por ejemplo, automatización):
 
 ```sh
-sudo ./install.sh --user "$USER" --yes --nvidia
+./install.sh --yes
+```
+
+Si se está probando NVIDIA en la VM, la política automática omite el driver.
+Para una pasada forzada, solo en hardware real y con Secure Boot/MOK resuelto:
+
+```sh
+./install.sh --nvidia
 ```
 
 Criterios de éxito de esta etapa:
@@ -251,15 +281,16 @@ __NV_PRIME_RENDER_OFFLOAD=1 __GLX_VENDOR_LIBRARY_NAME=nvidia glxinfo | grep Open
 - [ ] no hay pantalla negra ni conflicto de drivers;
 - [ ] se documenta si hace falta MOK con Secure Boot.
 
-Si falla, restaurar snapshot y volver a ejecutar con `--no-nvidia`.
+Si falla, restaurar snapshot y volver a ejecutar con la política automática
+(o con `--no-nvidia` solo para automatización).
 
 ## 10. Idempotencia y recuperación
 
 Con una instalación ya hecha:
 
 ```sh
-sudo ./install.sh --user "$USER" --yes
-sudo ./install.sh --user "$USER" --yes --rebuild
+./install.sh --yes
+./install.sh --yes --rebuild
 ```
 
 - [ ] la segunda ejecución no rompe configs ni servicios;
@@ -290,13 +321,14 @@ Añadir una tabla por ejecución:
 
 | Fecha | Entorno | Opciones | Resultado | Notas |
 |---|---|---|---|---|
-| pendiente | VM Debian 13 minimal | `--no-nvidia` | pendiente | primera prueba |
+| pendiente | VM Debian 13 minimal | `./install.sh` | pendiente | primera prueba |
 
 ## 13. Rollback
 
 - Restaurar snapshot de la VM (lo más limpio).
 - En hardware:
-  - backups en `/var/backups/dwm-setup/<timestamp>/`;
+  - backups en `/var/backups/dwm-setup/<timestamp>/` (incluye fuentes APT si
+    se añadieron componentes);
   - backups de usuario en `~/.config-backup/dwm-setup/<timestamp>/`;
   - deshabilitar `ly@tty2` y habilitar el display manager anterior;
   - restaurar `/etc/ly`, `/usr/share/xsessions/dwm.desktop`,

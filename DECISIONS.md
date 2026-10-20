@@ -88,10 +88,9 @@ Si `udiskie` no está corriendo, `dwm-doctor` avisa.
 **Contexto:** el equipo de referencia tiene Intel Iris Plus + NVIDIA MX330;
 el prototipo instalaba NVIDIA/CUDA sin condiciones.
 
-**Decisión:** detectar GPU. Instalar `nvidia-driver` solo si hay NVIDIA y:
-- no se pasó `--no-nvidia`;
-- Secure Boot está desactivado, o se pasó `--nvidia`;
-- no es una VM, o se pasó `--nvidia`.
+**Decisión:** detectar GPU. Instalar `nvidia-driver` solo si hay NVIDIA y la
+política automática lo permite: Secure Boot desactivado y no es una VM. Las
+flags avanzadas `--nvidia`/`--no-nvidia` permiten forzar o desactivar.
 
 No se instala CUDA.
 
@@ -211,19 +210,38 @@ destino. Si no coincide, el instalador aborta antes de modificar el sistema.
 alternativo requeriría propagar explícitamente el home a `run.sh`, eww, kitty,
 `dwm.desktop` y `dwm-safe`, y queda fuera de la fase 1.
 
-## ADR-018 — Preflight de componentes APT antes de confirmar
+## ADR-018 — Preflight APT con menú y auto-add autorizado
 
-**Contexto:** el instalador no añade repositorios y los grupos opcionales
+**Contexto:** el instalador no añadía repositorios y los grupos opcionales
 (firmware, GPU, microcódigo, cámara) podían omitir paquetes sin que el usuario
-viera las consecuencias hasta después de confirmar y empezar la instalación.
+viera las consecuencias hasta después de confirmar. A la vez, obligar a editar
+`sources.list` a mano hacía la instalación frágil.
 
 **Decisión:** leer los componentes APT habilitados con
-`apt-get indextargets` antes de instalar, mostrar qué falta y qué funciones se
-pierden, y pedir confirmación en instalación interactiva. En `--dry-run` solo
-se muestra el aviso. El instalador no habilita repositorios ni modifica
-`sources.list`.
+`apt-get indextargets` antes de instalar. Si falta `main`, abortar: nunca se
+auto-añade. Si faltan componentes opcionales, mostrar qué falta y ofrecer un
+menú genérico: `1) añadir`, `2) continuar sin ellos`, `3) cancelar`. La opción
+1 exige autorización explícita, hace backup de las fuentes, modifica solo
+entradas oficiales de Debian 13 (`trixie`/`stable` y dominios `debian.org`),
+ejecuta `apt update` y vuelve a comprobar. `--dry-run` solo muestra el aviso;
+`--yes` continúa sin modificar repositorios.
 
 **Consecuencias:** el usuario decide con información antes de tocar el sistema.
-`contrib` se trata aparte: solo afecta a `nvidia-settings`, no al driver NVIDIA.
-Los grupos obligatorios siguen abortando si falta un paquete; los opcionales
-avisan y continúan.
+`contrib` se trata como cualquier componente opcional: solo afecta a
+`nvidia-settings`, no al driver NVIDIA. Los grupos obligatorios siguen
+abortando si falta un paquete; los opcionales avisan y continúan.
+
+## ADR-019 — `./install.sh` como interfaz normal
+
+**Contexto:** el uso normal requería recordar `--user`, `--home`, `--nvidia` y
+otras flags. El instalador ya puede detectar el usuario, el home y el hardware.
+
+**Decisión:** `./install.sh` es la interfaz normal. Detecta el usuario destino
+(`SUDO_USER` o el usuario actual), su home real y el hardware, y solo pregunta
+cuando hay una decisión real: confirmar la instalación o resolver componentes
+APT. `--dry-run` y `--yes` quedan como opciones simples; las flags antiguas se
+conservan solo para automatización avanzada y no se necesitan en uso normal.
+
+**Consecuencias:** la instalación es más corta de explicar y menos propensa a
+errores. Las flags avanzadas siguen disponibles para pruebas y automatización,
+pero no se anuncian como parte del flujo normal.

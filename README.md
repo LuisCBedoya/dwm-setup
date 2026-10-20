@@ -49,15 +49,17 @@ No incluido todavía (fases posteriores):
 - Sistema con systemd.
 - `git` instalado para clonar el repositorio; el instalador instala el resto
   de dependencias.
-- Usuario no-root con home real y `sudo` (o ejecutar como root indicando
-  `--user`).
+- Usuario no-root con home real y `sudo`. El instalador detecta el usuario y
+  su home automáticamente; si se ejecuta como root, usa `SUDO_USER` o pregunta
+  el usuario destino.
 - Conexión a Internet durante la primera instalación: se descargan paquetes,
   Zig, Ly, dependencias de Cargo y la Nerd Font.
 - UEFI o BIOS. Con NVIDIA, Secure Boot `enabled` o no detectable omite el
-  driver propietario salvo `--nvidia`; con Secure Boot desactivado se instala
-  si hay GPU NVIDIA y no se pasó `--no-nvidia`.
+  driver propietario; con Secure Boot desactivado se instala automáticamente
+  si hay GPU NVIDIA. La opción avanzada `--nvidia` permite forzarlo.
 - Fuentes `non-free-firmware`, `non-free` y `contrib` habilitadas si se
-  quieren firmware/drivers opcionales. `contrib` solo hace falta para
+  quieren firmware/drivers opcionales. Si faltan, el instalador ofrece
+  añadirlas con autorización explícita. `contrib` solo hace falta para
   `nvidia-settings`; el driver NVIDIA está en `non-free`.
 
 ## Inicio rápido
@@ -73,10 +75,10 @@ cd dwm-setup
 chmod +x install.sh
 
 # 1. Ver el plan sin tocar nada
-./install.sh --dry-run --user "$USER"
+./install.sh --dry-run
 
-# 2. Instalación real (pide sudo; no guarda la contraseña)
-sudo ./install.sh --user "$USER" --yes
+# 2. Instalación real guiada (pide sudo; no guarda la contraseña)
+./install.sh
 
 # 3. Reiniciar y entrar desde Ly en la sesión "dwm"
 sudo reboot
@@ -84,33 +86,26 @@ sudo reboot
 
 El ejecutable es **`install.sh`**, no `installer.sh`. Si se ejecuta como
 usuario normal, el script pide `sudo -v` una vez y usa `sudo` para las
-operaciones de sistema. Si se ejecuta como root, hay que indicar el usuario
-destino:
-
-```sh
-sudo ./install.sh --user luc --yes
-```
+operaciones de sistema. `sudo ./install.sh` también funciona: el instalador
+usa `SUDO_USER` para el usuario destino. Si se inicia como root sin
+`SUDO_USER`, pregunta el usuario.
 
 La primera instalación necesita Internet para descargar paquetes, Zig, Ly,
-las dependencias de Cargo y la Nerd Font. En una VM de prueba se puede pasar
-`--no-nvidia` para evitar el driver propietario.
+las dependencias de Cargo y la Nerd Font. En una VM de prueba la política
+automática omite el driver NVIDIA.
 
-Opciones útiles:
+Uso normal:
 
 | Opción | Efecto |
 |---|---|
-| `--dry-run` | Muestra el plan completo sin modificar el sistema |
-| `-y`, `--yes` | No pide confirmación |
-| `--user USUARIO` | Usuario destino del escritorio |
-| `--home RUTA` | Home real del usuario (debe coincidir con `/etc/passwd`) |
-| `--rebuild` | Recompila dwm, eww y Ly aunque ya existan |
-| `--nvidia` | Fuerza el driver NVIDIA detectado |
-| `--no-nvidia` | No instala driver NVIDIA |
-| `--keymap MAPA` | Distribución de teclado (por defecto `latam`) |
-| `--font FUENTE` | Fuente de dwm (por defecto `JetBrainsMono Nerd Font`) |
-| `--font-size N` | Tamaño de dwm (por defecto `10`) |
-| `--resolution WxH` | Solo registra la resolución detectada |
-| `--debug` | Muestra información de depuración |
+| `./install.sh` | Instalación guiada; solo pregunta cuando hay una decisión real |
+| `./install.sh --dry-run` | Muestra el plan completo sin modificar el sistema |
+| `./install.sh --yes` | No pide confirmación; no modifica repositorios APT |
+
+Opciones avanzadas para automatización (no necesarias en uso normal):
+`--user`, `--home`, `--rebuild`, `--nvidia`, `--no-nvidia`, `--keymap`,
+`--font`, `--font-size`, `--resolution` y `--debug`. También están disponibles
+`--help` y `--version`.
 
 ## Qué hace el instalador
 
@@ -118,9 +113,12 @@ Opciones útiles:
    detecta VM, CPU, GPU, Secure Boot, resolución, cámaras, batería, backlight,
    WiFi, audio y tipo de sistema de archivos raíz.
 2. **Preflight APT**: lee los componentes habilitados (`main`, `contrib`,
-   `non-free`, `non-free-firmware`) y avisa antes de instalar si falta algo.
-   En una instalación interactiva pide confirmación; en `--dry-run` solo
-   muestra el aviso y no modifica nada.
+   `non-free`, `non-free-firmware`). Si falta `main`, aborta. Si faltan
+   componentes opcionales, ofrece tres opciones: añadirlos automáticamente,
+   continuar sin ellos o cancelar. La opción 1 hace backup de las fuentes,
+   modifica solo entradas oficiales de Debian 13, ejecuta `apt update` y
+   vuelve a comprobar. `--dry-run` solo muestra el aviso; `--yes` continúa
+   sin modificar repositorios.
 3. **Paquetes**: grupos base, Xorg, compilación, escritorio, audio/códecs,
    cámara, almacenamiento, red, fuentes, firmware, microcódigo y GPU.
 4. **Fuente**: descarga JetBrainsMono Nerd Font `3.5.1`, verifica SHA-256 y
@@ -147,8 +145,9 @@ Opciones útiles:
 - Backups de usuario: `~/.config-backup/dwm-setup/<timestamp>/`
 - Log: `~/.local/state/dwm-setup/install-<timestamp>.log`
 
-El log se escribe en el home del usuario destino. `--dry-run` no crea log ni
-modifica archivos.
+Si se elige añadir componentes APT, `/etc/apt/sources.list` y
+`/etc/apt/sources.list.d/` se guardan antes de editarlos. El log se escribe en
+el home del usuario destino. `--dry-run` no crea log ni modifica archivos.
 
 ### Display manager
 
@@ -272,12 +271,16 @@ externos (aparte de las descargas de Zig, Ly y la Nerd Font).
   referencia; los checks locales y de dry-run no sustituyen esa prueba.
 - La compilación de eww y Ly requiere red y puede tardar; los errores se
   muestran y el instalador se detiene antes de habilitar Ly.
-- NVIDIA propietario con `--nvidia` y Secure Boot requiere MOK; si Secure
-  Boot no está desactivado, el driver se omite y se avisa.
+- NVIDIA propietario y Secure Boot requiere MOK; si Secure Boot no está
+  desactivado, el driver se omite y se avisa. `--nvidia` permite forzarlo de
+  forma avanzada.
 - `libcamera-tools`, firmware y drivers propietarios son opcionales: el
   preflight avisa de los componentes APT que faltan y de sus consecuencias.
-- El instalador no modifica `/etc/apt/sources.list` ni añade repositorios;
-  solo lee los componentes habilitados y avisa.
+- El instalador no modifica repositorios por defecto. Solo la opción 1 del
+  menú, elegida explícitamente, añade componentes a entradas oficiales de
+  Debian 13, después de un backup. `main` nunca se añade automáticamente.
+  El auto-add solo reconoce hosts `*.debian.org`; con un mirror propio hay que
+  editar `sources.list` manualmente.
 - No se instala ningún navegador, IDE, cliente de correo ni música.
 - El host de referencia tiene XFCE/LightDM: no se debe usar como destino de
   la instalación real sin backup y validación previa.

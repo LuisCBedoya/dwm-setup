@@ -38,9 +38,13 @@ La fase 1 termina en el escritorio. No implementar todavía:
 6. **Fallos visibles.** No ocultar errores de compilación, paquetes o
    servicios. Los grupos opcionales pueden avisar y continuar; los
    obligatorios deben detener la instalación.
-7. **No añadir repositorios APT** ni modificar `sources.list`. El preflight
-   solo lee los componentes habilitados (`main`, `contrib`, `non-free`,
-   `non-free-firmware`) y avisa antes de instalar. Los paquetes de
+7. **No modificar repositorios APT sin autorización explícita.** El preflight
+   lee los componentes habilitados (`main`, `contrib`, `non-free`,
+   `non-free-firmware`). Si falta `main`, aborta. Si faltan componentes
+   opcionales, ofrece un menú: añadirlos, continuar sin ellos o cancelar.
+   Solo la opción 1 modifica fuentes, y debe hacer backup, tocar únicamente
+   entradas oficiales de Debian 13, ejecutar `apt update` y comprobar de
+   nuevo. `--dry-run` y `--yes` nunca modifican repositorios. Los paquetes de
    `non-free`/`non-free-firmware`/`contrib` son opcionales y se detectan con
    `apt-cache`.
 8. **No introducir PulseAudio como servidor.** PipeWire es el servidor;
@@ -66,7 +70,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 
 | Archivo | Responsabilidad |
 |---|---|
-| `install.sh` | Flags, orden, confirmación, backups y resumen |
+| `install.sh` | Flujo, opciones, confirmación, backups y resumen |
 | `lib/common.sh` | Logs, sudo, render, backups, helpers |
 | `lib/detect.sh` | Detección de sistema/hardware y usuario |
 | `lib/packages.sh` | Preflight APT, paquetes y Nerd Font |
@@ -95,8 +99,8 @@ for f in install.sh lib/*.sh bin/dwm-safe bin/dwm-doctor \
   bash -n "$f" || exit 1
 done
 
-# Plan sin cambios
-./install.sh --dry-run --yes --user "$USER" --no-nvidia
+# Plan sin cambios (no pregunta y no toca repositorios)
+./install.sh --dry-run
 
 # Comprobar atajos, sesión, tema y dunst del repo
 grep -RInE 'xss-lock|rofi|eww -c .*open --toggle|pcmanfm|--config.*rofi|dunstrc' templates
@@ -120,6 +124,8 @@ historia de `PLAN.md`; está marcado como obsoleto.
 
 - El código de fase 1 está implementado y los checks estáticos pasan.
 - Las fuentes de chadwm y eww están vendorizadas; el repo no usa submódulos.
+- El uso normal es `./install.sh`; el usuario/home se detectan y las flags
+  avanzadas solo son para automatización.
 - Hay backups y dry-run; falta validación real y subir el repo.
 - `PROGRESS.md` contiene la lista de pruebas y bloqueos.
 - Si se completa una prueba real, actualizar `PROGRESS.md` y

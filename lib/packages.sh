@@ -66,15 +66,26 @@ NERD_FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD
 NERD_FONT_SHA256="04d5e8f903693f9dd13e16f867e994834e681eb3c72c0d337a770dcda09010cf"
 
 APT_COMPONENTS=()
-REPO_PREFLIGHT_MISSING=0
+APT_MISSING_COMPONENTS=()
+REPO_MAIN_MISSING=0
+REPO_COMPONENTS_UNKNOWN=0
+REPO_MODIFIED=0
+APT_SOURCES_LIST="${APT_SOURCES_LIST:-/etc/apt/sources.list}"
+APT_SOURCES_DIR="${APT_SOURCES_DIR:-/etc/apt/sources.list.d}"
+APT_INDEX_UPDATED=0
 
 apt_update() {
+  if [[ "$APT_INDEX_UPDATED" == "1" ]]; then
+    return 0
+  fi
   section "Índices APT"
   if dry_run; then
     print_cmd apt-get update
+    APT_INDEX_UPDATED=1
     return 0
   fi
   run_root env DEBIAN_FRONTEND=noninteractive apt-get update
+  APT_INDEX_UPDATED=1
 }
 
 # Devuelve los componentes APT habilitados. apt-get indextargets lee la
@@ -93,25 +104,27 @@ apt_components() {
   # Fallback para APT muy antiguo o configuración no legible por indextargets.
   {
     local file
-    for file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+    for file in "$APT_SOURCES_LIST" "$APT_SOURCES_DIR"/*.list; do
       [[ -r "$file" ]] || continue
       awk '!/^[[:space:]]*#/ && $1 == "deb" { for (i = 2; i <= NF; i++) print $i }' "$file"
     done
-    for file in /etc/apt/sources.list.d/*.sources; do
+    for file in "$APT_SOURCES_DIR"/*.sources; do
       [[ -r "$file" ]] || continue
       awk '
         BEGIN { RS = ""; FS = "\n" }
         {
           enabled = 1
+          is_deb = 0
           components = ""
           for (i = 1; i <= NF; i++) {
             if ($i ~ /^Enabled:[[:space:]]*[Nn][Oo]/) enabled = 0
+            if ($i ~ /^Types:/ && $i ~ /(^|[[:space:]])deb([[:space:]]|$)/) is_deb = 1
             if ($i ~ /^Components:[[:space:]]*/) {
               sub(/^Components:[[:space:]]*/, "", $i)
               components = $i
             }
           }
-          if (enabled && components != "") print components
+          if (enabled && is_deb && components != "") print components
         }' "$file"
     done
   } | grep -Ex 'main|contrib|non-free|non-free-firmware' | sort -u || true
@@ -125,8 +138,16 @@ apt_component_enabled() {
   return 1
 }
 
+add_missing_component() {
+  local component="$1" current
+  for current in "${APT_MISSING_COMPONENTS[@]}"; do
+    [[ "$current" == "$component" ]] && return 0
+  done
+  APT_MISSING_COMPONENTS+=("$component")
+}
+
 # Política única para decidir si se intentará el driver NVIDIA propietario.
-# Debe coincidir con install_gpu_packages().
+# La usan el preflight y install_gpu_packages().
 nvidia_driver_wanted() {
   [[ "$HAS_NVIDIA" -eq 1 ]] || return 1
   case "${INSTALL_NVIDIA:-auto}" in
@@ -138,15 +159,193 @@ nvidia_driver_wanted() {
   return 0
 }
 
-# Preflight de repositorios antes de confirmar o instalar. No modifica nada.
-preflight_repos() {
-  section "Repositorios APT"
+is_debian_13_suite() {
+  [[ "$1" =~ ^(trixie|stable)(-updates|-security)?$ ]]
+}
+
+is_debian_uri() {
+  local uri="$1"
+  # Solo dominios oficiales de Debian. No se tocan mirrors de terceros ni
+  # repositorios que casualmente tengan /debian en la ruta.
+  [[ "$uri" =~ ^(https?|ftp)://([A-Za-z0-9.-]+\.)?debian\.org/ ]] && return 0
+  return 1
+}
+
+has_component_token() {
+  [[ " $1 " == *" $2 "* ]]
+}
+
+# Reemplaza un fichero de fuentes conservando modo y propietario. Devuelve 1
+# si el contenido no cambió.
+install_repo_file() {
+  local file="$1" tmp="$2" mode owner group
+  if cmp -s -- "$file" "$tmp"; then
+    rm -f -- "$tmp"
+    return 1
+  fi
+  mode=$(stat -c '%a' "$file")
+  owner=$(stat -c '%U' "$file")
+  group=$(stat -c '%g' "$file")
+  run_root install -m "$mode" -o "$owner" -g "$group" "$tmp" "$file"
+  rm -f -- "$tmp"
+  info "Actualizado: $file"
+  return 0
+}
+
+add_components_list_file() {
+  local file="$1"
+  shift
+  local -a add=("$@") tokens=()
+  local tmp line idx uri suite component
+  [[ -r "$file" ]] || return 1
+  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-sources.XXXXXX")
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ "$line" =~ ^[[:space:]]*deb[[:space:]] ]]; then
+      tokens=()
+      read -r -a tokens <<< "$line"
+      idx=1
+      if [[ "${tokens[$idx]:-}" == \[* ]]; then
+        while ((idx < ${#tokens[@]})) && [[ "${tokens[$idx]}" != *\] ]]; do
+          ((idx++))
+        done
+        ((idx++))
+      fi
+      uri="${tokens[$idx]:-}"
+      suite="${tokens[$((idx + 1))]:-}"
+      if is_debian_13_suite "$suite" && is_debian_uri "$uri"; then
+        for component in "${add[@]}"; do
+          if ! has_component_token "$line" "$component"; then
+            line+=" $component"
+          fi
+        done
+      fi
+    fi
+    printf '%s\n' "$line"
+  done <"$file" >"$tmp"
+  if install_repo_file "$file" "$tmp"; then
+    return 0
+  fi
+  return 1
+}
+
+add_components_sources_file() {
+  local file="$1"
+  shift
+  local -a add=("$@")
+  local tmp status
+  [[ -r "$file" ]] || return 1
+  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-sources.XXXXXX")
+  status=$(mktemp "${TMPDIR:-/tmp}/dwm-sources-status.XXXXXX")
+  awk -v add="${add[*]}" -v status_file="$status" '
+    BEGIN { RS = ""; FS = "\n"; n = split(add, wanted, " "); changed = 0 }
+    function has_token(s, t) { return index(" " s " ", " " t " ") > 0 }
+    function suite_ok(s) {
+      return s ~ /(^|[[:space:]])(trixie|stable)(-updates|-security)?([[:space:]]|$)/
+    }
+    function uri_ok(u) {
+      return u ~ /^(https?|ftp):\/\/([A-Za-z0-9.-]+\.)?debian\.org\//
+    }
+    {
+      is_deb = 0
+      enabled = 1
+      suite = ""
+      uri = ""
+      comps = ""
+      has_comps = 0
+      for (i = 1; i <= NF; i++) {
+        if ($i ~ /^Enabled:[[:space:]]*[Nn][Oo]/) enabled = 0
+        if ($i ~ /^Types:/ && $i ~ /(^|[[:space:]])deb([[:space:]]|$)/) is_deb = 1
+        if ($i ~ /^Suites:/) {
+          x = $i
+          sub(/^Suites:[[:space:]]*/, "", x)
+          suite = x
+        }
+        if ($i ~ /^URIs:/) {
+          x = $i
+          sub(/^URIs:[[:space:]]*/, "", x)
+          uri = x
+        }
+        if ($i ~ /^Components:/) {
+          x = $i
+          sub(/^Components:[[:space:]]*/, "", x)
+          comps = x
+          has_comps = 1
+        }
+      }
+      if (enabled && is_deb && has_comps && suite_ok(suite) && uri_ok(uri)) {
+        block_changed = 0
+        for (j = 1; j <= n; j++) {
+          if (!has_token(comps, wanted[j])) {
+            comps = comps " " wanted[j]
+            block_changed = 1
+          }
+        }
+        if (block_changed) {
+          changed = 1
+          for (i = 1; i <= NF; i++) {
+            if ($i ~ /^Components:/) $i = "Components: " comps
+          }
+        }
+      }
+      for (i = 1; i <= NF; i++) print $i
+      print ""
+    }
+    END { print changed > status_file; close(status_file) }' "$file" >"$tmp"
+  if [[ ! -s "$status" || "$(<"$status")" != "1" ]]; then
+    rm -f -- "$tmp" "$status"
+    return 1
+  fi
+  rm -f -- "$status"
+  if install_repo_file "$file" "$tmp"; then
+    return 0
+  fi
+  return 1
+}
+
+add_apt_components() {
+  local -a add=("$@")
+  local changed=0 file component
+  ((${#add[@]} > 0)) || return 0
+  for component in "${add[@]}"; do
+    [[ "$component" == "main" ]] && die "El componente main no se añade automáticamente."
+  done
+  [[ -n "${ROOT_BACKUP_DIR:-}" ]] || die "No hay directorio de backup para editar sources.list"
+  info "Añadiendo componentes APT: ${add[*]}"
+  backup_root "$APT_SOURCES_LIST"
+  backup_root "$APT_SOURCES_DIR"
+
+  for file in "$APT_SOURCES_LIST" "$APT_SOURCES_DIR"/*.list; do
+    [[ -r "$file" ]] || continue
+    if add_components_list_file "$file" "${add[@]}"; then
+      changed=1
+    fi
+  done
+  for file in "$APT_SOURCES_DIR"/*.sources; do
+    [[ -r "$file" ]] || continue
+    if add_components_sources_file "$file" "${add[@]}"; then
+      changed=1
+    fi
+  done
+
+  if ((changed == 0)); then
+    warn "No hay componentes nuevos que añadir en las entradas de Debian 13."
+    return 1
+  fi
+  # Las fuentes cambiaron: el siguiente apt update debe refrescar índices.
+  APT_INDEX_UPDATED=0
+  return 0
+}
+
+detect_repo_problems() {
   APT_COMPONENTS=()
-  REPO_PREFLIGHT_MISSING=0
+  APT_MISSING_COMPONENTS=()
+  REPO_MAIN_MISSING=0
+  REPO_COMPONENTS_UNKNOWN=0
 
   local component_list
   mapfile -t APT_COMPONENTS < <(apt_components)
   if ((${#APT_COMPONENTS[@]} == 0)); then
+    REPO_COMPONENTS_UNKNOWN=1
     warn "No se pudieron detectar los componentes APT habilitados."
     warn "Revisa /etc/apt/sources.list y /etc/apt/sources.list.d/ antes de continuar."
     return 0
@@ -156,8 +355,8 @@ preflight_repos() {
   info "Componentes detectados: $component_list"
 
   if ! apt_component_enabled main; then
+    REPO_MAIN_MISSING=1
     warn "Falta el componente main: los paquetes obligatorios no estarán disponibles."
-    REPO_PREFLIGHT_MISSING=1
   fi
 
   if ! apt_component_enabled non-free-firmware; then
@@ -171,7 +370,7 @@ preflight_repos() {
     if [[ "$HAS_INTEL" -eq 1 || "$HAS_AMD" -eq 1 || "$HAS_NVIDIA" -eq 1 ]]; then
       warn "  GPU detectada: puede faltar firmware específico."
     fi
-    REPO_PREFLIGHT_MISSING=1
+    add_missing_component non-free-firmware
   fi
 
   local need_nonfree=0
@@ -186,21 +385,94 @@ preflight_repos() {
     if nvidia_driver_wanted; then
       warn "  NVIDIA: no se instalará nvidia-driver; no habrá driver propietario."
     fi
-    REPO_PREFLIGHT_MISSING=1
+    add_missing_component non-free
   fi
 
   if nvidia_driver_wanted && ! apt_component_enabled contrib; then
     warn "Falta contrib: se omitirá nvidia-settings (opcional)."
     warn "  El driver NVIDIA puede instalarse igual; solo falta el panel de configuración."
-    REPO_PREFLIGHT_MISSING=1
+    add_missing_component contrib
   fi
 
-  if [[ "$REPO_PREFLIGHT_MISSING" -eq 1 ]]; then
-    warn "La instalación puede continuar, pero esas funciones no se instalarán."
-    warn "Si las quieres, habilita los componentes y ejecuta 'sudo apt update' antes de instalar."
-  else
-    ok "Componentes APT necesarios disponibles"
+  return 0
+}
+
+resolve_repo_menu() {
+  local choice
+  while true; do
+    if ((${#APT_MISSING_COMPONENTS[@]} == 0)); then
+      return 0
+    fi
+    printf '\n'
+    info "Componentes APT que faltan: ${APT_MISSING_COMPONENTS[*]}"
+    printf '  1) Añadirlos automáticamente (backup + apt update + comprobar)\n'
+    printf '  2) Continuar sin ellos (se omitirán esos paquetes/funciones)\n'
+    printf '  3) Cancelar\n'
+    choice=""
+    if ! read -r -p "Elige [1/2/3] (2): " choice; then
+      choice="2"
+    fi
+    case "$choice" in
+      ""|2)
+        warn "Se continúa sin: ${APT_MISSING_COMPONENTS[*]}"
+        return 0
+        ;;
+      1)
+        if add_apt_components "${APT_MISSING_COMPONENTS[@]}"; then
+          REPO_MODIFIED=1
+        else
+          warn "No se modificó ninguna entrada de Debian 13; se vuelve a comprobar."
+        fi
+        apt_update
+        detect_repo_problems
+        if ((${#APT_MISSING_COMPONENTS[@]} == 0)); then
+          ok "Componentes APT añadidos y detectados correctamente"
+          return 0
+        fi
+        warn "Siguen faltando componentes: ${APT_MISSING_COMPONENTS[*]}"
+        ;;
+      3)
+        if [[ "$REPO_MODIFIED" -eq 1 ]]; then
+          info "Cancelado. Los repositorios ya modificados se conservan en el backup: $ROOT_BACKUP_DIR"
+        else
+          info "Cancelado por el usuario. No se modificó el sistema."
+        fi
+        exit 0
+        ;;
+      *)
+        warn "Opción no válida: '$choice'"
+        ;;
+    esac
+  done
+}
+
+# Preflight de repositorios antes de confirmar o instalar. No modifica nada
+# hasta que el usuario elige explícitamente la opción 1.
+preflight_repos() {
+  section "Repositorios APT"
+  detect_repo_problems
+
+  if [[ "$REPO_MAIN_MISSING" -eq 1 ]]; then
+    die "Falta el componente main en APT. Revisa sources.list antes de instalar."
   fi
+  if [[ "$REPO_COMPONENTS_UNKNOWN" -eq 1 ]]; then
+    return 0
+  fi
+  if ((${#APT_MISSING_COMPONENTS[@]} == 0)); then
+    ok "Componentes APT necesarios disponibles"
+    return 0
+  fi
+
+  if dry_run; then
+    info "En una instalación real se ofrecería añadir: ${APT_MISSING_COMPONENTS[*]}"
+    return 0
+  fi
+  if [[ "$ASSUME_YES" == "1" ]]; then
+    warn "Modo --yes: no se modifican repositorios; se continúa sin ${APT_MISSING_COMPONENTS[*]}."
+    return 0
+  fi
+
+  resolve_repo_menu
 }
 
 # install_group ETIQUETA required|optional paquete...
@@ -279,19 +551,26 @@ install_gpu_packages() {
     gpu_pkgs+=(mesa-va-drivers mesa-vdpau-drivers)
   fi
   if [[ "$HAS_NVIDIA" -eq 1 ]]; then
-    if [[ "${INSTALL_NVIDIA:-auto}" == "no" ]]; then
-      info "NVIDIA detectada; instalación omitida por --no-nvidia"
-    elif [[ ( "$SECURE_BOOT" == "enabled" || "$SECURE_BOOT" == "unknown" ) && "${INSTALL_NVIDIA:-auto}" != "yes" ]]; then
-      if [[ "$SECURE_BOOT" == "enabled" ]]; then
-        warn "NVIDIA detectada con Secure Boot activo; se omite el driver propietario."
-      else
-        warn "NVIDIA detectada pero no se pudo determinar Secure Boot; se omite por precaución."
-      fi
-      warn "Usa --nvidia después de configurar MOK o desactiva Secure Boot."
-    elif [[ "$IS_VM" -eq 1 && "${INSTALL_NVIDIA:-auto}" != "yes" ]]; then
-      warn "NVIDIA detectada en una VM; se omite el driver propietario (usa --nvidia para forzar)."
-    else
+    if nvidia_driver_wanted; then
       gpu_pkgs+=(nvidia-driver nvidia-settings nvidia-vaapi-driver linux-headers-amd64)
+    else
+      case "${INSTALL_NVIDIA:-auto}" in
+        no)
+          info "NVIDIA detectada; instalación omitida por --no-nvidia"
+          ;;
+        *)
+          if [[ "$SECURE_BOOT" == "enabled" || "$SECURE_BOOT" == "unknown" ]]; then
+            if [[ "$SECURE_BOOT" == "enabled" ]]; then
+              warn "NVIDIA detectada con Secure Boot activo; se omite el driver propietario."
+            else
+              warn "NVIDIA detectada pero no se pudo determinar Secure Boot; se omite por precaución."
+            fi
+            warn "Usa --nvidia después de configurar MOK o desactiva Secure Boot."
+          elif [[ "$IS_VM" -eq 1 ]]; then
+            warn "NVIDIA detectada en una VM; se omite el driver propietario (usa --nvidia para forzar)."
+          fi
+          ;;
+      esac
     fi
   fi
   if ((${#gpu_pkgs[@]} > 0)); then

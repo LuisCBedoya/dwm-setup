@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # Instalador de la fase 1: Debian 13 minimal + Xorg + Ly + chadwm + eww.
 #
-# Uso:
-#   ./install.sh --dry-run
-#   sudo ./install.sh --user "$USER" --yes
+# Uso normal:
+#   ./install.sh
+#
+# Opcional:
+#   ./install.sh --dry-run    Comprobar y mostrar el plan sin modificar nada
+#   ./install.sh --yes        Modo no interactivo (no añade repositorios)
 #
 # El instalador no guarda contraseñas, hace backups y no toca fases futuras.
 set -Eeuo pipefail
@@ -35,29 +38,22 @@ usage() {
   cat <<'EOF'
 Instalador de fase 1: escritorio dwm + eww en Debian 13.
 
-Uso:
-  install.sh [opciones]
+Uso normal:
+  ./install.sh              Instalación guiada (recomendado)
+  ./install.sh --dry-run    Comprobar y mostrar el plan sin modificar
+  ./install.sh --yes        Modo no interactivo (no añade repositorios)
+  ./install.sh --help
+  ./install.sh --version
 
-Opciones:
-  --dry-run             Mostrar acciones sin modificar el sistema
-  -y, --yes             No pedir confirmación
-  --user USUARIO        Usuario destino (por defecto SUDO_USER o el actual)
-  --home RUTA           Home real del usuario (debe coincidir con su passwd)
-  --rebuild             Recompilar dwm, eww y Ly aunque ya existan
-  --nvidia              Forzar la instalación del driver NVIDIA
-  --no-nvidia           No instalar el driver NVIDIA
-  --keymap MAPA         Distribución de teclado (por defecto latam)
-  --font FUENTE         Fuente de dwm (por defecto JetBrainsMono Nerd Font)
-  --font-size N         Tamaño de fuente de dwm (por defecto 10)
-  --resolution WxH      Resolución detectada (solo se registra)
-  --debug               Mostrar información de depuración
-  -h, --help            Mostrar esta ayuda
-  --version             Mostrar versión del instalador
+El instalador detecta usuario, home, GPU, Secure Boot, resolución, cámara,
+batería y red. Solo pregunta cuando hay una decisión real, por ejemplo qué
+hacer si faltan componentes APT.
+
+Opciones avanzadas (automatización; normalmente no necesarias):
+  --user USUARIO, --home RUTA, --rebuild, --nvidia, --no-nvidia,
+  --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
 
 Fases futuras (IDE, navegadores, música) no se instalan desde aquí.
-
-El preflight avisa si faltan componentes APT (non-free, non-free-firmware,
-contrib), pero no modifica sources.list ni habilita repositorios.
 EOF
 }
 
@@ -180,7 +176,7 @@ Home:            $TARGET_HOME
 Log:             ${LOG_FILE:-sin log en dry-run}
 
 Para ejecutar de verdad:
-  sudo ./install.sh --user "$TARGET_USER"
+  ./install.sh
 EOF
     return 0
   fi
@@ -211,6 +207,9 @@ Notas:
   - Los USB se montan solos y solo notifican; no se abre ninguna app.
   - No se instala ningún IDE, navegador ni reproductor de música.
 EOF
+  if [[ "$REPO_MODIFIED" -eq 1 ]]; then
+    printf '  - Componentes APT añadidos; backup de fuentes: %s\n' "$ROOT_BACKUP_DIR"
+  fi
 }
 
 main() {
@@ -235,19 +234,22 @@ main() {
 
   show_banner
   print_detection
-  preflight_repos
 
+  # Los backups deben existir antes del preflight: si el usuario autoriza
+  # añadir componentes APT, add_apt_components() guarda sources.list primero.
   local backup_ts
   backup_ts=$(timestamp)
   ROOT_BACKUP_DIR="/var/backups/dwm-setup/$backup_ts"
   USER_BACKUP_DIR="$TARGET_HOME/.config-backup/dwm-setup/$backup_ts"
 
-  local confirm_prompt="¿Continuar con la instalación de la fase 1?"
-  if [[ "$REPO_PREFLIGHT_MISSING" -eq 1 ]]; then
-    confirm_prompt="¿Continuar sabiendo que faltan componentes APT?"
-  fi
-  if ! confirm "$confirm_prompt"; then
-    info "Cancelado por el usuario. No se modificó el sistema."
+  preflight_repos
+
+  if ! confirm "¿Aplicar los cambios y continuar con la instalación de la fase 1?"; then
+    if [[ "$REPO_MODIFIED" -eq 1 ]]; then
+      info "Cancelado. Los componentes APT añadidos se conservan en el backup: $ROOT_BACKUP_DIR"
+    else
+      info "Cancelado por el usuario. No se modificó el sistema."
+    fi
     exit 0
   fi
 
