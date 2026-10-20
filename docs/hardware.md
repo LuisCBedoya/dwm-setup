@@ -123,13 +123,15 @@ El equipo es híbrido Intel + NVIDIA MX330. El instalador:
 - detecta ambas GPU;
 - instala `intel-media-va-driver-non-free`, `i965-va-driver` e
   `intel-gpu-tools` para Intel (si están disponibles);
-- instala `nvidia-driver`, `nvidia-settings`, `nvidia-vaapi-driver` y
-  `linux-headers-amd64` para NVIDIA solo si se cumple la política;
+- instala `nvidia-driver`, `nvidia-settings`, `nvidia-vaapi-driver`,
+  `nvidia-smi` y `linux-headers-amd64` para NVIDIA solo si se cumple la política;
 - `nvidia-driver` está en `non-free`; `nvidia-settings` está en `contrib`.
   Si falta `contrib`, el preflight avisa y ofrece añadirlo con autorización;
   si se continúa sin él, solo se omite `nvidia-settings` y el driver puede
   instalarse igual.
-- no instala CUDA;
+- `nvidia-smi` está en `non-free/utils`; se instala siempre junto al driver.
+- CUDA toolkit (`nvidia-cuda-toolkit`): **opcional**, solo si se pide con
+  `--cuda` o modo interactivo y usuario confirma; no se instala por defecto.
 - no escribe un `xorg.conf` de PRIME.
 
 Política NVIDIA (`./install.sh`, sin flags):

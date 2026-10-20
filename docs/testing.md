@@ -132,6 +132,14 @@ Para una pasada forzada, solo en hardware real y con Secure Boot/MOK resuelto:
 ./install.sh --nvidia
 ```
 
+Para instalar también el CUDA toolkit (nvcc, librerías desarrollo):
+
+```sh
+./install.sh --nvidia --cuda
+```
+
+En modo interactivo, el instalador pregunta si se quiere CUDA.
+
 Criterios de éxito de esta etapa:
 
 - termina sin errores;

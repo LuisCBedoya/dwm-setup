@@ -51,6 +51,7 @@ hacer si faltan componentes APT.
 
 Opciones avanzadas (automatización; normalmente no necesarias):
   --user USUARIO, --home RUTA, --rebuild, --nvidia, --no-nvidia,
+  --cuda, --no-cuda,
   --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
 
 Fases futuras (IDE, navegadores, música) no se instalan desde aquí.
@@ -75,6 +76,8 @@ parse_args() {
       --rebuild) FORCE_REBUILD=1 ;;
       --nvidia) INSTALL_NVIDIA="yes" ;;
       --no-nvidia) INSTALL_NVIDIA="no" ;;
+      --cuda) INSTALL_CUDA="yes" ;;
+      --no-cuda) INSTALL_CUDA="no" ;;
       --keymap)
         [[ $# -ge 2 ]] || die "--keymap requiere un valor"
         DWM_KEYMAP="$2"; shift

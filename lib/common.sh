@@ -122,6 +122,19 @@ confirm() {
   esac
 }
 
+ask_cuda_toolkit() {
+  local prompt="¿Instalar CUDA toolkit (nvcc, librerías desarrollo)?"
+  if [[ "$ASSUME_YES" == "1" ]] || dry_run; then
+    return 1
+  fi
+  local answer
+  read -r -p "$prompt [s/N] " answer
+  case "$answer" in
+    s|S|sí|si|Sí|Si) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 timestamp() {
   date +%Y%m%d-%H%M%S
 }

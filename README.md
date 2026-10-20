@@ -103,8 +103,8 @@ Uso normal:
 | `./install.sh --yes` | No pide confirmación; no modifica repositorios APT |
 
 Opciones avanzadas para automatización (no necesarias en uso normal):
-`--user`, `--home`, `--rebuild`, `--nvidia`, `--no-nvidia`, `--keymap`,
-`--font`, `--font-size`, `--resolution` y `--debug`. También están disponibles
+`--user`, `--home`, `--rebuild`, `--nvidia`, `--no-nvidia`, `--cuda`, `--no-cuda`,
+`--keymap`, `--font`, `--font-size`, `--resolution` y `--debug`. También están disponibles
 `--help` y `--version`.
 
 ## Qué hace el instalador

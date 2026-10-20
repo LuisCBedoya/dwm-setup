@@ -552,7 +552,15 @@ install_gpu_packages() {
   fi
   if [[ "$HAS_NVIDIA" -eq 1 ]]; then
     if nvidia_driver_wanted; then
-      gpu_pkgs+=(nvidia-driver nvidia-settings nvidia-vaapi-driver linux-headers-amd64)
+      gpu_pkgs+=(nvidia-driver nvidia-settings nvidia-vaapi-driver nvidia-smi linux-headers-amd64)
+      # CUDA toolkit: solo si se pide explícitamente (--cuda) o modo interactivo y usuario confirma
+      if [[ "${INSTALL_CUDA:-auto}" == "yes" ]]; then
+        gpu_pkgs+=(nvidia-cuda-toolkit)
+      elif [[ "$DRY_RUN" -eq 0 && "$ASSUME_YES" -eq 0 && -t 0 && "${INSTALL_CUDA:-auto}" == "auto" ]]; then
+        if ask_cuda_toolkit; then
+          gpu_pkgs+=(nvidia-cuda-toolkit)
+        fi
+      fi
     else
       case "${INSTALL_NVIDIA:-auto}" in
         no)
