@@ -1,0 +1,4 @@
+#!/bin/sh
+up=$(uptime -p 2>/dev/null | sed 's/^up //')
+[ -n "$up" ] || up=$(uptime 2>/dev/null | sed 's/.*up //; s/,.*//')
+echo "$up"

@@ -1,0 +1,4 @@
+#!/bin/sh
+v=$(pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null | awk 'NR==1 {gsub(/%/,"",$5); print $5}')
+[ -n "$v" ] || v=0
+echo "$v"

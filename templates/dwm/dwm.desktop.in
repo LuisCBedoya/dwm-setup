@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=dwm
+Comment=Chadwm + eww (Gruvbox Material)
+Exec=@HOME@/.config/dwm/run.sh
+TryExec=@HOME@/.config/dwm/run.sh
+Type=Application
+DesktopNames=dwm
+X-LightDM-DesktopName=dwm
+Keywords=window manager;tiling;dwm;eww;

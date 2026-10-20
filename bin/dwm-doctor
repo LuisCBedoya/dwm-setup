@@ -1,0 +1,445 @@
+#!/bin/sh
+# Diagnóstico de la fase 1: escritorio dwm + eww.
+# Se instala en /usr/local/bin/dwm-doctor.
+set -u
+
+PATH="/usr/local/bin:/usr/bin:/usr/sbin:/bin:/sbin:${PATH:-}"
+FAILED=0
+WARNINGS=0
+CAMERA_TEST=0
+# Si se ejecuta con sudo, las comprobaciones deben mirar al usuario de la
+# sesión, no a root.
+SESSION_USER="${SUDO_USER:-$(id -un)}"
+SESSION_HOME=$(getent passwd "$SESSION_USER" 2>/dev/null | cut -d: -f6)
+[ -n "$SESSION_HOME" ] || SESSION_HOME="${HOME:-/root}"
+SESSION_UID=$(id -u "$SESSION_USER" 2>/dev/null || id -u)
+
+if [ "$(id -u)" -eq 0 ] && [ "$SESSION_USER" != "root" ]; then
+  printf 'Aviso: dwm-doctor se ejecuta como root; se usan los datos de %s. Ejecútalo sin sudo para audio/gráficos.\n' "$SESSION_USER" >&2
+fi
+
+if [ -t 1 ]; then
+  C_OK=$(printf '\033[32m'); C_WARN=$(printf '\033[33m'); C_FAIL=$(printf '\033[31m'); C_OFF=$(printf '\033[0m')
+else
+  C_OK=; C_WARN=; C_FAIL=; C_OFF=
+fi
+
+ok()   { printf '  %s[ ok ]%s %s\n' "$C_OK" "$C_OFF" "$*"; }
+warn() { WARNINGS=$((WARNINGS + 1)); printf '  %s[warn]%s %s\n' "$C_WARN" "$C_OFF" "$*"; }
+fail() { FAILED=$((FAILED + 1)); printf '  %s[fail]%s %s\n' "$C_FAIL" "$C_OFF" "$*"; }
+section() { printf '\n== %s ==\n' "$*"; }
+
+has() { command -v "$1" >/dev/null 2>&1; }
+file_ok() { [ -r "$1" ] && ok "$2" || fail "$2 (falta $1)"; }
+
+check_command() {
+  if has "$1"; then
+    ok "binario: $1"
+  else
+    fail "falta el binario: $1"
+  fi
+}
+
+check_optional_command() {
+  if has "$1"; then
+    ok "binario opcional: $1"
+  else
+    warn "binario opcional ausente: $1"
+  fi
+}
+
+check_service() {
+  if systemctl list-unit-files "$1" >/dev/null 2>&1; then
+    state=$(systemctl is-enabled "$1" 2>/dev/null || true)
+    active=$(systemctl is-active "$1" 2>/dev/null || true)
+    if [ "$state" = "enabled" ] || [ "$state" = "static" ]; then
+      ok "servicio $1: $state (activo: ${active:-no})"
+    else
+      warn "servicio $1 no está habilitado (estado: ${state:-desconocido})"
+    fi
+  else
+    warn "servicio $1 no existe"
+  fi
+}
+
+check_groups() {
+  check_group video
+  check_group audio
+  check_group render
+}
+
+check_group() {
+  group=$1
+  if ! getent group "$group" >/dev/null 2>&1; then
+    warn "el grupo $group no existe en este sistema"
+    return
+  fi
+  if id -nG "$SESSION_USER" 2>/dev/null | tr ' ' '\n' | grep -qx "$group"; then
+    ok "$SESSION_USER en el grupo $group"
+  else
+    fail "$SESSION_USER fuera del grupo $group (cierra sesión y vuelve a entrar)"
+  fi
+}
+
+check_display() {
+  if [ -z "${DISPLAY:-}" ]; then
+    warn "DISPLAY no está definido; pruebas gráficas omitidas"
+    return
+  fi
+  if has xdpyinfo && xdpyinfo >/dev/null 2>&1; then
+    ok "servidor X accesible en $DISPLAY"
+    if has xrandr; then
+      res=$(xrandr --current 2>/dev/null | awk '/ connected/ {getline; print $1; exit}')
+      [ -n "$res" ] && ok "resolución detectada: $res"
+    fi
+  else
+    fail "no se puede conectar al servidor X ($DISPLAY)"
+  fi
+}
+
+check_gpu() {
+  if ! has lspci; then
+    warn "lspci no está instalado; no se puede listar la GPU"
+    return
+  fi
+  gpus=$(lspci 2>/dev/null | grep -Ei 'VGA compatible controller|3D controller|Display controller' || true)
+  if [ -z "$gpus" ]; then
+    warn "no se detectaron GPUs con lspci"
+    return
+  fi
+  printf '%s\n' "$gpus" | sed 's/^/       /'
+  if printf '%s\n' "$gpus" | grep -qi 'NVIDIA'; then ok "GPU NVIDIA detectada"; fi
+  if printf '%s\n' "$gpus" | grep -qi 'Intel'; then ok "GPU Intel detectada"; fi
+  if printf '%s\n' "$gpus" | grep -Eqi '(^|[^[:alnum:]])(AMD|ATI)([^[:alnum:]]|$)'; then ok "GPU AMD detectada"; fi
+  if has vainfo; then
+    if vainfo >/dev/null 2>&1; then
+      ok "VA-API responde (vainfo)"
+    else
+      warn "vainfo no pudo inicializar VA-API (puede requerir sesión gráfica)"
+    fi
+  else
+    warn "vainfo no está instalado"
+  fi
+  if has nvidia-smi; then
+    if nvidia-smi >/dev/null 2>&1; then
+      ok "nvidia-smi responde"
+    else
+      warn "nvidia-smi no responde"
+    fi
+  fi
+}
+
+check_audio() {
+  if [ "$(id -u)" -eq 0 ] && [ "$SESSION_USER" != "root" ]; then
+    warn "audio no comprobado: ejecuta dwm-doctor sin sudo como $SESSION_USER"
+    return
+  fi
+  if has pactl; then
+    if LC_ALL=C pactl info >/dev/null 2>&1; then
+      server=$(LC_ALL=C pactl info 2>/dev/null | awk -F': ' '/Server Name/ {print $2; exit}')
+      ok "servidor de audio: ${server:-desconocido}"
+    else
+      warn "pactl no puede conectar al servidor de audio"
+    fi
+  else
+    fail "pactl no está instalado (pulseaudio-utils)"
+  fi
+  if has wpctl; then
+    if wpctl status >/dev/null 2>&1; then
+      ok "WirePlumber responde (wpctl)"
+    else
+      warn "wpctl no puede conectar a PipeWire/WirePlumber"
+    fi
+  else
+    warn "wpctl no está instalado"
+  fi
+  if has aplay; then
+    if aplay -l 2>/dev/null | grep -q '^card'; then
+      ok "tarjetas ALSA detectadas"
+    else
+      warn "no se detectaron tarjetas ALSA"
+    fi
+  fi
+}
+
+check_codecs() {
+  if ! has ffmpeg; then
+    fail "ffmpeg no está instalado"
+  else
+    for codec in h264 hevc vp9 av1 aac mp3; do
+      if ffmpeg -hide_banner -decoders 2>/dev/null | grep -qi " $codec"; then
+        ok "ffmpeg decodifica $codec"
+      else
+        warn "ffmpeg no muestra decodificador $codec"
+      fi
+    done
+    if ffmpeg -hide_banner -encoders 2>/dev/null | grep -qi 'libx264'; then
+      ok "ffmpeg incluye libx264"
+    else
+      warn "ffmpeg no incluye libx264"
+    fi
+  fi
+  if has gst-inspect-1.0; then
+    for plugin in avdec_h264 vaapih264dec; do
+      if gst-inspect-1.0 "$plugin" >/dev/null 2>&1; then
+        ok "GStreamer: $plugin"
+      else
+        warn "GStreamer no encuentra $plugin"
+      fi
+    done
+  else
+    warn "gst-inspect-1.0 no está instalado"
+  fi
+}
+
+check_camera() {
+  found=0
+  for dev in /dev/video*; do
+    [ -e "$dev" ] || continue
+    found=1
+    name=""
+    if has v4l2-ctl; then
+      name=$(v4l2-ctl --device "$dev" --info 2>/dev/null | awk -F': ' '/Card type/ {print $2; exit}')
+    fi
+    [ -n "$name" ] || name="dispositivo V4L2"
+    ok "cámara: $dev ($name)"
+  done
+  if [ "$found" -eq 0 ]; then
+    warn "no hay /dev/video*; no se detectó cámara"
+    return
+  fi
+  if [ "$CAMERA_TEST" -eq 0 ]; then
+    warn "prueba de captura omitida; usa: dwm-doctor --camera"
+    return
+  fi
+  if ! has ffmpeg; then
+    fail "no se puede probar la cámara: falta ffmpeg"
+    return
+  fi
+  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-camera.XXXXXX.jpg") || {
+    fail "no se pudo crear archivo temporal para la prueba de cámara"
+    return
+  }
+  captured=0
+  for dev in /dev/video*; do
+    [ -e "$dev" ] || continue
+    for size in "" "640x480"; do
+      rm -f "$tmp"
+      if [ -n "$size" ]; then
+        timeout 15 ffmpeg -hide_banner -loglevel error -f v4l2 -video_size "$size" \
+          -i "$dev" -frames:v 1 -y "$tmp" >/dev/null 2>&1
+      else
+        timeout 15 ffmpeg -hide_banner -loglevel error -f v4l2 \
+          -i "$dev" -frames:v 1 -y "$tmp" >/dev/null 2>&1
+      fi
+      if [ -s "$tmp" ]; then
+        ok "captura real correcta: $dev ${size:+($size)}"
+        captured=1
+        break 2
+      fi
+    done
+  done
+  rm -f "$tmp"
+  if [ "$captured" -eq 0 ]; then
+    fail "no se pudo capturar un frame de ninguna cámara"
+    warn "revisa permisos del grupo video, que la cámara no esté ocupada y el log de dmesg"
+  fi
+}
+
+check_storage() {
+  if systemctl is-active udisks2 >/dev/null 2>&1; then
+    ok "udisks2 activo"
+  else
+    fail "udisks2 no está activo"
+  fi
+  if has udisksctl; then
+    if udisksctl status >/dev/null 2>&1; then
+      ok "udisksctl responde"
+    else
+      warn "udisksctl no responde"
+    fi
+  else
+    fail "udisksctl no está instalado"
+  fi
+  for tool in mount.ntfs-3g mkfs.exfat mkfs.fat e2fsck; do
+    if has "$tool"; then
+      ok "soporte de almacenamiento: $tool"
+    else
+      warn "falta herramienta de almacenamiento: $tool"
+    fi
+  done
+  if has udiskie; then
+    if pgrep -u "$SESSION_UID" -x udiskie >/dev/null 2>&1; then
+      ok "udiskie está ejecutándose (solo notificación)"
+    else
+      warn "udiskie no está ejecutándose en esta sesión"
+    fi
+  else
+    fail "udiskie no está instalado"
+  fi
+}
+
+check_configs() {
+  home="$SESSION_HOME"
+  file_ok "$home/.config/dwm/run.sh" "run.sh de sesión"
+  file_ok "$home/.config/dwm/scripts/bar.sh" "script de barra"
+  file_ok "$home/.config/dwm/picom.conf" "configuración de picom"
+  file_ok "$home/.config/dwm/dunst/dunstrc" "configuración de dunst"
+  file_ok "$home/.config/dwm/rofi/gruvbox.rasi" "tema de rofi"
+  file_ok "$home/.config/dwm/eww/eww.yuck" "configuración de eww"
+  file_ok "$home/.local/share/wallpapers/rocky.jpg" "wallpaper"
+  if [ -x "$home/.config/dwm/run.sh" ]; then
+    ok "run.sh es ejecutable"
+  else
+    fail "run.sh no es ejecutable"
+  fi
+}
+
+check_ly() {
+  if [ -x /usr/bin/ly ]; then
+    ok "binario Ly instalado"
+  else
+    fail "Ly no está instalado"
+  fi
+  file_ok /etc/ly/config.lua "configuración de Ly"
+  if [ -r /etc/ly/config.lua ]; then
+    grep -q 'xinitrc = nil' /etc/ly/config.lua && ok "Ly: sesión xinitrc oculta" || warn "Ly: xinitrc no está oculto"
+    grep -q 'shell = false' /etc/ly/config.lua && ok "Ly: shell oculta" || warn "Ly: shell no está oculta"
+    grep -q 'xsessions = ' /etc/ly/config.lua && ok "Ly: sesiones X11 configuradas" || warn "Ly: xsessions no configurado"
+  fi
+  check_service ly@tty2.service
+  if systemctl is-enabled lightdm.service >/dev/null 2>&1; then
+    warn "LightDM sigue habilitado; Ly podría competir por el arranque"
+  fi
+}
+
+check_session() {
+  if has dwm; then
+    version=$(timeout 10 dwm -v 2>&1 | head -1 || true)
+    [ -n "$version" ] && ok "dwm: $version" || warn "dwm no respondió a -v"
+  else
+    fail "dwm no está en PATH"
+  fi
+  if pgrep -x dwm >/dev/null 2>&1; then
+    ok "proceso dwm en ejecución"
+  else
+    warn "dwm no está ejecutándose en esta sesión"
+  fi
+  if has eww && eww --version >/dev/null 2>&1; then
+    ok "eww: $(eww --version 2>/dev/null | head -1)"
+  else
+    fail "eww no está instalado o no responde"
+  fi
+  for cmd in picom dunst rofi feh kitty flameshot xss-lock xclip pcmanfm; do
+    check_command "$cmd"
+  done
+  if pgrep -x xss-lock >/dev/null 2>&1; then
+    ok "xss-lock en ejecución"
+  else
+    warn "xss-lock no está ejecutándose"
+  fi
+}
+
+check_fonts() {
+  if has fc-match; then
+    match=$(fc-match -f '%{family}\n' 'JetBrainsMono Nerd Font' 2>/dev/null | head -1)
+    case "$match" in
+      *JetBrainsMono*Nerd*) ok "fuente Nerd Font: $match" ;;
+      *) warn "JetBrainsMono Nerd Font no está disponible (fc-match: ${match:-ninguna})" ;;
+    esac
+  else
+    warn "fc-match no está instalado"
+  fi
+}
+
+check_power() {
+  if [ -d /sys/class/backlight ]; then
+    for bl in /sys/class/backlight/*; do
+      [ -e "$bl" ] || continue
+      ok "backlight: $(basename "$bl")"
+    done
+  else
+    warn "no se detectó backlight (puede ser un equipo de escritorio)"
+  fi
+  if ls /sys/class/power_supply 2>/dev/null | grep -q '^BAT'; then
+    ok "batería detectada"
+  else
+    warn "no se detectó batería (AC)"
+  fi
+  if has brightnessctl; then
+    if brightnessctl info >/dev/null 2>&1; then
+      ok "brightnessctl responde"
+    else
+      warn "brightnessctl no puede acceder al backlight"
+    fi
+  else
+    fail "brightnessctl no está instalado"
+  fi
+}
+
+summary() {
+  section "Resumen"
+  printf 'Fallos: %s   Avisos: %s\n' "$FAILED" "$WARNINGS"
+  if [ "$FAILED" -gt 0 ]; then
+    printf 'Estado: FALLA. Revisa los puntos marcados [fail].\n'
+    return 1
+  fi
+  printf 'Estado: correcto (con avisos opcionales si aparecen).\n'
+  return 0
+}
+
+for arg in "$@"; do
+  case "$arg" in
+    --camera) CAMERA_TEST=1 ;;
+    --help|-h)
+      cat <<'EOF'
+Uso: dwm-doctor [--camera]
+
+Comprueba el escritorio de fase 1: Xorg/dwm, eww, barra, picom, dunst,
+rofi, fuentes, audio/códecs, cámara, almacenamiento extraíble, Ly y permisos.
+Con --camera realiza una captura real con ffmpeg.
+EOF
+      exit 0
+      ;;
+    *)
+      printf 'dwm-doctor: opción desconocida: %s\n' "$arg" >&2
+      exit 2
+      ;;
+  esac
+done
+
+section "Sistema"
+if [ -r /etc/os-release ]; then
+  . /etc/os-release
+  if [ "${ID:-}" = "debian" ] && [ "${VERSION_ID:-}" = "13" ]; then
+    ok "Debian 13 ($PRETTY_NAME)"
+  else
+    fail "se esperaba Debian 13; detectado: ${PRETTY_NAME:-desconocido}"
+  fi
+fi
+case "$(uname -m)" in
+  x86_64|amd64) ok "arquitectura x86_64" ;;
+  *) fail "arquitectura no soportada: $(uname -m)" ;;
+esac
+check_display
+check_groups
+
+section "Sesión y aplicaciones"
+check_session
+check_configs
+check_fonts
+check_ly
+
+section "Hardware"
+check_gpu
+check_power
+check_camera
+
+section "Audio y códecs"
+check_audio
+check_codecs
+
+section "Almacenamiento extraíble"
+check_storage
+
+summary

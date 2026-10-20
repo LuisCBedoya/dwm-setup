@@ -1,0 +1,2 @@
+version=4
+http://dl.suckless.org/dwm/ dwm-([0-9.]+)\.tar\.gz

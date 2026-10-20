@@ -1,0 +1,241 @@
+/* See LICENSE file for copyright and license details. */
+
+#include <X11/XF86keysym.h>
+
+/* appearance */
+static const unsigned int borderpx  = 1;
+static const unsigned int default_border = 1;
+static const unsigned int snap      = 16;
+static const unsigned int gappih    = 8;
+static const unsigned int gappiv    = 8;
+static const unsigned int gappoh    = 10;
+static const unsigned int gappov    = 10;
+static const int smartgaps          = 0;
+static const unsigned int systraypinning = 0;
+static const unsigned int systrayspacing = 6;
+static const unsigned int systrayiconsize = 18;
+static const int systraypinningfailfirst = 1;
+static const int showsystray        = 1;
+static const int showbar            = 1;
+static const int showtab            = showtab_never;
+static const int toptab             = 1;
+static const int floatbar           = 0;
+static const int topbar             = 1;
+static const int horizpadbar        = 5;
+static const int vertpadbar         = 8;
+static const int vertpadtab         = 35;
+static const int horizpadtabi       = 15;
+static const int horizpadtabo       = 15;
+static const int scalepreview       = 4;
+static const int tag_preview        = 0;
+static const int colorfultag        = 0;
+static const int new_window_attach_on_end = 0;
+
+#define ICONSIZE 18
+#define ICONSPACING 8
+
+static const char *fonts[]          = { "JetBrainsMono Nerd Font:size=10:style=Medium" };
+
+/* Tema Gruvbox Material */
+#include "themes/gruvchad.h"
+
+static const char *colors[][3] = {
+    [SchemeNorm]       = { gray3,   black,  gray2 },
+    [SchemeSel]        = { gray4,   blue,   gray3  },
+    [SchemeTitle]      = { white,   black,  black  },
+    [TabSel]           = { blue,    gray2,  black  },
+    [TabNorm]          = { gray3,   black,  black  },
+    [SchemeTag]        = { gray3,   black,  black  },
+    [SchemeTag1]       = { blue,    black,  black  },
+    [SchemeTag2]       = { red,     black,  black  },
+    [SchemeTag3]       = { orange,  black,  black  },
+    [SchemeTag4]       = { green,   black,  black  },
+    [SchemeTag5]       = { pink,    black,  black  },
+    [SchemeLayout]     = { green,   black,  black  },
+    [SchemeBtnPrev]    = { green,   black,  black  },
+    [SchemeBtnNext]    = { yellow,  black,  black  },
+    [SchemeBtnClose]   = { red,     black,  black  },
+};
+
+/* tagging */
+static char *tags[] = { "[cmd]", "[www]", "[dev]", "[chat]", "[sys]", "[med]" };
+
+/* eww: dashboard */
+static const char *eww[] = { "/usr/bin/eww", "-c", "/home/luc/.config/dwm/eww", "open", "--toggle", "dashboard", NULL };
+
+static const Launcher launchers[] = {
+    { eww, "󰕮" },
+};
+
+static const int tagschemes[] = {
+    SchemeTag1, SchemeTag2, SchemeTag3, SchemeTag4, SchemeTag5,
+};
+
+static const unsigned int ulinepad      = 4;
+static const unsigned int ulinestroke   = 2;
+static const unsigned int ulinevoffset  = 0;
+static const int ulineall               = 0;
+
+/* reglas */
+static const Rule rules[] = {
+    { "Gimp",     NULL,       NULL,       0,            0,           1,           -1 },
+    { "Firefox",  NULL,       NULL,       1 << 1,       0,           0,           -1 },
+    { "eww",      NULL,       NULL,       0,            0,           1,           -1 },
+    { "feh",      NULL,       NULL,       0,            0,           1,           -1 },
+    { "mpv",      NULL,       NULL,       0,            0,           1,           -1 },
+    { "KeePassXC",NULL,       NULL,       0,            0,           1,           -1 },
+};
+
+/* layout(s) */
+static const float mfact     = 0.55;
+static const int nmaster     = 1;
+static const int resizehints = 0;
+static const int lockfullscreen = 1;
+
+#define FORCE_VSPLIT 1
+#include "functions.h"
+
+static const Layout layouts[] = {
+    { "[]=",      tile },
+    { "[M]",      monocle },
+    { "[@]",      spiral },
+    { "[\\]",     dwindle },
+    { "H[]",      deck },
+    { "TTT",      bstack },
+    { "===",      bstackhoriz },
+    { "HHH",      grid },
+    { "###",      nrowgrid },
+    { "---",      horizgrid },
+    { ":::",      gaplessgrid },
+    { "|M|",      centeredmaster },
+    { ">M>",      centeredfloatingmaster },
+    { "><>",      NULL },
+    { NULL,       NULL },
+};
+
+/* key definitions */
+#define MODKEY Mod4Mask
+#define TAGKEYS(KEY,TAG) \
+    { MODKEY,                       KEY,      view,           {.ui = 1 << TAG} }, \
+    { MODKEY|ControlMask,           KEY,      toggleview,     {.ui = 1 << TAG} }, \
+    { MODKEY|ShiftMask,             KEY,      tag,            {.ui = 1 << TAG} }, \
+    { MODKEY|ControlMask|ShiftMask, KEY,      toggletag,      {.ui = 1 << TAG} },
+
+#define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
+
+/* comandos */
+static const char *upvol[]   = { "/usr/bin/pactl", "set-sink-volume", "@DEFAULT_SINK@", "+5%", NULL };
+static const char *downvol[] = { "/usr/bin/pactl", "set-sink-volume", "@DEFAULT_SINK@", "-5%", NULL };
+static const char *mutevol[] = { "/usr/bin/pactl", "set-sink-mute",   "@DEFAULT_SINK@", "toggle", NULL };
+static const char *light_up[] = { "/usr/bin/brightnessctl", "set", "10%+", NULL };
+static const char *light_down[] = { "/usr/bin/brightnessctl", "set", "10%-", NULL };
+
+static const char *termcmd[]  = { "alacritty", NULL };
+static const char *termcmda[] = { "kitty", NULL };
+static const char *dmenucmd[] = { "rofi", "-show", "drun", "-theme", "/home/luc/.config/dwm/rofi/gruvbox.rasi", NULL };
+static const char *browsercmd[] = { "firefox", NULL };
+static const char *shotcmd[] = { "flameshot", "gui", NULL };
+static const char *filescmd[] = { "thunar", NULL };
+static const char *passcmd[] = { "keepassxc", NULL };
+static const char *imgcmd[] = { "gpicview", NULL };
+static const char *editorcmd[] = { "kitty", "-e", "nvim", NULL };
+static const char *lockcmd[] = { "i3lock", "-i", "/home/luc/.local/share/wallpapers/rocky.jpg", "-c", "000000", "--clock", NULL };
+
+static const Key keys[] = {
+    /* volumen y brillo */
+    { 0, XK_F1, spawn, {.v = downvol} },
+    { 0, XK_F2, spawn, {.v = upvol} },
+    { 0, XK_F3, spawn, {.v = mutevol} },
+    { 0, XK_F11, spawn, {.v = light_down} },
+    { 0, XK_F12, spawn, {.v = light_up} },
+    { 0, XF86XK_AudioLowerVolume, spawn, {.v = downvol} },
+    { 0, XF86XK_AudioRaiseVolume, spawn, {.v = upvol} },
+    { 0, XF86XK_AudioMute, spawn, {.v = mutevol} },
+    { 0, XF86XK_MonBrightnessDown, spawn, {.v = light_down} },
+    { 0, XF86XK_MonBrightnessUp, spawn, {.v = light_up} },
+
+    /* terminales y apps */
+    { MODKEY, XK_Return, spawn, {.v = termcmd} },
+    { MODKEY|ShiftMask, XK_Return, spawn, {.v = termcmda} },
+    { MODKEY|ShiftMask, XK_d, spawn, {.v = dmenucmd} },
+    { MODKEY|ShiftMask, XK_b, spawn, {.v = browsercmd} },
+    { MODKEY|ShiftMask, XK_s, spawn, {.v = shotcmd} },
+    { MODKEY|ShiftMask, XK_p, spawn, {.v = filescmd} },
+    { MODKEY|ShiftMask, XK_k, spawn, {.v = passcmd} },
+    { MODKEY|ShiftMask, XK_g, spawn, {.v = imgcmd} },
+    { MODKEY|ShiftMask, XK_v, spawn, {.v = editorcmd} },
+    { MODKEY|ShiftMask, XK_l, spawn, {.v = lockcmd} },
+    { MODKEY, XK_grave, spawn, SHCMD("/usr/bin/eww -c /home/luc/.config/dwm/eww open --toggle dashboard") },
+    { MODKEY, XK_c, spawn, SHCMD("/usr/bin/eww -c /home/luc/.config/dwm/eww open --toggle control") },
+    { MODKEY|ShiftMask, XK_c, spawn, SHCMD("/usr/bin/eww -c /home/luc/.config/dwm/eww open --toggle calendar") },
+    { MODKEY|ShiftMask, XK_x, spawn, SHCMD("/usr/bin/eww -c /home/luc/.config/dwm/eww open --toggle census") },
+    { MODKEY, XK_Escape, spawn, SHCMD("/usr/bin/eww -c /home/luc/.config/dwm/eww open --toggle power") },
+
+    /* barra y foco */
+    { MODKEY, XK_b, togglebar, {0} },
+    { Mod1Mask, XK_Tab, focusstack, {.i = +1} },
+    { MODKEY, XK_j, focusstack, {.i = +1} },
+    { MODKEY, XK_k, focusstack, {.i = -1} },
+    { MODKEY|ShiftMask, XK_j, movestack, {.i = +1} },
+    { MODKEY|ShiftMask, XK_k, movestack, {.i = -1} },
+    { MODKEY|ShiftMask, XK_f, togglefullscr, {0} },
+
+    /* tamaños */
+    { MODKEY, XK_i, incnmaster, {.i = +1} },
+    { MODKEY, XK_d, incnmaster, {.i = -1} },
+    { MODKEY, XK_h, setmfact, {.f = -0.05} },
+    { MODKEY, XK_l, setmfact, {.f = +0.05} },
+    { MODKEY|ControlMask, XK_Return, zoom, {0} },
+
+    /* ventanas y layouts */
+    { MODKEY, XK_Tab, view, {0} },
+    { MODKEY|ShiftMask, XK_q, killclient, {0} },
+    { MODKEY, XK_t, setlayout, {.v = &layouts[0]} },
+    { MODKEY, XK_f, setlayout, {.v = &layouts[13]} },
+    { MODKEY, XK_m, setlayout, {.v = &layouts[1]} },
+    { MODKEY, XK_space, setlayout, {0} },
+    { MODKEY|ShiftMask, XK_space, togglefloating, {0} },
+    { MODKEY, XK_0, view, {.ui = ~0} },
+    { MODKEY|ShiftMask, XK_0, tag, {.ui = ~0} },
+    { MODKEY, XK_comma, focusmon, {.i = -1} },
+    { MODKEY, XK_period, focusmon, {.i = +1} },
+    { MODKEY|ShiftMask, XK_comma, tagmon, {.i = -1} },
+    { MODKEY|ShiftMask, XK_period, tagmon, {.i = +1} },
+
+    /* gaps */
+    { MODKEY, XK_minus, incrgaps, {.i = -1} },
+    { MODKEY, XK_plus, incrgaps, {.i = +1} },
+    { MODKEY|ShiftMask, XK_plus, defaultgaps, {0} },
+
+    /* reinicio y salida */
+    { MODKEY|ShiftMask, XK_r, restart, {0} },
+    { MODKEY|ControlMask|ShiftMask, XK_q, quit, {0} },
+
+    TAGKEYS(XK_1, 0)
+    TAGKEYS(XK_2, 1)
+    TAGKEYS(XK_3, 2)
+    TAGKEYS(XK_4, 3)
+    TAGKEYS(XK_5, 4)
+    TAGKEYS(XK_6, 5)
+};
+
+/* button definitions */
+static const Button buttons[] = {
+    { ClkLtSymbol,          0,              Button1,        setlayout,      {0} },
+    { ClkLtSymbol,          0,              Button3,        setlayout,      {.v = &layouts[2]} },
+    { ClkWinTitle,          0,              Button2,        zoom,           {0} },
+    { ClkStatusText,        0,              Button2,        spawn,          {.v = termcmda} },
+    { ClkClientWin,         MODKEY,         Button1,        moveorplace,    {.i = 0} },
+    { ClkClientWin,         MODKEY,         Button2,        togglefloating, {0} },
+    { ClkClientWin,         MODKEY,         Button3,        resizemouse,    {0} },
+    { ClkClientWin,         ControlMask,    Button1,        dragmfact,      {0} },
+    { ClkClientWin,         ControlMask,    Button3,        dragcfact,      {0} },
+    { ClkTagBar,            0,              Button1,        view,           {0} },
+    { ClkTagBar,            0,              Button3,        toggleview,     {0} },
+    { ClkTagBar,            MODKEY,         Button1,        tag,            {0} },
+    { ClkTagBar,            MODKEY,         Button3,        toggletag,      {0} },
+    { ClkTabBar,            0,              Button1,        focuswin,       {0} },
+    { ClkTabPrev,           0,              Button1,        movestack,      {.i = -1} },
+    { ClkTabNext,           0,              Button1,        movestack,      {.i = +1} },
+    { ClkTabClose,          0,              Button1,        killclient,     {0} },
+};

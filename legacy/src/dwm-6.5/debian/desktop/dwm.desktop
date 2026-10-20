@@ -1,0 +1,14 @@
+[Desktop Entry]
+Name=dwm
+Comment=dynamic window manager
+Exec=dwm
+Icon=dwm
+Type=Application
+X-GNOME-WMName=dwm
+DesktopNames=dwm
+X-LightDM-DesktopName=dwm
+
+[Window Manager]
+Name=dwm
+SessionManaged=true
+StartupNotification=false

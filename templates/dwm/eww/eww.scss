@@ -1,0 +1,320 @@
+$bg: #1e2122;
+$bg-alt: #242728;
+$surface: #2b2e2f;
+$border: #3c3f41;
+$fg: #c7b89d;
+$fg-dim: #928374;
+$green: #89b482;
+$red: #ec6b64;
+$blue: #6f8faf;
+$yellow: #d6b676;
+$purple: #9f899c;
+
+* {
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 11px;
+}
+
+window {
+  background-color: transparent;
+}
+
+.panel {
+  background-color: $bg;
+  border: 1px solid $border;
+  border-radius: 12px;
+  padding: 12px;
+  color: $fg;
+}
+
+button {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  color: $fg;
+}
+
+.close {
+  color: $fg-dim;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.close:hover {
+  color: $red;
+}
+
+/* Dashboard */
+.dash-header {
+  padding: 0;
+}
+
+.avatar {
+  font-size: 38px;
+  color: $green;
+}
+
+.dash-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: $fg;
+}
+
+.dash-sub {
+  font-size: 9px;
+  color: $fg-dim;
+}
+
+.dash-time {
+  background-color: $bg-alt;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.clock {
+  font-size: 30px;
+  font-weight: bold;
+  color: $fg;
+}
+
+.date {
+  font-size: 10px;
+  color: $fg-dim;
+}
+
+.statbar {
+  background-color: $bg-alt;
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+
+.stat-icon {
+  font-size: 18px;
+}
+
+.stat-label {
+  font-size: 9px;
+  color: $fg-dim;
+}
+
+.stat-value {
+  font-size: 9px;
+  color: $fg;
+}
+
+progressbar trough {
+  background-color: $surface;
+  border-radius: 4px;
+  min-height: 6px;
+}
+
+progressbar progress {
+  background-color: $green;
+  border-radius: 4px;
+  min-height: 6px;
+}
+
+.dash-actions {
+  padding-top: 2px;
+}
+
+.action {
+  background-color: $bg-alt;
+  border-radius: 8px;
+  min-width: 38px;
+  min-height: 34px;
+  padding: 6px;
+  font-size: 18px;
+  color: $fg;
+}
+
+.action:hover {
+  background-color: $green;
+  color: $bg;
+}
+
+.dash-foot {
+  font-size: 9px;
+  color: $fg-dim;
+}
+
+/* Calendar */
+.cal-time {
+  font-size: 24px;
+  font-weight: bold;
+  color: $fg;
+}
+
+.cal-long {
+  font-size: 9px;
+  color: $fg-dim;
+}
+
+.cal-grid {
+  background-color: $bg-alt;
+  border-radius: 8px;
+  padding: 2px;
+  color: $fg;
+  font-size: 9px;
+}
+
+calendar:selected {
+  background-color: $green;
+  color: $bg;
+  border-radius: 4px;
+}
+
+calendar.header {
+  background-color: transparent;
+  color: $fg;
+}
+
+calendar.button {
+  color: $fg;
+}
+
+.cal-foot {
+  font-size: 9px;
+  color: $fg-dim;
+}
+
+/* Control center */
+.cc-title {
+  font-size: 12px;
+  font-weight: bold;
+  color: $fg;
+}
+
+.cc-grid {
+  padding: 2px 0;
+}
+
+.tile {
+  background-color: $bg-alt;
+  border-radius: 8px;
+  min-width: 60px;
+  min-height: 56px;
+  padding: 6px;
+  color: $fg;
+}
+
+.tile:hover {
+  background-color: $green;
+  color: $bg;
+}
+
+.tile-icon {
+  font-size: 20px;
+}
+
+.tile-label {
+  font-size: 9px;
+}
+
+.cc-status {
+  font-size: 9px;
+  color: $fg-dim;
+  padding: 0 2px;
+}
+
+.cc-slider {
+  background-color: $bg-alt;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+
+.cc-label {
+  font-size: 9px;
+  color: $fg-dim;
+}
+
+.cc-value {
+  font-size: 9px;
+  color: $fg;
+}
+
+scale.cc-scale trough {
+  background-color: $surface;
+  border-radius: 4px;
+  min-height: 5px;
+}
+
+scale.cc-scale highlight {
+  background-color: $blue;
+  border-radius: 4px;
+}
+
+scale.cc-scale slider {
+  background-color: $fg;
+  border-radius: 50%;
+  min-width: 11px;
+  min-height: 11px;
+}
+
+.cc-actions {
+  padding-top: 2px;
+}
+
+/* Census */
+.census-title {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.census-row {
+  padding: 0;
+}
+
+.gauge {
+  background-color: $bg-alt;
+  border-radius: 10px;
+  padding: 6px;
+  min-width: 128px;
+}
+
+.gauge-ring {
+  min-width: 72px;
+  min-height: 72px;
+}
+
+.gauge-icon {
+  font-size: 15px;
+  color: $fg;
+}
+
+.gauge-value {
+  font-size: 11px;
+  font-weight: bold;
+  color: $fg;
+}
+
+.gauge-label {
+  font-size: 8px;
+  color: $fg-dim;
+}
+
+.census-foot {
+  font-size: 9px;
+  color: $fg-dim;
+}
+
+/* Power menu */
+.power-title {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.power-row {
+  background-color: $bg-alt;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 11px;
+  color: $fg;
+}
+
+.power-row:hover {
+  background-color: $green;
+  color: $bg;
+}

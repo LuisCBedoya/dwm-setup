@@ -1,0 +1,4 @@
+#!/bin/sh
+n=$(apt list --upgradable 2>/dev/null | grep -c '\[upgradable\]')
+[ -n "$n" ] || n=0
+echo "$n"

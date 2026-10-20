@@ -1,0 +1,4 @@
+#!/bin/sh
+# Fallback manual: startx
+# Ly oculta esta sesión y usa dwm.desktop; esto queda para recuperación.
+exec "$HOME/.config/dwm/run.sh"

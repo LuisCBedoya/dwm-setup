@@ -1,0 +1,18 @@
+Description: Modified command and rules to use Debian specific tools
+ By default dwm uses st as terminal emulator
+ this is modified now to use x-terminal-emulator
+ command instead.
+Author: Vasudev Kamath <kamathvasudev@gmail.com>
+Forwarded: not-needed
+Last-Update: 2024-04-25
+--- a/config.def.h
++++ b/config.def.h
+@@ -58,7 +58,7 @@ static const Layout layouts[] = {
+ /* commands */
+ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() */
+ static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
+-static const char *termcmd[]  = { "st", NULL };
++static const char *termcmd[]  = { "x-terminal-emulator", NULL };
+ 
+ static const Key keys[] = {
+ 	/* modifier                     key        function        argument */

@@ -1,0 +1,120 @@
+(defwidget statbar [icon label value color]
+  (box :class "statbar" :orientation "h" :space-evenly false :spacing 8
+    (label :class "stat-icon" :style "color: ${color};" :text icon)
+    (box :class "stat-body" :orientation "v" :hexpand true :spacing 2
+      (box :class "stat-top" :orientation "h"
+        (label :class "stat-label" :hexpand true :text label)
+        (label :class "stat-value" :text "${round(value, 0)}%"))
+      (progress :class "stat-progress" :value value :hexpand true))
+  )
+)
+
+(defwidget action [icon command]
+  (button :class "action" :onclick command
+    (label :text icon))
+)
+
+(defwidget tile [icon label command]
+  (button :class "tile" :onclick command
+    (box :orientation "v" :spacing 2 :halign "center"
+      (label :class "tile-icon" :text icon)
+      (label :class "tile-label" :text label)))
+)
+
+(defwidget cc-slider [label value command]
+  (box :class "cc-slider" :orientation "v" :spacing 2
+    (box :class "cc-slider-top" :orientation "h"
+      (label :class "cc-label" :hexpand true :text label)
+      (label :class "cc-value" :text value))
+    (scale :class "cc-scale" :value value :min 0 :max 100 :onchange command :orientation "h" :hexpand true))
+)
+
+(defwidget gauge [value label icon color]
+  (box :class "gauge" :orientation "v" :spacing 2
+    (circular-progress :class "gauge-ring" :style "color: ${color};" :value value :thickness 6
+      (box :orientation "v" :halign "center" :valign "center" :spacing 0
+        (label :class "gauge-icon" :text icon)
+        (label :class "gauge-value" :text "${round(value, 0)}%")))
+    (label :class "gauge-label" :text label))
+)
+
+(defwidget dashboard-widget []
+  (box :class "panel dashboard" :orientation "v" :spacing 10
+    (box :class "dash-header" :orientation "h" :space-evenly false :spacing 10
+      (label :class "avatar" :text "󰄛")
+      (box :orientation "v" :hexpand true :spacing 0
+        (label :class "dash-name" :text "${user}")
+        (label :class "dash-sub" :text "${host} · dwm"))
+      (button :class "close" :onclick "${EWW_CMD} close dashboard" "󰅖"))
+    (box :class "dash-time" :orientation "v" :spacing 0
+      (label :class "clock" :text "${time}")
+      (label :class "date" :text "${date}"))
+    (box :class "dash-stats" :orientation "v" :spacing 8
+      (statbar :icon "󰻠" :label "CPU" :value "${EWW_CPU.avg}" :color "#89b482")
+      (statbar :icon "󰍛" :label "RAM" :value "${EWW_RAM.used_mem_perc}" :color "#6f8faf")
+      (statbar :icon "󰋊" :label "DISK" :value "${EWW_DISK['/'].used_perc}" :color "#d6b676"))
+    (box :class "dash-actions" :orientation "h" :spacing 8
+      (action :icon "󰆍" :command "kitty &")
+      (action :icon "󰉋" :command "pcmanfm &")
+      (action :icon "󰒓" :command "${EWW_CMD} open --toggle control"))
+    (label :class "dash-foot" :text "uptime ${uptime} · ${updates} updates"))
+)
+
+(defwidget calendar-widget []
+  (box :class "panel calendar" :orientation "v" :spacing 8
+    (box :class "cal-header" :orientation "h" :spacing 8
+      (label :class "cal-time" :hexpand true :text "${time}")
+      (button :class "close" :onclick "${EWW_CMD} close calendar" "󰅖"))
+    (label :class "cal-long" :text "${longdate}")
+    (calendar :class "cal-grid" :show-heading true :show-day-names true :show-week-numbers false)
+    (label :class "cal-foot" :text "uptime ${uptime} · ${battery}"))
+)
+
+(defwidget control-widget []
+  (box :class "panel control" :orientation "v" :spacing 10
+    (box :class "cc-header" :orientation "h" :spacing 8
+      (label :class "cc-title" :hexpand true :text "Centro de control")
+      (button :class "close" :onclick "${EWW_CMD} close control" "󰅖"))
+    (box :class "cc-grid" :orientation "h" :spacing 8
+      (tile :icon "󰤨" :label "WiFi" :command "nmcli radio wifi toggle")
+      (tile :icon "󰄀" :label "Captura" :command "flameshot gui")
+      (tile :icon "󰌾" :label "Bloquear" :command "/usr/local/bin/dwm-safe lock"))
+    (label :class "cc-status" :text "WiFi ${wifi} · ${battery}")
+    (cc-slider :label "Volumen" :value "${volume}" :command "pactl set-sink-volume @DEFAULT_SINK@ {}%")
+    (cc-slider :label "Brillo" :value "${brightness}" :command "brightnessctl set {}%")
+    (box :class "cc-actions" :orientation "h" :spacing 8
+      (action :icon "󰐥" :command "/usr/local/bin/dwm-safe poweroff")
+      (action :icon "󰜉" :command "/usr/local/bin/dwm-safe reboot")
+      (action :icon "󰤄" :command "/usr/local/bin/dwm-safe suspend")
+      (action :icon "󰍃" :command "/usr/local/bin/dwm-safe logout")))
+)
+
+(defwidget census-widget []
+  (box :class "panel census" :orientation "v" :spacing 8
+    (box :class "census-header" :orientation "h" :spacing 8
+      (label :class "census-title" :hexpand true :text "CENSUS")
+      (button :class "close" :onclick "${EWW_CMD} close census" "󰅖"))
+    (box :class "census-grid" :orientation "v" :spacing 8
+      (box :class "census-row" :orientation "h" :spacing 8
+        (gauge :value "${temp}" :label "CPU TEMP" :icon "󰔏" :color "#ec6b64")
+        (gauge :value "${EWW_RAM.used_mem_perc}" :label "RAM" :icon "󰍛" :color "#89b482"))
+      (box :class "census-row" :orientation "h" :spacing 8
+        (gauge :value "${EWW_DISK['/'].used_perc}" :label "DISK" :icon "󰋊" :color "#d6b676")
+        (gauge :value "${EWW_CPU.avg}" :label "CPU" :icon "󰻠" :color "#6f8faf")))
+    (box :class "census-foot" :orientation "v"
+      (label :text "WiFi: ${wifi}")
+      (label :text "Batería: ${battery}")
+      (label :text "Uptime: ${uptime}")))
+)
+
+(defwidget power-widget []
+  (box :class "panel power" :orientation "v" :spacing 8
+    (box :class "power-header" :orientation "h" :spacing 8
+      (label :class "power-title" :hexpand true :text "Energía")
+      (button :class "close" :onclick "${EWW_CMD} close power" "󰅖"))
+    (button :class "power-row" :onclick "/usr/local/bin/dwm-safe poweroff" "Apagar")
+    (button :class "power-row" :onclick "/usr/local/bin/dwm-safe reboot" "Reiniciar")
+    (button :class "power-row" :onclick "/usr/local/bin/dwm-safe lock" "Bloquear")
+    (button :class "power-row" :onclick "/usr/local/bin/dwm-safe suspend" "Suspender")
+    (button :class "power-row" :onclick "/usr/local/bin/dwm-safe logout" "Cerrar sesión"))
+)

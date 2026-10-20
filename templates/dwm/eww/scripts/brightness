@@ -1,0 +1,8 @@
+#!/bin/sh
+cur=$(brightnessctl get 2>/dev/null)
+max=$(brightnessctl max 2>/dev/null)
+if [ -n "$cur" ] && [ -n "$max" ] && [ "$max" -gt 0 ]; then
+  echo $((cur * 100 / max))
+else
+  echo 0
+fi
