@@ -78,8 +78,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/dwm/` | dwm/eww/barra/dunst/rofi/picom/sesión |
 | `templates/kitty/` | kitty |
 | `assets/wallpaper.jpg` | Wallpaper |
-| `src/chadwm/chadwm` | Fuente chadwm |
-| `src/eww` | Fuente eww v0.6.0 |
+| `src/chadwm/chadwm` | Fuente chadwm, vendorizada (commit `7991ac8`) |
+| `src/eww` | Fuente eww v0.6.0, vendorizada (commit `d87c2fd`) |
 | `legacy/` | Prototipo antiguo, no usado |
 
 ## Comandos de validación
@@ -117,7 +117,8 @@ historia de `PLAN.md`; está marcado como obsoleto.
 ## Estado esperado al retomar
 
 - El código de fase 1 está implementado y los checks estáticos pasan.
-- Hay backups y dry-run; falta validación real.
+- Las fuentes de chadwm y eww están vendorizadas; el repo no usa submódulos.
+- Hay backups y dry-run; falta validación real y subir el repo.
 - `PROGRESS.md` contiene la lista de pruebas y bloqueos.
 - Si se completa una prueba real, actualizar `PROGRESS.md` y
   `docs/testing.md` con fecha, hardware, fuentes y resultados. Si no hay

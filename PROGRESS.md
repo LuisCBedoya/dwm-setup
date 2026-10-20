@@ -19,6 +19,7 @@ Debian 13 minimal ni en el hardware de referencia. Por tanto:
 - `bash -n` / `sh -n` sobre `install.sh`, `lib/*.sh` y los scripts de sesión.
 - Dry-run real con `--yes --user "$USER"` y comprobación de residuos en un home
   de prueba: sin rutas `/home/luc` ni placeholders sin renderizar.
+- `src/chadwm` y `src/eww` verificados como directorios normales, no gitlinks.
 - chadwm `config.h.in`: verificado con headers extraídos en `tmp/devroot`.
 - eww v0.6.0: `cargo check --locked --no-default-features --features x11`
   con Debian Rust 1.85 tras fijar `time 0.3.35`; añade `libdbusmenu-glib-dev`
@@ -53,6 +54,7 @@ Debian 13 minimal ni en el hardware de referencia. Por tanto:
 - [x] Backups de sistema y usuario.
 - [x] `PLAN.md` marcado como obsoleto.
 - [x] Prototipo antiguo movido a `legacy/`.
+- [x] Fuentes de chadwm y eww vendorizadas en el repositorio, sin submódulos.
 
 ## Checklist de validación
 
@@ -90,7 +92,8 @@ Estas tareas requieren una instalación real:
 - La cámara, el montaje USB, el audio/códecs y NVIDIA/PRIME necesitan hardware
   real o pass-through de VM.
 - No ha habido ninguna instalación real todavía.
-- No hay commits en un repositorio git; el proyecto está en el filesystem.
+- El repositorio Git ya incluye las fuentes vendorizadas de chadwm y eww; falta
+  subirlo y validar el clon limpio en la VM.
 
 ## Riesgos conocidos
 
