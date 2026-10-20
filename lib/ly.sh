@@ -51,6 +51,12 @@ build_ly() {
     ok "Ly ya está instalado ($LY_BIN); usa --rebuild para recompilar"
     return 0
   fi
+  if ! pkg-config --exists pam; then
+    die "Falta pam.pc (paquete libpam0g-dev); no se puede compilar Ly"
+  fi
+  if ! pkg-config --exists audit; then
+    die "Falta audit.pc (paquete libaudit-dev); no se puede compilar Ly"
+  fi
   ensure_zig
   if [[ -d "$LY_SRC/.git" ]]; then
     run_root git -C "$LY_SRC" fetch --tags origin

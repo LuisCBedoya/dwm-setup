@@ -133,7 +133,8 @@ Opciones avanzadas para automatización (no necesarias en uso normal):
    nativas incluyen `libdbusmenu-glib-dev` y `libdbusmenu-gtk3-dev`.
 7. **Ly**: descarga Zig `0.17.0` (SHA-256 fijo), clona el commit fijo de Ly,
    compila, instala `/usr/bin/ly` y `/etc/ly/config.lua`, y habilita
-   `ly@tty2.service`.
+   `ly@tty2.service`. Las dependencias nativas incluyen `libpam0g-dev` y
+   `libaudit-dev`: `pam.pc` exige `audit.pc` y sin él la compilación falla.
 8. **Configuración**: copia `~/.config/dwm`, `~/.config/kitty`,
    `~/.xinitrc`, wallpaper y `/usr/share/xsessions/dwm.desktop`.
 9. **Verificación**: comprueba binarios, archivos, servicios y que Ly quedó

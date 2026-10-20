@@ -47,9 +47,10 @@ de LightDM.
 `4e0f23f08406f20b95146de6ce2e876918d7903d` con Zig `0.17.0`, instalar
 `ly@tty2.service` y dejar `~/.xinitrc` como fallback.
 
-**Consecuencias:** se descargan Zig y Ly; el commit/versión están fijados. No
-se inicia Ly durante la instalación para no matar la sesión actual. `startx`
-sigue siendo una vía de recuperación.
+**Consecuencias:** se descargan Zig y Ly; el commit/versión están fijados. La
+compilación requiere `libpam0g-dev` y `libaudit-dev`, porque `pam.pc` exige
+`audit.pc`. No se inicia Ly durante la instalación para no matar la sesión
+actual. `startx` sigue siendo una vía de recuperación.
 
 ## ADR-005 — PipeWire, no PulseAudio
 

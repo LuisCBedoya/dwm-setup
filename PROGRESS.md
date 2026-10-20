@@ -24,8 +24,10 @@ Debian 13 minimal ni en el hardware de referencia. Por tanto:
 - eww v0.6.0: `cargo check --locked --no-default-features --features x11`
   con Debian Rust 1.85 tras fijar `time 0.3.35`; añade `libdbusmenu-glib-dev`
   y `libdbusmenu-gtk3-dev`.
-- Ly: compilación local del commit fixado con Zig 0.17.0; el fallo final fue
-  solo de linking contra libs estáticas extraídas, no del código fuente.
+- Ly: compilación local del commit fixado con Zig 0.17.0. Se añadió
+  `libaudit-dev` porque `pam.pc` exige `audit.pc`; sin ese paquete Zig falla
+  al resolver dependencias. El fallo final fue solo de linking contra libs
+  estáticas extraídas, no del código fuente.
 - dunst `1.12.2`, picom `12.5`, rofi `1.7.5` y kitty:
   parseo/dry-run/config check sin errores.
 - Preflight APT probado con componentes simulados: detecta `non-free`,
@@ -52,7 +54,8 @@ Debian 13 minimal ni en el hardware de referencia. Por tanto:
 - [x] Compilación e instalación de chadwm.
 - [x] Compilación e instalación de eww v0.6.0, con ajuste `time 0.3.35`
       para Rust 1.85.
-- [x] Compilación de Ly con Zig 0.17.0 y commit fijo.
+- [x] Compilación de Ly con Zig 0.17.0 y commit fijo, con `libpam0g-dev` y
+      `libaudit-dev`.
 - [x] Configuración de Ly (Gruvbox, español, sin shell/xinitrc).
 - [x] Servicio `ly@tty2` y deshabilitado de otros display managers.
 - [x] Configuración de usuario, backups, wallpaper y sesión X11.

@@ -21,6 +21,10 @@ sustituyen una instalación real.
 - eww v0.6.0: `cargo check --locked --no-default-features --features x11`
   con Debian Rust 1.85 tras fijar `time 0.3.35`.
 - dunst 1.12.2, picom 12.5, rofi 1.7.5 y kitty: parseo/init check local.
+- Ly: `libaudit-dev` añadido a `BUILD_PKGS` porque `pam.pc` exige `audit.pc`;
+  la cadena `pam.pc -> audit.pc -> libcap-ng.pc` queda resuelta por
+  `libaudit-dev` y su dependencia `libcap-ng-dev`. `pkg-config --exists pam
+  audit` debe pasar antes de compilar.
 - Preflight APT y auto-add probados con fixtures temporales: detección de
   componentes, menú, backup, edición limitada a Debian 13, `main` ausente,
   `--dry-run`/`--yes` sin cambios e idempotencia.
@@ -137,11 +141,13 @@ Criterios de éxito de esta etapa:
 - `ly@tty2.service` está `enabled`;
 - `udisks2` está `enabled`;
 - el log no tiene errores ignorados;
+- `pkg-config --exists pam audit` pasa antes de compilar Ly;
 - los backups se crearon si había archivos previos.
 
 Comandos de comprobación:
 
 ```sh
+pkg-config --exists pam audit
 command -v dwm eww picom dunst rofi kitty pcmanfm i3lock xss-lock
 command -v brightnessctl v4l2-ctl ffmpeg pactl
 systemctl is-enabled ly@tty2.service
