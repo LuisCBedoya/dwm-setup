@@ -70,6 +70,11 @@ install_user_configs() {
 
   run_root chown -R "$TARGET_USER:$TARGET_GROUP" \
     "$home/.config/dwm" "$home/.config/kitty" "$home/.local/share/wallpapers" "$home/.xinitrc"
+  # Defensa en profundidad: asegurar ownership de directorios que se crean/copian como root
+  run_root chown -R "$TARGET_USER:$TARGET_GROUP" \
+    "$home/.local/share/xorg" 2>/dev/null || true
+  run_root chown -R "$TARGET_USER:$TARGET_GROUP" \
+    "$USER_BACKUP_DIR" 2>/dev/null || true
   run_root chmod 0755 "$home/.config/dwm/run.sh" "$home/.config/dwm/scripts/bar.sh"
 
   ok "Configuración instalada para $TARGET_USER"

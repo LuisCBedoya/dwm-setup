@@ -245,6 +245,12 @@ main() {
   ROOT_BACKUP_DIR="/var/backups/dwm-setup/$backup_ts"
   USER_BACKUP_DIR="$TARGET_HOME/.config-backup/dwm-setup/$backup_ts"
 
+  # Crear directorio de backup de usuario con propietario correcto ANTES de usarlo.
+  # Evita que ~/.config-backup/dwm-setup/<timestamp> quede root:root.
+  if ! dry_run; then
+    run_root install -d -m 0755 -o "$TARGET_USER" -g "$TARGET_GROUP" "$USER_BACKUP_DIR"
+  fi
+
   preflight_repos
 
   if ! confirm "¿Aplicar los cambios y continuar con la instalación de la fase 1?"; then
