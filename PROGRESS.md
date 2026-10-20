@@ -28,6 +28,8 @@ Debian 13 minimal ni en el hardware de referencia. Por tanto:
   solo de linking contra libs estáticas extraídas, no del código fuente.
 - dunst `1.12.2`, picom `12.5`, rofi `1.7.5` y kitty:
   parseo/dry-run/config check sin errores.
+- Preflight APT probado con componentes simulados: detecta `non-free`,
+  `non-free-firmware` y `contrib` ausentes sin modificar el sistema.
 
 ## Checklist de implementación
 
@@ -36,6 +38,7 @@ Debian 13 minimal ni en el hardware de referencia. Por tanto:
 - [x] Detección de cámara, batería, backlight, WiFi, audio y raíz.
 - [x] Resolución del usuario destino y validación de `sudo`.
 - [x] Grupos de paquetes Debian 13.
+- [x] Preflight de componentes APT con aviso y confirmación antes de instalar.
 - [x] Instalación de Nerd Font con versión y checksum fijos, con fallback
       configurable al empaquetado Debian.
 - [x] Compilación e instalación de chadwm.
@@ -104,7 +107,9 @@ Estas tareas requieren una instalación real:
 | Ly cambia y el commit fijo no compila con Zig 0.17 | Alto | Commit y versión fijos; fallback `startx` |
 | NVIDIA DKMS falla | Medio | Grupo GPU es opcional; se continúa con Intel/mesa |
 | Secure Boot `enabled` o no detectable | Medio | Se omite NVIDIA por defecto y se avisa; `--nvidia` fuerza |
-| Falta `non-free-firmware` | Medio | Grupos opcionales avisan y continúan |
+| Falta `non-free-firmware` | Medio | Preflight avisa antes de instalar; el usuario decide continuar |
+| Falta `non-free` | Medio | Preflight avisa de la pérdida de VA-API Intel/NVIDIA; se usa Mesa |
+| Falta `contrib` | Bajo | Preflight avisa; solo se omite `nvidia-settings` |
 | Nerd Font no descarga | Bajo | Fallback a `JetBrains Mono` / `monospace`; iconos pueden fallar |
 | `udiskie` no arranca en la sesión | Medio | `run.sh` lo inicia; `dwm-doctor` avisa |
 | El usuario no cierra sesión tras `usermod` | Medio | Se avisa; grupos video/audio/render se aplican al reentrar |

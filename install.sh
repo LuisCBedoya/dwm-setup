@@ -55,6 +55,9 @@ Opciones:
   --version             Mostrar versión del instalador
 
 Fases futuras (IDE, navegadores, música) no se instalan desde aquí.
+
+El preflight avisa si faltan componentes APT (non-free, non-free-firmware,
+contrib), pero no modifica sources.list ni habilita repositorios.
 EOF
 }
 
@@ -232,13 +235,18 @@ main() {
 
   show_banner
   print_detection
+  preflight_repos
 
   local backup_ts
   backup_ts=$(timestamp)
   ROOT_BACKUP_DIR="/var/backups/dwm-setup/$backup_ts"
   USER_BACKUP_DIR="$TARGET_HOME/.config-backup/dwm-setup/$backup_ts"
 
-  if ! confirm "¿Continuar con la instalación de la fase 1?"; then
+  local confirm_prompt="¿Continuar con la instalación de la fase 1?"
+  if [[ "$REPO_PREFLIGHT_MISSING" -eq 1 ]]; then
+    confirm_prompt="¿Continuar sabiendo que faltan componentes APT?"
+  fi
+  if ! confirm "$confirm_prompt"; then
     info "Cancelado por el usuario. No se modificó el sistema."
     exit 0
   fi

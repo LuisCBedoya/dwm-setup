@@ -210,3 +210,20 @@ destino. Si no coincide, el instalador aborta antes de modificar el sistema.
 **Consecuencias:** se evita una instalación parcial silenciosa. Un home
 alternativo requeriría propagar explícitamente el home a `run.sh`, eww, kitty,
 `dwm.desktop` y `dwm-safe`, y queda fuera de la fase 1.
+
+## ADR-018 — Preflight de componentes APT antes de confirmar
+
+**Contexto:** el instalador no añade repositorios y los grupos opcionales
+(firmware, GPU, microcódigo, cámara) podían omitir paquetes sin que el usuario
+viera las consecuencias hasta después de confirmar y empezar la instalación.
+
+**Decisión:** leer los componentes APT habilitados con
+`apt-get indextargets` antes de instalar, mostrar qué falta y qué funciones se
+pierden, y pedir confirmación en instalación interactiva. En `--dry-run` solo
+se muestra el aviso. El instalador no habilita repositorios ni modifica
+`sources.list`.
+
+**Consecuencias:** el usuario decide con información antes de tocar el sistema.
+`contrib` se trata aparte: solo afecta a `nvidia-settings`, no al driver NVIDIA.
+Los grupos obligatorios siguen abortando si falta un paquete; los opcionales
+avisan y continúan.

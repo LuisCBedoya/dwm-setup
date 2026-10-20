@@ -43,6 +43,8 @@ Durante la instalación de Debian:
 - crear usuario normal con sudo;
 - instalar SSH si se va a trabajar desde el host;
 - dejar `non-free-firmware` si el instalador lo permite, para probar firmware;
+- habilitar `non-free` y `contrib` si se va a probar NVIDIA (`contrib` solo
+  aporta `nvidia-settings`);
 - no configurar Secure Boot para la primera pasada.
 
 Comprobar la base:
@@ -68,9 +70,16 @@ descargas ni compilaciones. Revisar:
 
 - usuario y home correctos;
 - GPU/CPU/cámara detectadas;
+- componentes APT detectados y avisos del preflight;
 - grupos de paquetes;
 - política NVIDIA;
 - rutas de backup y log.
+
+Prueba específica del preflight: en una copia/snapshot, deshabilita temporalmente
+`contrib`, `non-free` o `non-free-firmware` y repite el dry-run. Debe avisar
+antes de la sección de paquetes, explicar qué se omite y no debe preguntar ni
+modificar nada. En una instalación real, la confirmación debe indicar que
+faltan componentes APT.
 
 ## 2. Instalación real
 

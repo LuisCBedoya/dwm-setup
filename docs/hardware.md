@@ -125,6 +125,9 @@ El equipo es híbrido Intel + NVIDIA MX330. El instalador:
   `intel-gpu-tools` para Intel (si están disponibles);
 - instala `nvidia-driver`, `nvidia-settings`, `nvidia-vaapi-driver` y
   `linux-headers-amd64` para NVIDIA solo si se cumple la política;
+- `nvidia-driver` está en `non-free`; `nvidia-settings` está en `contrib`.
+  Si falta `contrib`, el preflight avisa y omite solo `nvidia-settings`; el
+  driver puede instalarse igual.
 - no instala CUDA;
 - no escribe un `xorg.conf` de PRIME.
 

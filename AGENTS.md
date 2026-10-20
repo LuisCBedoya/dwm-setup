@@ -38,8 +38,10 @@ La fase 1 termina en el escritorio. No implementar todavía:
 6. **Fallos visibles.** No ocultar errores de compilación, paquetes o
    servicios. Los grupos opcionales pueden avisar y continuar; los
    obligatorios deben detener la instalación.
-7. **No añadir repositorios APT** ni modificar `sources.list`. Los paquetes
-   de `non-free`/`non-free-firmware` son opcionales y se detectan con
+7. **No añadir repositorios APT** ni modificar `sources.list`. El preflight
+   solo lee los componentes habilitados (`main`, `contrib`, `non-free`,
+   `non-free-firmware`) y avisa antes de instalar. Los paquetes de
+   `non-free`/`non-free-firmware`/`contrib` son opcionales y se detectan con
    `apt-cache`.
 8. **No introducir PulseAudio como servidor.** PipeWire es el servidor;
    `pulseaudio-utils` solo aporta `pactl`.
@@ -67,7 +69,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `install.sh` | Flags, orden, confirmación, backups y resumen |
 | `lib/common.sh` | Logs, sudo, render, backups, helpers |
 | `lib/detect.sh` | Detección de sistema/hardware y usuario |
-| `lib/packages.sh` | Paquetes y Nerd Font |
+| `lib/packages.sh` | Preflight APT, paquetes y Nerd Font |
 | `lib/dwm.sh` | chadwm |
 | `lib/eww.sh` | eww v0.6.0 y ajuste `time 0.3.35` (Rust 1.85) |
 | `lib/ly.sh` | Zig, Ly, config y `ly@tty2` |

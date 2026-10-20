@@ -65,6 +65,9 @@ NERD_FONT_VERSION="3.5.1"
 NERD_FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/download/v${NERD_FONT_VERSION}/JetBrainsMono.tar.xz"
 NERD_FONT_SHA256="04d5e8f903693f9dd13e16f867e994834e681eb3c72c0d337a770dcda09010cf"
 
+APT_COMPONENTS=()
+REPO_PREFLIGHT_MISSING=0
+
 apt_update() {
   section "Índices APT"
   if dry_run; then
@@ -72,6 +75,132 @@ apt_update() {
     return 0
   fi
   run_root env DEBIAN_FRONTEND=noninteractive apt-get update
+}
+
+# Devuelve los componentes APT habilitados. apt-get indextargets lee la
+# configuración de fuentes y no modifica nada, así que también sirve en
+# --dry-run.
+apt_components() {
+  local output=""
+  if command -v apt-get >/dev/null 2>&1; then
+    output=$(apt-get indextargets --format '$(COMPONENT)' 2>/dev/null || true)
+  fi
+  if [[ -n "$output" ]]; then
+    printf '%s\n' "$output" | tr ' ' '\n' | sed '/^$/d' | sort -u
+    return 0
+  fi
+
+  # Fallback para APT muy antiguo o configuración no legible por indextargets.
+  {
+    local file
+    for file in /etc/apt/sources.list /etc/apt/sources.list.d/*.list; do
+      [[ -r "$file" ]] || continue
+      awk '!/^[[:space:]]*#/ && $1 == "deb" { for (i = 2; i <= NF; i++) print $i }' "$file"
+    done
+    for file in /etc/apt/sources.list.d/*.sources; do
+      [[ -r "$file" ]] || continue
+      awk '
+        BEGIN { RS = ""; FS = "\n" }
+        {
+          enabled = 1
+          components = ""
+          for (i = 1; i <= NF; i++) {
+            if ($i ~ /^Enabled:[[:space:]]*[Nn][Oo]/) enabled = 0
+            if ($i ~ /^Components:[[:space:]]*/) {
+              sub(/^Components:[[:space:]]*/, "", $i)
+              components = $i
+            }
+          }
+          if (enabled && components != "") print components
+        }' "$file"
+    done
+  } | grep -Ex 'main|contrib|non-free|non-free-firmware' | sort -u || true
+}
+
+apt_component_enabled() {
+  local component="$1" current
+  for current in "${APT_COMPONENTS[@]}"; do
+    [[ "$current" == "$component" ]] && return 0
+  done
+  return 1
+}
+
+# Política única para decidir si se intentará el driver NVIDIA propietario.
+# Debe coincidir con install_gpu_packages().
+nvidia_driver_wanted() {
+  [[ "$HAS_NVIDIA" -eq 1 ]] || return 1
+  case "${INSTALL_NVIDIA:-auto}" in
+    no) return 1 ;;
+    yes) return 0 ;;
+  esac
+  [[ "$SECURE_BOOT" == "enabled" || "$SECURE_BOOT" == "unknown" ]] && return 1
+  [[ "$IS_VM" -eq 1 ]] && return 1
+  return 0
+}
+
+# Preflight de repositorios antes de confirmar o instalar. No modifica nada.
+preflight_repos() {
+  section "Repositorios APT"
+  APT_COMPONENTS=()
+  REPO_PREFLIGHT_MISSING=0
+
+  local component_list
+  mapfile -t APT_COMPONENTS < <(apt_components)
+  if ((${#APT_COMPONENTS[@]} == 0)); then
+    warn "No se pudieron detectar los componentes APT habilitados."
+    warn "Revisa /etc/apt/sources.list y /etc/apt/sources.list.d/ antes de continuar."
+    return 0
+  fi
+
+  component_list="${APT_COMPONENTS[*]}"
+  info "Componentes detectados: $component_list"
+
+  if ! apt_component_enabled main; then
+    warn "Falta el componente main: los paquetes obligatorios no estarán disponibles."
+    REPO_PREFLIGHT_MISSING=1
+  fi
+
+  if ! apt_component_enabled non-free-firmware; then
+    warn "Falta non-free-firmware: se omitirán firmware de WiFi, audio SOF y GPU."
+    if [[ "$HAS_WIFI" -eq 1 ]]; then
+      warn "  WiFi detectado: puede quedar sin firmware."
+    fi
+    if [[ "$HAS_AUDIO" -eq 1 ]]; then
+      warn "  Audio detectado: puede faltar firmware SOF."
+    fi
+    if [[ "$HAS_INTEL" -eq 1 || "$HAS_AMD" -eq 1 || "$HAS_NVIDIA" -eq 1 ]]; then
+      warn "  GPU detectada: puede faltar firmware específico."
+    fi
+    REPO_PREFLIGHT_MISSING=1
+  fi
+
+  local need_nonfree=0
+  if [[ "$HAS_INTEL" -eq 1 ]] || nvidia_driver_wanted; then
+    need_nonfree=1
+  fi
+  if ((need_nonfree == 1)) && ! apt_component_enabled non-free; then
+    warn "Falta non-free: se omitirán drivers propietarios."
+    if [[ "$HAS_INTEL" -eq 1 ]]; then
+      warn "  Intel: no se instalará intel-media-va-driver-non-free; se usará Mesa."
+    fi
+    if nvidia_driver_wanted; then
+      warn "  NVIDIA: no se instalará nvidia-driver; no habrá driver propietario."
+    fi
+    REPO_PREFLIGHT_MISSING=1
+  fi
+
+  if nvidia_driver_wanted && ! apt_component_enabled contrib; then
+    warn "Falta contrib: se omitirá nvidia-settings (opcional)."
+    warn "  El driver NVIDIA puede instalarse igual; solo falta el panel de configuración."
+    REPO_PREFLIGHT_MISSING=1
+  fi
+
+  if [[ "$REPO_PREFLIGHT_MISSING" -eq 1 ]]; then
+    warn "La instalación puede continuar, pero esas funciones no se instalarán."
+    warn "Si las quieres, habilita los componentes y ejecuta 'sudo apt update' antes de instalar."
+  else
+    ok "Componentes APT necesarios disponibles"
+  fi
 }
 
 # install_group ETIQUETA required|optional paquete...

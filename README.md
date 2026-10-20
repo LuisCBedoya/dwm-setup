@@ -56,8 +56,9 @@ No incluido todavía (fases posteriores):
 - UEFI o BIOS. Con NVIDIA, Secure Boot `enabled` o no detectable omite el
   driver propietario salvo `--nvidia`; con Secure Boot desactivado se instala
   si hay GPU NVIDIA y no se pasó `--no-nvidia`.
-- Fuentes `non-free-firmware` (y `non-free` para algunos drivers Intel/NVIDIA)
-  habilitadas si se quieren firmware/drivers opcionales.
+- Fuentes `non-free-firmware`, `non-free` y `contrib` habilitadas si se
+  quieren firmware/drivers opcionales. `contrib` solo hace falta para
+  `nvidia-settings`; el driver NVIDIA está en `non-free`.
 
 ## Inicio rápido
 
@@ -116,24 +117,28 @@ Opciones útiles:
 1. **Detección**: Debian 13 y x86_64 se verifican antes de pedir `sudo`. Luego
    detecta VM, CPU, GPU, Secure Boot, resolución, cámaras, batería, backlight,
    WiFi, audio y tipo de sistema de archivos raíz.
-2. **Paquetes**: grupos base, Xorg, compilación, escritorio, audio/códecs,
+2. **Preflight APT**: lee los componentes habilitados (`main`, `contrib`,
+   `non-free`, `non-free-firmware`) y avisa antes de instalar si falta algo.
+   En una instalación interactiva pide confirmación; en `--dry-run` solo
+   muestra el aviso y no modifica nada.
+3. **Paquetes**: grupos base, Xorg, compilación, escritorio, audio/códecs,
    cámara, almacenamiento, red, fuentes, firmware, microcódigo y GPU.
-3. **Fuente**: descarga JetBrainsMono Nerd Font `3.5.1`, verifica SHA-256 y
+4. **Fuente**: descarga JetBrainsMono Nerd Font `3.5.1`, verifica SHA-256 y
    ejecuta `fc-cache`. Si falla y no se pasó `--font`, usa `JetBrains Mono` de
    Debian o `monospace`, y avisa.
-4. **chadwm**: renderiza `templates/dwm/config.h.in` con el home, fuente y
+5. **chadwm**: renderiza `templates/dwm/config.h.in` con el home, fuente y
    tamaño elegidos, compila en `/var/cache/dwm-setup` e instala en
    `/usr/local/bin/dwm`.
-5. **eww**: compila eww `v0.6.0` con features X11 e instala
+6. **eww**: compila eww `v0.6.0` con features X11 e instala
    `/usr/local/bin/eww`. Si el lockfile trae `time 0.3.34`, se ajusta a
    `0.3.35` en una copia antes de compilar con `--locked`. Las dependencias
    nativas incluyen `libdbusmenu-glib-dev` y `libdbusmenu-gtk3-dev`.
-6. **Ly**: descarga Zig `0.17.0` (SHA-256 fijo), clona el commit fijo de Ly,
+7. **Ly**: descarga Zig `0.17.0` (SHA-256 fijo), clona el commit fijo de Ly,
    compila, instala `/usr/bin/ly` y `/etc/ly/config.lua`, y habilita
    `ly@tty2.service`.
-7. **Configuración**: copia `~/.config/dwm`, `~/.config/kitty`,
+8. **Configuración**: copia `~/.config/dwm`, `~/.config/kitty`,
    `~/.xinitrc`, wallpaper y `/usr/share/xsessions/dwm.desktop`.
-8. **Verificación**: comprueba binarios, archivos, servicios y que Ly quedó
+9. **Verificación**: comprueba binarios, archivos, servicios y que Ly quedó
    habilitado. La prueba gráfica real se hace después de entrar a la sesión.
 
 ### Backups y logs
@@ -269,9 +274,10 @@ externos (aparte de las descargas de Zig, Ly y la Nerd Font).
   muestran y el instalador se detiene antes de habilitar Ly.
 - NVIDIA propietario con `--nvidia` y Secure Boot requiere MOK; si Secure
   Boot no está desactivado, el driver se omite y se avisa.
-- `libcamera-tools` y algunos firmware son opcionales: si el repositorio no
-  está habilitado, se avisa y se continúa.
-- El instalador no modifica `/etc/apt/sources.list`; no añade repositorios.
+- `libcamera-tools`, firmware y drivers propietarios son opcionales: el
+  preflight avisa de los componentes APT que faltan y de sus consecuencias.
+- El instalador no modifica `/etc/apt/sources.list` ni añade repositorios;
+  solo lee los componentes habilitados y avisa.
 - No se instala ningún navegador, IDE, cliente de correo ni música.
 - El host de referencia tiene XFCE/LightDM: no se debe usar como destino de
   la instalación real sin backup y validación previa.
