@@ -5,7 +5,7 @@ verify_install() {
   section "Verificación final"
   local failures=0
   local home="$TARGET_HOME"
-  local cmd
+  local cmd xorg_owner xorg_mode
 
   for cmd in dwm eww picom dunst rofi feh kitty flameshot i3lock xss-lock \
     brightnessctl xclip pcmanfm udiskie v4l2-ctl ffmpeg pactl wpctl; do
@@ -25,6 +25,7 @@ verify_install() {
     "$home/.config/dwm/rofi/gruvbox.rasi" \
     "$home/.config/dwm/eww/eww.yuck" \
     "$home/.local/share/wallpapers/rocky.jpg" \
+    "$home/.local/share/xorg" \
     "/usr/share/xsessions/dwm.desktop" \
     "/usr/local/bin/dwm-safe" \
     "/usr/local/bin/dwm-doctor" \
@@ -41,6 +42,20 @@ verify_install() {
     debug "ok: scripts ejecutables"
   else
     error "run.sh o bar.sh no son ejecutables"
+    failures=$((failures + 1))
+  fi
+
+  if [[ -d "$home/.local/share/xorg" ]]; then
+    xorg_owner=$(stat -c '%U' "$home/.local/share/xorg" 2>/dev/null || true)
+    xorg_mode=$(stat -c '%a' "$home/.local/share/xorg" 2>/dev/null || true)
+    if [[ "$xorg_owner" == "$TARGET_USER" && "$xorg_mode" == "700" && -w "$home/.local/share/xorg" ]]; then
+      debug "ok: Xorg puede escribir su log en $home/.local/share/xorg"
+    else
+      error "Permisos incorrectos en $home/.local/share/xorg: $xorg_owner $xorg_mode (se espera $TARGET_USER 700)"
+      failures=$((failures + 1))
+    fi
+  else
+    error "Falta el directorio escribible para el log de Xorg: $home/.local/share/xorg"
     failures=$((failures + 1))
   fi
 

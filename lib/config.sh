@@ -7,6 +7,7 @@ install_user_configs() {
   if dry_run; then
     log "[dry-run] backup en $USER_BACKUP_DIR"
     log "[dry-run] instalar ~/.config/dwm, ~/.config/kitty, ~/.xinitrc y wallpaper"
+    log "[dry-run] preparar ~/.local/share/xorg (0700) para el log de Xorg sin root"
     log "[dry-run] instalar /usr/share/xsessions/dwm.desktop"
     log "[dry-run] instalar /usr/local/bin/dwm-safe y dwm-doctor"
     return 0
@@ -25,7 +26,12 @@ install_user_configs() {
   make_user_dir "$home/.config/dwm/dunst"
   make_user_dir "$home/.config/dwm/rofi"
   make_user_dir "$home/.config/kitty/colorshemes"
+  make_user_dir "$home/.local/share"
   make_user_dir "$home/.local/share/wallpapers"
+  # Xorg lanzado por Ly corre como el usuario y escribe aquí su log.
+  # Sin este directorio, Xorg aborta con "Cannot open log file".
+  run_root install -d -m 0700 -o "$TARGET_USER" -g "$TARGET_GROUP" \
+    "$home/.local/share/xorg"
 
   # Reemplazar solo las piezas que gestiona el instalador.
   run_root rm -rf "$home/.config/dwm/scripts" "$home/.config/dwm/dunst" \

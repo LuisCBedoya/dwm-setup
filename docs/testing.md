@@ -25,6 +25,8 @@ sustituyen una instalación real.
   la cadena `pam.pc -> audit.pc -> libcap-ng.pc` queda resuelta por
   `libaudit-dev` y su dependencia `libcap-ng-dev`. `pkg-config --exists pam
   audit` debe pasar antes de compilar.
+- Xorg sin root: el instalador crea `~/.local/share/xorg` con modo `0700`;
+  `dwm-doctor` y la verificación final comprueban que sea escribible.
 - Preflight APT y auto-add probados con fixtures temporales: detección de
   componentes, menú, backup, edición limitada a Debian 13, `main` ausente,
   `--dry-run`/`--yes` sin cambios e idempotencia.
@@ -170,8 +172,13 @@ Si Ly no aparece:
 1. `Ctrl+Alt+F3` para una TTY.
 2. `systemctl status ly@tty2 -l`.
 3. `journalctl -u ly@tty2 -b`.
-4. `startx` como fallback.
-5. Si `startx` funciona, el problema es Ly; si no, es Xorg/dwm.
+4. Comprueba `ls -ld ~/.local/share/xorg`; debe existir, ser del usuario y
+   tener modo `0700`. Si falta:
+   `sudo install -d -m 0700 -o "$USER" -g "$(id -gn)" ~/.local/share/xorg`.
+5. `startx` como fallback.
+6. Si `startx` funciona pero Ly vuelve al login con `Cannot open log file`,
+   el problema era el directorio del log de Xorg. Si `startx` tampoco
+   funciona, es Xorg/dwm.
 
 ## 4. Sesión dwm
 

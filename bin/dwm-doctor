@@ -295,6 +295,24 @@ check_configs() {
   fi
 }
 
+check_xorg_logdir() {
+  xorg_dir="$SESSION_HOME/.local/share/xorg"
+  if [ ! -d "$xorg_dir" ]; then
+    fail "falta $xorg_dir; Xorg no podrá escribir su log y la sesión no arrancará"
+    return
+  fi
+  owner=$(stat -c '%U' "$xorg_dir" 2>/dev/null || true)
+  if [ "$owner" != "$SESSION_USER" ]; then
+    fail "$xorg_dir pertenece a ${owner:-desconocido}, no a $SESSION_USER"
+    return
+  fi
+  if [ -w "$xorg_dir" ]; then
+    ok "Xorg puede escribir su log en $xorg_dir"
+  else
+    fail "$xorg_dir no es escribible por $SESSION_USER"
+  fi
+}
+
 check_ly() {
   if [ -x /usr/bin/ly ]; then
     ok "binario Ly instalado"
@@ -427,6 +445,7 @@ check_groups
 section "Sesión y aplicaciones"
 check_session
 check_configs
+check_xorg_logdir
 check_fonts
 check_ly
 

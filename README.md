@@ -161,6 +161,11 @@ reiniciar para no matar la sesión desde la que se instala.
 `~/.xinitrc` queda como fallback de recuperación: desde una TTY,
 `startx` debe iniciar la misma sesión.
 
+Ly lanza Xorg como el usuario de la sesión. Xorg escribe su log en
+`~/.local/share/xorg/Xorg.0.log`, así que el instalador crea ese directorio
+con permisos `0700`. Sin él, Ly muestra el login pero la sesión X11 aborta con
+`Cannot open log file`.
+
 ## Uso diario
 
 | Atajo | Acción |
@@ -227,9 +232,12 @@ Si Ly no arranca:
 1. Entra por una TTY (`Ctrl+Alt+F3`).
 2. Ejecuta `startx` para usar `~/.xinitrc`.
 3. Revisa `journalctl -u ly@tty2 -b` y el log del instalador.
-4. Comprueba `/etc/ly/config.lua` y que `/usr/share/xsessions/dwm.desktop`
+4. Comprueba que existe `~/.local/share/xorg` con permisos `0700` y propietario
+   del usuario. Si falta, créalo:
+   `sudo install -d -m 0700 -o "$USER" -g "$(id -gn)" ~/.local/share/xorg`.
+5. Comprueba `/etc/ly/config.lua` y que `/usr/share/xsessions/dwm.desktop`
    tenga el `Exec` correcto.
-5. Para volver temporalmente a otro display manager, habilítalo con
+6. Para volver temporalmente a otro display manager, habilítalo con
    `systemctl enable lightdm` (si está instalado) y deshabilita `ly@tty2`.
 
 Si dwm compila pero no arranca, revisa `~/.cache/dwm/*.log` y ejecuta

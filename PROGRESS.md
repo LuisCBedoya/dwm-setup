@@ -28,6 +28,9 @@ Debian 13 minimal ni en el hardware de referencia. Por tanto:
   `libaudit-dev` porque `pam.pc` exige `audit.pc`; sin ese paquete Zig falla
   al resolver dependencias. El fallo final fue solo de linking contra libs
   estáticas extraídas, no del código fuente.
+- Xorg lanzado por Ly corre como usuario y necesita escribir
+  `~/.local/share/xorg/Xorg.0.log`; el instalador crea ese directorio con modo
+  `0700` y la verificación comprueba que sea escribible.
 - dunst `1.12.2`, picom `12.5`, rofi `1.7.5` y kitty:
   parseo/dry-run/config check sin errores.
 - Preflight APT probado con componentes simulados: detecta `non-free`,
@@ -57,6 +60,7 @@ Debian 13 minimal ni en el hardware de referencia. Por tanto:
 - [x] Compilación de Ly con Zig 0.17.0 y commit fijo, con `libpam0g-dev` y
       `libaudit-dev`.
 - [x] Configuración de Ly (Gruvbox, español, sin shell/xinitrc).
+- [x] Directorio `~/.local/share/xorg` (0700) para el log de Xorg sin root.
 - [x] Servicio `ly@tty2` y deshabilitado de otros display managers.
 - [x] Configuración de usuario, backups, wallpaper y sesión X11.
 - [x] `run.sh` con barra, eww, dunst, picom, udiskie y xss-lock.

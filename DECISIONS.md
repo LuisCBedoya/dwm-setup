@@ -49,8 +49,10 @@ de LightDM.
 
 **Consecuencias:** se descargan Zig y Ly; el commit/versión están fijados. La
 compilación requiere `libpam0g-dev` y `libaudit-dev`, porque `pam.pc` exige
-`audit.pc`. No se inicia Ly durante la instalación para no matar la sesión
-actual. `startx` sigue siendo una vía de recuperación.
+`audit.pc`. Ly lanza Xorg como el usuario de la sesión, así que el instalador
+crea `~/.local/share/xorg` con modo `0700`; sin ese directorio Xorg no puede
+escribir su log y la sesión no arranca. No se inicia Ly durante la instalación
+para no matar la sesión actual. `startx` sigue siendo una vía de recuperación.
 
 ## ADR-005 — PipeWire, no PulseAudio
 
