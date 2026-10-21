@@ -1,0 +1,37 @@
+#!/bin/sh
+# screenshot — menú rofi para capturas de pantalla
+# Requiere: scrot, rofi, xclip
+
+opts="  Pantalla completa\n  Área seleccionada\n  Ventana activa\n  Pantalla completa (clipboard)\n  Área (clipboard)\n  Ventana (clipboard)"
+
+choice=$(echo -e "$opts" | rofi -dmenu -i -p "Captura" -theme @HOME@/.config/rofi/powermenu.rasi -width 300)
+
+case $choice in
+  *Pantalla\ completa*)
+    scrot -q 100 "@HOME@/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png" 2>/dev/null \
+      || scrot -q 100 "/tmp/screenshot_%Y-%m-%d_%H-%M-%S.png"
+    notify-send "Captura" "Pantalla completa guardada"
+    ;;
+  *Área\ seleccionada*)
+    scrot -s -q 100 "@HOME@/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png" 2>/dev/null \
+      || scrot -s -q 100 "/tmp/screenshot_%Y-%m-%d_%H-%M-%S.png"
+    notify-send "Captura" "Área seleccionada guardada"
+    ;;
+  *Ventana\ activa*)
+    scrot -u -q 100 "@HOME@/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png" 2>/dev/null \
+      || scrot -u -q 100 "/tmp/screenshot_%Y-%m-%d_%H-%M-%S.png"
+    notify-send "Captura" "Ventana activa guardada"
+    ;;
+  *Pantalla\ completa\ \(clipboard\)*)
+    scrot -q 100 - | xclip -selection clipboard -t image/png
+    notify-send "Captura" "Pantalla completa en clipboard"
+    ;;
+  *Área\ \(clipboard\)*)
+    scrot -s -q 100 - | xclip -selection clipboard -t image/png
+    notify-send "Captura" "Área en clipboard"
+    ;;
+  *Ventana\ \(clipboard\)*)
+    scrot -u -q 100 - | xclip -selection clipboard -t image/png
+    notify-send "Captura" "Ventana en clipboard"
+    ;;
+esac

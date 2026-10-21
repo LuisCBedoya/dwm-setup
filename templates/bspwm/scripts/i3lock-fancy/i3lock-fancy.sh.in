@@ -1,0 +1,16 @@
+#!/bin/sh
+# i3lock-fancy — locker simple con color de fondo (sin imagemagick)
+# Requiere: i3lock, xset
+
+# Color de fondo desde paleta Nord
+BG="@COLOR_BG@"
+
+# Tomar captura, pixelar, añadir color
+scrot -z -o /tmp/lockscreen.png 2>/dev/null || true
+
+# Usar i3lock con color sólido (más simple y rápido)
+i3lock -c "${BG#\#}" -n -e -f
+
+# Apagar pantalla tras 5s si sigue bloqueado
+sleep 5
+pgrep -x i3lock >/dev/null && xset dpms force off

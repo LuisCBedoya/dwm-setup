@@ -251,9 +251,23 @@ init_logging() {
   info "Log: $LOG_FILE"
 }
 
+prompt_yes_no() {
+  local prompt="$1"
+  local default="${2:-N}"
+  if [[ "$ASSUME_YES" == "1" ]] || dry_run; then
+    return 0
+  fi
+  local answer
+  read -r -p "$prompt [s/N] " answer
+  case "$answer" in
+    s|S|sí|si|Sí|Si|y|Y|yes|YES) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 show_banner() {
   cat <<'EOF'
-  dwm + eww · Debian 13 · fase 1 (escritorio)
-  ------------------------------------------------
+  bspwm + polybar · Debian 13 · fase 1b (escritorio)
+  ---------------------------------------------------
 EOF
 }

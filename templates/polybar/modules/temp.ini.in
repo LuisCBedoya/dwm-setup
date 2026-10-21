@@ -1,0 +1,14 @@
+; temp — temperatura CPU con rampa de iconos
+[module/temp]
+type = internal/temperature
+thermal-zone = 0
+warn-temperature = 75
+format = <ramp><label>
+format-padding = 6
+format-foreground = ${colors.foreground}
+label = %temperature-c%
+label-font = 0
+ramp-0 = "\uf2cb "
+ramp-1 = "\uf2ca "
+ramp-2 = "\uf2c7 "
+ramp-foreground = ${colors.foreground}

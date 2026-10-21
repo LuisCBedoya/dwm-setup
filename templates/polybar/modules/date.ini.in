@@ -1,0 +1,9 @@
+; date — hora y fecha
+[module/date]
+type = internal/date
+interval = 1
+time = %I:%M %p
+label = %time%
+label-padding = 6
+label-foreground = ${colors.foreground}
+label-font = 0

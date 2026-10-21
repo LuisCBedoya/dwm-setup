@@ -1,0 +1,85 @@
+# dunstrc — generado desde template
+# Paleta: @THEME_NAME@ (Nord)
+
+[global]
+    width = 300
+    height = 100
+    origin = top-center
+    offset = 10x40
+    monitor = 0
+    follow = mouse
+    separator_height = 2
+    separator_color = frame
+    padding = 12
+    horizontal_padding = 12
+    frame_width = 2
+    frame_color = "@COLOR_BORDER@"
+    font = @FONT@ @FONT_SIZE@
+    markup = full
+    format = "<b>%s</b>\n%b"
+    alignment = left
+    show_age_threshold = 60
+    word_wrap = yes
+    ignore_newline = no
+    stack_duplicates = true
+    hide_duplicate_count = false
+    sticky_history = yes
+    history_length = 20
+    dmenu = /usr/bin/rofi -dmenu -p dunst:
+    browser = /usr/bin/xdg-open
+    icon_position = left
+    min_icon_size = 32
+    max_icon_size = 64
+    icon_path = /usr/share/icons/Paper/48x48/status/:/usr/share/icons/Paper/48x48/devices/
+    line_height = 0
+
+[frame]
+    width = 2
+    color = "@COLOR_BORDER@"
+
+[shortcuts]
+    close = ctrl+space
+    close_all = ctrl+shift+space
+    history = ctrl+grave
+    context = ctrl+shift+period
+
+[urgency_low]
+    background = "@COLOR_BG@"
+    foreground = "@COLOR_FG@"
+    frame_color = "@COLOR_GREEN@"
+    timeout = 10
+
+[urgency_normal]
+    background = "@COLOR_BG@"
+    foreground = "@COLOR_FG@"
+    frame_color = "@COLOR_ACCENT@"
+    timeout = 10
+
+[urgency_critical]
+    background = "@COLOR_BG@"
+    foreground = "@COLOR_FG@"
+    frame_color = "@COLOR_RED@"
+    timeout = 0
+
+[test]
+    summary = "*test*"
+
+[signed_on]
+    appname = Pidgin
+    summary = "*signed on*"
+    urgency = low
+
+[signed_off]
+    appname = Pidgin
+    summary = "*signed off*"
+    urgency = low
+
+[says]
+    appname = Pidgin
+    summary = "*says*"
+    urgency = critical
+
+[twitter]
+    appname = Pidgin
+    summary = "*twitter*"
+    urgency = low

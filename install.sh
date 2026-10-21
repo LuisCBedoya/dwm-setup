@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instalador de la fase 1: Debian 13 minimal + Xorg + Ly + chadwm + eww.
+# Instalador fase 1b: Debian 13 minimal + Xorg + bspwm + sxhkd + polybar.
 #
 # Uso normal:
 #   ./install.sh
@@ -23,12 +23,22 @@ source "$PROJECT_ROOT/lib/common.sh"
 source "$PROJECT_ROOT/lib/detect.sh"
 # shellcheck source=lib/packages.sh
 source "$PROJECT_ROOT/lib/packages.sh"
-# shellcheck source=lib/dwm.sh
-source "$PROJECT_ROOT/lib/dwm.sh"
-# shellcheck source=lib/eww.sh
-source "$PROJECT_ROOT/lib/eww.sh"
-# shellcheck source=lib/ly.sh
-source "$PROJECT_ROOT/lib/ly.sh"
+# shellcheck source=lib/dotfiles.sh
+source "$PROJECT_ROOT/lib/dotfiles.sh"
+# shellcheck source=lib/bspwm.sh
+source "$PROJECT_ROOT/lib/bspwm.sh"
+# shellcheck source=lib/sxhkd.sh
+source "$PROJECT_ROOT/lib/sxhkd.sh"
+# shellcheck source=lib/polybar.sh
+source "$PROJECT_ROOT/lib/polybar.sh"
+# shellcheck source=lib/picom.sh
+source "$PROJECT_ROOT/lib/picom.sh"
+# shellcheck source=lib/dunst.sh
+source "$PROJECT_ROOT/lib/dunst.sh"
+# shellcheck source=lib/rofi.sh
+source "$PROJECT_ROOT/lib/rofi.sh"
+# shellcheck source=lib/kitty.sh
+source "$PROJECT_ROOT/lib/kitty.sh"
 # shellcheck source=lib/config.sh
 source "$PROJECT_ROOT/lib/config.sh"
 # shellcheck source=lib/verify.sh
@@ -38,7 +48,7 @@ source "$PROJECT_ROOT/lib/theme.sh"
 
 usage() {
   cat <<'EOF'
-Instalador de fase 1: escritorio dwm + eww en Debian 13.
+Instalador de fase 1b: escritorio bspwm + polybar en Debian 13.
 
 Uso normal:
   ./install.sh              Instalación guiada (recomendado)
@@ -51,15 +61,15 @@ El instalador detecta usuario, home, GPU, Secure Boot, resolución, cámara,
 batería y red. Solo pregunta cuando hay una decisión real, por ejemplo qué
 hacer si faltan componentes APT.
 
+Opcionalmente, puedes proporcionar un repo Git (HTTPS) con tus dotfiles.
+Estructura esperada: repo/config/.config/{bspwm,sxhkd,polybar,picom,dunst,rofi,kitty}
+
 Opciones avanzadas (automatización; normalmente no necesarias):
   --user USUARIO, --home RUTA, --rebuild, --nvidia, --no-nvidia,
   --cuda, --no-cuda,
   --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
-  --theme TEMA              Tema de colores (monolith, gruvbox)
 
-Temas disponibles:
-  monolith (default) — Monocromático con acentos apagados
-  gruvbox — Gruvbox Material
+Tema: Nord (vendorizado desde tu repo Bspwm)
 
 Fases futuras (IDE, navegadores, música) no se instalan desde aquí.
 EOF
@@ -105,14 +115,9 @@ parse_args() {
         DWM_RESOLUTION="$2"; shift
         ;;
       --resolution=*) DWM_RESOLUTION="${1#*=}" ;;
-      --theme)
-        [[ $# -ge 2 ]] || die "--theme requiere un valor"
-        DWM_THEME="$2"; shift
-        ;;
-      --theme=*) DWM_THEME="${1#*=}" ;;
       --debug) DWM_DEBUG=1 ;;
       -h|--help) usage; exit 0 ;;
-      --version) printf 'dwm-setup 0.1.0 (fase 1)\n'; exit 0 ;;
+      --version) printf 'dwm-setup 0.2.0 (fase 1b: bspwm+polybar)\n'; exit 0 ;;
       *) die "Opción desconocida: $1 (usa --help)" ;;
     esac
     shift
@@ -132,12 +137,6 @@ validate_options() {
     [[ "$TARGET_HOME" == /* ]] || die "--home debe ser una ruta absoluta: $TARGET_HOME"
     [[ "$TARGET_HOME" != "/" ]] || die "--home no puede ser /"
   fi
-  # Validar tema
-  if [[ -n "${DWM_THEME:-}" ]]; then
-    if [[ ! -f "$PROJECT_ROOT/templates/colors/palette-${DWM_THEME}.sh" ]]; then
-      die "Tema '$DWM_THEME' no encontrado. Temas disponibles: $(list_themes | awk '{print $1}' | tr '\n' ' ')"
-    fi
-  fi
 }
 
 check_project_layout() {
@@ -146,50 +145,55 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/common.sh"
     "$PROJECT_ROOT/lib/detect.sh"
     "$PROJECT_ROOT/lib/packages.sh"
-    "$PROJECT_ROOT/lib/dwm.sh"
-    "$PROJECT_ROOT/lib/eww.sh"
-    "$PROJECT_ROOT/lib/ly.sh"
+    "$PROJECT_ROOT/lib/dotfiles.sh"
+    "$PROJECT_ROOT/lib/bspwm.sh"
+    "$PROJECT_ROOT/lib/sxhkd.sh"
+    "$PROJECT_ROOT/lib/polybar.sh"
+    "$PROJECT_ROOT/lib/picom.sh"
+    "$PROJECT_ROOT/lib/dunst.sh"
+    "$PROJECT_ROOT/lib/rofi.sh"
+    "$PROJECT_ROOT/lib/kitty.sh"
     "$PROJECT_ROOT/lib/config.sh"
     "$PROJECT_ROOT/lib/verify.sh"
     "$PROJECT_ROOT/lib/theme.sh"
-    "$PROJECT_ROOT/bin/dwm-safe"
-    "$PROJECT_ROOT/bin/dwm-doctor"
+    "$PROJECT_ROOT/bin/desktop-safe"
+    "$PROJECT_ROOT/bin/desktop-doctor"
     "$PROJECT_ROOT/templates/colors/base.sh"
-    "$PROJECT_ROOT/templates/colors/palette-monolith.sh"
-    "$PROJECT_ROOT/templates/colors/palette-gruvbox.sh"
-    "$PROJECT_ROOT/templates/dwm/config.h.in"
-    "$PROJECT_ROOT/templates/dwm/run.sh"
-    "$PROJECT_ROOT/templates/dwm/environment.in"
-    "$PROJECT_ROOT/templates/dwm/dwm.desktop.in"
-    "$PROJECT_ROOT/templates/dwm/xinitrc"
-    "$PROJECT_ROOT/templates/dwm/picom.conf.in"
-    "$PROJECT_ROOT/templates/dwm/dunst/dunstrc.in"
-    "$PROJECT_ROOT/templates/dwm/rofi/colors.rasi.in"
-    "$PROJECT_ROOT/templates/dwm/rofi/fonts.rasi"
-    "$PROJECT_ROOT/templates/dwm/rofi/config.rasi"
-    "$PROJECT_ROOT/templates/dwm/scripts/bar.sh"
-    "$PROJECT_ROOT/templates/dwm/scripts/bar_themes/gruvchad"
-    "$PROJECT_ROOT/templates/dwm/eww/eww.yuck"
-    "$PROJECT_ROOT/templates/dwm/eww/vars.yuck.in"
-    "$PROJECT_ROOT/templates/dwm/eww/widgets.yuck"
-    "$PROJECT_ROOT/templates/dwm/eww/eww.scss.in"
-    "$PROJECT_ROOT/templates/dwm/eww/scripts/battery"
-    "$PROJECT_ROOT/templates/dwm/eww/scripts/brightness"
-    "$PROJECT_ROOT/templates/dwm/eww/scripts/temp"
-    "$PROJECT_ROOT/templates/dwm/eww/scripts/updates"
-    "$PROJECT_ROOT/templates/dwm/eww/scripts/uptime"
-    "$PROJECT_ROOT/templates/dwm/eww/scripts/volume"
-    "$PROJECT_ROOT/templates/dwm/eww/scripts/wifi"
-    "$PROJECT_ROOT/templates/kitty/kitty.conf"
+    "$PROJECT_ROOT/templates/colors/palette-nord.sh"
+    "$PROJECT_ROOT/templates/bspwm/bspwmrc.in"
+    "$PROJECT_ROOT/templates/bspwm/autostart.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/bspwm_resize.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/low_bat_notifier.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/keybindings_rofi.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/screenshot.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
+    "$PROJECT_ROOT/templates/sxhkd/sxhkdrc.in"
+    "$PROJECT_ROOT/templates/polybar/config.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/logo.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/bspwm.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/updates.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/polypomo.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/temp.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/memory.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/cpu.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/xkeyboard.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/eth.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/wlan.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/battery.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/pipewire.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/date.ini.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/updates-apt.sh.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/polypomo.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/launch.sh.in"
+    "$PROJECT_ROOT/templates/picom/picom.conf.in"
+    "$PROJECT_ROOT/templates/dunst/dunstrc.in"
+    "$PROJECT_ROOT/templates/rofi/powermenu.rasi.in"
+    "$PROJECT_ROOT/templates/kitty/kitty.conf.in"
     "$PROJECT_ROOT/assets/wallpaper.jpg"
-    "$PROJECT_ROOT/src/chadwm/chadwm/Makefile"
   )
   for path in "${required[@]}"; do
     [[ -e "$path" ]] || die "Falta un archivo del proyecto: $path"
   done
-  if [[ ! -f "$PROJECT_ROOT/src/eww/Cargo.toml" ]]; then
-    warn "No existe src/eww; se intentará clonar eww v0.6.0 en /var/cache/dwm-setup."
-  fi
 }
 
 print_summary() {
@@ -208,25 +212,37 @@ EOF
   fi
   section "Instalación completada"
   cat <<EOF
-Fase 1 instalada para: $TARGET_USER
-Home:                  $TARGET_HOME
-Log:                   $LOG_FILE
+Fase 1b instalada para: $TARGET_USER
+Home:                   $TARGET_HOME
+Log:                    $LOG_FILE
 
 Próximo paso:
   1. Reinicia el equipo: sudo reboot
-  2. En Ly elige la sesión "dwm" y entra con tu usuario.
-  3. Comprueba el escritorio: dwm-doctor
-  4. Prueba la cámara real: dwm-doctor --camera
+  2. En TTY1 entra con tu usuario y ejecuta: startx
+     (o configura auto-login en ~/.bash_profile)
+  3. Comprueba el escritorio: desktop-doctor
+  4. Prueba la cámara real: desktop-doctor --camera
   5. Si algo falla, entra por TTY y usa: startx
 
 Atajos principales:
-  Mod+Return      kitty
-  Mod+E           pcmanfm
-  Mod+Shift+D     rofi
-  Mod+Shift+S     flameshot
-  Mod+grave       dashboard eww
-  Mod+Escape      menú de energía
-  Mod+Shift+L     bloquear
+  Super+Return      kitty
+  Super+d           rofi (drun)
+  Super+Shift+b     firefox
+  Super+Shift+e     VS Code
+  Super+Shift+f     thunar
+  Super+Shift+l     bloquear
+  Super+Shift+s     captura de pantalla
+  Print             captura completa
+  Super+Print       menú capturas
+  Super+{h,j,k,l}   foco ventanas
+  Super+Shift+{h,j,k,l} mover ventanas
+  Super+{1-5}       ir a escritorio
+  Super+Shift+{1-5} mover ventana a escritorio
+  Super+Alt+{h,j,k,l} redimensionar
+  Super+m           monocle/tiled
+  Super+f           fullscreen
+  XF86AudioRaise/Lower/Mute   volumen
+  XF86MonBrightnessUp/Down    brillo
 
 Notas:
   - El grupo video/audio/render requiere cerrar sesión y volver a entrar.
@@ -241,14 +257,8 @@ EOF
 main() {
   parse_args "$@"
 
-  # Tema por defecto
-  DWM_THEME="${DWM_THEME:-monolith}"
-
   validate_options
   check_project_layout
-
-  # Cargar tema temprano para que dry-run muestre los colores correctos
-  load_theme "$DWM_THEME"
 
   # Debian 13 y x86_64 antes de pedir sudo o resolver el usuario.
   detect_os
@@ -268,25 +278,32 @@ main() {
   show_banner
   print_detection
 
-  # Generar assets de tema (bar_theme, rofi colors, eww scss/vars, dunstrc, picom, kitty)
-  generate_all_theme_assets "$DWM_THEME"
+  # Cargar paleta Nord
+  load_theme "nord"
 
-  # Los backups deben existir antes del preflight: si el usuario autoriza
-  # añadir componentes APT, add_apt_components() guarda sources.list primero.
+  # Prompt para repo dotfiles opcional
+  DOTFILES_DIR=""
+  if prompt_dotfiles_repo; then
+    DOTFILES_DIR=$(clone_dotfiles_repo "$DOTFILES_URL")
+    validate_dotfiles_structure "$DOTFILES_DIR"
+    prompt_missing_configs "${DOTFILES_MISSING[@]}"
+  else
+    info "Usando templates integrados con paleta Nord"
+  fi
+
+  # Los backups deben existir antes del preflight
   local backup_ts
   backup_ts=$(timestamp)
   ROOT_BACKUP_DIR="/var/backups/dwm-setup/$backup_ts"
   USER_BACKUP_DIR="$TARGET_HOME/.config-backup/dwm-setup/$backup_ts"
 
-  # Crear directorio de backup de usuario con propietario correcto ANTES de usarlo.
-  # Evita que ~/.config-backup/dwm-setup/<timestamp> quede root:root.
   if ! dry_run; then
     run_root install -d -m 0755 -o "$TARGET_USER" -g "$TARGET_GROUP" "$USER_BACKUP_DIR"
   fi
 
   preflight_repos
 
-  if ! confirm "¿Aplicar los cambios y continuar con la instalación de la fase 1?"; then
+  if ! confirm "¿Aplicar los cambios y continuar con la instalación de la fase 1b?"; then
     if [[ "$REPO_MODIFIED" -eq 1 ]]; then
       info "Cancelado. Los componentes APT añadidos se conservan en el backup: $ROOT_BACKUP_DIR"
     else
@@ -296,10 +313,14 @@ main() {
   fi
 
   install_packages
-  build_dwm
-  build_eww
+  install_bspwm "nord"
+  install_sxhkd
+  install_polybar
+  install_picom
+  install_dunst
+  install_rofi
+  install_kitty
   install_user_configs
-  install_ly
 
   if ! dry_run; then
     if ! verify_install; then

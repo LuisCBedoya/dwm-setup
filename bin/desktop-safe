@@ -1,0 +1,30 @@
+#!/bin/sh
+# desktop-safe — Acciones de sesión seguras (lock/suspend/logout/poweroff)
+# Instalado en /usr/local/bin/desktop-safe
+
+set -eu
+
+action="${1:-lock}"
+
+case "$action" in
+  lock)
+    # Bloquear pantalla con i3lock (color de fondo Nord)
+    i3lock -c "2e3440" -n -e -f
+    ;;
+  suspend)
+    systemctl suspend
+    ;;
+  logout)
+    bspc quit
+    ;;
+  poweroff)
+    systemctl poweroff
+    ;;
+  reboot)
+    systemctl reboot
+    ;;
+  *)
+    printf 'Uso: desktop-safe {lock|suspend|logout|poweroff|reboot}\n' >&2
+    exit 1
+    ;;
+esac

@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# polypomo — Pomodoro timer para polybar (vendorizado desde Bspwm repo)
+# Solo stdlib Python 3 (sqlite3, socket, argparse, etc.)
+
+import os
+import sys
+import socket
+import argparse
+import operator
+import time
+import select
+from contextlib import contextmanager
+from subprocess import call, DEVNULL
+import sqlite3
+import pathlib
+
+SOCKDIR = os.environ.get("XDG_RUNTIME_DIR", "/var/tmp")
+SOCKFILE = os.path.join(SOCKDIR, "polypomo.sock")
+TOMATO = "\U0001F345"
+BREAK = "\U0001F3D6"
+PAUSE = "\U000023F8"
+
+class Exit(Exception):
+    pass
+
+class Timer:
+    def __init__(self, remtime):
+        self.time = remtime
+        self.notified = False
+        self.tick()
+
+    def __str__(self):
+        return self.format_time()
+
+    def tick(self):
+        self.previous = time.time()
+
+    def format_time(self):
+        day_factor = 86400
+        hour_factor = 3600
+        minute_factor = 60
+        if self.time > 0:
+            rem = self.time
+            neg = ""
+        else:
+            rem = -self.time
+            neg = "-"
+        days = int(rem // day_factor)
+        rem -= days * day_factor
+        hours = int(rem // hour_factor)
+        rem -= hours * hour_factor
+        minutes = int(rem // minute_factor)
+        rem -= minutes * minute_factor
+        seconds = int(rem // 1)
+        strtime = []
+        if days > 0:
+            strtime.append(str(days))
+        if days > 0 or hours > 0:
+            strtime.append("{:02d}".format(hours))
+        strtime.append("{:02d}".format(minutes))
+        strtime.append("{:02d}".format(seconds))
+        return neg + ":".join(strtime)
+
+    def update(self):
+        now = time.time()
+        delta = now - self.previous
+        self.time -= delta
+        if not self.notified and self.time < 0:
+            self.notified = True
+            try:
+                call(["notify-send", "-t", "0", "-u", "critical", "Pomodoro", "Timer reached zero"],
+                     stdout=DEVNULL, stderr=DEVNULL)
+            except FileNotFoundError:
+                pass
+
+    def change(self, op, seconds):
+        self.time = op(self.time, seconds)
+
+class Status:
+    def __init__(self, worktime, breaktime, saveto):
+        self.worktime = worktime
+        self.breaktime = breaktime
+        self.status = "work"
+        self.timer = Timer(self.worktime)
+        self.active = False
+        self.locked = True
+        self.saveto = saveto
+
+    def show(self):
+        status = TOMATO if self.status == "work" else BREAK
+        if not self.active:
+            status = PAUSE
+        sys.stdout.write("{} {}\n".format(status, self.timer))
+        sys.stdout.flush()
+
+    def toggle(self):
+        self.active = not self.active
+        if self.saveto and self.status == "work":
+            self.save()
+
+    def toggle_lock(self):
+        self.locked = not self.locked
+
+    def update(self):
+        if self.active:
+            self.timer.update()
+        self.timer.tick()
+
+    def change(self, op, seconds):
+        if self.locked:
+            return
+        seconds = int(seconds)
+        op = operator.add if op == "add" else operator.sub
+        self.timer.change(op, seconds)
+
+    def next_timer(self):
+        if self.status == "work":
+            if self.active:
+                self.active = False
+                self.save()
+            self.status = "break"
+            self.timer = Timer(self.breaktime)
+        elif self.status == "break":
+            self.active = False
+            self.status = "work"
+            self.timer = Timer(self.worktime)
+
+    def save(self):
+        with setup_conn(self.saveto) as conn:
+            if self.active:
+                conn.execute("INSERT INTO sessions VALUES (date('now'), time('now'), NULL)")
+            else:
+                conn.execute("""UPDATE sessions SET stop = time('now')
+                                WHERE start IN (SELECT start FROM sessions ORDER BY start DESC LIMIT 1)""")
+
+@contextmanager
+def setup_conn(path):
+    conn = sqlite3.connect(path)
+    cur = conn.cursor()
+    cur.execute("""CREATE TABLE IF NOT EXISTS sessions (
+        date text, start text, stop text
+    )""")
+    try:
+        yield cur
+    finally:
+        conn.commit()
+        conn.close()
+
+@contextmanager
+def setup_listener():
+    action_exit(None, warn=False)
+    try:
+        os.remove(SOCKFILE)
+    except FileNotFoundError:
+        pass
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    s.bind(SOCKFILE)
+    try:
+        yield s
+    finally:
+        s.close()
+
+@contextmanager
+def setup_client():
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    s.connect(SOCKFILE)
+    try:
+        yield s
+    finally:
+        s.close()
+
+def wait_for_socket_cleanup(tries=20, wait=0.5):
+    for i in range(tries):
+        if not os.path.isfile(SOCKFILE):
+            return True
+        time.sleep(wait)
+    return False
+
+def check_actions(sock, status):
+    timeout = time.time() + 0.9
+    data = ""
+    while True:
+        ready = select.select([sock], [], [], 0.2)
+        if time.time() > timeout:
+            break
+        if ready[0]:
+            try:
+                data = sock.recv(1024)
+                if data:
+                    break
+            except socket.error as e:
+                print("Lost connection to client:", e, file=sys.stderr)
+                break
+    if not data:
+        return
+    action = data.decode("utf8")
+    if action == "toggle":
+        status.toggle()
+    elif action == "end":
+        status.next_timer()
+    elif action == "lock":
+        status.toggle_lock()
+    elif action.startswith("time"):
+        _, op, seconds = action.split(" ")
+        status.change(op, seconds)
+    elif action == "exit":
+        raise Exit()
+
+def action_display(args):
+    status = Status(args.worktime, args.breaktime, args.saveto)
+    with setup_listener() as sock:
+        while True:
+            status.show()
+            status.update()
+            try:
+                check_actions(sock, status)
+            except Exit:
+                print("Received exit request...", file=sys.stderr)
+                break
+
+def action_toggle(args):
+    with setup_client() as s:
+        s.send("toggle".encode("utf8"))
+
+def action_end(args):
+    with setup_client() as s:
+        s.send("end".encode("utf8"))
+
+def action_lock(args):
+    with setup_client() as s:
+        s.send("lock".encode("utf8"))
+
+def action_time(args):
+    with setup_client() as s:
+        s.send("time {} {}".format(args.delta[0], args.delta[1]).encode("utf8"))
+
+def action_exit(args, warn=True):
+    try:
+        with setup_client() as s:
+            s.send("exit".encode("utf8"))
+    except (FileNotFoundError, ConnectionRefusedError) as e:
+        if warn:
+            print("No instance of polypomo listening, error:", e, file=sys.stderr)
+    else:
+        if not wait_for_socket_cleanup():
+            print("Socket was not removed, assuming it's stale", file=sys.stderr)
+
+class ValidateTime(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values[0] not in "-+":
+            parser.error("Time format should be +num or -num")
+        if not values[1:].isdigit():
+            parser.error("Expected number after +/- but saw '{}'".format(values[1:]))
+        action = "add" if values[0] == "+" else "sub"
+        value = values[1:]
+        setattr(namespace, self.dest, (action, value))
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Pomodoro timer for polybar")
+    parser.add_argument("--worktime", type=int, default=25*60, help="Work timer in seconds")
+    parser.add_argument("--breaktime", type=int, default=3*60, help="Break timer in seconds")
+    parser.add_argument("--saveto", type=pathlib.Path, default=None, help="Path to database")
+    parser.set_defaults(func=action_display)
+    sub = parser.add_subparsers()
+    sub.add_parser("toggle", help="start/stop timer").set_defaults(func=action_toggle)
+    sub.add_parser("end", help="end current timer").set_defaults(func=action_end)
+    sub.add_parser("lock", help="lock time actions").set_defaults(func=action_lock)
+    sub.add_parser("exit", help="exit polypomo gracefully").set_defaults(func=action_exit)
+    time = sub.add_parser("time", help="add/remove time")
+    time.add_argument("delta", action=ValidateTime, help="Time to add/remove (e.g. +60)")
+    time.set_defaults(func=action_time)
+    return parser.parse_args()
+
+def main():
+    args = parse_args()
+    args.func(args)
+
+if __name__ == "__main__":
+    main()
+
+# vim: ai sts=4 et sw=4

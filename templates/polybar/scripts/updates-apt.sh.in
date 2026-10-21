@@ -1,0 +1,11 @@
+#!/bin/sh
+# updates-apt.sh — cuenta paquetes actualizables en Debian/Ubuntu
+# Usado por polybar module updates
+
+updates=$(apt-get -s -o Debug::NoLocking=1 upgrade 2>/dev/null | grep -c '^Inst ') || updates=0
+
+if [ "$updates" -gt 0 ]; then
+  echo "\uf79f $updates"
+else
+  echo "\uf79f 0"
+fi

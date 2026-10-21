@@ -1,0 +1,81 @@
+; polybar config.ini — generado desde template, no editar directamente
+; Paleta exacta del screenshot (GitHub Dark / Nord-modificada)
+; Barra TOP, full-width, sin subrayados, sin bloques de fondo
+
+include-directory = @HOME@/.config/polybar/modules
+
+[colors]
+background = #0D1117
+background-alt = #0D1117
+foreground = #C9D1D9
+foreground-alt = #6E7681
+primary = #58A6FF
+secondary = #A371F7
+alert = #F47067
+disabled = #6E7681
+
+; Alias Nord para compatibilidad con módulos portados
+nord0 = #0D1117
+nord1 = #0D1117
+nord2 = #161B22
+nord3 = #21262D
+nord4 = #C9D1D9
+nord5 = #8B949E
+nord6 = #C9D1D9
+nord7 = #58A6FF
+nord8 = #79C0FF
+nord9 = #58A6FF
+nord10 = #388BF8
+nord11 = #F47067
+nord12 = #D29922
+nord13 = #D29922
+nord14 = #3FB950
+nord15 = #A371F7
+
+[bar/main]
+monitor = ${env:MONITOR:}
+width = 100%
+height = 26
+radius = 0
+bottom = false
+fixed-center = true
+
+background = ${colors.background}
+foreground = ${colors.foreground}
+
+line-size = 0
+line-color = ${colors.background}
+
+border-size = 0
+border-color = ${colors.background}
+
+padding-left = 4
+padding-right = 4
+
+module-margin-left = 1
+module-margin-right = 1
+
+font-0 = "JetBrainsMono Nerd Font:size=10;3"
+font-1 = "JetBrainsMono Nerd Font:style=Bold:size=10;3"
+font-2 = "JetBrainsMono Nerd Font:size=11;3"
+font-3 = "JetBrainsMono Nerd Font:size=11;5"
+font-4 = "JetBrainsMono Nerd Font:style=Bold:size=12;3"
+font-5 = "Noto Color Emoji:scale=9:antialias=false;3"
+
+modules-left = logo bspwm
+modules-right = updates polypomo temp memory cpu xkeyboard eth @WLAN_MODULE@ @BATTERY_MODULE@ pipewire date
+
+cursor-click = pointer
+cursor-scroll = ns-resize
+
+enable-ipc = true
+
+wm-restack = bspwm
+
+override-redirect = true
+
+[settings]
+screenchange-reload = true
+pseudo-transparency = true
+
+; vim:ft=dosini

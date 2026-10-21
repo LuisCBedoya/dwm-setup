@@ -1,0 +1,9 @@
+; memory — uso de RAM
+[module/memory]
+type = internal/memory
+interval = 2
+format = <label>
+format-padding = 6
+format-foreground = ${colors.foreground}
+label = "\uf538 %percentage_used:2%%"
+label-font = 0

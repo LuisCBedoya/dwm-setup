@@ -1,0 +1,115 @@
+# sxhkdrc — generado desde template, no editar directamente
+# Paleta: @THEME_NAME@ (Nord)
+# Variables: @TERM@ @MENU@ @BROWSER@ @EDITOR@ @LOCK@ @SCREENSHOT@ @FILEMGR@ @KEYBINDINGS@
+
+# ─── Aplicaciones ───
+@TERM@
+    super + Return
+
+@MENU@
+    super + d
+
+@BROWSER@
+    super + shift + b
+
+@EDITOR@
+    super + shift + e
+
+@FILEMGR@
+    super + shift + f
+
+@LOCK@
+    super + shift + l
+
+@SCREENSHOT@
+    Print
+    super + Print
+
+# ─── Sistema ───
+# Reiniciar / apagar bspwm
+super + alt + q
+    bspc quit
+super + alt + r
+    bspc wm -r
+
+# Cerrar / matar ventana
+super + q
+    bspc node -c
+super + shift + q
+    bspc node -k
+
+# Alternar monocle / tiled
+super + m
+    bspc desktop -l next
+
+# Estados de ventana
+super + t
+    bspc node -t tiled
+super + shift + t
+    bspc node -t pseudo_tiled
+super + s
+    bspc node -t floating
+super + f
+    bspc node -t fullscreen
+
+# Flags de ventana
+super + ctrl + m
+    bspc node -g marked
+super + ctrl + x
+    bspc node -g locked
+super + ctrl + y
+    bspc node -g sticky
+super + ctrl + z
+    bspc node -g private
+
+# ─── Foco y movimiento ───
+# Direcciones
+super + {_,shift + }{h,j,k,l}
+    bspc node -{f,s} {west,south,north,east}
+
+# Ventana siguiente/anterior
+super + {_,shift + }c
+    bspc node -f {next,prev}.local.!hidden.window
+
+# Escritorios
+super + bracket{left,right}
+    bspc desktop -f {prev,next}.local
+super + {_,shift + }{1-9,0}
+    bspc {desktop -f,node -d} '^{1-9,10}'
+
+# ─── Redimensionar (teclas de flecha con Alt+Super) ───
+alt + super + {Left,Down,Up,Right}
+    @HOME@/.config/bspwm/scripts/bspwm_resize {left,down,up,right}
+
+# Mover ventana flotante
+super + {Left,Down,Up,Right}
+    bspc node -v {-20 0,0 20,0 -20,20 0}
+
+# ─── Multimedia ───
+XF86AudioRaiseVolume
+    pamixer -i 5
+XF86AudioLowerVolume
+    pamixer -d 5
+XF86AudioMute
+    pamixer -t
+
+XF86MonBrightnessUp
+    brightnessctl set +10%
+XF86MonBrightnessDown
+    brightnessctl set 10%-
+
+# Fallback F-keys
+F2
+    pamixer -i 5
+F1
+    pamixer -d 5
+F3
+    pamixer -t
+F12
+    brightnessctl set +10%
+F11
+    brightnessctl set 10%-
+
+# ─── Recargar configs ───
+super + ctrl + r
+    pkill -USR1 -x sxhkd; bspc wm -r

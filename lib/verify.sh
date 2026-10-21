@@ -5,11 +5,9 @@ verify_install() {
   section "Verificación final"
   local failures=0
   local home="$TARGET_HOME"
-  local theme="${DWM_THEME:-monolith}"
-  local cmd xorg_owner xorg_mode
 
-  for cmd in dwm eww picom dunst rofi feh kitty flameshot i3lock xss-lock \
-    brightnessctl xclip pcmanfm udiskie v4l2-ctl ffmpeg pactl wpctl pamixer xwallpaper playerctl; do
+  for cmd in bspwm sxhkd polybar picom dunst rofi feh kitty flameshot i3lock xss-lock \
+    brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer xwallpaper playerctl; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
@@ -19,40 +17,39 @@ verify_install() {
   done
 
   for path in \
-    "$home/.config/dwm/run.sh" \
-    "$home/.config/dwm/scripts/bar.sh" \
-    "$home/.config/dwm/scripts/bar_themes/$theme" \
-    "$home/.config/dwm/scripts/bar_themes/gruvchad" \
-    "$home/.config/dwm/picom.conf" \
-    "$home/.config/dwm/dunst/dunstrc" \
-    "$home/.config/dwm/rofi/config.rasi" \
-    "$home/.config/dwm/rofi/colors.rasi" \
-    "$home/.config/dwm/rofi/fonts.rasi" \
-    "$home/.config/dwm/eww/eww.yuck" \
-    "$home/.config/dwm/eww/vars.yuck" \
-    "$home/.config/dwm/eww/widgets.yuck" \
-    "$home/.config/dwm/eww/eww.scss" \
-    "$home/.config/dwm/eww/scripts/volume" \
-    "$home/.config/dwm/eww/scripts/brightness" \
-    "$home/.config/dwm/eww/scripts/battery" \
-    "$home/.config/dwm/eww/scripts/wifi" \
-    "$home/.config/dwm/eww/scripts/temp" \
-    "$home/.config/dwm/eww/scripts/updates" \
-    "$home/.config/dwm/eww/scripts/uptime" \
-    "$home/.config/dwm/eww/scripts/music" \
-    "$home/.config/dwm/eww/scripts/bluetooth" \
-    "$home/.config/dwm/eww/scripts/network" \
-    "$home/.config/dwm/eww/scripts/energy" \
-    "$home/.config/dwm/eww/scripts/nightlight" \
-    "$home/.config/dwm/eww/scripts/cpu" \
-    "$home/.config/dwm/eww/scripts/ram" \
-    "$home/.config/dwm/eww/scripts/disk" \
+    "$home/.config/bspwm/bspwmrc" \
+    "$home/.config/bspwm/scripts/autostart" \
+    "$home/.config/bspwm/scripts/bspwm_resize" \
+    "$home/.config/bspwm/scripts/low_bat_notifier.sh" \
+    "$home/.config/bspwm/scripts/keybindings_rofi.sh" \
+    "$home/.config/bspwm/scripts/screenshot.sh" \
+    "$home/.config/sxhkd/sxhkdrc" \
+    "$home/.config/polybar/config.ini" \
+    "$home/.config/polybar/launch.sh" \
+    "$home/.config/polybar/modules/logo.ini" \
+    "$home/.config/polybar/modules/bspwm.ini" \
+    "$home/.config/polybar/modules/updates.ini" \
+    "$home/.config/polybar/modules/polypomo.ini" \
+    "$home/.config/polybar/modules/temp.ini" \
+    "$home/.config/polybar/modules/memory.ini" \
+    "$home/.config/polybar/modules/cpu.ini" \
+    "$home/.config/polybar/modules/xkeyboard.ini" \
+    "$home/.config/polybar/modules/eth.ini" \
+    "$home/.config/polybar/modules/wlan.ini" \
+    "$home/.config/polybar/modules/battery.ini" \
+    "$home/.config/polybar/modules/pipewire.ini" \
+    "$home/.config/polybar/modules/date.ini" \
+    "$home/.config/polybar/scripts/updates-apt.sh" \
+    "$home/.config/polybar/scripts/polypomo" \
+    "$home/.config/picom/picom.conf" \
+    "$home/.config/dunst/dunstrc" \
+    "$home/.config/rofi/powermenu.rasi" \
+    "$home/.config/kitty/kitty.conf" \
+    "$home/.xinitrc" \
     "$home/.local/share/wallpapers/rocky.jpg" \
     "$home/.local/share/xorg" \
-    "/usr/share/xsessions/dwm.desktop" \
-    "/usr/local/bin/dwm-safe" \
-    "/usr/local/bin/dwm-doctor" \
-    "/etc/ly/config.lua"; do
+    "/usr/local/bin/desktop-safe" \
+    "/usr/local/bin/desktop-doctor"; do
     if [[ -e "$path" ]]; then
       debug "ok: $path"
     else
@@ -61,19 +58,15 @@ verify_install() {
     fi
   done
 
-  # Detectar anidado accidental scripts/scripts (bug cp -a)
-  if [[ -d "$home/.config/dwm/eww/scripts/scripts" ]]; then
-    error "Directorio anidado detectado: $home/.config/dwm/eww/scripts/scripts (reinstale para corregir)"
-    failures=$((failures + 1))
-  fi
+  # Verificar scripts ejecutables
+  for script in "$home/.config/bspwm/scripts/"* "$home/.config/polybar/scripts/"*; do
+    if [[ -f "$script" && ! -x "$script" ]]; then
+      error "Script no ejecutable: $script"
+      failures=$((failures + 1))
+    fi
+  done
 
-  if [[ -x "$home/.config/dwm/run.sh" && -x "$home/.config/dwm/scripts/bar.sh" ]]; then
-    debug "ok: scripts ejecutables"
-  else
-    error "run.sh o bar.sh no son ejecutables"
-    failures=$((failures + 1))
-  fi
-
+  # Verificar directorio Xorg
   if [[ -d "$home/.local/share/xorg" ]]; then
     xorg_owner=$(stat -c '%U' "$home/.local/share/xorg" 2>/dev/null || true)
     xorg_mode=$(stat -c '%a' "$home/.local/share/xorg" 2>/dev/null || true)
@@ -88,42 +81,47 @@ verify_install() {
     failures=$((failures + 1))
   fi
 
-  if [[ -r /etc/ly/config.lua ]]; then
-    grep -q 'xinitrc = nil' /etc/ly/config.lua || { error "Ly: xinitrc no está oculto"; failures=$((failures + 1)); }
-    grep -q 'shell = false' /etc/ly/config.lua || { error "Ly: shell no está oculta"; failures=$((failures + 1)); }
-  fi
-
-  if [[ "$(systemctl is-enabled ly@tty2.service 2>/dev/null || true)" == "enabled" ]]; then
-    debug "ok: ly@tty2 habilitado"
-  else
-    error "ly@tty2.service no está habilitado"
-    failures=$((failures + 1))
-  fi
+  # Servicios base
   if [[ "$(systemctl is-enabled udisks2.service 2>/dev/null || true)" == "enabled" || "$(systemctl is-enabled udisks2.service 2>/dev/null || true)" == "static" ]]; then
     debug "ok: udisks2"
   else
     error "udisks2.service no está habilitado"
     failures=$((failures + 1))
   fi
+  if [[ "$(systemctl is-enabled NetworkManager.service 2>/dev/null || true)" == "enabled" || "$(systemctl is-enabled NetworkManager.service 2>/dev/null || true)" == "static" ]]; then
+    debug "ok: NetworkManager"
+  else
+    error "NetworkManager.service no está habilitado"
+    failures=$((failures + 1))
+  fi
 
-  if cmd_exists dwm; then
-    if [[ "$(timeout 10 dwm -v 2>&1 || true)" == dwm-* ]]; then
-      debug "ok: dwm -v"
+  # Verificar binarios
+  if cmd_exists bspwm; then
+    if [[ "$(timeout 5 bspwm -v 2>&1 || true)" == bspwm* ]]; then
+      debug "ok: bspwm -v"
     else
-      error "dwm -v falló"
+      error "bspwm -v falló"
+      failures=$((failures + 1))
+    fi
+  fi
+  if cmd_exists sxhkd; then
+    if sxhkd -v >/dev/null 2>&1; then
+      debug "ok: sxhkd -v"
+    else
+      error "sxhkd -v falló"
+      failures=$((failures + 1))
+    fi
+  fi
+  if cmd_exists polybar; then
+    if polybar --version >/dev/null 2>&1; then
+      debug "ok: polybar --version"
+    else
+      error "polybar --version falló"
       failures=$((failures + 1))
     fi
   fi
 
-  if cmd_exists eww; then
-    if eww --version >/dev/null 2>&1; then
-      debug "ok: eww --version"
-    else
-      error "eww --version falló"
-      failures=$((failures + 1))
-    fi
-  fi
-
+  # Cámara
   if cmd_exists v4l2-ctl; then
     if v4l2-ctl --list-devices >/dev/null 2>&1; then
       debug "ok: v4l2-ctl"
@@ -132,15 +130,17 @@ verify_install() {
     fi
   fi
 
-  # Verificar que no queden placeholders sin renderizar en configs
+  # Verificar que no queden placeholders sin renderizar en configs críticos
   for path in \
-    "$home/.config/dwm/picom.conf" \
-    "$home/.config/dwm/dunst/dunstrc" \
-    "$home/.config/dwm/rofi/colors.rasi" \
-    "$home/.config/dwm/eww/vars.yuck" \
-    "$home/.config/dwm/eww/eww.scss"; do
-    if [[ -f "$path" ]] && grep -q '@COLOR_' "$path" 2>/dev/null; then
-      error "Placeholders @COLOR_*@ sin renderizar en $path"
+    "$home/.config/bspwm/bspwmrc" \
+    "$home/.config/polybar/config.ini" \
+    "$home/.config/picom/picom.conf" \
+    "$home/.config/dunst/dunstrc" \
+    "$home/.config/rofi/powermenu.rasi" \
+    "$home/.config/kitty/kitty.conf" \
+    "$home/.xinitrc"; do
+    if [[ -f "$path" ]] && grep -q '@COLOR_\|@HOME@\|@FONT@\|@FONT_SIZE@\|@KEYMAP@\|@ETH_IFACE@\|@WLAN_IFACE@\|@BATTERY@\|@AC_ADAPTER@' "$path" 2>/dev/null; then
+      error "Placeholders sin renderizar en $path"
       failures=$((failures + 1))
     fi
   done
@@ -149,7 +149,7 @@ verify_install() {
     warn "No se detectó cámara; la prueba real se omite"
   else
     info "Cámara(s) detectada(s): ${CAMERAS[*]}"
-    info "Prueba real de captura tras iniciar sesión: dwm-doctor --camera"
+    info "Prueba real de captura tras iniciar sesión: desktop-doctor --camera"
   fi
 
   if ((failures > 0)); then

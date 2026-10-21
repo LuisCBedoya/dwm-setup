@@ -1,0 +1,16 @@
+; pipewire — volumen
+[module/pipewire]
+type = internal/pulseaudio
+format-volume = <label-volume>
+format-volume-padding = 6
+format-volume-foreground = ${colors.foreground}
+label-volume = "\ufa7d %percentage%%"
+label-volume-font = 0
+
+format-muted = <label-muted>
+format-muted-padding = 6
+format-muted-foreground = ${colors.foreground}
+label-muted = "\ufa80 muted"
+label-muted-font = 0
+
+click-right = pavucontrol

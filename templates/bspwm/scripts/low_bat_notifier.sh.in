@@ -1,0 +1,19 @@
+#!/bin/sh
+# low_bat_notifier — notifica cuando la batería está baja
+# Solo se ejecuta si existe la batería (verificado en autostart)
+
+BATTERY="@BATTERY@"
+THRESHOLD=15
+CHECK_INTERVAL=60
+
+while true; do
+  if [ -d "/sys/class/power_supply/$BATTERY" ]; then
+    capacity=$(cat "/sys/class/power_supply/$BATTERY/capacity" 2>/dev/null)
+    status=$(cat "/sys/class/power_supply/$BATTERY/status" 2>/dev/null)
+    
+    if [ "$capacity" -le "$THRESHOLD" ] && [ "$status" = "Discharging" ]; then
+      notify-send -u critical "Batería baja" "Nivel: ${capacity}% — Conecte el cargador"
+    fi
+  fi
+  sleep $CHECK_INTERVAL
+done

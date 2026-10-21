@@ -1,0 +1,76 @@
+* {
+    background:     @COLOR_BG@;
+    background-alt: @COLOR_BG_ALT@;
+    foreground:     @COLOR_FG@;
+    selected:       @COLOR_ACCENT@;
+    active:         @COLOR_GREEN@;
+    urgent:         @COLOR_RED@;
+    border:         @COLOR_BORDER@;
+}
+
+configuration {
+    modi: "powermenu";
+    show-icons: true;
+    icon-theme: "Paper";
+    font: "@FONT@ @FONT_SIZE@";
+    dpi: 96;
+}
+
+window {
+    width: 400;
+    height: 120;
+    location: center;
+    anchor: center;
+    fullscreen: false;
+    monitor: -1;
+    border: 2;
+    border-radius: 10;
+    border-color: @COLOR_BORDER@;
+    padding: 20;
+}
+
+mainbox {
+    children: [ "message", "listview" ];
+}
+
+message {
+    background-color: @COLOR_BG_ALT@;
+    text-color: @COLOR_FG@;
+    padding: 10;
+    margin: 0 0 10 0;
+    border-radius: 6;
+    text: "  Power Menu";
+}
+
+listview {
+    columns: 6;
+    lines: 1;
+    fixed-height: false;
+    spacing: 10;
+    scrollbar: false;
+}
+
+element {
+    orientation: vertical;
+    padding: 10;
+    border-radius: 6;
+    text-color: @COLOR_FG@;
+}
+
+element normal.normal {
+    background-color: transparent;
+}
+
+element normal.active {
+    background-color: @COLOR_BG_ALT@;
+}
+
+element-text {
+    font: "@FONT@ @FONT_SIZE@";
+    vertical-align: 0.5;
+}
+
+element-icon {
+    size: 28;
+    vertical-align: 0.5;
+}

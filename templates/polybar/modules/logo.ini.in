@@ -1,0 +1,7 @@
+; logo — glifo U+F2DD (fa-superpowers), idéntico al screenshot
+[module/logo]
+type = custom/text
+content = "\uf2dd"
+content-foreground = ${colors.foreground}
+content-font = 4
+content-padding = 2

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Grupos de paquetes de la fase 1. Debian 13 (trixie).
+# Grupos de paquetes de la fase 1b. Debian 13 (trixie).
 
 BASE_PKGS=(
   build-essential git curl ca-certificates xz-utils unzip tar file pkg-config
   procps pciutils usbutils dmidecode inxi bash-completion sudo less rsync
+  python3
 )
 
 XORG_PKGS=(
@@ -12,15 +13,14 @@ XORG_PKGS=(
   mesa-va-drivers mesa-vdpau-drivers vulkan-tools vainfo vdpauinfo
 )
 
+# Paquetes de compilación mínimos (solo para lo que se compila, ya no chadwm/eww/Ly)
 BUILD_PKGS=(
   libx11-dev libxft-dev libxinerama-dev libxrender-dev libfontconfig1-dev
-  libimlib2-dev libx11-xcb-dev libxcb1-dev libxcb-randr0-dev libxcb-shape0-dev
-  libxcb-xfixes0-dev libxcb-xinerama0-dev libxcb-util-dev libxcb-cursor-dev
-  libxcb-xkb-dev libxkbcommon-dev libxkbcommon-x11-dev
+  libx11-xcb-dev libxcb1-dev libxcb-randr0-dev libxcb-shape0-dev
+  libxcb-xfixes0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev
+  libxkbcommon-dev libxkbcommon-x11-dev
   libgtk-3-dev libcairo2-dev libpango1.0-dev libgdk-pixbuf-2.0-dev
-  libglib2.0-dev libdbus-1-dev libdbusmenu-glib-dev libdbusmenu-gtk3-dev
-  libssl-dev zlib1g-dev libpam0g-dev libaudit-dev
-  rustc cargo
+  libglib2.0-dev libdbus-1-dev libssl-dev zlib1g-dev
 )
 
 AUDIO_PKGS=(
@@ -40,17 +40,22 @@ STORAGE_PKGS=(
   lxpolkit libnotify-bin gir1.2-notify-0.7
 )
 
+# bspwm + sxhkd + polybar + resto del escritorio
 DESKTOP_PKGS=(
+  bspwm sxhkd polybar
   picom dunst rofi feh kitty flameshot i3lock xss-lock
-  brightnessctl xclip pcmanfm
+  brightnessctl xclip thunar
   xwallpaper playerctl
   bluez redshift
+  scrot imagemagick
+  lm-sensors upower acpi
 )
 
 NETWORK_PKGS=(network-manager network-manager-gnome dbus-user-session dbus-x11)
 
 FONT_PKGS=(
   fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji
+  fonts-noto-cjk
   adwaita-icon-theme hicolor-icon-theme desktop-file-utils shared-mime-info
   xdg-utils xdg-user-dirs
 )
@@ -90,9 +95,6 @@ apt_update() {
   APT_INDEX_UPDATED=1
 }
 
-# Devuelve los componentes APT habilitados. apt-get indextargets lee la
-# configuración de fuentes y no modifica nada, así que también sirve en
-# --dry-run.
 apt_components() {
   local output=""
   if command -v apt-get >/dev/null 2>&1; then
@@ -103,7 +105,6 @@ apt_components() {
     return 0
   fi
 
-  # Fallback para APT muy antiguo o configuración no legible por indextargets.
   {
     local file
     for file in "$APT_SOURCES_LIST" "$APT_SOURCES_DIR"/*.list; do
@@ -148,8 +149,6 @@ add_missing_component() {
   APT_MISSING_COMPONENTS+=("$component")
 }
 
-# Política única para decidir si se intentará el driver NVIDIA propietario.
-# La usan el preflight y install_gpu_packages().
 nvidia_driver_wanted() {
   [[ "$HAS_NVIDIA" -eq 1 ]] || return 1
   case "${INSTALL_NVIDIA:-auto}" in
@@ -167,8 +166,6 @@ is_debian_13_suite() {
 
 is_debian_uri() {
   local uri="$1"
-  # Solo dominios oficiales de Debian. No se tocan mirrors de terceros ni
-  # repositorios que casualmente tengan /debian en la ruta.
   [[ "$uri" =~ ^(https?|ftp)://([A-Za-z0-9.-]+\.)?debian\.org/ ]] && return 0
   return 1
 }
@@ -177,8 +174,6 @@ has_component_token() {
   [[ " $1 " == *" $2 "* ]]
 }
 
-# Reemplaza un fichero de fuentes conservando modo y propietario. Devuelve 1
-# si el contenido no cambió.
 install_repo_file() {
   local file="$1" tmp="$2" mode owner group
   if cmp -s -- "$file" "$tmp"; then
@@ -333,7 +328,6 @@ add_apt_components() {
     warn "No hay componentes nuevos que añadir en las entradas de Debian 13."
     return 1
   fi
-  # Las fuentes cambiaron: el siguiente apt update debe refrescar índices.
   APT_INDEX_UPDATED=0
   return 0
 }
@@ -448,8 +442,6 @@ resolve_repo_menu() {
   done
 }
 
-# Preflight de repositorios antes de confirmar o instalar. No modifica nada
-# hasta que el usuario elige explícitamente la opción 1.
 preflight_repos() {
   section "Repositorios APT"
   detect_repo_problems
@@ -477,7 +469,6 @@ preflight_repos() {
   resolve_repo_menu
 }
 
-# install_group ETIQUETA required|optional paquete...
 install_group() {
   local label="$1" requirement="$2"
   shift 2
@@ -528,7 +519,7 @@ install_base_packages() {
 
 install_desktop_packages() {
   section "Escritorio, audio, cámara y almacenamiento"
-  install_group "escritorio" required "${DESKTOP_PKGS[@]}"
+  install_group "escritorio (bspwm+sxhkd+polybar+apps)" required "${DESKTOP_PKGS[@]}"
   install_group "audio y códecs" required "${AUDIO_PKGS[@]}"
   install_group "cámara" optional "${CAMERA_PKGS[@]}"
   install_group "almacenamiento extraíble" required "${STORAGE_PKGS[@]}"
@@ -555,7 +546,6 @@ install_gpu_packages() {
   if [[ "$HAS_NVIDIA" -eq 1 ]]; then
     if nvidia_driver_wanted; then
       gpu_pkgs+=(nvidia-driver nvidia-settings nvidia-vaapi-driver nvidia-smi linux-headers-amd64)
-      # CUDA toolkit: solo si se pide explícitamente (--cuda) o modo interactivo y usuario confirma
       if [[ "${INSTALL_CUDA:-auto}" == "yes" ]]; then
         gpu_pkgs+=(nvidia-cuda-toolkit)
       elif [[ "$DRY_RUN" -eq 0 && "$ASSUME_YES" -eq 0 && -t 0 && "${INSTALL_CUDA:-auto}" == "auto" ]]; then
@@ -597,7 +587,7 @@ font_fallback() {
   else
     DWM_FONT="monospace"
   fi
-  warn "Se usará la fuente '$DWM_FONT' en dwm porque la Nerd Font no está disponible."
+  warn "Se usará la fuente '$DWM_FONT' en bspwm porque la Nerd Font no está disponible."
 }
 
 install_nerd_font() {

@@ -295,3 +295,90 @@ la fase 1. El usuario aprobó implementar los widgets con funcionalidad real
 - Si `bluez`/`redshift` no están instalados, los widgets muestran "Off" sin
   romper eww.
 - `DECISIONS.md` registra la excepción explícita a `AGENTS.md`.
+
+## ADR-022 — Migración a bspwm + sxhkd + polybar (fase 1b)
+
+**Contexto:** El instalador original compilaba chadwm (C), eww v0.6.0 (Rust+webkitgtk)
+y Ly (Zig). El usuario tiene una configuración bspwm madura y probada en
+`/home/luc/Documentos/Bspwm` y quiere usarla tal cual, con `startx` en lugar de Ly,
+para eliminar tres cadenas de compilación y reducir dependencias.
+
+**Decisión:**
+1. **Eliminar:** `lib/dwm.sh`, `lib/eww.sh`, `lib/ly.sh`, `src/chadwm/`, `src/eww/`,
+   `templates/dwm/`, `/usr/share/xsessions/dwm.desktop`, servicio `ly@tty2`,
+   `bin/dwm-safe`, `bin/dwm-doctor`.
+2. **Añadir:** `lib/dotfiles.sh` (clona repo Git HTTPS opcional), `lib/bspwm.sh`,
+   `lib/sxhkd.sh`, `lib/polybar.sh`, `lib/picom.sh`, `lib/dunst.sh`,
+   `lib/rofi.sh`, `lib/kitty.sh`.
+3. **Templates nuevos:** `templates/bspwm/`, `templates/sxhkd/`,
+   `templates/polybar/`, `templates/picom/`, `templates/dunst/`,
+   `templates/rofi/`, `templates/kitty/` — renderizados con paleta **Nord**
+   (vendorizada en `templates/colors/palette-nord.sh`).
+4. **Sesión:** `~/.xinitrc` ejecuta `bspwm` (su `autostart` levanta polybar, dunst,
+   picom, udiskie, xss-lock, low_bat_notifier, xwallpaper). Sin display manager.
+5. **Paquetes:** Añadir `bspwm sxhkd polybar` a `DESKTOP_PKGS`; quitar `zig`,
+   `rustc cargo`, headers X11 de dwm, `libpam0g-dev`, `libaudit-dev`.
+6. **Dotfiles opcionales:** Prompt interactivo para URL Git HTTPS de un repo
+   `dotfiles`. Estructura esperada: `repo/config/.config/{bspwm,sxhkd,polybar,
+   picom,dunst,rofi,kitty}`. Si el repo falta carpetas, pregunta si continuar
+   con templates integrados o abortar.
+7. **Batería condicional:** `polybar/launch.sh` detecta `/sys/class/power_supply/BAT*`
+   y elige config con/sin módulo battery.
+8. **Binarios:** `desktop-safe` (lock/suspend/logout/poweroff/reboot) y
+   `desktop-doctor` (diagnóstico bspwm/sxhkd/polybar/cámara).
+
+**Consecuencias:**
+- **−3 compilaciones** (chadwm, eww, Ly) → instalación ~5 min más rápida, ~200 MB
+  menos en build-deps, cero red para compilar.
+- **Polybar 3.7.2** (C, en apt) reemplaza a eww v0.6.0 (Rust+webkitgtk, ~150–250 MB
+  RSS en runtime).
+- **startx** elimina display manager; usuario hace `startx` desde TTY o configura
+  auto-login en `~/.bash_profile` / `getty@tty1`.
+- **Configuración idéntica a `/home/luc/Documentos/Bspwm`**: 5 workspaces, gaps 10px,
+  bordes 2px, keybindings completos, polybar modular con 12+ módulos, picom con
+  esquinas redondeadas, dunst top-center, rofi powermenu 6 acciones, kitty con
+  opacidad y tabs.
+- **Templates como fallback** garantizan instalación reproducible sin red ni repo
+  externo.
+- **Paleta Nord** aplicada a todos los componentes (bspwm borders, polybar, dunst,
+  rofi, picom, kitty).
+
+## ADR-023 — Barra polybar réplica exacta del diseño de referencia
+
+**Contexto:** El usuario tiene una captura de pantalla (EndeavourOS + bspwm + polybar)
+que quiere replicar píxel a píxel en Debian 13. El diseño del screenshot difiere
+de la config actual del repo Bspwm en varios puntos: fondo de barra `#0D1117` (no
+`#000`), logo U+F2DD en extremo izquierdo, workspaces 1-5 con dígitos árabes (no
+chinos), barra **arriba** (no abajo), sin subrayados visibles, altura ~26 px, y
+módulos `updates` + `polypomo` ya integrados. La plantilla actual no tenía
+`include-directory`, los módulos no se cargaban, y el módulo `bspwm` usaba
+iconos chinos.
+
+**Decisión:**
+1. **`config.ini.in` reescrito** con colores exactos del screenshot
+   (`background = #0D1117`, `foreground = #C9D1D9`), `height = 26`,
+   `bottom = false`, `wm-restack = bspwm`, `include-directory = @HOME@/.config/polybar/modules`.
+2. **13 módulos portados** tal cual del repo Bspwm (`modules/`), con glifos Nerd
+   Font idénticos: `logo`, `bspwm`, `updates`, `polypomo`, `temp`, `memory`,
+   `cpu`, `xkeyboard`, `eth`, `wlan`, `battery`, `pipewire`, `date`.
+3. **Módulos condicionales en render time** (`@WLAN_MODULE@`, `@BATTERY_MODULE@`)
+   — se omiten si no hay hardware, sin `sed` en `launch.sh`.
+4. **Módulo `bspwm` con `%name%`** (dígitos 1-5), enfocado = caja `#C9D1D9`/
+   `#0D1117` con padding 2.
+5. **`polypomo` vendorizado** en `templates/polybar/scripts/polypomo` (solo stdlib
+   Python 3). **`updates` reescrito a `apt-get -s upgrade`**.
+6. **`launch.sh` simplificado**: solo `killall` + `polybar -r main`; la detección
+   de hardware y la omisión de módulos ocurren en el render, no en runtime.
+7. **`bspc config top_padding = 26`** en `bspwmrc.in` (variable `@BAR_HEIGHT@`)
+   porque bspwm no respeta struts; así las ventanas no quedan bajo la barra.
+8. **`python3` añadido** a `BASE_PKGS` para polypomo.
+
+**Consecuencias:**
+- Barra visualmente indistinguible del screenshot (colores, iconos, logo, layout,
+  spacing).
+- Sin `format-underline` ni `format-background` → barra plana y limpia.
+- Glifo del logo U+F2DD (`fa-superpowers`) resuelto por JetBrainsMono Nerd Font
+  (Font Awesome 6 no existe en Debian).
+- Módulos `wlan`/`battery` desaparecen silenciosamente en desktop/VM sin hardware.
+- Próxima validación en VM: comparar `startx` + screenshot lado a lado; afinar
+  `pad`/`module-margin` si el espaciado no cuadra exactamente.

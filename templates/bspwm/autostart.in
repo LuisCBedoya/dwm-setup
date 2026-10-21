@@ -1,0 +1,49 @@
+#!/bin/sh
+# autostart — generado desde template, no editar directamente
+# Se ejecuta al iniciar bspwm (desde bspwmrc)
+
+set -eu
+
+# Esperar a que X esté listo
+sleep 0.5
+
+# --- Polybar ---
+# El script launch.sh detecta batería y elige config adecuada
+@HOME@/.config/polybar/launch.sh &
+
+# --- Notificaciones ---
+dunst &
+
+# --- Compositor ---
+picom --config @HOME@/.config/picom/picom.conf &
+
+# --- Wallpaper ---
+# xwallpaper (preferido) o feh fallback
+if command -v xwallpaper >/dev/null 2>&1; then
+  xwallpaper --zoom @WALLPAPER@ &
+elif command -v feh >/dev/null 2>&1; then
+  feh --bg-scale @WALLPAPER@ &
+fi
+
+# --- Montaje automático USB + notificaciones ---
+udiskie -N -a -t &
+
+# --- Bloqueo de pantalla (xss-lock + i3lock) ---
+xss-lock -- @HOME@/.local/bin/desktop-safe lock &
+
+# --- Notificador de batería baja (solo si hay batería) ---
+if [ -d "/sys/class/power_supply/@BATTERY@" ] 2>/dev/null; then
+  @HOME@/.config/bspwm/scripts/low_bat_notifier.sh &
+fi
+
+# --- Teclado ---
+setxkbmap @KEYMAP@ 2>/dev/null || true
+
+# --- Cursor ---
+xsetroot -cursor_name left_ptr &
+
+# --- Polkit agent (para autenticación GUI) ---
+/usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 &
+
+# --- Configuración de ratón (opcional) ---
+# xinput set-prop "pointer:..." "libinput Accel Speed" -0.5

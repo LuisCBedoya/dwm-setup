@@ -1,0 +1,128 @@
+#!/bin/sh
+# desktop-doctor — Diagnóstico del escritorio bspwm+polybar
+# Instalado en /usr/local/bin/desktop-doctor
+
+set -eu
+
+HOME="${HOME:-/home/$USER}"
+CONFIG="$HOME/.config"
+CACHE="$HOME/.cache"
+
+print_header() {
+  printf '\n=== %s ===\n' "$1"
+}
+
+check_cmd() {
+  if command -v "$1" >/dev/null 2>&1; then
+    printf '  [OK] %s\n' "$1"
+  else
+    printf '  [FALTA] %s\n' "$1"
+  fi
+}
+
+check_file() {
+  if [[ -f "$1" ]]; then
+    printf '  [OK] %s\n' "$1"
+  else
+    printf '  [FALTA] %s\n' "$1"
+  fi
+}
+
+check_dir() {
+  if [[ -d "$1" ]]; then
+    printf '  [OK] %s\n' "$1"
+  else
+    printf '  [FALTA] %s\n' "$1"
+  fi
+}
+
+# ─── Binarios ───
+print_header "Binarios esenciales"
+for c in bspwm sxhkd polybar picom dunst rofi kitty feh flameshot i3lock xss-lock \
+         brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pamixer wpctl xwallpaper playerctl; do
+  check_cmd "$c"
+done
+
+# ─── Configs ───
+print_header "Archivos de configuración"
+check_file "$CONFIG/bspwm/bspwmrc"
+check_file "$CONFIG/bspwm/scripts/autostart"
+check_file "$CONFIG/sxhkd/sxhkdrc"
+check_file "$CONFIG/polybar/config.ini"
+check_file "$CONFIG/polybar/launch.sh"
+check_file "$CONFIG/picom/picom.conf"
+check_file "$CONFIG/dunst/dunstrc"
+check_file "$CONFIG/rofi/powermenu.rasi"
+check_file "$CONFIG/kitty/kitty.conf"
+check_file "$HOME/.xinitrc"
+check_file "$HOME/.local/share/wallpapers/rocky.jpg"
+
+# ─── Servicios ───
+print_header "Servicios systemd"
+for s in udisks2 NetworkManager; do
+  status=$(systemctl is-enabled "$s" 2>/dev/null || true)
+  if [[ "$status" == "enabled" || "$status" == "static" ]]; then
+    printf '  [OK] %s (enabled)\n' "$s"
+  else
+    printf '  [WARN] %s (%s)\n' "$s" "$status"
+  fi
+done
+
+# ─── Hardware ───
+print_header "Hardware detectado"
+printf '  GPU: '
+lspci | grep -E 'VGA|3D' | head -1 | sed 's/.*: //' || printf 'desconocida\n'
+printf '  Audio: '
+pactl info 2>/dev/null | grep 'Server Name' | sed 's/.*: //' || printf 'no detectado\n'
+printf '  Cámaras: '
+if ls /dev/video* >/dev/null 2>&1; then
+  ls /dev/video* | tr '\n' ' '
+  printf '\n'
+else
+  printf 'ninguna\n'
+fi
+printf '  Batería: '
+if ls /sys/class/power_supply/BAT* >/dev/null 2>&1; then
+  ls /sys/class/power_supply/BAT* | xargs -n1 basename | tr '\n' ' '
+  printf '\n'
+else
+  printf 'ninguna\n'
+fi
+
+# ─── Procesos (si estamos en sesión gráfica) ───
+if [[ -n "$DISPLAY" ]] || [[ -n "$WAYLAND_DISPLAY" ]]; then
+  print_header "Procesos en sesión actual"
+  for p in bspwm sxhkd polybar picom dunst; do
+    if pgrep -x "$p" >/dev/null; then
+      printf '  [RUNNING] %s\n' "$p"
+    else
+      printf '  [STOPPED] %s\n' "$p"
+    fi
+  done
+fi
+
+# ─── Cámara (--camera) ───
+if [[ "${1:-}" == "--camera" ]]; then
+  print_header "Prueba de cámara"
+  if ! command -v v4l2-ctl >/dev/null 2>&1; then
+    printf '  v4l2-ctl no instalado\n'
+    exit 1
+  fi
+  for dev in /dev/video*; do
+    [[ -e "$dev" ]] || continue
+    printf '  Dispositivo: %s\n' "$dev"
+    v4l2-ctl --device="$dev" --list-formats-ext 2>/dev/null | head -20
+    # Intento de captura rápida
+    if command -v ffmpeg >/dev/null 2>&1; then
+      out="/tmp/test-cam-$(date +%s).jpg"
+      if ffmpeg -f v4l2 -i "$dev" -vframes 1 -y "$out" -loglevel error 2>/dev/null; then
+        printf '  Captura OK: %s (%s bytes)\n' "$out" "$(stat -c%s "$out" 2>/dev/null || echo '?')"
+        rm -f "$out"
+      else
+        printf '  Captura FALLÓ\n'
+      fi
+    fi
+  done
+fi
+
+printf '\n'

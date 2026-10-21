@@ -1,0 +1,20 @@
+#!/bin/sh
+# keybindings_rofi — muestra atajos de sxhkd en rofi
+
+sxhkd_keys="@HOME@/.config/sxhkd/sxhkdrc"
+
+if [ ! -f "$sxhkd_keys" ]; then
+  notify-send "Error" "No se encuentra $sxhkd_keys"
+  exit 1
+fi
+
+# Extraer comentarios y bindings, formatear para rofi
+awk '
+  /^#/ { desc=$0; gsub(/^# ?/, "", desc); next }
+  /^[^#]/ && desc {
+    gsub(/ +/, " ", $0)
+    print desc " :: " $0
+    desc=""
+  }
+  !/^[^#]/ && !/^#/ { desc="" }
+' "$sxhkd_keys" | rofi -dmenu -i -p "Atajos" -theme @HOME@/.config/rofi/powermenu.rasi -width 800

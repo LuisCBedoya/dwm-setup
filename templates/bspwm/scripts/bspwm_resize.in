@@ -1,0 +1,13 @@
+#!/bin/sh
+# bspwm_resize — helper para redimensionar ventanas con teclado
+# Uso: bspwm_resize <direccion>  (left|down|up|right)
+
+direction=$1
+step=20
+
+case $direction in
+  left)  bspc node -z left -$step 0 || bspc node -z right -$step 0 ;;
+  down)  bspc node -z bottom 0 $step || bspc node -z top 0 $step ;;
+  up)    bspc node -z top 0 -$step || bspc node -z bottom 0 -$step ;;
+  right) bspc node -z right $step 0 || bspc node -z left $step 0 ;;
+esac

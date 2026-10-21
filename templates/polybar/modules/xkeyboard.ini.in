@@ -1,0 +1,9 @@
+; xkeyboard — layout de teclado
+[module/xkeyboard]
+type = internal/xkeyboard
+blacklist-0 = num lock
+format = <label>
+format-padding = 6
+format-foreground = ${colors.foreground}
+label = "\uf11c %layout%"
+label-font = 0
