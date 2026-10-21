@@ -234,7 +234,16 @@ init_logging() {
     chown -R "$TARGET_USER:$TARGET_GROUP" "$log_dir" 2>/dev/null || true
   fi
   LOG_FILE="$log_dir/install-$(timestamp).log"
-  : >"$LOG_FILE"
+  : >"$LOG_FILE" 2>/dev/null || {
+    # Fallback a ~/.cache si ~/.local/state falla
+    log_dir="$log_home/.cache/dwm-setup"
+    mkdir -p -- "$log_dir" 2>/dev/null || true
+    if [[ "$EUID" -eq 0 && -n "$TARGET_USER" ]]; then
+      chown -R "$TARGET_USER:$TARGET_GROUP" "$log_dir" 2>/dev/null || true
+    fi
+    LOG_FILE="$log_dir/install-$(timestamp).log"
+    : >"$LOG_FILE" || die "No se pudo crear archivo de log en $LOG_FILE"
+  }
   if [[ "$EUID" -eq 0 && -n "$TARGET_USER" ]]; then
     chown "$TARGET_USER:$TARGET_GROUP" "$LOG_FILE" 2>/dev/null || true
   fi

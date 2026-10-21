@@ -84,12 +84,13 @@ theme_var() {
   printf '%s' "$val"
 }
 
-# Renderiza un template reemplazando @COLOR_VAR@ por su valor
-# Uso: render_theme_template "input.in" "output" [perms]
+# Renderiza un template reemplazando @COLOR_VAR@ y @VAR@ por su valor
+# Uso: render_theme_template "input.in" "output" [perms] [HOME=... FONT=... FONT_SIZE=... KEYMAP=... WALLPAPER=... RESOLUTION=...]
 render_theme_template() {
   local input="$1"
   local output="$2"
   local perms="${3:-0644}"
+  shift 3 || true
 
   if dry_run; then
     log "[dry-run] render_theme_template $input -> $output"
@@ -116,6 +117,14 @@ render_theme_template() {
 
   # También reemplazar @THEME_NAME@
   content="${content//@THEME_NAME@/$THEME_NAME}"
+
+  # Reemplazar variables de entorno/plantilla extra
+  local extra_var extra_val
+  for arg in "$@"; do
+    extra_var="${arg%%=*}"
+    extra_val="${arg#*=}"
+    content="${content//@${extra_var}@/$extra_val}"
+  done
 
   run_root install -D -m "$perms" /dev/stdin "$output" <<<"$content"
   ok "Renderizado: $output"
@@ -238,7 +247,8 @@ generate_eww_scss() {
     return 0
   fi
 
-  render_theme_template "$template" "$output" 0644
+  render_theme_template "$template" "$output" 0644 \
+    HOME="$TARGET_HOME"
 }
 
 # Genera vars.yuck para eww
@@ -261,7 +271,8 @@ generate_eww_vars() {
     return 0
   fi
 
-  render_theme_template "$template" "$output" 0644
+  render_theme_template "$template" "$output" 0644 \
+    HOME="$TARGET_HOME"
 }
 
 # Genera dunstrc para dunst
@@ -396,7 +407,13 @@ generate_chadwm_config_h() {
 
   # El template config.h.in usa @COLOR_*@ para colores
   # y @FONT@, @FONT_SIZE@, @KEYMAP@, @HOME@ para otros
-  render_theme_template "$template" "$output_file" 0644
+  render_theme_template "$template" "$output_file" 0644 \
+    HOME="$TARGET_HOME" \
+    FONT="$DWM_FONT" \
+    FONT_SIZE="$DWM_FONT_SIZE" \
+    KEYMAP="$DWM_KEYMAP" \
+    WALLPAPER="$TARGET_HOME/.local/share/wallpapers/rocky.jpg" \
+    RESOLUTION="$DWM_RESOLUTION"
 }
 
 # Genera TODO lo necesario para un tema

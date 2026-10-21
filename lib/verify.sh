@@ -44,6 +44,9 @@ verify_install() {
     "$home/.config/dwm/eww/scripts/network" \
     "$home/.config/dwm/eww/scripts/energy" \
     "$home/.config/dwm/eww/scripts/nightlight" \
+    "$home/.config/dwm/eww/scripts/cpu" \
+    "$home/.config/dwm/eww/scripts/ram" \
+    "$home/.config/dwm/eww/scripts/disk" \
     "$home/.local/share/wallpapers/rocky.jpg" \
     "$home/.local/share/xorg" \
     "/usr/share/xsessions/dwm.desktop" \
@@ -57,6 +60,12 @@ verify_install() {
       failures=$((failures + 1))
     fi
   done
+
+  # Detectar anidado accidental scripts/scripts (bug cp -a)
+  if [[ -d "$home/.config/dwm/eww/scripts/scripts" ]]; then
+    error "Directorio anidado detectado: $home/.config/dwm/eww/scripts/scripts (reinstale para corregir)"
+    failures=$((failures + 1))
+  fi
 
   if [[ -x "$home/.config/dwm/run.sh" && -x "$home/.config/dwm/scripts/bar.sh" ]]; then
     debug "ok: scripts ejecutables"

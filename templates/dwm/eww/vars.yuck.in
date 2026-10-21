@@ -25,6 +25,9 @@
 (defvar color-accent-rgba-30 "@COLOR_ACCENT_RGBA_30@")
 (defvar color-border-rgba-50 "@COLOR_BORDER_RGBA_50@")
 
+;; Eww command y rutas
+(defvar EWW_CMD "eww -c @HOME@/.config/dwm/eww")
+
 ;; Espaciado y dimensiones
 (defvar spacing-xs 4)
 (defvar spacing-sm 8)
@@ -46,15 +49,34 @@
 (defvar shadow-offset-y 8)
 
 ;; Transiciones
-(defvar transition-fast 150ms)
-(defvar transition-normal 250ms)
-(defvar transition-slow 350ms)
+(defvar transition-fast "150ms")
+(defvar transition-normal "250ms")
+(defvar transition-slow "350ms")
 
 ;; Panel lateral (control center)
 (defvar panel-width 340)
-(defvar panel-height 100%)
+(defvar panel-height "100%")
 
 ;; Gauges circulares
 (defvar gauge-size 80)
 (defvar gauge-stroke-width 6)
 (defvar gauge-gap 2)
+
+;; Polls para datos del sistema (ejecutan scripts cada N segundos)
+(defpoll time :interval "1s" "date +'%H:%M'")
+(defpoll date :interval "60s" "date +'%a %d %b'")
+(defpoll longdate :interval "60s" "date +'%A, %d de %B de %Y'")
+(defpoll user :interval "3600s" "whoami")
+(defpoll host :interval "3600s" "hostname")
+(defpoll uptime :interval "60s" "@HOME@/.config/dwm/eww/scripts/uptime")
+(defpoll temp :interval "2s" "@HOME@/.config/dwm/eww/scripts/temp")
+(defpoll volume :interval "1s" "@HOME@/.config/dwm/eww/scripts/volume")
+(defpoll brightness :interval "1s" "@HOME@/.config/dwm/eww/scripts/brightness")
+(defpoll wifi :interval "5s" "@HOME@/.config/dwm/eww/scripts/wifi")
+(defpoll battery :interval "60s" "@HOME@/.config/dwm/eww/scripts/battery")
+(defpoll updates :interval "1800s" "@HOME@/.config/dwm/eww/scripts/updates")
+
+;; CPU, RAM, Disk polls para census/widgets
+(defpoll cpu :interval "2s" "@HOME@/.config/dwm/eww/scripts/cpu")
+(defpoll ram :interval "2s" "@HOME@/.config/dwm/eww/scripts/ram")
+(defpoll disk :interval "5s" "@HOME@/.config/dwm/eww/scripts/disk")

@@ -12,13 +12,6 @@ if [ -r "$DWM_CONFIG/environment" ]; then
   . "$DWM_CONFIG/environment"
 fi
 
-# Cargar paleta de colores (para scripts que la necesiten)
-if [ -r "$PROJECT_ROOT/templates/colors/base.sh" ]; then
-  . "$PROJECT_ROOT/templates/colors/base.sh"
-elif [ -r "/usr/local/share/dwm-setup/colors/base.sh" ]; then
-  . "/usr/local/share/dwm-setup/colors/base.sh"
-fi
-
 WALLPAPER="${DWM_WALLPAPER:-$HOME/.local/share/wallpapers/rocky.jpg}"
 export DWM_WALLPAPER="$WALLPAPER"
 mkdir -p "$DWM_CACHE"

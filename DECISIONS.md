@@ -248,3 +248,50 @@ conservan solo para automatización avanzada y no se necesitan en uso normal.
 **Consecuencias:** la instalación es más corta de explicar y menos propensa a
 errores. Las flags avanzadas siguen disponibles para pruebas y automatización,
 pero no se anuncian como parte del flujo normal.
+
+## ADR-020 — Sistema de temas con paletas (`templates/colors/`, `lib/theme.sh`)
+
+**Contexto:** el prototipo usaba `themes/gruvchad.h` hardcodeado en `config.h`.
+El usuario quiere una paleta monocromática "Monolith" y mantener Gruvbox como
+fallback, sin recompilar chadwm cada vez que se cambia un color.
+
+**Decisión:**
+- Paletas en `templates/colors/palette-<name>.sh` (formato HEX `#rrggbb`).
+- `lib/theme.sh` carga la paleta, exporta helpers RGBA, y tiene generadores:
+  `generate_bar_theme`, `generate_rofi_colors`, `generate_eww_scss`,
+  `generate_eww_vars`, `generate_dunstrc`, `generate_picom_conf`,
+  `generate_kitty_theme`, `generate_chadwm_config_h`.
+- Plantillas `.in` con placeholders `@COLOR_*@`, `@THEME_NAME@`,
+  `@HOME@`, `@FONT@`, `@FONT_SIZE@`, `@KEYMAP@`, `@WALLPAPER@`,
+  `@RESOLUTION@` → renderizadas en instalación.
+- Flag `--theme <monolith|gruvbox>` en `install.sh`; default `monolith`.
+- `config.h.in` ya no incluye `themes/gruvchad.h`; colores inline.
+
+**Consecuencias:**
+- Cambiar el tema no requiere recompilar chadwm salvo `config.h` (se hace en
+  `build_dwm` vía `generate_chadwm_config_h`).
+- Todos los componentes (barra, rofi, eww, dunst, picom, kitty) usan la misma
+  paleta de forma consistente.
+- El dry-run muestra los assets generados.
+- `pamixer` sustituye a `pactl`; `xwallpaper` a `feh`; `playerctl` para MPRIS.
+
+## ADR-021 — Widgets eww completos en fase 1 (música, bluetooth, energía, nightlight)
+
+**Contexto:** `AGENTS.md` excluye música, Bluetooth, reproductores y Bluetooth de
+la fase 1. El usuario aprobó implementar los widgets con funcionalidad real
+(stubs no aceptados), degradando a `N/A` si falta el paquete.
+
+**Decisión:**
+- Añadir `bluez` y `redshift` a `DESKTOP_PKGS` (dependencias reales, opcionales
+  en runtime: los scripts devuelven "Off"/"N/A" si el demonio no corre).
+- Scripts nuevos: `music` (playerctl/mpc), `bluetooth` (bluetoothctl),
+  `network` (nmcli), `energy` (powerprofilesctl/auto-cpufreq/tuned/cpufreq),
+  `nightlight` (redshift).
+- Polls en `vars.yuck.in` para CPU/RAM/Disk (`cpu`, `ram`, `disk` scripts JSON).
+- Variables de color desde `vars.yuck` (sin hardcodear hex en `widgets.yuck`).
+
+**Consecuencias:**
+- La fase 1 incluye control center funcional completo; no hay stubs.
+- Si `bluez`/`redshift` no están instalados, los widgets muestran "Off" sin
+  romper eww.
+- `DECISIONS.md` registra la excepción explícita a `AGENTS.md`.

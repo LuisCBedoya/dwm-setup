@@ -44,6 +44,7 @@ DESKTOP_PKGS=(
   picom dunst rofi feh kitty flameshot i3lock xss-lock
   brightnessctl xclip pcmanfm
   xwallpaper playerctl
+  bluez redshift
 )
 
 NETWORK_PKGS=(network-manager network-manager-gnome dbus-user-session dbus-x11)

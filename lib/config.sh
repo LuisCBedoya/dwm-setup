@@ -44,7 +44,8 @@ install_user_configs() {
 
   # Scripts de sesión
   run_root install -D -m 0755 "$PROJECT_ROOT/templates/dwm/run.sh" "$home/.config/dwm/run.sh"
-  run_root install -D -m 0755 "$PROJECT_ROOT/templates/dwm/scripts/bar.sh" "$home/.config/dwm/scripts/bar.sh"
+  render_theme_template "$PROJECT_ROOT/templates/dwm/scripts/bar.sh" "$home/.config/dwm/scripts/bar.sh" 0755 \
+    THEME_NAME="$theme"
   # Bar theme para el tema actual
   run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/scripts/bar_themes/$theme" "$home/.config/dwm/scripts/bar_themes/$theme"
   # También instalar gruvchad como fallback
@@ -62,8 +63,9 @@ install_user_configs() {
   run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/eww/vars.yuck" "$home/.config/dwm/eww/vars.yuck"
   run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/eww/widgets.yuck" "$home/.config/dwm/eww/widgets.yuck"
   run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/eww/eww.scss" "$home/.config/dwm/eww/eww.scss"
-  run_root cp -a "$PROJECT_ROOT/templates/dwm/eww/scripts" "$home/.config/dwm/eww/scripts"
-  run_root chmod 0755 "$home/.config/dwm/eww/scripts/"* 2>/dev/null || true
+  for f in "$PROJECT_ROOT/templates/dwm/eww/scripts"/*; do
+    run_root install -D -m 0755 "$f" "$home/.config/dwm/eww/scripts/$(basename "$f")"
+  done
 
   # Environment
   install_template_user 0644 "$PROJECT_ROOT/templates/dwm/environment.in" "$home/.config/dwm/environment" \

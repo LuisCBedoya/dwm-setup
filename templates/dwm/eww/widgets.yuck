@@ -79,9 +79,9 @@
       (label :class "clock" :text "${time}")
       (label :class "date" :text "${date}"))
     (box :class "dash-stats" :orientation "v" :spacing 8
-      (statbar :icon "󰻠" :label "CPU" :value "${EWW_CPU.avg}" :color color-accent)
-      (statbar :icon "󰍛" :label "RAM" :value "${EWW_RAM.used_mem_perc}" :color color-accent-alt)
-      (statbar :icon "󰋊" :label "DISK" :value "${EWW_DISK['/'].used_perc}" :color color-yellow))
+      (statbar :icon "󰻠" :label "CPU" :value "${cpu.avg}" :color color-accent)
+      (statbar :icon "󰍛" :label "RAM" :value "${ram.used_mem_perc}" :color color-accent-alt)
+      (statbar :icon "󰋊" :label "DISK" :value "${disk['/'].used_perc}" :color color-yellow))
     (box :class "dash-actions" :orientation "h" :spacing 8
       (action :icon "󰆍" :command "kitty &")
       (action :icon "󰉋" :command "pcmanfm &")
@@ -138,10 +138,10 @@
     (box :class "census-grid" :orientation "v" :spacing 8
       (box :class "census-row" :orientation "h" :spacing 8
         (gauge :value "${temp}" :label "CPU TEMP" :icon "󰔏")
-        (gauge :value "${EWW_RAM.used_mem_perc}" :label "RAM" :icon "󰍛"))
+        (gauge :value "${ram.used_mem_perc}" :label "RAM" :icon "󰍛"))
       (box :class "census-row" :orientation "h" :spacing 8
-        (gauge :value "${EWW_DISK['/'].used_perc}" :label "DISK" :icon "󰋊")
-        (gauge :value "${EWW_CPU.avg}" :label "CPU" :icon "󰻠"))
+        (gauge :value "${disk['/'].used_perc}" :label "DISK" :icon "󰋊")
+        (gauge :value "${cpu.avg}" :label "CPU" :icon "󰻠"))
     )
     (box :class "census-foot" :orientation "v"
       (label :text "WiFi: ${wifi}")

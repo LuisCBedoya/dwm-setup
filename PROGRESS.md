@@ -1,12 +1,13 @@
 # Progreso — fase 1
 
-Última actualización: 2026-10-20
+Última actualización: 2026-10-21
 
 ## Resumen
 
-El código de la fase 1 está implementado. Los checks estáticos y de configuración
-locales han pasado, pero la instalación **no** se ha ejecutado todavía en una VM
-Debian 13 minimal ni en el hardware de referencia. Por tanto:
+El código de la fase 1 está implementado con sistema de temas completo. Los checks
+estáticos y de configuración locales han pasado, pero la instalación **no** se ha
+ejecutado todavía en una VM Debian 13 minimal ni en el hardware de referencia.
+Por tanto:
 
 - Estado del código: implementado; `bash -n`, `--dry-run` y validaciones locales
   de configuración pasan.
@@ -73,6 +74,18 @@ Debian 13 minimal ni en el hardware de referencia. Por tanto:
 - [x] `PLAN.md` marcado como obsoleto.
 - [x] Prototipo antiguo movido a `legacy/`.
 - [x] Fuentes de chadwm y eww vendorizadas en el repositorio, sin submódulos.
+- [x] **Sistema de temas** (`templates/colors/`, `lib/theme.sh`, `--theme` flag,
+      paletas Monolith/Gruvbox, generadores bar/rofi/eww/dunst/picom/kitty/chadwm).
+- [x] **Widgets eww completos** (music, bluetooth, network, energy, nightlight,
+      cpu/ram/disk polls JSON, `vars.yuck` con colores y polls, `widgets.yuck`
+      usando variables).
+- [x] `pamixer`/`xwallpaper`/`playerctl` en lugar de `pactl`/`feh`.
+- [x] Fix `cp -a` anidado en `lib/config.sh` (copia por archivo a `install -D`).
+- [x] Fix `config.h` placeholders (`@HOME@`, `@FONT@`, `@FONT_SIZE@`,
+      `@KEYMAP@`) renderizados en `generate_chadwm_config_h`.
+- [x] Fix `bar.sh` `@THEME_NAME@` renderizado en `install_user_configs`.
+- [x] `init_logging` con fallback a `~/.cache/dwm-setup` y validación de log.
+- [x] `lib/verify.sh` detecta anidado `eww/scripts/scripts`.
 
 ## Checklist de validación
 

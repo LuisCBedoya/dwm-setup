@@ -1,0 +1,23 @@
+#!/bin/sh
+# Obtiene info de disco para /
+# Formato: JSON { "/": { "used_perc": 45, "used_human": "120G", "total_human": "256G" } }
+
+df_out=$(df -B1 / 2>/dev/null | awk 'NR==2 {print $2, $3, $4, $5}')
+if [ -z "$df_out" ]; then
+    printf '{}'
+    exit 0
+fi
+
+total=$(echo "$df_out" | awk '{print $1}')
+used=$(echo "$df_out" | awk '{print $2}')
+
+if [ "$total" -gt 0 ]; then
+    perc=$((used * 100 / total))
+else
+    perc=0
+fi
+
+used_human=$(echo "$used" | awk '{split("B KB MB GB TB", u); for(i=1; $1>=1024 && i<5; i++) $1/=1024; printf "%.1f%s", $1, u[i]}')
+total_human=$(echo "$total" | awk '{split("B KB MB GB TB", u); for(i=1; $1>=1024 && i<5; i++) $1/=1024; printf "%.1f%s", $1, u[i]}')
+
+printf '{\"/\":{"used_perc":%d,"used_human":"%s","total_human":"%s"}}\n' "$perc" "$used_human" "$total_human"
