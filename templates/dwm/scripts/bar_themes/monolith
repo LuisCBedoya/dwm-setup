@@ -1,0 +1,33 @@
+# Tema barra status2d: monolith (generado automáticamente)
+# No editar directamente; modificar templates/colors/palette-monolith.sh
+
+BG="#151518"
+FG="#d8d4cc"
+ACCENT="#b4a7d6"
+ACCENT_ALT="#8fa8c8"
+GREEN="#9eb88a"
+YELLOW="#d8c08a"
+ORANGE="#d09a72"
+RED="#c97f7f"
+CYAN="#8fbfc7"
+MUTED="#8a8a92"
+DIM="#5c5c64"
+BORDER="#2b2b32"
+
+# Para status2d (^c^b^ formato)
+C_BG="^c${BG}^"
+C_FG="^c${FG}^"
+C_ACCENT="^c${ACCENT}^"
+C_ACCENT_ALT="^c${ACCENT_ALT}^"
+C_GREEN="^c${GREEN}^"
+C_YELLOW="^c${YELLOW}^"
+C_ORANGE="^c${ORANGE}^"
+C_RED="^c${RED}^"
+C_CYAN="^c${CYAN}^"
+C_MUTED="^c${MUTED}^"
+C_DIM="^c${DIM}^"
+C_BORDER="^c${BORDER}^"
+
+B_BG="^b${BG}^"
+B_FG="^b${FG}^"
+B_ACCENT="^b${ACCENT}^"

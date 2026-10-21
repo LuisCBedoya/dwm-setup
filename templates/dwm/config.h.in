@@ -3,8 +3,8 @@
 #include <X11/XF86keysym.h>
 
 /* appearance */
-static const unsigned int borderpx  = 1;
-static const unsigned int default_border = 1;
+static const unsigned int borderpx  = 2;
+static const unsigned int default_border = 2;
 static const unsigned int snap      = 16;
 static const unsigned int gappih    = 8;
 static const unsigned int gappiv    = 8;
@@ -36,32 +36,69 @@ static const int new_window_attach_on_end = 0;
 
 static const char *fonts[]          = { "@FONT@:size=@FONT_SIZE@:style=Medium" };
 
-/* Tema Gruvbox Material */
-#include "themes/gruvchad.h"
+/* Colores del tema (@THEME_NAME@) — renderizados desde palette-@THEME_NAME@.sh */
+static const char normbgcolor[]      = "@COLOR_BG_ALT@";
+static const char normfgcolor[]      = "@COLOR_FG@";
+static const char normbordercolor[]  = "@COLOR_BORDER@";
+static const char normfloatcolor[]   = "@COLOR_BORDER@";
+
+static const char selfgcolor[]       = "@COLOR_BG@";
+static const char selbgcolor[]       = "@COLOR_ACCENT@";
+static const char selbordercolor[]   = "@COLOR_ACCENT@";
+static const char selfloatcolor[]    = "@COLOR_ACCENT@";
+
+static const char titlenormfgcolor[] = "@COLOR_FG@";
+static const char titlenormbgcolor[] = "@COLOR_BG_ALT@";
+static const char titlenormborder[]  = "@COLOR_BORDER@";
+static const char titleselfgcolor[]  = "@COLOR_BG@";
+static const char titleselbgcolor[]  = "@COLOR_ACCENT@";
+static const char titleselborder[]   = "@COLOR_ACCENT@";
+
+static const char tagsnormfgcolor[]  = "@COLOR_FG_MUTED@";
+static const char tagsnormbgcolor[]  = "@COLOR_BG_ALT@";
+static const char tagsnormborder[]   = "@COLOR_BORDER@";
+static const char tagsselfgcolor[]   = "@COLOR_BG@";
+static const char tagsselbgcolor[]   = "@COLOR_ACCENT@";
+static const char tagsselborder[]    = "@COLOR_ACCENT@";
+
+static const char hidnormfgcolor[]   = "@COLOR_FG_DIM@";
+static const char hidnormbgcolor[]   = "@COLOR_BG_ALT@";
+static const char hidselfgcolor[]    = "@COLOR_FG@";
+static const char hidselbgcolor[]    = "@COLOR_BG_ELEV@";
+
+static const char urgfgcolor[]       = "@COLOR_BG@";
+static const char urgbgcolor[]       = "@COLOR_RED@";
+static const char urgbordercolor[]   = "@COLOR_RED@";
 
 static const char *colors[][3] = {
-    [SchemeNorm]       = { gray3,   black,  gray2 },
-    [SchemeSel]        = { gray4,   blue,   gray3  },
-    [SchemeTitle]      = { white,   black,  black  },
-    [TabSel]           = { blue,    gray2,  black  },
-    [TabNorm]          = { gray3,   black,  black  },
-    [SchemeTag]        = { gray3,   black,  black  },
-    [SchemeTag1]       = { blue,    black,  black  },
-    [SchemeTag2]       = { red,     black,  black  },
-    [SchemeTag3]       = { orange,  black,  black  },
-    [SchemeTag4]       = { green,   black,  black  },
-    [SchemeTag5]       = { pink,    black,  black  },
-    [SchemeLayout]     = { green,   black,  black  },
-    [SchemeBtnPrev]    = { green,   black,  black  },
-    [SchemeBtnNext]    = { yellow,  black,  black  },
-    [SchemeBtnClose]   = { red,     black,  black  },
+    /*               fg          bg          border   */
+    [SchemeNorm]  = { normfgcolor,  normbgcolor,  normbordercolor },
+    [SchemeSel]   = { selfgcolor,   selbgcolor,   selbordercolor },
+    [SchemeTitle]= { titlenormfgcolor, titlenormbgcolor, titlenormborder },
+    [SchemeTag]  = { tagsnormfgcolor, tagsnormbgcolor, tagsnormborder },
+    [SchemeTag1] = { "@COLOR_ACCENT@", tagsnormbgcolor, tagsnormborder },
+    [SchemeTag2] = { "@COLOR_RED@", tagsnormbgcolor, tagsnormborder },
+    [SchemeTag3] = { "@COLOR_ORANGE@", tagsnormbgcolor, tagsnormborder },
+    [SchemeTag4] = { "@COLOR_GREEN@", tagsnormbgcolor, tagsnormborder },
+    [SchemeTag5] = { "@COLOR_ACCENT_ALT@", tagsnormbgcolor, tagsnormborder },
+    [SchemeLayout]= { "@COLOR_GREEN@", tagsnormbgcolor, tagsnormborder },
+    [SchemeBtnPrev]= { "@COLOR_GREEN@", tagsnormbgcolor, tagsnormborder },
+    [SchemeBtnNext]= { "@COLOR_YELLOW@", tagsnormbgcolor, tagsnormborder },
+    [SchemeBtnClose]= { "@COLOR_RED@", tagsnormbgcolor, tagsnormborder },
+    [SchemeHid]   = { hidnormfgcolor, hidnormbgcolor, normbordercolor },
+    [SchemeHidSel]= { hidselfgcolor, hidselbgcolor, normbordercolor },
+    [SchemeUrg]   = { urgfgcolor, urgbgcolor, urgbordercolor },
 };
 
 /* tagging */
 static char *tags[] = { "[cmd]", "[www]", "[dev]", "[chat]", "[sys]", "[med]" };
 
-/* eww: dashboard */
+/* eww: dashboard, control, calendar, census, power */
 static const char *eww[] = { "/usr/local/bin/eww", "-c", "@HOME@/.config/dwm/eww", "open", "--toggle", "dashboard", NULL };
+static const char *eww_control[] = { "/usr/local/bin/eww", "-c", "@HOME@/.config/dwm/eww", "open", "--toggle", "control", NULL };
+static const char *eww_calendar[] = { "/usr/local/bin/eww", "-c", "@HOME@/.config/dwm/eww", "open", "--toggle", "calendar", NULL };
+static const char *eww_census[] = { "/usr/local/bin/eww", "-c", "@HOME@/.config/dwm/eww", "open", "--toggle", "census", NULL };
+static const char *eww_power[] = { "/usr/local/bin/eww", "-c", "@HOME@/.config/dwm/eww", "open", "--toggle", "power", NULL };
 
 static const Launcher launchers[] = {
     { eww, "󰕮" },
@@ -80,6 +117,8 @@ static const int ulineall               = 0;
 static const Rule rules[] = {
     { "eww",      NULL,       NULL,       0,            0,           1,           -1 },
     { "feh",      NULL,       NULL,       0,            0,           1,           -1 },
+    { "Rofi",     NULL,       NULL,       0,            0,           1,           -1 },
+    { "Dunst",    NULL,       NULL,       0,            0,           1,           -1 },
 };
 
 /* layout(s) */
@@ -120,30 +159,31 @@ static const Layout layouts[] = {
 #define SHCMD(cmd) { .v = (const char*[]){ "/bin/sh", "-c", cmd, NULL } }
 
 /* comandos */
-static const char *upvol[]   = { "/usr/bin/pactl", "set-sink-volume", "@DEFAULT_SINK@", "+5%", NULL };
-static const char *downvol[] = { "/usr/bin/pactl", "set-sink-volume", "@DEFAULT_SINK@", "-5%", NULL };
-static const char *mutevol[] = { "/usr/bin/pactl", "set-sink-mute",   "@DEFAULT_SINK@", "toggle", NULL };
+static const char *upvol[]   = { "/usr/bin/pamixer", "--increase", "5", NULL };
+static const char *downvol[] = { "/usr/bin/pamixer", "--decrease", "5", NULL };
+static const char *mutevol[] = { "/usr/bin/pamixer", "--toggle-mute", NULL };
 static const char *light_up[] = { "/usr/bin/brightnessctl", "set", "10%+", NULL };
 static const char *light_down[] = { "/usr/bin/brightnessctl", "set", "10%-", NULL };
 
 static const char *termcmd[]  = { "kitty", NULL };
-static const char *dmenucmd[] = { "rofi", "-show", "drun", "-theme", "@HOME@/.config/dwm/rofi/gruvbox.rasi", NULL };
+static const char *dmenucmd[] = { "rofi", "-show", "drun", "-config", "@HOME@/.config/dwm/rofi/config.rasi", NULL };
 static const char *shotcmd[] = { "flameshot", "gui", NULL };
 static const char *filescmd[] = { "pcmanfm", NULL };
 static const char *lockcmd[] = { "/usr/local/bin/dwm-safe", "lock", NULL };
 
 static const Key keys[] = {
-    /* volumen y brillo */
-    { 0, XK_F1, spawn, {.v = downvol} },
-    { 0, XK_F2, spawn, {.v = upvol} },
-    { 0, XK_F3, spawn, {.v = mutevol} },
-    { 0, XK_F11, spawn, {.v = light_down} },
-    { 0, XK_F12, spawn, {.v = light_up} },
+    /* volumen y brillo (teclas multimedia) */
     { 0, XF86XK_AudioLowerVolume, spawn, {.v = downvol} },
     { 0, XF86XK_AudioRaiseVolume, spawn, {.v = upvol} },
     { 0, XF86XK_AudioMute, spawn, {.v = mutevol} },
     { 0, XF86XK_MonBrightnessDown, spawn, {.v = light_down} },
     { 0, XF86XK_MonBrightnessUp, spawn, {.v = light_up} },
+    /* fallback F-keys (algunos teclados) */
+    { 0, XK_F1, spawn, {.v = downvol} },
+    { 0, XK_F2, spawn, {.v = upvol} },
+    { 0, XK_F3, spawn, {.v = mutevol} },
+    { 0, XK_F11, spawn, {.v = light_down} },
+    { 0, XK_F12, spawn, {.v = light_up} },
 
     /* terminales y apps */
     { MODKEY, XK_Return, spawn, {.v = termcmd} },
@@ -152,11 +192,13 @@ static const Key keys[] = {
     { MODKEY, XK_e, spawn, {.v = filescmd} },
     { MODKEY|ShiftMask, XK_p, spawn, {.v = filescmd} },
     { MODKEY|ShiftMask, XK_l, spawn, {.v = lockcmd} },
-    { MODKEY, XK_grave, spawn, SHCMD("/usr/local/bin/eww -c @HOME@/.config/dwm/eww open --toggle dashboard") },
-    { MODKEY, XK_c, spawn, SHCMD("/usr/local/bin/eww -c @HOME@/.config/dwm/eww open --toggle control") },
-    { MODKEY|ShiftMask, XK_c, spawn, SHCMD("/usr/local/bin/eww -c @HOME@/.config/dwm/eww open --toggle calendar") },
-    { MODKEY|ShiftMask, XK_x, spawn, SHCMD("/usr/local/bin/eww -c @HOME@/.config/dwm/eww open --toggle census") },
-    { MODKEY, XK_Escape, spawn, SHCMD("/usr/local/bin/eww -c @HOME@/.config/dwm/eww open --toggle power") },
+
+    /* eww windows */
+    { MODKEY, XK_grave, spawn, {.v = eww} },
+    { MODKEY, XK_c, spawn, {.v = eww_control} },
+    { MODKEY|ShiftMask, XK_c, spawn, {.v = eww_calendar} },
+    { MODKEY|ShiftMask, XK_x, spawn, {.v = eww_census} },
+    { MODKEY, XK_Escape, spawn, {.v = eww_power} },
 
     /* barra y foco */
     { MODKEY, XK_b, togglebar, {0} },

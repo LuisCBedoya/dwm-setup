@@ -1,0 +1,27 @@
+#!/bin/sh
+# Info detallada de red
+# Para uso en eww
+
+# WiFi
+wifi_ssid=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2)
+wifi_signal=$(nmcli -t -f active,signal dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2)
+
+# Ethernet
+eth_state=$(nmcli -t -f device,state dev 2>/dev/null | grep ':connected$' | grep -E '^eth|^enp' | head -1 | cut -d: -f1)
+
+output=""
+if [ -n "$wifi_ssid" ]; then
+    signal_icon="󰤯"
+    [ "$wifi_signal" -ge 75 ] && signal_icon="󰤨"
+    [ "$wifi_signal" -ge 50 ] && [ "$wifi_signal" -lt 75 ] && signal_icon="󰤥"
+    [ "$wifi_signal" -ge 25 ] && [ "$wifi_signal" -lt 50 ] && signal_icon="󰤢"
+    [ "$wifi_signal" -lt 25 ] && signal_icon="󰤟"
+    output="${signal_icon} ${wifi_ssid}"
+fi
+
+if [ -n "$eth_state" ]; then
+    [ -n "$output" ] && output="${output} · "
+    output="${output}󰈀 ${eth_state}"
+fi
+
+[ -n "$output" ] && echo "$output" || echo "󰖪 Sin conexión"

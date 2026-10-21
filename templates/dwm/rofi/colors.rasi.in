@@ -1,0 +1,19 @@
+/* Rofi colors for @THEME_NAME@ theme */
+/* Generated from palette-@THEME_NAME@.sh — do not edit directly */
+
+* {
+    /* Colores base */
+    background:     @COLOR_BG_ELEV@;
+    foreground:     @COLOR_FG@;
+    selected:       @COLOR_BG_HOVER@;
+    accent:         @COLOR_ACCENT@;
+    border:         @COLOR_BORDER@;
+
+    /* Estados */
+    urgent:         @COLOR_RED@;
+    active:         @COLOR_ACCENT@;
+    normal:         @COLOR_FG_MUTED@;
+
+    /* Transparencias */
+    background-alpha: 0.95;
+}

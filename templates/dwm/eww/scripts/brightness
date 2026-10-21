@@ -1,8 +1,10 @@
 #!/bin/sh
-cur=$(brightnessctl get 2>/dev/null)
-max=$(brightnessctl max 2>/dev/null)
-if [ -n "$cur" ] && [ -n "$max" ] && [ "$max" -gt 0 ]; then
-  echo $((cur * 100 / max))
-else
-  echo 0
-fi
+# Obtiene brillo actual (0-100)
+# Usa brightnessctl
+
+# Intentar con el primer dispositivo de backlight
+b=$(brightnessctl -m -d "$(brightnessctl -l | head -n1 | cut -d: -f1)" get 2>/dev/null) || b=0
+# brightnessctl -m devuelve "device,class,current,max,percent%"
+b=$(echo "$b" | cut -d, -f5 | tr -d '%')
+[ -n "$b" ] || b=0
+echo "$b"

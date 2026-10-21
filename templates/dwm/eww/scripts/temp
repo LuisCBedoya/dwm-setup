@@ -1,9 +1,16 @@
 #!/bin/sh
-max=0
-for z in /sys/class/thermal/thermal_zone*/temp; do
-  [ -r "$z" ] || continue
-  t=$(cat "$z" 2>/dev/null)
-  [ -n "$t" ] || continue
-  [ "$t" -gt "$max" ] 2>/dev/null && max=$t
+# Obtiene temperatura CPU
+# Para uso en eww census
+
+# Intentar con thermal zone 0
+for zone in /sys/class/thermal/thermal_zone*/temp; do
+    [ -f "$zone" ] || continue
+    temp=$(cat "$zone" 2>/dev/null) || continue
+    # temp está en milligrados
+    temp=$((temp / 1000))
+    [ "$temp" -gt 0 ] && [ "$temp" -lt 150 ] && echo "$temp" && exit 0
 done
-echo $((max / 1000))
+
+# Fallback: sensors
+temp=$(sensors 2>/dev/null | grep -i 'package id 0:' | head -1 | awk '{print $4}' | tr -d '+°C')
+[ -n "$temp" ] && echo "$temp" || echo "45"

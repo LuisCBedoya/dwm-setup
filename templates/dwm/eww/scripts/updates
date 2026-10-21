@@ -1,4 +1,7 @@
 #!/bin/sh
-n=$(apt list --upgradable 2>/dev/null | grep -c '\[upgradable\]')
-[ -n "$n" ] || n=0
-echo "$n"
+# Obtiene número de actualizaciones pendientes
+# Para uso en barra y eww
+
+# apt check (no necesita root)
+updates=$(apt list --upgradable 2>/dev/null | grep -c upgradable)
+[ -n "$updates" ] && echo "$updates" || echo "0"

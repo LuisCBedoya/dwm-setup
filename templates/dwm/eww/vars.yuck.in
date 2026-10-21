@@ -1,0 +1,60 @@
+;; Eww variables for @THEME_NAME@ theme
+;; Generated from palette-@THEME_NAME@.sh — do not edit directly
+
+(defvar color-bg "@COLOR_BG@")
+(defvar color-bg-alt "@COLOR_BG_ALT@")
+(defvar color-bg-elev "@COLOR_BG_ELEV@")
+(defvar color-bg-hover "@COLOR_BG_HOVER@")
+(defvar color-fg "@COLOR_FG@")
+(defvar color-fg-muted "@COLOR_FG_MUTED@")
+(defvar color-fg-dim "@COLOR_FG_DIM@")
+(defvar color-border "@COLOR_BORDER@")
+(defvar color-accent "@COLOR_ACCENT@")
+(defvar color-accent-alt "@COLOR_ACCENT_ALT@")
+(defvar color-green "@COLOR_GREEN@")
+(defvar color-yellow "@COLOR_YELLOW@")
+(defvar color-orange "@COLOR_ORANGE@")
+(defvar color-red "@COLOR_RED@")
+(defvar color-cyan "@COLOR_CYAN@")
+
+;; RGBA helpers para transparencias
+(defvar color-bg-rgba-92 "@COLOR_BG_RGBA_92@")
+(defvar color-bg-alt-rgba-92 "@COLOR_BG_ALT_RGBA_92@")
+(defvar color-bg-elev-rgba-92 "@COLOR_BG_ELEV_RGBA_92@")
+(defvar color-bg-elev-rgba-85 "@COLOR_BG_ELEV_RGBA_85@")
+(defvar color-accent-rgba-30 "@COLOR_ACCENT_RGBA_30@")
+(defvar color-border-rgba-50 "@COLOR_BORDER_RGBA_50@")
+
+;; Espaciado y dimensiones
+(defvar spacing-xs 4)
+(defvar spacing-sm 8)
+(defvar spacing-md 12)
+(defvar spacing-lg 16)
+(defvar spacing-xl 24)
+
+(defvar radius-sm 6)
+(defvar radius-md 10)
+(defvar radius-lg 14)
+(defvar radius-xl 20)
+
+(defvar border-width 2)
+
+;; Sombras
+(defvar shadow-color "rgba(0, 0, 0, 0.45)")
+(defvar shadow-radius 20)
+(defvar shadow-offset-x 0)
+(defvar shadow-offset-y 8)
+
+;; Transiciones
+(defvar transition-fast 150ms)
+(defvar transition-normal 250ms)
+(defvar transition-slow 350ms)
+
+;; Panel lateral (control center)
+(defvar panel-width 340)
+(defvar panel-height 100%)
+
+;; Gauges circulares
+(defvar gauge-size 80)
+(defvar gauge-stroke-width 6)
+(defvar gauge-gap 2)

@@ -1,0 +1,40 @@
+#!/bin/sh
+# Obtiene info de música actual (playerctl/mpc)
+# Para uso en eww dashboard/control
+
+# Intentar playerctl primero (MPRIS - Spotify, VLC, mpd con mpris, etc.)
+title=$(playerctl metadata title 2>/dev/null)
+artist=$(playerctl metadata artist 2>/dev/null)
+status=$(playerctl status 2>/dev/null)
+
+if [ -n "$title" ] && [ -n "$artist" ]; then
+    case "$status" in
+        Playing) icon="󰎇" ;;
+        Paused) icon="󰏤" ;;
+        *) icon="󰎈" ;;
+    esac
+    # Escapar comillas para JSON/yuck
+    title=$(echo "$title" | sed 's/"/\\"/g' | cut -c1-50)
+    artist=$(echo "$artist" | sed 's/"/\\"/g' | cut -c1-40)
+    echo "{\"icon\":\"$icon\",\"title\":\"$title\",\"artist\":\"$artist\",\"status\":\"$status\"}"
+    exit 0
+fi
+
+# Fallback: mpc (mpd)
+title=$(mpc current -f %title% 2>/dev/null)
+artist=$(mpc current -f %artist% 2>/dev/null)
+status=$(mpc status 2>/dev/null | grep -o '\[playing\]\|\[paused\]' | tr -d '[]')
+
+if [ -n "$title" ]; then
+    case "$status" in
+        playing) icon="󰎇" ;;
+        paused) icon="󰏤" ;;
+        *) icon="󰎈" ;;
+    esac
+    title=$(echo "$title" | sed 's/"/\\"/g' | cut -c1-50)
+    artist=$(echo "$artist" | sed 's/"/\\"/g' | cut -c1-40)
+    echo "{\"icon\":\"$icon\",\"title\":\"$title\",\"artist\":\"$artist\",\"status\":\"$status\"}"
+    exit 0
+fi
+
+echo "{\"icon\":\"󰝚\",\"title\":\"Sin música\",\"artist\":\"\",\"status\":\"stopped\"}"

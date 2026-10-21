@@ -25,11 +25,8 @@ build_dwm() {
   if ! run_root make -C "$DWM_BUILD" clean >/dev/null 2>&1; then
     debug "make clean no era necesario"
   fi
-  # Ojo: make clean borra config.h; la plantilla debe instalarse después.
-  install_template_root 0644 "$PROJECT_ROOT/templates/dwm/config.h.in" "$DWM_BUILD/config.h" \
-    HOME "$TARGET_HOME" \
-    FONT "$DWM_FONT" \
-    FONT_SIZE "$DWM_FONT_SIZE"
+  # Generar config.h con tema actual (incluye colores)
+  generate_chadwm_config_h "${DWM_THEME:-monolith}"
   info "Compilando chadwm..."
   if ! run_root make -C "$DWM_BUILD" -j"$(nproc)"; then
     die "Falló la compilación de chadwm. Revisa el log."

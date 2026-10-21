@@ -1,0 +1,11 @@
+#!/bin/sh
+# Estado de redshift (night light)
+# Para uso en eww control center
+
+if pgrep -x redshift >/dev/null 2>&1; then
+    # Obtener temperatura actual si es posible
+    temp=$(redshift -p 2>/dev/null | grep -o '[0-9]\+K' | head -1 | tr -d 'K')
+    [ -n "$temp" ] && echo "󰔏 ${temp}K" || echo "󰔏 On"
+else
+    echo "󰔏 Off"
+fi

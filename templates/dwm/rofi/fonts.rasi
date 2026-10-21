@@ -1,0 +1,5 @@
+/* Rofi fonts configuration */
+
+* {
+    font: "JetBrainsMono Nerd Font 11";
+}

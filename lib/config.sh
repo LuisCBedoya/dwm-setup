@@ -4,6 +4,7 @@
 install_user_configs() {
   section "Configuración del escritorio"
   local home="$TARGET_HOME"
+  local theme="${DWM_THEME:-monolith}"
   if dry_run; then
     log "[dry-run] backup en $USER_BACKUP_DIR"
     log "[dry-run] instalar ~/.config/dwm, ~/.config/kitty, ~/.xinitrc y wallpaper"
@@ -39,30 +40,51 @@ install_user_configs() {
   make_user_dir "$home/.config/dwm/scripts/bar_themes"
   make_user_dir "$home/.config/dwm/dunst"
   make_user_dir "$home/.config/dwm/rofi"
+  make_user_dir "$home/.config/dwm/eww/scripts"
 
+  # Scripts de sesión
   run_root install -D -m 0755 "$PROJECT_ROOT/templates/dwm/run.sh" "$home/.config/dwm/run.sh"
   run_root install -D -m 0755 "$PROJECT_ROOT/templates/dwm/scripts/bar.sh" "$home/.config/dwm/scripts/bar.sh"
+  # Bar theme para el tema actual
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/scripts/bar_themes/$theme" "$home/.config/dwm/scripts/bar_themes/$theme"
+  # También instalar gruvchad como fallback
   run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/scripts/bar_themes/gruvchad" "$home/.config/dwm/scripts/bar_themes/gruvchad"
+
+  # Picom, Dunst, Rofi (renderizados desde templates .in)
   run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/picom.conf" "$home/.config/dwm/picom.conf"
   run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/dunst/dunstrc" "$home/.config/dwm/dunst/dunstrc"
-  run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/rofi/gruvbox.rasi" "$home/.config/dwm/rofi/gruvbox.rasi"
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/rofi/config.rasi" "$home/.config/dwm/rofi/config.rasi"
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/rofi/colors.rasi" "$home/.config/dwm/rofi/colors.rasi"
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/rofi/fonts.rasi" "$home/.config/dwm/rofi/fonts.rasi"
 
-  run_root cp -a "$PROJECT_ROOT/templates/dwm/eww" "$home/.config/dwm/eww"
+  # Eww (config renderizada)
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/eww/eww.yuck" "$home/.config/dwm/eww/eww.yuck"
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/eww/vars.yuck" "$home/.config/dwm/eww/vars.yuck"
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/eww/widgets.yuck" "$home/.config/dwm/eww/widgets.yuck"
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/dwm/eww/eww.scss" "$home/.config/dwm/eww/eww.scss"
+  run_root cp -a "$PROJECT_ROOT/templates/dwm/eww/scripts" "$home/.config/dwm/eww/scripts"
   run_root chmod 0755 "$home/.config/dwm/eww/scripts/"* 2>/dev/null || true
 
+  # Environment
   install_template_user 0644 "$PROJECT_ROOT/templates/dwm/environment.in" "$home/.config/dwm/environment" \
     KEYMAP "$DWM_KEYMAP" \
     WALLPAPER "$home/.local/share/wallpapers/rocky.jpg" \
     FONT "$DWM_FONT" \
     FONT_SIZE "$DWM_FONT_SIZE" \
-    RESOLUTION "$DWM_RESOLUTION"
+    RESOLUTION "$DWM_RESOLUTION" \
+    THEME "$theme"
 
+  # Kitty (config base + tema actual)
   run_root install -D -m 0644 "$PROJECT_ROOT/templates/kitty/kitty.conf" "$home/.config/kitty/kitty.conf"
-  run_root install -D -m 0644 "$PROJECT_ROOT/templates/kitty/colorshemes/gruvbox-material.conf" \
-    "$home/.config/kitty/colorshemes/gruvbox-material.conf"
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/kitty/colorshemes/$theme.conf" "$home/.config/kitty/colorshemes/$theme.conf"
+  # Fallback gruvbox
+  run_root install -D -m 0644 "$PROJECT_ROOT/templates/kitty/colorshemes/gruvbox-material.conf" "$home/.config/kitty/colorshemes/gruvbox-material.conf"
+
+  # Xinitrc y wallpaper
   install_template_user 0755 "$PROJECT_ROOT/templates/dwm/xinitrc" "$home/.xinitrc"
   run_root install -D -m 0644 "$PROJECT_ROOT/assets/wallpaper.jpg" "$home/.local/share/wallpapers/rocky.jpg"
 
+  # Sesión X11 y binarios
   install_template_root 0644 "$PROJECT_ROOT/templates/dwm/dwm.desktop.in" "/usr/share/xsessions/dwm.desktop" \
     HOME "$home"
   run_root install -D -m 0755 "$PROJECT_ROOT/bin/dwm-safe" "/usr/local/bin/dwm-safe"

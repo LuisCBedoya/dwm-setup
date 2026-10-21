@@ -5,10 +5,11 @@ verify_install() {
   section "Verificación final"
   local failures=0
   local home="$TARGET_HOME"
+  local theme="${DWM_THEME:-monolith}"
   local cmd xorg_owner xorg_mode
 
   for cmd in dwm eww picom dunst rofi feh kitty flameshot i3lock xss-lock \
-    brightnessctl xclip pcmanfm udiskie v4l2-ctl ffmpeg pactl wpctl; do
+    brightnessctl xclip pcmanfm udiskie v4l2-ctl ffmpeg pactl wpctl pamixer xwallpaper playerctl; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
@@ -20,10 +21,29 @@ verify_install() {
   for path in \
     "$home/.config/dwm/run.sh" \
     "$home/.config/dwm/scripts/bar.sh" \
+    "$home/.config/dwm/scripts/bar_themes/$theme" \
+    "$home/.config/dwm/scripts/bar_themes/gruvchad" \
     "$home/.config/dwm/picom.conf" \
     "$home/.config/dwm/dunst/dunstrc" \
-    "$home/.config/dwm/rofi/gruvbox.rasi" \
+    "$home/.config/dwm/rofi/config.rasi" \
+    "$home/.config/dwm/rofi/colors.rasi" \
+    "$home/.config/dwm/rofi/fonts.rasi" \
     "$home/.config/dwm/eww/eww.yuck" \
+    "$home/.config/dwm/eww/vars.yuck" \
+    "$home/.config/dwm/eww/widgets.yuck" \
+    "$home/.config/dwm/eww/eww.scss" \
+    "$home/.config/dwm/eww/scripts/volume" \
+    "$home/.config/dwm/eww/scripts/brightness" \
+    "$home/.config/dwm/eww/scripts/battery" \
+    "$home/.config/dwm/eww/scripts/wifi" \
+    "$home/.config/dwm/eww/scripts/temp" \
+    "$home/.config/dwm/eww/scripts/updates" \
+    "$home/.config/dwm/eww/scripts/uptime" \
+    "$home/.config/dwm/eww/scripts/music" \
+    "$home/.config/dwm/eww/scripts/bluetooth" \
+    "$home/.config/dwm/eww/scripts/network" \
+    "$home/.config/dwm/eww/scripts/energy" \
+    "$home/.config/dwm/eww/scripts/nightlight" \
     "$home/.local/share/wallpapers/rocky.jpg" \
     "$home/.local/share/xorg" \
     "/usr/share/xsessions/dwm.desktop" \
@@ -102,6 +122,19 @@ verify_install() {
       warn "v4l2-ctl no pudo listar dispositivos"
     fi
   fi
+
+  # Verificar que no queden placeholders sin renderizar en configs
+  for path in \
+    "$home/.config/dwm/picom.conf" \
+    "$home/.config/dwm/dunst/dunstrc" \
+    "$home/.config/dwm/rofi/colors.rasi" \
+    "$home/.config/dwm/eww/vars.yuck" \
+    "$home/.config/dwm/eww/eww.scss"; do
+    if [[ -f "$path" ]] && grep -q '@COLOR_' "$path" 2>/dev/null; then
+      error "Placeholders @COLOR_*@ sin renderizar en $path"
+      failures=$((failures + 1))
+    fi
+  done
 
   if [[ ${#CAMERAS[@]} -eq 0 ]]; then
     warn "No se detectó cámara; la prueba real se omite"

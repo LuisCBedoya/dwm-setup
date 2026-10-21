@@ -6,11 +6,20 @@ set -u
 export PATH="/usr/local/bin:$HOME/.local/bin:$PATH"
 DWM_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/dwm"
 DWM_CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}/dwm"
+
+# Cargar environment (KEYMAP, WALLPAPER, FONT, FONT_SIZE, RESOLUTION, THEME)
 if [ -r "$DWM_CONFIG/environment" ]; then
   . "$DWM_CONFIG/environment"
 fi
+
+# Cargar paleta de colores (para scripts que la necesiten)
+if [ -r "$PROJECT_ROOT/templates/colors/base.sh" ]; then
+  . "$PROJECT_ROOT/templates/colors/base.sh"
+elif [ -r "/usr/local/share/dwm-setup/colors/base.sh" ]; then
+  . "/usr/local/share/dwm-setup/colors/base.sh"
+fi
+
 WALLPAPER="${DWM_WALLPAPER:-$HOME/.local/share/wallpapers/rocky.jpg}"
-# dwm-safe también usa DWM_WALLPAPER al bloquear.
 export DWM_WALLPAPER="$WALLPAPER"
 mkdir -p "$DWM_CACHE"
 
@@ -27,8 +36,13 @@ xset s 300 5 2>/dev/null || true
 xset +dpms 2>/dev/null || true
 xset dpms 0 0 600 2>/dev/null || true
 
-if [ -r "$WALLPAPER" ] && command -v feh >/dev/null 2>&1; then
-  feh --bg-fill "$WALLPAPER" >"$DWM_CACHE/feh.log" 2>&1 || true
+# Wallpaper con xwallpaper (fallback feh)
+if [ -r "$WALLPAPER" ]; then
+  if command -v xwallpaper >/dev/null 2>&1; then
+    xwallpaper --zoom "$WALLPAPER" >"$DWM_CACHE/wallpaper.log" 2>&1 || true
+  elif command -v feh >/dev/null 2>&1; then
+    feh --bg-fill "$WALLPAPER" >"$DWM_CACHE/feh.log" 2>&1 || true
+  fi
 fi
 
 if command -v picom >/dev/null 2>&1; then
@@ -45,6 +59,8 @@ fi
 
 if command -v eww >/dev/null 2>&1; then
   eww -c "$DWM_CONFIG/eww" daemon >"$DWM_CACHE/eww.log" 2>&1 &
+  # Bajar eww debajo de otras ventanas
+  sleep 2 && xdo lower -n eww 2>/dev/null || true
 fi
 
 # Almacenamiento extraíble: montar y notificar, nunca abrir una aplicación.

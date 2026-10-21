@@ -33,6 +33,8 @@ source "$PROJECT_ROOT/lib/ly.sh"
 source "$PROJECT_ROOT/lib/config.sh"
 # shellcheck source=lib/verify.sh
 source "$PROJECT_ROOT/lib/verify.sh"
+# shellcheck source=lib/theme.sh
+source "$PROJECT_ROOT/lib/theme.sh"
 
 usage() {
   cat <<'EOF'
@@ -53,6 +55,11 @@ Opciones avanzadas (automatización; normalmente no necesarias):
   --user USUARIO, --home RUTA, --rebuild, --nvidia, --no-nvidia,
   --cuda, --no-cuda,
   --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
+  --theme TEMA              Tema de colores (monolith, gruvbox)
+
+Temas disponibles:
+  monolith (default) — Monocromático con acentos apagados
+  gruvbox — Gruvbox Material
 
 Fases futuras (IDE, navegadores, música) no se instalan desde aquí.
 EOF
@@ -98,6 +105,11 @@ parse_args() {
         DWM_RESOLUTION="$2"; shift
         ;;
       --resolution=*) DWM_RESOLUTION="${1#*=}" ;;
+      --theme)
+        [[ $# -ge 2 ]] || die "--theme requiere un valor"
+        DWM_THEME="$2"; shift
+        ;;
+      --theme=*) DWM_THEME="${1#*=}" ;;
       --debug) DWM_DEBUG=1 ;;
       -h|--help) usage; exit 0 ;;
       --version) printf 'dwm-setup 0.1.0 (fase 1)\n'; exit 0 ;;
@@ -120,6 +132,12 @@ validate_options() {
     [[ "$TARGET_HOME" == /* ]] || die "--home debe ser una ruta absoluta: $TARGET_HOME"
     [[ "$TARGET_HOME" != "/" ]] || die "--home no puede ser /"
   fi
+  # Validar tema
+  if [[ -n "${DWM_THEME:-}" ]]; then
+    if [[ ! -f "$PROJECT_ROOT/templates/colors/palette-${DWM_THEME}.sh" ]]; then
+      die "Tema '$DWM_THEME' no encontrado. Temas disponibles: $(list_themes | awk '{print $1}' | tr '\n' ' ')"
+    fi
+  fi
 }
 
 check_project_layout() {
@@ -133,22 +151,28 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/ly.sh"
     "$PROJECT_ROOT/lib/config.sh"
     "$PROJECT_ROOT/lib/verify.sh"
+    "$PROJECT_ROOT/lib/theme.sh"
     "$PROJECT_ROOT/bin/dwm-safe"
     "$PROJECT_ROOT/bin/dwm-doctor"
+    "$PROJECT_ROOT/templates/colors/base.sh"
+    "$PROJECT_ROOT/templates/colors/palette-monolith.sh"
+    "$PROJECT_ROOT/templates/colors/palette-gruvbox.sh"
     "$PROJECT_ROOT/templates/dwm/config.h.in"
     "$PROJECT_ROOT/templates/dwm/run.sh"
     "$PROJECT_ROOT/templates/dwm/environment.in"
     "$PROJECT_ROOT/templates/dwm/dwm.desktop.in"
     "$PROJECT_ROOT/templates/dwm/xinitrc"
-    "$PROJECT_ROOT/templates/dwm/picom.conf"
-    "$PROJECT_ROOT/templates/dwm/dunst/dunstrc"
-    "$PROJECT_ROOT/templates/dwm/rofi/gruvbox.rasi"
+    "$PROJECT_ROOT/templates/dwm/picom.conf.in"
+    "$PROJECT_ROOT/templates/dwm/dunst/dunstrc.in"
+    "$PROJECT_ROOT/templates/dwm/rofi/colors.rasi.in"
+    "$PROJECT_ROOT/templates/dwm/rofi/fonts.rasi"
+    "$PROJECT_ROOT/templates/dwm/rofi/config.rasi"
     "$PROJECT_ROOT/templates/dwm/scripts/bar.sh"
     "$PROJECT_ROOT/templates/dwm/scripts/bar_themes/gruvchad"
     "$PROJECT_ROOT/templates/dwm/eww/eww.yuck"
-    "$PROJECT_ROOT/templates/dwm/eww/vars.yuck"
+    "$PROJECT_ROOT/templates/dwm/eww/vars.yuck.in"
     "$PROJECT_ROOT/templates/dwm/eww/widgets.yuck"
-    "$PROJECT_ROOT/templates/dwm/eww/eww.scss"
+    "$PROJECT_ROOT/templates/dwm/eww/eww.scss.in"
     "$PROJECT_ROOT/templates/dwm/eww/scripts/battery"
     "$PROJECT_ROOT/templates/dwm/eww/scripts/brightness"
     "$PROJECT_ROOT/templates/dwm/eww/scripts/temp"
@@ -157,7 +181,6 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/dwm/eww/scripts/volume"
     "$PROJECT_ROOT/templates/dwm/eww/scripts/wifi"
     "$PROJECT_ROOT/templates/kitty/kitty.conf"
-    "$PROJECT_ROOT/templates/kitty/colorshemes/gruvbox-material.conf"
     "$PROJECT_ROOT/assets/wallpaper.jpg"
     "$PROJECT_ROOT/src/chadwm/chadwm/Makefile"
   )
@@ -217,8 +240,15 @@ EOF
 
 main() {
   parse_args "$@"
+
+  # Tema por defecto
+  DWM_THEME="${DWM_THEME:-monolith}"
+
   validate_options
   check_project_layout
+
+  # Cargar tema temprano para que dry-run muestre los colores correctos
+  load_theme "$DWM_THEME"
 
   # Debian 13 y x86_64 antes de pedir sudo o resolver el usuario.
   detect_os
@@ -237,6 +267,9 @@ main() {
 
   show_banner
   print_detection
+
+  # Generar assets de tema (bar_theme, rofi colors, eww scss/vars, dunstrc, picom, kitty)
+  generate_all_theme_assets "$DWM_THEME"
 
   # Los backups deben existir antes del preflight: si el usuario autoriza
   # añadir componentes APT, add_apt_components() guarda sources.list primero.

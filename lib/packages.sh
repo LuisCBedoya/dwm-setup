@@ -25,7 +25,7 @@ BUILD_PKGS=(
 
 AUDIO_PKGS=(
   pipewire pipewire-pulse pipewire-alsa wireplumber
-  alsa-utils pavucontrol pulseaudio-utils
+  alsa-utils pavucontrol pulseaudio-utils pamixer
   ffmpeg libavcodec-extra ffmpegthumbnailer
   gstreamer1.0-libav gstreamer1.0-plugins-base gstreamer1.0-plugins-good
   gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-vaapi
@@ -43,6 +43,7 @@ STORAGE_PKGS=(
 DESKTOP_PKGS=(
   picom dunst rofi feh kitty flameshot i3lock xss-lock
   brightnessctl xclip pcmanfm
+  xwallpaper playerctl
 )
 
 NETWORK_PKGS=(network-manager network-manager-gnome dbus-user-session dbus-x11)
