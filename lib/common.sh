@@ -83,7 +83,10 @@ run_root() {
   if [[ "$EUID" -eq 0 ]]; then
     "$@"
   else
-    sudo "$@"
+    if ! sudo -n true 2>/dev/null; then
+      die "sudo requiere contraseña o no tiene permisos. Ejecuta 'sudo -v' antes o usa sudo ./install.sh"
+    fi
+    sudo "$@" || die "Comando falló: $*"
   fi
 }
 

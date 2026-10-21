@@ -669,6 +669,34 @@ install_packages() {
   install_desktop_packages
   install_gpu_packages
   install_nerd_font
+  # Verificación explícita: paquetes obligatorios DEBEN estar instalados
+  if dry_run; then
+    return 0
+  fi
+  local required_pkgs=(
+    bspwm sxhkd polybar kitty picom dunst rofi feh xwallpaper
+    udiskie brightnessctl xclip thunar playerctl flameshot i3lock xss-lock
+    libnotify-bin gir1.2-notify-0.7 lm-sensors upower acpi
+    fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji fonts-noto-cjk
+    adwaita-icon-theme hicolor-icon-theme desktop-file-utils shared-mime-info
+    xdg-utils xdg-user-dirs network-manager network-manager-gnome dbus-user-session dbus-x11
+    pipewire pipewire-pulse wireplumber alsa-utils pavucontrol pulseaudio-utils pamixer
+    ffmpeg libavcodec-extra gstreamer1.0-plugins-base gstreamer1.0-plugins-good
+    gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-vaapi
+    v4l-utils udisks2 gvfs gvfs-backends exfatprogs ntfs-3g dosfstools e2fsprogs
+    lxpolkit
+  )
+  local missing=()
+  for pkg in "${required_pkgs[@]}"; do
+    if ! dpkg -l "$pkg" 2>/dev/null | grep -q '^ii'; then
+      missing+=("$pkg")
+    fi
+  done
+  if ((${#missing[@]} > 0)); then
+    die "Paquetes obligatorios NO instalados (revisa sudo/apt/locks): ${missing[*]}"
+  fi
+  ok "Todos los paquetes obligatorios verificados"
+
   enable_base_services
   add_user_groups
 }
