@@ -109,6 +109,9 @@ setxkbmap @KEYMAP@ 2>/dev/null || true
 # Cursor
 xsetroot -cursor_name left_ptr
 
+# Terminal fallback (por si sxhkd falla)
+kitty &
+
 # Iniciar bspwm (lee ~/.config/bspwm/bspwmrc que lanza autostart)
 exec bspwm
 EOF

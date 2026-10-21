@@ -2,7 +2,7 @@
 # bspwmrc — generado desde template, no editar directamente
 # Paleta: @THEME_NAME@ (Nord)
 
-pgrep -x sxhkd > /dev/null || sxhkd &
+pgrep -x sxhkd > /dev/null || sxhkd -c @HOME@/.config/sxhkd/sxhkdrc &
 
 # Monitores y escritorios
 bspc monitor -d 1 2 3 4 5
