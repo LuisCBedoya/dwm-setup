@@ -185,7 +185,10 @@ archivos del prototipo a `legacy/`. La fuente de verdad es `README.md`,
 **Consecuencias:** no se borra historia, pero no se debe usar `legacy/` para
 la instalación.
 
-## ADR-016 — Fuentes de chadwm y eww vendorizadas
+**Nota:** el directorio `legacy/` se eliminó posteriormente junto con
+`src/chadwm/` y `src/eww/` (ADR-022). Este ADR se conserva como historial.
+
+## ADR-016 — Fuentes de chadwm y eww vendorizadas (eliminadas en ADR-022)
 
 **Contexto:** `src/chadwm` y `src/eww` eran repositorios Git anidados. Git los
 registraba como gitlinks, sin `.gitmodules`, así que un clon del proyecto no
@@ -196,9 +199,12 @@ submódulos. Se fijan los commits upstream: chadwm `7991ac8` y eww `v0.6.0`
 (`d87c2fd`). Los metadatos `.git` de los repos anidados no forman parte del
 proyecto.
 
-**Consecuencias:** un `git clone` es autocontenido para chadwm y eww; solo
-Zig, Ly y la Nerd Font se descargan durante la instalación. Actualizar una
-fuente implica reemplazar el árbol vendorizado y anotar el nuevo commit.
+**Consecuencias:** un `git clone` era autocontenido para chadwm y eww; solo
+Zig, Ly y la Nerd Font se descargaban durante la instalación.
+
+**Nota (ADR-022):** con la migración a bspwm + sxhkd + polybar, chadwm/eww/Ly
+se eliminaron. Los directorios `src/chadwm/`, `src/eww/` y `legacy/` se borraron
+del repositorio. Este ADR se conserva solo como historial.
 
 ## ADR-017 — `--home` limitado al home real del usuario
 

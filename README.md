@@ -269,14 +269,8 @@ templates/dunst/           dunstrc.in
 templates/rofi/            powermenu.rasi.in
 templates/kitty/           kitty.conf.in
 assets/wallpaper.jpg       Wallpaper de referencia
-src/chadwm/                Fuente chadwm (vendorizada, ya no se usa)
-src/eww/                   Fuente eww (vendorizada, ya no se usa)
 docs/                      Hardware y testing
-legacy/                    Prototipo antiguo, no usado
 ```
-
-Los archivos de `legacy/` se conservan solo como referencia histórica. La
-fuente de verdad es `install.sh`, `lib/` y `templates/`.
 
 ## Limitaciones conocidas
 

@@ -1,3 +1,0 @@
-debian/desktop/*            /usr/share/xsessions
-debian/icons/*              /usr/share/icons
-debian/xdg-desktop-portal/* /usr/share/xdg-desktop-portal

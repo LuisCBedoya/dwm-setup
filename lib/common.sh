@@ -128,9 +128,9 @@ ask_cuda_toolkit() {
     return 1
   fi
   local answer
-  read -r -p "$prompt [s/N] " answer
+  read -r -p "$prompt [y/N] " answer
   case "$answer" in
-    s|S|sí|si|Sí|Si) return 0 ;;
+    y|Y|yes|YES|sí|si|Sí|Si) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -258,9 +258,9 @@ prompt_yes_no() {
     return 0
   fi
   local answer
-  read -r -p "$prompt [s/N] " answer
+  read -r -p "$prompt [y/N] " answer
   case "$answer" in
-    s|S|sí|si|Sí|Si|y|Y|yes|YES) return 0 ;;
+    y|Y|yes|YES|sí|si|Sí|Si) return 0 ;;
     *) return 1 ;;
   esac
 }

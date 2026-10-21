@@ -1,7 +1,0 @@
-[Desktop Entry]
-Name=dwm (Gruvbox)
-Comment=dwm con barra status2d y eww
-Exec=/home/luc/.config/dwm/run.sh
-TryExec=/home/luc/.config/dwm/run.sh
-Type=Application
-DesktopNames=dwm

@@ -126,7 +126,7 @@ prompt_missing_configs() {
     printf "  - %s\n" "$d"
   done
   printf "\n"
-  read -rp "¿Continuar con templates integrados (paleta Nord) para las que faltan? [s/N]: " ans
+  read -rp "¿Continuar con templates integrados (paleta Nord) para las que faltan? [y/N]: " ans
   
   if [[ "$ans" =~ ^[Ss]$ ]]; then
     return 0
