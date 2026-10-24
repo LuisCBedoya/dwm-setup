@@ -15,7 +15,8 @@ ejecutable, picom arranque y la verificación final no falle.
 - Estado de validación real: **sesión viva validada**; falta la instalación
   desde cero en VM Debian 13 minimal.
 - Sesión: `startx` manual desde TTY; sin display manager ni auto-login.
-- Barra: 12 módulos, logo StumbleUpon, 4 workspaces, red unificada y `dots`.
+- Barra: 11 módulos, logo StumbleUpon, 4 workspaces, red unificada y sin
+  `dots`; `updates` al final.
 
 ## Validación viva (2026-10-24)
 
@@ -26,9 +27,9 @@ Procesos comprobados:
 
 - `bspwm 0.9.10`
 - `sxhkd 0.6.2`
-- `polybar 3.7.2` con **12 módulos**: `logo`, `bspwm`, `updates`,
-  `polypomo`, `temp`, `memory`, `cpu`, `network`, `pipewire`,
-  `battery`, `date`, `dots`.
+- `polybar 3.7.2` con **11 módulos**: `logo`, `bspwm`, `polypomo`,
+  `temp`, `memory`, `cpu`, `network`, `pipewire`, `battery`, `date`,
+  `updates`.
 - `picom` 12.5 activo (config sin `glx-swap-method`).
 - `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock` activos.
 - `BAT1`, `ACAD`, `enp3s0`, `wlo1`, batería y volumen visibles en la barra.
@@ -53,7 +54,8 @@ Comprobaciones:
 
 Se adaptó `templates/sxhkd/sxhkdrc.in` a los atajos de i3 del usuario,
 manteniendo gaps 10, borde 2 y el wallpaper actual. El rediseño final
-redujo a 4 escritorios y reincorporó `dots`:
+redujo a 4 escritorios; los ajustes manuales posteriores retiraron `dots`
+y movieron `updates` al final:
 
 - Apps: `Super+Return` kitty, `Super+Shift+s` scrot región+portapapeles,
   `Super+Shift+p` pcmanfm, `Super+Shift+b` chromium, `Super+Shift+v`
@@ -137,31 +139,32 @@ predeterminada; si no, se usará un headset USB.
 
 ## Rediseño polybar (2026-10-24)
 
-Se replicó la barra de referencia:
+Se partió de la barra de referencia y se aplicaron los ajustes manuales
+del usuario:
 
 - 4 escritorios (`1-4`); `bspwmrc` y `sxhkd` ajustados.
-- Logo StumbleUpon `U+F1A4` (sin cambio).
+- Logo StumbleUpon `U+F1A4` en `font-0` (`%{T0}`), padding 1 y sin espacio
+  final.
 - Workspace enfocado con caja blanca, texto oscuro, font-1 y padding 1.
-- Orden derecha: `updates`, `polypomo`, `temp`, `memory`, `cpu`, `network`,
-  `pipewire`, `battery`, `date`, `dots`.
-- `updates` muestra `󰚌 # N`; si N=0 no muestra nada.
-- `temp [T]`, `memory [M]`, `cpu [C]`.
+- Orden derecha: `polypomo`, `temp`, `memory`, `cpu`, `network`,
+  `pipewire`, `battery`, `date`, `updates`.
+- `updates` al final muestra calavera `U+F4F9` + número, sin `#`; si N=0
+  no muestra nada.
+- Sin etiquetas `[T]`, `[M]` ni `[C]`.
 - Red unificada: `󰖩 connected` si hay WiFi; si no, `󰈀 connected` si hay
   Ethernet; si no hay ninguna, nada. Sin `NoC` ni SSID; WiFi tiene
   prioridad. `NETWORK_FAKE=wifi|eth|none` permite probar los tres estados.
-- `dots` vuelve con `...` al final.
-- `xkeyboard`/`latam` eliminado de la barra; `wlan`/`eth` separados
-  eliminados.
-- Pomodoro pausa con `U+F04C` (dos barras) como la referencia.
-- Separación compacta: `module-margin-left/right = 0`; `updates`/`polypomo`
-  con padding 2/1; padding 1 en `temp`, `memory`, `cpu`, `pipewire`,
-  `date` y `dots`; `network` 0; volumen y batería juntos (el volumen lleva
-  un espacio inicial y la batería un solo espacio icono-porcentaje).
+- Sin `dots`, sin `xkeyboard`, sin `wlan`/`eth` separados.
+- Pomodoro pausa con `U+F04C` (dos barras).
+- Fuentes: `font-1 = 10`, `font-3 = 13`; logo en `font-0 = 11`.
+- Separación: `module-margin-left/right = 0`; `updates`/`polypomo` 1/1;
+  padding 1 en `temp`, `memory`, `cpu`, `pipewire`, `battery` y `date`;
+  `network` 0; `cpu` añade `%{O8}` a la derecha; volumen y batería juntos.
 - Con `UPDATES_FAKE_FILE=0` el módulo de actualizaciones desaparece y no
   muestra `# 0` (probado en vivo).
-- Polybar cargó 12 módulos sin errores; capturas `bar-design3.png` (diseño),
-  `bar-spacing-final.png` (separación) y `bar-network-final.png` (red
-  unificada).
+- Polybar cargó 11 módulos sin errores; capturas `bar-design3.png`
+  (diseño inicial), `bar-spacing-final.png` (separación) y
+  `bar-user-final.png` (barra final).
 
 ## Correcciones aplicadas
 
@@ -183,8 +186,8 @@ Se replicó la barra de referencia:
   `WAYLAND_DISPLAY` sin `:-` ni `ls BAT* | xargs basename`.
 - **Barra**: font-0 pasa de `DesktopLogo` a JBM; se retira
   `assets/desktop-logo.ttf` y la instalación de la fuente. `dots.ini` se
-  retiró temporalmente y se reincorporó en el rediseño final; se añade
-  limpieza idempotente de restos.
+  retiró temporalmente y el ajuste final del usuario lo eliminó
+  definitivamente; se añade limpieza idempotente de restos.
 - **Limpieza**: eliminados `lib/dwm.sh`, `lib/eww.sh`, `lib/ly.sh`,
   `templates/dwm/`, paletas no usadas, `--rebuild` y la integración de
   dotfiles externos.
@@ -222,7 +225,7 @@ Se replicó la barra de referencia:
 
 - [x] Sesión viva en Debian 13 (host de referencia).
 - [x] `desktop-doctor` sin falsos `[FALTA]`.
-- [x] Barra con 12 módulos y sin placeholders.
+- [x] Barra con 11 módulos y sin placeholders.
 - [x] Picom, dunst, lxpolkit, udiskie y xss-lock activos.
 - [x] `bspwmrc` ejecutable y `.xinitrc` sin kitty.
 - [x] Ownership de `~/.config`, `~/.local` y `~/.config-backup`.

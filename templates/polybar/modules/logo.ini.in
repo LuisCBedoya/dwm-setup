@@ -1,6 +1,6 @@
 ; logo — StumbleUpon (U+F1A4)
 [module/logo]
 type = custom/text
-format = "%{T1}%{T-}"
-format-padding = 2
+format = "%{T0}%{T-}"
+format-padding = 1
 format-foreground = ${colors.foreground}

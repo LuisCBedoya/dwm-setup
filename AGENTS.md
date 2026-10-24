@@ -11,12 +11,13 @@ con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 **i3lock/xss-lock**, PipeWire, cámara UVC y almacenamiento extraíble con
 notificación.
 
-La barra final es la de la config viva: **12 módulos**, logo StumbleUpon
-(`U+F1A4`), workspaces 1-4, actualizaciones con calavera y contador, red
-unificada (`󰖩/󰈀 connected`, sin `NoC`) y tres puntos al final. Sin
-`xkeyboard`, `wlan`/`eth` separados ni fuente `DesktopLogo`. Separación
-compacta: `module-margin-left/right = 0`; `updates`/`polypomo` con padding
-2/1; volumen y batería juntos.
+La barra final es la de la config viva: **11 módulos**, logo StumbleUpon
+(`U+F1A4`), workspaces 1-4, actualizaciones con calavera + número al final,
+red unificada (`󰖩/󰈀 connected`, sin `NoC`), volumen, batería, fecha y sin
+`dots`. Sin `xkeyboard`, `wlan`/`eth` separados ni fuente `DesktopLogo`.
+Fuentes: `font-1` 10 y `font-3` 13; logo en `font-0`. Separación compacta:
+`module-margin-left/right = 0`; `updates`/`polypomo` con padding 1/1;
+volumen y batería juntos.
 
 La fase 1 termina en el escritorio. No implementar todavía:
 
@@ -167,7 +168,7 @@ desktop-doctor --camera
 ## Estado esperado al retomar
 
 - El código de fase 1b está implementado y los checks estáticos pasan.
-- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (12 módulos),
+- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (11 módulos),
   picom, dunst, lxpolkit, udiskie y xss-lock activos; `startx` manual.
 - Se corrigieron backups previos, ownership, `bspwmrc` 0755, picom,
   `desktop-doctor`, batería baja y polkit.

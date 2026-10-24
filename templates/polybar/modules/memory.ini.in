@@ -5,5 +5,5 @@ interval = 2
 format = <label>
 format-padding = 1
 format-foreground = ${colors.foreground}
-label = "%{T1}%{T-} %percentage_used:2%% [M]"
+label = "%{T1}%{T-} %percentage_used:2%%"
 label-font = 1

@@ -1196,3 +1196,37 @@ seguían demasiado separados, y fijó manualmente `updates` con padding 2 y
   `NETWORK_FAKE=wifi` → `󰖩 connected`; `NETWORK_FAKE=none` → nada.
   Polybar carga 12 módulos; capturas `bar-network-eth.png`,
   `bar-network-wifi.png`, `bar-network-none.png` y `bar-network-final.png`.
+
+## ADR-046 — Barra final ajustada manualmente por el usuario
+
+**Contexto:** El usuario ajustó su barra viva en `~/.config/polybar`:
+redujo fuentes, quitó etiquetas `[T]/[M]/[C]`, movió `updates` al final,
+eliminó `dots`, cambió el logo y afinó paddings. Quiere que esos cambios
+se conserven en el repo y que una reinstalación no los revierta.
+
+**Decisión:**
+1. Barra final de **11 módulos**:
+   `logo`, `bspwm`, `polypomo`, `temp`, `memory`, `cpu`, `network`,
+   `pipewire`, `battery`, `date`, `updates`.
+2. `modules-right = polypomo temp memory cpu network pipewire battery date updates`.
+3. Fuentes: `font-1 = 10`, `font-3 = 13`; `font-0 = 11`. El logo usa
+   `font-0` (`%{T0}`) para conservar su tamaño.
+4. Logo StumbleUpon `U+F1A4` sin espacio final y `format-padding = 1`.
+5. Sin etiquetas `[T]`, `[M]` ni `[C]`.
+6. `cpu` usa `label = "... %percentage%%{O8}"` para 8 px extra a la
+   derecha.
+7. `updates` al final: calavera `U+F4F9` + espacio + número, sin `#`;
+   `updates`/`polypomo` con padding 1/1.
+8. Se elimina `dots` del repo, de `lib/polybar.sh`, de `lib/verify.sh`,
+   de `install.sh` y de la config viva.
+9. `pipewire` y `battery` con padding 1; volumen sin espacio entre icono y
+   porcentaje; rampas de batería sin espacio final.
+
+**Consecuencias:**
+- La barra coincide con la que el usuario ajustó manualmente.
+- `updates` queda al final; si N=0 no ocupa espacio visible.
+- El logo no se reduce al bajar `font-1`; los números y módulos sí.
+- `dots`, `eth` y `wlan` ya no forman parte de la barra; se retiraron
+  también los archivos vivos no usados.
+- Polybar cargó 11 módulos sin errores; captura `bar-user-final.png`.
+- Verificado con `verify_install`, home simulado y `--dry-run`.

@@ -19,10 +19,10 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
-- **polybar** con **12 módulos**: logo StumbleUpon, workspaces 1-4,
-  actualizaciones (`󰚌 # N`), pomodoro, temperatura `[T]`, RAM `[M]`, CPU
-  `[C]`, red unificada (`󰖩/󰈀 connected`, sin `NoC`), volumen, batería,
-  fecha y tres puntos finales. Separación compacta (`module-margin` 0).
+- **polybar** con **11 módulos**: logo StumbleUpon, workspaces 1-4,
+  pomodoro, temperatura, RAM, CPU, red unificada
+  (`󰖩/󰈀 connected`, sin `NoC`), volumen, batería, fecha y actualizaciones
+  (calavera + número). `font-1` 10 y `font-3` 13; logo en `font-0`.
 - **picom**, **dunst**, **rofi**, **kitty**, **flameshot**.
 - Bloqueo con **i3lock** + **xss-lock**.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
@@ -259,11 +259,11 @@ Si algo falla:
 | `XF86AudioRaise/Lower/Mute` | volumen |
 | `XF86MonBrightnessUp/Down` | brillo |
 
-`Super` es la tecla Windows. La barra muestra 12 módulos (logo StumbleUpon,
-workspaces 1-4, actualizaciones, pomodoro, temperatura, RAM, CPU, red,
-volumen, batería, fecha y puntos). La red muestra un solo
-`󰖩 connected` o `󰈀 connected` según la conexión activa; si no hay ninguna,
-no muestra nada. Las actualizaciones muestran `󰚌 # N` y se ocultan si N=0.
+`Super` es la tecla Windows. La barra muestra 11 módulos (logo StumbleUpon,
+workspaces 1-4, pomodoro, temperatura, RAM, CPU, red, volumen, batería,
+fecha y actualizaciones). La red muestra un solo `󰖩 connected` o
+`󰈀 connected` según la conexión activa; si no hay ninguna, no muestra nada.
+Las actualizaciones muestran calavera + número y se ocultan si N=0.
 
 Los atajos de apps que aún no están instaladas se dejan puestos para no
 cambiar la memoria muscular; no hacen nada hasta instalar la app. `codium`

@@ -10,7 +10,7 @@ apt_lists=${UPDATES_APT_LISTS:-/var/lib/apt/lists}
 gap=${UPDATES_GAP:-1}              # cada cuántos segundos vigilar (s)
 debounce=${UPDATES_DEBOUNCE:-1.5}  # calma requerida antes de recalcular (s)
 
-skull="󰚌"                # U+F068C (calavera)
+skull=" "                # U+F4F9 (calavera)
 
 # Cuenta. UPDATES_FAKE_FILE permite probar el circuito sin apt (archivo
 # que contiene un número); por defecto usa la simulación real de apt.
@@ -28,7 +28,7 @@ estado() {
     ''|*[!0-9]*) updates=0 ;;
   esac
   if [ "$updates" -gt 0 ]; then
-    printf '%%{T3}%s%%{T-} # %s\n' "$skull" "$updates"
+    printf '%%{T3}%s%%{T-}%s\n' "$skull" "$updates"
   else
     printf '\n'
   fi

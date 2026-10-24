@@ -62,7 +62,6 @@ render_polybar_templates() {
     "modules/battery.ini"
     "modules/pipewire.ini"
     "modules/date.ini"
-    "modules/dots.ini"
   )
 
   local m
