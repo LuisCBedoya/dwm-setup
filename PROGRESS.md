@@ -89,6 +89,10 @@ Se añadió un watcher de audio genérico y sonido de notificación:
 - Al cambiar de salida conserva volumen/mute y mueve los streams.
 - `notification-sound.sh` reproduce `message-new-instant.oga` con `paplay`
   (fallback `pw-play`) en cada notificación de dunst.
+- `stack_duplicates = false`: dos mensajes idénticos ya no se agrupan en
+  `(2)`; se muestran por separado y cada uno dispara el script.
+- `flock` serializa los sonidos: si llegan dos a la vez, el segundo espera
+  al primero.
 - `sound-theme-freedesktop` se añadió a `AUDIO_PKGS`.
 - Quirk `alc255-asus` para ASUS FX504GE/ALC255:
   - Detecta DMI y códec.
@@ -107,6 +111,9 @@ Probado en vivo:
 - Dunst reproduce el sonido: aparece un sink-input de `paplay` y la regla
   `[notification-sound]` está cargada.
 - `notify-send` se ve y suena en el sink activo.
+- Dos `notify-send` idénticos: `dunstctl count displayed` pasa de 0 a 2,
+  no aparece `(2)` y se crean dos sink-inputs consecutivos (2953 → 2978),
+  confirmando el `flock`.
 
 Pendiente: reiniciar con el quirk ALC255 para confirmar que aparece el
 micrófono del jack combo. Si funciona, el watcher lo pondrá como fuente

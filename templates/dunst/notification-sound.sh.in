@@ -4,6 +4,14 @@
 
 set -u
 
+# Serializa los sonidos: si llegan dos notificaciones a la vez, el segundo
+# espera a que termine el primero.
+if command -v flock >/dev/null 2>&1; then
+  lock="${XDG_RUNTIME_DIR:-/tmp}/dunst-sound-$(id -u).lock"
+  exec 9>"$lock"
+  flock 9
+fi
+
 sound=/usr/share/sounds/freedesktop/stereo/message-new-instant.oga
 
 if command -v paplay >/dev/null 2>&1 && [ -r "$sound" ]; then

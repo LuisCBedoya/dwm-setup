@@ -962,3 +962,30 @@ usará en otros PCs, así que el quirk no puede aplicarse a ciegas.
   si no funciona, se revierte y se usa un headset USB.
 - En PCs sin HDMI/auriculares o en VM, el watcher no falla.
 - Bluetooth sigue fuera de fase 1.
+
+## ADR-038 — Notificaciones duplicadas y sonidos serializados
+
+**Contexto:** Con `stack_duplicates = true`, dos notificaciones idénticas de
+la misma aplicación (mismo appname, summary, body, icono y urgencia) se
+fusionaban en una sola con contador `(2)`. El script de sonido no se volvía
+a ejecutar para el duplicado, así que solo se oía una vez. El usuario quiere
+que cada mensaje suene.
+
+**Decisión:**
+1. `stack_duplicates = false` en `dunstrc`: cada notificación se muestra por
+   separado y dispara el script de sonido.
+2. `notification-sound.sh` usa `flock` sobre
+   `${XDG_RUNTIME_DIR:-/tmp}/dunst-sound-$(id -u).lock` antes de `paplay`.
+   Si llegan dos sonidos a la vez, el segundo espera al primero.
+3. `hide_duplicate_count` se deja como está; con stacking desactivado no se
+   muestra el contador.
+
+**Consecuencias:**
+- Dos mensajes idénticos producen dos notificaciones y dos sonidos
+  consecutivos.
+- El coste es que no se agrupan los duplicados; pueden aparecer varias
+  ventanas si llegan muchos iguales.
+- `flock` no bloquea la visualización de la notificación, solo el audio.
+- Si `flock` no está disponible, el sonido sigue funcionando sin serializar.
+- Validado en vivo: `dunstctl count displayed` 0 → 2 y dos sink-inputs
+  consecutivos (2953 → 2978).

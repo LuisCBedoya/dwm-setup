@@ -188,6 +188,9 @@ kernel. Opciones: `--headset-quirk` (forzar) y `--no-headset-quirk`
 Dunst reproduce `message-new-instant.oga` en cada notificación mediante una
 regla con `script`; el sonido sale por el sink activo (HDMI, auriculares o
 altavoces). `sound-theme-freedesktop` se instala como dependencia.
+`stack_duplicates = false` evita que dos mensajes idénticos se agrupen en
+un `(2)`; cada uno se muestra y suena. Los sonidos se serializan con
+`flock`, así que dos notificaciones seguidas suenan una tras otra.
 
 ### Cámara
 

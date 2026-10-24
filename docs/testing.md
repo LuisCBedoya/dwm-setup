@@ -200,6 +200,14 @@ Criterios:
 - `notify-send "Prueba" "Sonido"` muestra la notificación y aparece un
   sink-input de `paplay`; se oye en el sink activo.
 - `dunstctl rules` incluye `notification-sound`.
+- Dos notificaciones idénticas seguidas:
+  ```sh
+  notify-send "Prueba duplicado" "Mismo mensaje"
+  notify-send "Prueba duplicado" "Mismo mensaje"
+  dunstctl count displayed   # debe ser 2, no (2)
+  ```
+  Deben verse dos notificaciones y oírse dos sonidos consecutivos (dos
+  sink-inputs distintos con `flock`).
 - En un PC sin HDMI/auriculares o en VM, el watcher no falla.
 
 Quirk ALC255 (solo ASUS FX504GE/ALC255):
