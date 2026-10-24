@@ -47,6 +47,35 @@ Comprobaciones:
 - Home simulado (`/tmp/opencode/fakehome`) renderizado y `verify_install`
   pasa con código 0.
 
+## Mapa de atajos i3 (2026-10-24)
+
+Se adaptó `templates/sxhkd/sxhkdrc.in` a los atajos de i3 del usuario,
+manteniendo 5 escritorios, gaps 10, borde 2 y el wallpaper actual:
+
+- Apps: `Super+Return` kitty, `Super+Shift+s` flameshot, `Super+Shift+p`
+  pcmanfm, `Super+Shift+b` chromium, `Super+Shift+v` codium,
+  `Super+Shift+i` ristretto, `Super+Shift+a` lxappearance y
+  `Super+Shift+d` dmenu_run. Las apps que no están en fase 1 quedan como
+  bindings no-op.
+- `Super+Shift+e` pasa a logout; el editor se mueve a `Super+Shift+v`.
+- `Alt+Tab` / `Alt+Shift+Tab` ciclan ventanas visibles del escritorio.
+- `Super+r` + `h/j/k/l` redimensiona con cadena de sxhkd (`:`); `Escape`
+  sale. Se retiró `Super+Alt+{flechas}`.
+- Se añadieron `Super+Shift+c` (reload), `Super+Shift+r` (restart),
+  `Super+Shift+space` (floating), `Super+a` (parent) y `Super+b/v`
+  (split h/v por preselección).
+- Se mantienen los extras: Thunar, lock, rofi drun, capturas, flags y
+  multimedia.
+- `Super+s/w/e` de i3 (stacking/tabbed/toggle split) no tienen equivalente
+  exacto en bspwm; no se mapean en esta iteración.
+
+Validado en vivo: `sxhkd` recarga el nuevo `sxhkdrc` sin errores; el
+`bspwm_resize h/l` cambia el ancho en un layout lado a lado y la cadena
+`Super+r` se queda activa hasta `Escape`. `Alt+Tab`/`Alt+Shift+Tab` ciclan
+ventanas. `j/k` solo pueden cambiar altura cuando el split es vertical
+(ventanas apiladas) o la ventana es flotante; es una limitación del tiling
+de bspwm.
+
 ## Correcciones aplicadas
 
 - **Backups antes de escribir**: `backup_existing_configs` se ejecuta antes

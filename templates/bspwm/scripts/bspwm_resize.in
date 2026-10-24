@@ -1,13 +1,21 @@
 #!/bin/sh
-# bspwm_resize — helper para redimensionar ventanas con teclado
-# Uso: bspwm_resize <direccion>  (left|down|up|right)
+# bspwm_resize — resize tipo i3
+# Uso: bspwm_resize {h|j|k|l} [paso]
+#   h: encoger ancho
+#   j: encoger alto
+#   k: agrandar alto
+#   l: agrandar ancho
 
-direction=$1
-step=20
+direction="${1:-}"
+step="${2:-20}"
 
-case $direction in
-  left)  bspc node -z left -$step 0 || bspc node -z right -$step 0 ;;
-  down)  bspc node -z bottom 0 $step || bspc node -z top 0 $step ;;
-  up)    bspc node -z top 0 -$step || bspc node -z bottom 0 -$step ;;
-  right) bspc node -z right $step 0 || bspc node -z left $step 0 ;;
+case "$direction" in
+  h) bspc node -z right -"$step" 0 || bspc node -z left "$step" 0 ;;
+  j) bspc node -z bottom 0 -"$step" || bspc node -z top 0 "$step" ;;
+  k) bspc node -z bottom 0 "$step" || bspc node -z top 0 -"$step" ;;
+  l) bspc node -z right "$step" 0 || bspc node -z left -"$step" 0 ;;
+  *)
+    printf 'Uso: %s {h|j|k|l} [paso]\n' "$0" >&2
+    exit 1
+    ;;
 esac

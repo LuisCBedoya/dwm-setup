@@ -36,8 +36,8 @@ render_sxhkd_template() {
     "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/rocky.jpg" \
     "TERM=kitty" \
     "MENU=rofi -show drun" \
-    "BROWSER=firefox" \
-    "EDITOR=code" \
+    "BROWSER=chromium" \
+    "EDITOR=codium" \
     "FILEMGR=thunar" \
     "LOCK=/usr/local/bin/desktop-safe lock" \
     "SCREENSHOT=$TARGET_HOME/.config/bspwm/scripts/screenshot.sh" \

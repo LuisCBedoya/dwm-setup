@@ -196,25 +196,42 @@ Si algo falla:
 |---|---|
 | `Super+Return` | kitty |
 | `Super+d` | rofi (drun) |
-| `Super+Shift+b` | Firefox (no instalado en fase 1) |
-| `Super+Shift+e` | VS Code (no instalado en fase 1) |
+| `Super+Shift+d` | dmenu_run (pendiente de instalar) |
+| `Super+Shift+s` | flameshot gui |
+| `Super+Shift+p` | pcmanfm (pendiente de instalar) |
+| `Super+Shift+b` | chromium (pendiente de instalar) |
+| `Super+Shift+v` | codium (pendiente; no está en Debian) |
+| `Super+Shift+i` | ristretto (pendiente) |
+| `Super+Shift+a` | lxappearance (pendiente) |
 | `Super+Shift+f` | Thunar |
 | `Super+Shift+l` | bloquear (desktop-safe lock) |
-| `Print` | menú de capturas |
-| `Super+Print` | menú de capturas |
+| `Super+Shift+e` | salir (desktop-safe logout) |
+| `Super+Shift+c` | recargar sxhkd y bspwm |
+| `Super+Shift+r` | reiniciar bspwm |
+| `Super+Shift+space` | alternar floating |
+| `Super+Shift+q` | cerrar ventana |
+| `Super+a` | enfocar contenedor padre |
+| `Super+b` / `Super+v` | split horizontal / vertical (preselección) |
+| `Super+f` | fullscreen |
+| `Alt+Tab` / `Alt+Shift+Tab` | siguiente / anterior ventana |
 | `Super+{h,j,k,l}` | foco ventanas |
-| `Super+Shift+{h,j,k,l}` | mover ventanas |
+| `Super+Shift+{h,j,k,l}` | mover/intercambiar ventanas |
 | `Super+{1-5}` | ir a escritorio |
 | `Super+Shift+{1-5}` | mover ventana a escritorio |
-| `Super+Alt+{h,j,k,l}` | redimensionar |
+| `Super+r`, luego `h/j/k/l` | redimensionar (Escape sale) |
 | `Super+m` | monocle/tiled |
-| `Super+f` | fullscreen |
+| `Print` / `Super+Print` | menú de capturas |
 | `XF86AudioRaise/Lower/Mute` | volumen |
 | `XF86MonBrightnessUp/Down` | brillo |
 
 `Super` es la tecla Windows. La barra muestra 13 módulos (logo, workspaces,
 pomodoro, temperatura, RAM, CPU, teclado, ethernet, WiFi, batería, volumen,
 fecha y updates); WiFi y batería solo aparecen si el hardware existe.
+
+Los atajos de apps que aún no están instaladas se dejan puestos para no
+cambiar la memoria muscular; no hacen nada hasta instalar la app. `codium`
+requiere el repositorio de VSCodium. `Super+s/w/e` de i3 (stacking/tabbed)
+no tienen equivalente exacto en bspwm y no se mapean.
 
 ## Estructura del repositorio
 
@@ -259,8 +276,10 @@ docs/                      Hardware y testing
 - El instalador no modifica repositorios por defecto. Solo la opción 1 del
   menú añade componentes a entradas oficiales de Debian 13, tras un backup.
 - No se instala ningún navegador, IDE, cliente de correo ni música.
-- `Super+Shift+b` y `Super+Shift+e` existen en `sxhkdrc` pero las apps no se
-  instalan en esta fase.
+- Los atajos `Super+Shift+p/b/v/i/a/d` existen en `sxhkdrc` pero las apps
+  (`pcmanfm`, `chromium`, `codium`, `ristretto`, `lxappearance`, `dmenu`) no
+  se instalan en esta fase. `codium` requiere el repositorio de VSCodium.
+  `Super+Shift+e` es logout; el editor se movió a `Super+Shift+v`.
 
 ## Documentación
 

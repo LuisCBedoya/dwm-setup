@@ -88,6 +88,9 @@ Comprobado:
 - `desktop-doctor` sin falsos `[FALTA]`; solo avisa de cámara ausente.
 - `notify-send` funciona.
 - Picom arranca sin errores (`glx`).
+- `sxhkd` recarga el nuevo mapa de i3 sin errores.
+- `Super+r` + `h`/`l` probado con XTest: cambia el ancho y `Escape` sale.
+- `Alt+Tab` y `Alt+Shift+Tab` probados con XTest: ciclo de ventanas.
 
 Pendiente de la prueba real completa:
 
@@ -129,18 +132,34 @@ Criterios de aceptación:
 |---|---|---|
 | `Super+Return` | kitty | Abre terminal |
 | `Super+d` | rofi drun | Abre lanzador |
+| `Super+Shift+d` | dmenu_run | Pendiente de instalar dmenu |
+| `Super+Shift+s` | flameshot gui | Captura con flameshot |
+| `Super+Shift+p` | pcmanfm | Pendiente de instalar pcmanfm |
+| `Super+Shift+b` | chromium | Pendiente de instalar chromium |
+| `Super+Shift+v` | codium | Pendiente; requiere repo VSCodium |
+| `Super+Shift+i` | ristretto | Pendiente de instalar ristretto |
+| `Super+Shift+a` | lxappearance | Pendiente de instalar lxappearance |
 | `Super+Shift+f` | Thunar | Abre gestor |
 | `Super+Shift+l` | lock | Bloquea |
-| `Print` / `Super+Print` | capturas | Abre menú y guarda en `~/Pictures/Screenshots` |
+| `Super+Shift+e` | logout | Cierra la sesión |
+| `Super+Shift+c` | reload | Recarga sxhkd/bspwm |
+| `Super+Shift+r` | restart | Reinicia bspwm |
+| `Super+Shift+space` | floating | Alterna flotante |
+| `Super+a` | parent | Enfoca contenedor padre |
+| `Super+b` / `Super+v` | split h/v | Preselección para la próxima ventana |
+| `Super+f` | fullscreen | Alterna fullscreen |
+| `Alt+Tab` / `Alt+Shift+Tab` | ciclo | Siguiente/anterior ventana |
 | `Super+{h,j,k,l}` | foco | Cambia ventana |
-| `Super+Shift+{h,j,k,l}` | mover | Mueve ventana |
+| `Super+Shift+{h,j,k,l}` | mover | Intercambia ventana |
 | `Super+{1-5}` | escritorios | Cambia escritorio |
-| `Super+Alt+{flechas}` | resize | Redimensiona |
+| `Super+r`, luego `h/j/k/l` | resize | Redimensiona; Escape sale |
+| `Print` / `Super+Print` | capturas | Abre menú y guarda en `~/Pictures/Screenshots` |
 | `XF86Audio*` | volumen | pamixer |
 | `XF86MonBrightness*` | brillo | brightnessctl |
 
-`Super+Shift+b` (Firefox) y `Super+Shift+e` (VS Code) existen en `sxhkdrc`
-pero esas apps no se instalan en fase 1.
+Los atajos de apps no instaladas se dejan puestos para conservar la memoria
+muscular; no hacen nada hasta instalar la app. `Super+s/w/e` de i3 no tienen
+equivalente exacto en bspwm y no se mapean.
 
 ## 7. Cámara, USB, audio y NVIDIA
 

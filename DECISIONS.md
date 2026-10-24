@@ -839,3 +839,48 @@ mantener `startx` manual y usar este repositorio como fuente de configs.
 - El usuario debe ejecutar `startx` a mano tras el login.
 - Si más adelante se quiere un repo de dotfiles, habrá que diseñarlo de
   nuevo (copia + render + validación) y añadir un ADR.
+
+## ADR-035 — Mapa de atajos i3 y resize encadenado
+
+**Contexto:** El usuario aportó su configuración de i3 y pidió conservar la
+memoria muscular al abrir programas y al cambiar de ventana. Quería mantener
+5 escritorios, el estilo actual (gaps 10, borde 2) y el wallpaper
+`rocky.jpg`. Las apps de su i3 (`pcmanfm`, `chromium`, `codium`,
+`ristretto`, `lxappearance`, `dmenu`) no están instaladas en fase 1, pero
+pidió dejar los atajos puestos. `codium` no está en los repositorios Debian;
+`xfce-polkit` tampoco existe en Debian 13 (se usa `lxpolkit`). `fuji.png` no
+está en el sistema.
+
+**Decisión:**
+1. `templates/sxhkd/sxhkdrc.in` adopta el mapa de i3:
+   - Apps: `Super+Return` kitty, `Super+Shift+s` flameshot,
+     `Super+Shift+p` pcmanfm, `Super+Shift+b` chromium,
+     `Super+Shift+v` codium, `Super+Shift+i` ristretto,
+     `Super+Shift+a` lxappearance, `Super+Shift+d` dmenu_run.
+   - `Super+Shift+e` logout; el editor se mueve a `Super+Shift+v`.
+   - `Alt+Tab` / `Alt+Shift+Tab` ciclan ventanas visibles del escritorio.
+   - `Super+r` + `h/j/k/l` redimensiona con cadena de sxhkd (`:`);
+     `Escape` sale. Se retira `Super+Alt+{flechas}`.
+   - Se añaden reload (`Super+Shift+c`), restart (`Super+Shift+r`),
+     floating (`Super+Shift+space`), parent (`Super+a`) y split
+     (`Super+b/v`).
+2. `bspwm_resize` acepta `h/j/k/l` con los sentidos de i3: `h` encoge
+   ancho, `j` encoge alto, `k` agranda alto, `l` agranda ancho.
+3. Las apps no instaladas quedan como bindings no-op; no se añaden paquetes
+   ni repositorios en esta iteración.
+4. Se mantienen 5 escritorios, `window_gap 10`, `border_width 2` y
+   `rocky.jpg`.
+5. `Super+s/w/e` (stacking/tabbed/toggle split de i3) no tienen equivalente
+   exacto en bspwm y no se mapean.
+
+**Consecuencias:**
+- La apertura de programas y `Alt+Tab` coinciden con la memoria muscular de
+  i3; las teclas de apps ausentes no hacen nada hasta instalar la app.
+- El resize solo puede cambiar el eje del split en ventanas tiled; `j/k`
+  requieren un split vertical (ventanas apiladas) o una ventana flotante.
+  Es una limitación del tiling de bspwm, no del binding.
+- tmux no choca: usa `Ctrl+b`; `Super` y `Alt` son de sxhkd. Mientras la
+  cadena de resize está activa, `h/j/k/l` los captura sxhkd; al salir con
+  `Escape` o timeout vuelven a tmux.
+- `Super+Shift+b` deja de abrir Firefox; Firefox sigue instalado y se puede
+  abrir desde rofi.
