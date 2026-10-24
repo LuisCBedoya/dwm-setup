@@ -218,6 +218,8 @@ Criterios:
   `/tmp/scrot.*`. Scrot usa `--line mode=edge,color=#FF00FF,width=2,opacity=255`
   y un `xrefresh` posterior. Probar sobre una ventana blanca para confirmar
   que la línea magenta se ve.
+  La notificación de “Región copiada al portapapeles” debe mostrar una
+  miniatura del recorte desde `~/.cache/dunst/last-screenshot.png` (64 px).
 - En un PC sin HDMI/auriculares o en VM, el watcher no falla.
 
 Quirk ALC255 (solo ASUS FX504GE/ALC255):

@@ -17,7 +17,13 @@ fi
 command -v xrefresh >/dev/null 2>&1 && xrefresh >/dev/null 2>&1 || true
 
 if xclip -selection clipboard -t image/png -i "$tmp"; then
-  notify-send "Captura" "Región copiada al portapapeles"
+  thumb="$HOME/.cache/dunst/last-screenshot.png"
+  mkdir -p "$HOME/.cache/dunst" 2>/dev/null || true
+  if cp "$tmp" "$thumb" 2>/dev/null; then
+    notify-send -i "$thumb" "Captura" "Región copiada al portapapeles"
+  else
+    notify-send "Captura" "Región copiada al portapapeles"
+  fi
 else
   notify-send -u critical "Captura" "No se pudo copiar al portapapeles"
 fi

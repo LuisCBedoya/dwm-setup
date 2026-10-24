@@ -101,6 +101,9 @@ Se añadió un watcher de audio genérico y sonido de notificación:
   pantalla completa con eventos sintéticos.
 - Con XTest, la región 400x300 llega al portapapeles, no queda temporal y
   tras `xrefresh` no queda el rectángulo en pantalla.
+- La notificación de captura muestra una miniatura de 64 px del recorte
+  desde `~/.cache/dunst/last-screenshot.png`; comprobado con una captura de
+  la notificación.
 - `sound-theme-freedesktop` se añadió a `AUDIO_PKGS`.
 - Quirk `alc255-asus` para ASUS FX504GE/ALC255:
   - Detecta DMI y códec.

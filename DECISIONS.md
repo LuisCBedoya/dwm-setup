@@ -1043,3 +1043,32 @@ ve, pero el rectángulo residual seguía ahí; `xrefresh` lo borra.
 - Si `xrefresh` no está disponible, la captura sigue funcionando, pero el
   rectángulo podría quedar visible.
 - Sin paquetes nuevos.
+
+## ADR-041 — Miniatura del recorte en la notificación
+
+**Contexto:** El usuario vio que algunas notificaciones muestran logos o
+imágenes (por ejemplo WhatsApp) y quiso que la notificación de scrot mostrara
+también lo que acababa de recortar. El temporal de scrot se borra al salir,
+así que no se puede pasar directamente a dunst. `max_icon_size` ya está en
+64 px.
+
+**Decisión:**
+1. Tras copiar la región al portapapeles, `screenshot_region.sh` copia el
+   PNG temporal a `~/.cache/dunst/last-screenshot.png`.
+2. La notificación usa `notify-send -i ~/.cache/dunst/last-screenshot.png`;
+   dunst lo escala a 64 px en el lado mayor.
+3. Si la copia a caché falla, se envía la notificación sin icono. Si falla
+   `xclip`, se muestra una notificación de error sin miniatura.
+4. El archivo de caché se sobrescribe en cada captura; no se acumulan
+   archivos.
+5. El menú `Print`/`Super+Print` no cambia; la miniatura se añade solo a la
+   captura directa `Super+Shift+s`.
+
+**Consecuencias:**
+- La notificación de captura muestra una miniatura del recorte, estilo
+  WhatsApp.
+- La imagen completa sigue en el portapapeles; la caché es solo para el
+  icono.
+- `~/.cache/dunst/last-screenshot.png` conserva la última captura; se puede
+  borrar sin afectar a la funcionalidad.
+- Sin paquetes nuevos.

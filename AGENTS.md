@@ -92,7 +92,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
     sonidos simultáneos. Las capturas de región usan
     `scrot -s --line mode=edge,color=#FF00FF,width=2,opacity=255` y un
     `xrefresh` posterior para borrar el rectángulo residual; el magenta se
-    ve sobre fondo blanco.
+    ve sobre fondo blanco. La notificación usa como icono
+    `~/.cache/dunst/last-screenshot.png` (64 px) para mostrar el recorte.
 
 ## Estructura relevante
 
