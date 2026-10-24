@@ -69,7 +69,7 @@ grep -n 'glx-swap-method' ~/.config/picom/picom.conf && echo "MAL"
 grep -n 'icon-theme\|icon_theme' ~/.config/rofi/powermenu.rasi ~/.config/dunst/dunstrc
 ```
 
-Resultado esperado: sin placeholders, sin ficheros de root, 13 módulos,
+Resultado esperado: sin placeholders, sin ficheros de root, 12 módulos,
 sin `glx-swap-method`, iconos Adwaita.
 
 ## 4. Validación en vivo (2026-10-24)
@@ -79,19 +79,22 @@ Host: Debian 13, kernel 6.12, Xorg 1920x1080, Intel UHD 630 + NVIDIA GTX
 
 Comprobado:
 
-- `bspwm 0.9.10`, `sxhkd 0.6.2`, `polybar 3.7.2` (13 módulos), `picom 12.5`,
+- `bspwm 0.9.10`, `sxhkd 0.6.2`, `polybar 3.7.2` (12 módulos), `picom 12.5`,
   `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock`.
 - Barra: logo StumbleUpon, workspaces 1-4, updates `󰚌 # N`, `25:00`,
-  temperatura `[T]`, RAM `[M]`, CPU `[C]`, WiFi `NoC`, eth `connected`,
-  volumen, batería `BAT1`, fecha y `dots`.
+  temperatura `[T]`, RAM `[M]`, CPU `[C]`, red `󰈀 connected`, volumen,
+  batería `BAT1`, fecha y `dots`.
 - Barra rediseñada: 4 workspaces, caja blanca en el enfocado, logo
-  StumbleUpon, `updates` con calavera y contador, `[T]/[M]/[C]`, `NoC`,
-  `connected`, `dots` y sin `xkeyboard`. Polybar carga 13 módulos sin
-  errores.
-- Separación final: `module-margin-left/right = 0`; padding 1 en los
-  módulos de texto y 0 en `polypomo`/`battery`. Con
-  `UPDATES_FAKE_FILE=0` el módulo `updates` desaparece y no muestra
-  `# 0`; captura `bar-spacing-final.png`.
+  StumbleUpon, `updates` con calavera y contador, `[T]/[M]/[C]`, red
+  unificada, `dots` y sin `xkeyboard` ni `wlan`/`eth` separados. Polybar
+  carga 12 módulos sin errores.
+- Red: con WiFi down y Ethernet up solo `󰈀 connected` (sin `NoC`);
+  `NETWORK_FAKE=wifi` muestra solo `󰖩 connected`; `NETWORK_FAKE=none` no
+  muestra nada. Captura `bar-network-final.png`.
+- Separación final: `module-margin-left/right = 0`; `updates`/`polypomo`
+  con padding 2/1; volumen padding 0 y batería con un solo espacio entre
+  icono y porcentaje. Con `UPDATES_FAKE_FILE=0` el módulo `updates`
+  desaparece y no muestra `# 0`; captura `bar-spacing-final.png`.
 - `bspwmrc` y `.xinitrc` ejecutables; `.xinitrc` sin `kitty`.
 - Sin placeholders y sin ficheros root en `~/.config`.
 - `desktop-doctor` sin falsos `[FALTA]`; solo avisa de cámara ausente.
@@ -135,7 +138,7 @@ Criterios de aceptación:
 - No hay placeholders ni ficheros root en el home.
 - Tras `startx`, bspwm, sxhkd, polybar, picom, dunst, lxpolkit, udiskie y
   xss-lock están activos.
-- La barra muestra los módulos disponibles (13 en el host de referencia).
+- La barra muestra los módulos disponibles (12 en el host de referencia).
 - `desktop-doctor` no reporta fallos.
 - El segundo backup contiene las configs anteriores.
 

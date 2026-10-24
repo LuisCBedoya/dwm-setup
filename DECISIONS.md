@@ -1158,3 +1158,41 @@ demasiado separados respecto a la referencia. Los huecos grandes venían de
   derecha.
 - Verificado en vivo: polybar carga 13 módulos sin errores; captura
   `bar-spacing-final.png`.
+
+## ADR-045 — Red unificada y volumen/batería juntos
+
+**Contexto:** El usuario no quiere ver `NoC` cuando WiFi está desconectado,
+solo un `connected`. Si hay WiFi conectado quiere un único `Connected`, sin
+SSID ni el módulo Ethernet duplicado. También señaló que volumen y batería
+seguían demasiado separados, y fijó manualmente `updates` con padding 2 y
+`polypomo` con padding 1.
+
+**Decisión:**
+1. Un único módulo `network` (`custom/script`) reemplaza a `wlan` y `eth`.
+   - WiFi conectado → `󰖩 connected`.
+   - Sin WiFi y Ethernet conectado → `󰈀 connected`.
+   - Sin conexión → no imprime nada.
+   - Si ambos están conectados, prioriza WiFi.
+2. `network-status.sh` usa `nmcli` y fallback a `/sys/class/net` para
+   interfaces no gestionadas por NetworkManager; `NETWORK_FAKE=wifi|eth|none`
+   permite probar sin tocar la red.
+3. Se retiran los módulos y plantillas `wlan`/`eth`; la barra queda en 12
+   módulos.
+4. `updates` y `polypomo` conservan los paddings 2/1 elegidos por el usuario
+   y pasan a las plantillas.
+5. Volumen: `format-volume-padding = 0` y `format-muted-padding = 0`; la
+   etiqueta empieza con un espacio para mantener separación con la red.
+6. Batería: se elimina el espacio duplicado en carga/descarga; queda un solo
+   espacio entre icono y porcentaje. `label-full` ya tenía uno.
+
+**Consecuencias:**
+- La barra muestra un solo estado de red y nunca `NoC` ni el SSID.
+- Sin conexión, el módulo `network` queda vacío y no deja hueco.
+- El estado se actualiza cada 5 s (`interval = 5`).
+- Volumen y batería quedan juntos; la batería no separa el porcentaje con
+  dos espacios.
+- `updates`/`polypomo` mantienen el espaciado que el usuario dejó.
+- Verificado en vivo: WiFi down + Ethernet up → `󰈀 connected`;
+  `NETWORK_FAKE=wifi` → `󰖩 connected`; `NETWORK_FAKE=none` → nada.
+  Polybar carga 12 módulos; capturas `bar-network-eth.png`,
+  `bar-network-wifi.png`, `bar-network-none.png` y `bar-network-final.png`.

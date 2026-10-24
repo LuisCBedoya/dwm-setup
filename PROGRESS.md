@@ -15,7 +15,7 @@ ejecutable, picom arranque y la verificación final no falle.
 - Estado de validación real: **sesión viva validada**; falta la instalación
   desde cero en VM Debian 13 minimal.
 - Sesión: `startx` manual desde TTY; sin display manager ni auto-login.
-- Barra: 13 módulos, logo StumbleUpon, 4 workspaces y `dots`.
+- Barra: 12 módulos, logo StumbleUpon, 4 workspaces, red unificada y `dots`.
 
 ## Validación viva (2026-10-24)
 
@@ -26,14 +26,15 @@ Procesos comprobados:
 
 - `bspwm 0.9.10`
 - `sxhkd 0.6.2`
-- `polybar 3.7.2` con **13 módulos**: `logo`, `bspwm`, `updates`,
-  `polypomo`, `temp`, `memory`, `cpu`, `wlan`, `eth`, `pipewire`,
+- `polybar 3.7.2` con **12 módulos**: `logo`, `bspwm`, `updates`,
+  `polypomo`, `temp`, `memory`, `cpu`, `network`, `pipewire`,
   `battery`, `date`, `dots`.
 - `picom` 12.5 activo (config sin `glx-swap-method`).
 - `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock` activos.
-- `BAT1`, `ACAD`, `enp3s0`, `wlo1`, batería y volumen visibles en la barra;
-  `wlo1` sin conexión muestra `NoC`. El layout `latam` se aplica con
-  `setxkbmap` pero ya no ocupa un módulo de la barra.
+- `BAT1`, `ACAD`, `enp3s0`, `wlo1`, batería y volumen visibles en la barra.
+  La red es un solo módulo: con WiFi down y Ethernet up muestra `󰈀 connected`;
+  no muestra `NoC`. El layout `latam` se aplica con `setxkbmap` pero ya no
+  ocupa un módulo de la barra.
 - `notify-send` funciona.
 
 Comprobaciones:
@@ -141,21 +142,26 @@ Se replicó la barra de referencia:
 - 4 escritorios (`1-4`); `bspwmrc` y `sxhkd` ajustados.
 - Logo StumbleUpon `U+F1A4` (sin cambio).
 - Workspace enfocado con caja blanca, texto oscuro, font-1 y padding 1.
-- Orden derecha: `updates`, `polypomo`, `temp`, `memory`, `cpu`, `wlan`,
-  `eth`, `pipewire`, `battery`, `date`, `dots`.
+- Orden derecha: `updates`, `polypomo`, `temp`, `memory`, `cpu`, `network`,
+  `pipewire`, `battery`, `date`, `dots`.
 - `updates` muestra `󰚌 # N`; si N=0 no muestra nada.
 - `temp [T]`, `memory [M]`, `cpu [C]`.
-- `wlan` muestra `󰖪 NoC` cuando está desconectado.
+- Red unificada: `󰖩 connected` si hay WiFi; si no, `󰈀 connected` si hay
+  Ethernet; si no hay ninguna, nada. Sin `NoC` ni SSID; WiFi tiene
+  prioridad. `NETWORK_FAKE=wifi|eth|none` permite probar los tres estados.
 - `dots` vuelve con `...` al final.
-- `xkeyboard`/`latam` eliminado de la barra.
+- `xkeyboard`/`latam` eliminado de la barra; `wlan`/`eth` separados
+  eliminados.
 - Pomodoro pausa con `U+F04C` (dos barras) como la referencia.
-- Separación compacta: `module-margin-left/right = 0`; padding 1 en
-  `updates`, `temp`, `memory`, `cpu`, `wlan`, `eth`, `pipewire`, `date` y
-  `dots`; 0 en `polypomo` y `battery`. Los huecos quedan en ~1-2 unidades.
+- Separación compacta: `module-margin-left/right = 0`; `updates`/`polypomo`
+  con padding 2/1; padding 1 en `temp`, `memory`, `cpu`, `pipewire`,
+  `date` y `dots`; `network` 0; volumen y batería juntos (el volumen lleva
+  un espacio inicial y la batería un solo espacio icono-porcentaje).
 - Con `UPDATES_FAKE_FILE=0` el módulo de actualizaciones desaparece y no
   muestra `# 0` (probado en vivo).
-- Polybar cargó 13 módulos sin errores; capturas `bar-design3.png` (diseño)
-  y `bar-spacing-final.png` (separación final).
+- Polybar cargó 12 módulos sin errores; capturas `bar-design3.png` (diseño),
+  `bar-spacing-final.png` (separación) y `bar-network-final.png` (red
+  unificada).
 
 ## Correcciones aplicadas
 
@@ -216,7 +222,7 @@ Se replicó la barra de referencia:
 
 - [x] Sesión viva en Debian 13 (host de referencia).
 - [x] `desktop-doctor` sin falsos `[FALTA]`.
-- [x] Barra con 13 módulos y sin placeholders.
+- [x] Barra con 12 módulos y sin placeholders.
 - [x] Picom, dunst, lxpolkit, udiskie y xss-lock activos.
 - [x] `bspwmrc` ejecutable y `.xinitrc` sin kitty.
 - [x] Ownership de `~/.config`, `~/.local` y `~/.config-backup`.
@@ -252,7 +258,7 @@ Se replicó la barra de referencia:
 | Backups tardíos | Alto | `backup_existing_configs` antes de escribir |
 | Directorios root en el home | Medio | `make_user_dir` + `chown_managed_paths` |
 | Picom no arranca | Medio | Config sin `glx-swap-method`; log de sesión |
-| Módulo battery/WiFi inexistente | Bajo | Render condicional y archivos siempre presentes |
+| Módulo battery/red inexistente | Bajo | Batería condicional; red oculta si no hay conexión |
 | Nerd Font no descarga | Bajo | Fallback a JetBrains Mono/monospace |
 | Glifo Nerd Font 3.x incorrecto | Bajo | Verificar con `fc-list :charset=...` |
 | NVIDIA DKMS falla | Medio | Grupo GPU opcional; se continúa con Intel |

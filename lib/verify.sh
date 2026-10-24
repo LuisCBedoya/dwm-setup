@@ -38,14 +38,14 @@ verify_install() {
     "$home/.config/polybar/modules/temp.ini" \
     "$home/.config/polybar/modules/memory.ini" \
     "$home/.config/polybar/modules/cpu.ini" \
-    "$home/.config/polybar/modules/eth.ini" \
-    "$home/.config/polybar/modules/wlan.ini" \
+    "$home/.config/polybar/modules/network.ini" \
     "$home/.config/polybar/modules/battery.ini" \
     "$home/.config/polybar/modules/pipewire.ini" \
     "$home/.config/polybar/modules/date.ini" \
     "$home/.config/polybar/modules/dots.ini" \
     "$home/.config/polybar/scripts/updates-apt.sh" \
     "$home/.config/polybar/scripts/polypomo" \
+    "$home/.config/polybar/scripts/network-status.sh" \
     "$home/.config/picom/picom.conf" \
     "$home/.config/dunst/dunstrc" \
     "$home/.config/rofi/powermenu.rasi" \

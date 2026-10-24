@@ -2,15 +2,15 @@
 [module/pipewire]
 type = internal/pulseaudio
 format-volume = <label-volume>
-format-volume-padding = 1
+format-volume-padding = 0
 format-volume-foreground = ${colors.foreground}
-label-volume = "%{T1}󰕾 %{T-} %percentage%%"
+label-volume = " %{T1}󰕾 %{T-} %percentage%%"
 label-volume-font = 1
 
 format-muted = <label-muted>
-format-muted-padding = 1
+format-muted-padding = 0
 format-muted-foreground = ${colors.foreground}
-label-muted = "%{T1}󰝟 %{T-} muted"
+label-muted = " %{T1}󰝟 %{T-} muted"
 label-muted-font = 2
 
 click-right = pavucontrol

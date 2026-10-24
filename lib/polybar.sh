@@ -28,11 +28,6 @@ render_polybar_templates() {
   battery=$(polybar_detect_battery)
   ac_adapter=$(polybar_detect_ac_adapter)
 
-  local wlan_module=""
-  if [[ -n "$wlan_iface" ]]; then
-    wlan_module="wlan"
-  fi
-
   local battery_module=""
   if [[ -n "$battery" && -n "$ac_adapter" && -d "/sys/class/power_supply/$battery" ]]; then
     battery_module="battery"
@@ -49,7 +44,6 @@ render_polybar_templates() {
     "WLAN_IFACE=$wlan_iface"
     "BATTERY=$battery"
     "AC_ADAPTER=$ac_adapter"
-    "WLAN_MODULE=$wlan_module"
     "BATTERY_MODULE=$battery_module"
   )
 
@@ -64,8 +58,7 @@ render_polybar_templates() {
     "modules/temp.ini"
     "modules/memory.ini"
     "modules/cpu.ini"
-    "modules/eth.ini"
-    "modules/wlan.ini"
+    "modules/network.ini"
     "modules/battery.ini"
     "modules/pipewire.ini"
     "modules/date.ini"
@@ -78,7 +71,7 @@ render_polybar_templates() {
       "$home/.config/polybar/$m" 0644 "${common_vars[@]}"
   done
 
-  local scripts=("scripts/updates-apt.sh" "scripts/polypomo")
+  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh")
   local s
   for s in "${scripts[@]}"; do
     render_theme_template "$PROJECT_ROOT/templates/polybar/$s.in" \

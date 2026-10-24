@@ -1,0 +1,10 @@
+; network — un solo indicador: WiFi > Ethernet; sin NoC
+[module/network]
+type = custom/script
+exec = @HOME@/.config/polybar/scripts/network-status.sh
+interval = 5
+format = <label>
+format-padding = 0
+format-font = 1
+format-foreground = ${colors.foreground}
+label = %output%
