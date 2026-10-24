@@ -75,10 +75,11 @@ La fase 1 termina en el escritorio. No implementar todavía:
     está disponible. Los scripts instalados que corren en sesión usan
     `#!/bin/sh` POSIX; `desktop-doctor` y `desktop-safe` deben pasar `sh -n`.
 18. **Atajos:** `templates/sxhkd/sxhkdrc.in` sigue el mapa de i3 del usuario
-    (`Super+Return`, `Super+Shift+s/p/b/v/i/a/d`, `Alt+Tab`, etc.). Las apps
-    que no están en fase 1 se dejan como bindings no-op. `Super+r` seguido de
-    `h/j/k/l` redimensiona mediante cadena de sxhkd; `Escape` sale. No cambiar
-    este mapa sin una decisión nueva.
+    (`Super+Return`, `Super+Shift+s` scrot región+portapapeles,
+    `Super+Shift+d` rofi run, `Super+Shift+p/b/v/i/a`, `Alt+Tab`, etc.). Las
+    apps que no están en fase 1 se dejan como bindings no-op. `Super+r`
+    seguido de `h/j/k/l` redimensiona mediante cadena de sxhkd; `Escape` sale.
+    No cambiar este mapa sin una decisión nueva.
 
 ## Estructura relevante
 

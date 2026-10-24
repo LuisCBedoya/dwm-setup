@@ -1,0 +1,20 @@
+#!/bin/sh
+# screenshot_region — selecciona una región con scrot y la copia al portapapeles.
+# No deja archivo: usa un directorio temporal que se borra al salir.
+
+set -u
+
+tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/scrot.XXXXXX") || exit 1
+trap 'rm -rf "$tmpdir"' 0 1 2 15
+tmp="$tmpdir/capture.png"
+
+if ! scrot -s -q 100 "$tmp"; then
+  # Selección cancelada o scrot falló.
+  exit 0
+fi
+
+if xclip -selection clipboard -t image/png -i "$tmp"; then
+  notify-send "Captura" "Región copiada al portapapeles"
+else
+  notify-send -u critical "Captura" "No se pudo copiar al portapapeles"
+fi

@@ -196,8 +196,8 @@ Si algo falla:
 |---|---|
 | `Super+Return` | kitty |
 | `Super+d` | rofi (drun) |
-| `Super+Shift+d` | dmenu_run (pendiente de instalar) |
-| `Super+Shift+s` | flameshot gui |
+| `Super+Shift+d` | rofi -show run |
+| `Super+Shift+s` | scrot: seleccionar región y copiar al portapapeles |
 | `Super+Shift+p` | pcmanfm (pendiente de instalar) |
 | `Super+Shift+b` | chromium (pendiente de instalar) |
 | `Super+Shift+v` | codium (pendiente; no está en Debian) |
@@ -276,10 +276,12 @@ docs/                      Hardware y testing
 - El instalador no modifica repositorios por defecto. Solo la opción 1 del
   menú añade componentes a entradas oficiales de Debian 13, tras un backup.
 - No se instala ningún navegador, IDE, cliente de correo ni música.
-- Los atajos `Super+Shift+p/b/v/i/a/d` existen en `sxhkdrc` pero las apps
-  (`pcmanfm`, `chromium`, `codium`, `ristretto`, `lxappearance`, `dmenu`) no
-  se instalan en esta fase. `codium` requiere el repositorio de VSCodium.
+- Los atajos `Super+Shift+p/b/v/i/a` existen en `sxhkdrc` pero las apps
+  (`pcmanfm`, `chromium`, `codium`, `ristretto`, `lxappearance`) no se
+  instalan en esta fase. `codium` requiere el repositorio de VSCodium.
   `Super+Shift+e` es logout; el editor se movió a `Super+Shift+v`.
+- `Super+Shift+s` usa `scrot`: selecciona región y copia al portapapeles, sin
+  dejar archivo. No tiene anotaciones; flameshot sigue instalado para eso.
 
 ## Documentación
 

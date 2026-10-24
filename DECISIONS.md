@@ -884,3 +884,34 @@ está en el sistema.
   `Escape` o timeout vuelven a tmux.
 - `Super+Shift+b` deja de abrir Firefox; Firefox sigue instalado y se puede
   abrir desde rofi.
+
+## ADR-036 — Scrot región+portapapeles y rofi run
+
+**Contexto:** El usuario pidió sustituir `dmenu_run` por rofi y `flameshot
+gui` por scrot, manteniendo la tecla `Super+Shift+s` (la de su i3). Quería
+seleccionar una región, copiarla al portapapeles y pegarla en cualquier app.
+No necesita anotaciones y prefiere no dejar archivos. Chromium sigue sin
+decisión; el atajo `Super+Shift+b` se queda como no-op.
+
+**Decisión:**
+1. `Super+Shift+d` pasa de `dmenu_run` a `rofi -show run`.
+2. `Super+Shift+s` pasa de `flameshot gui` a un script nuevo,
+   `~/.config/bspwm/scripts/screenshot_region.sh`:
+   - `scrot -s -q 100` para seleccionar la región.
+   - `xclip -selection clipboard -t image/png -i` para copiarla.
+   - Archivo temporal con `mktemp` y `trap` para borrarlo siempre; **no se
+     guarda ninguna captura**.
+   - `notify-send` confirma o avisa del fallo.
+3. `Super+Shift+b` se queda con `chromium` como binding no-op hasta que el
+   usuario decida instalar un navegador.
+4. `flameshot` sigue instalado para anotar manualmente, pero ya no ocupa
+   `Super+Shift+s`.
+5. `Print`/`Super+Print` mantienen el menú de capturas existente.
+6. No se añaden paquetes: `scrot`, `xclip` y `rofi` ya están en el sistema.
+
+**Consecuencias:**
+- Pegar la captura funciona en apps que aceptan `image/png` en el
+  portapapeles; una terminal normal no pega imágenes.
+- Scrot no dibuja flechas ni texto; para eso queda flameshot manual.
+- El script es POSIX sh y se instala con el resto de scripts de bspwm.
+- No queda basura en `/tmp` ni en `~/Pictures/Screenshots` por esta captura.

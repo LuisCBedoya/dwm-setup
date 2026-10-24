@@ -91,6 +91,10 @@ Comprobado:
 - `sxhkd` recarga el nuevo mapa de i3 sin errores.
 - `Super+r` + `h`/`l` probado con XTest: cambia el ancho y `Escape` sale.
 - `Alt+Tab` y `Alt+Shift+Tab` probados con XTest: ciclo de ventanas.
+- `Super+Shift+s` probado con XTest: región 400x300 copiada como
+  `image/png`, sin temporales y con notificación de dunst.
+- `Super+Shift+d` abre `rofi -show run`; `Super+d` sigue abriendo
+  `rofi -show drun`.
 
 Pendiente de la prueba real completa:
 
@@ -132,8 +136,8 @@ Criterios de aceptación:
 |---|---|---|
 | `Super+Return` | kitty | Abre terminal |
 | `Super+d` | rofi drun | Abre lanzador |
-| `Super+Shift+d` | dmenu_run | Pendiente de instalar dmenu |
-| `Super+Shift+s` | flameshot gui | Captura con flameshot |
+| `Super+Shift+d` | rofi -show run | Lanzador de comandos |
+| `Super+Shift+s` | scrot región | Selecciona y copia al portapapeles |
 | `Super+Shift+p` | pcmanfm | Pendiente de instalar pcmanfm |
 | `Super+Shift+b` | chromium | Pendiente de instalar chromium |
 | `Super+Shift+v` | codium | Pendiente; requiere repo VSCodium |

@@ -10,7 +10,7 @@ super + d
     @MENU@
 
 super + shift + d
-    dmenu_run
+    rofi -show run
 
 super + shift + b
     @BROWSER@
@@ -28,7 +28,7 @@ super + shift + a
     lxappearance
 
 super + shift + s
-    flameshot gui
+    @HOME@/.config/bspwm/scripts/screenshot_region.sh
 
 super + shift + f
     @FILEMGR@

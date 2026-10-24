@@ -24,6 +24,7 @@ verify_install() {
     "$home/.config/bspwm/scripts/low_bat_notifier.sh" \
     "$home/.config/bspwm/scripts/keybindings_rofi.sh" \
     "$home/.config/bspwm/scripts/screenshot.sh" \
+    "$home/.config/bspwm/scripts/screenshot_region.sh" \
     "$home/.config/sxhkd/sxhkdrc" \
     "$home/.config/polybar/config.ini" \
     "$home/.config/polybar/launch.sh" \

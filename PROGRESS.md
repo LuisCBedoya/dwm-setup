@@ -52,10 +52,10 @@ Comprobaciones:
 Se adaptó `templates/sxhkd/sxhkdrc.in` a los atajos de i3 del usuario,
 manteniendo 5 escritorios, gaps 10, borde 2 y el wallpaper actual:
 
-- Apps: `Super+Return` kitty, `Super+Shift+s` flameshot, `Super+Shift+p`
-  pcmanfm, `Super+Shift+b` chromium, `Super+Shift+v` codium,
-  `Super+Shift+i` ristretto, `Super+Shift+a` lxappearance y
-  `Super+Shift+d` dmenu_run. Las apps que no están en fase 1 quedan como
+- Apps: `Super+Return` kitty, `Super+Shift+s` scrot región+portapapeles,
+  `Super+Shift+p` pcmanfm, `Super+Shift+b` chromium, `Super+Shift+v`
+  codium, `Super+Shift+i` ristretto, `Super+Shift+a` lxappearance y
+  `Super+Shift+d` rofi run. Las apps que no están en fase 1 quedan como
   bindings no-op.
 - `Super+Shift+e` pasa a logout; el editor se mueve a `Super+Shift+v`.
 - `Alt+Tab` / `Alt+Shift+Tab` ciclan ventanas visibles del escritorio.
@@ -72,9 +72,11 @@ manteniendo 5 escritorios, gaps 10, borde 2 y el wallpaper actual:
 Validado en vivo: `sxhkd` recarga el nuevo `sxhkdrc` sin errores; el
 `bspwm_resize h/l` cambia el ancho en un layout lado a lado y la cadena
 `Super+r` se queda activa hasta `Escape`. `Alt+Tab`/`Alt+Shift+Tab` ciclan
-ventanas. `j/k` solo pueden cambiar altura cuando el split es vertical
-(ventanas apiladas) o la ventana es flotante; es una limitación del tiling
-de bspwm.
+ventanas. `Super+Shift+s` probado con XTest: región 400x300 copiada como
+`image/png`, sin temporales y con notificación de dunst. `Super+Shift+d`
+abre `rofi -show run`; `Super+d` sigue abriendo `rofi -show drun`.
+`j/k` solo pueden cambiar altura cuando el split es vertical (ventanas
+apiladas) o la ventana es flotante; es una limitación del tiling de bspwm.
 
 ## Correcciones aplicadas
 

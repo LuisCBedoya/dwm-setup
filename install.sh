@@ -160,6 +160,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/bspwm/scripts/low_bat_notifier.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/keybindings_rofi.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/screenshot.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/screenshot_region.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
     "$PROJECT_ROOT/templates/sxhkd/sxhkdrc.in"
     "$PROJECT_ROOT/templates/polybar/config.ini.in"

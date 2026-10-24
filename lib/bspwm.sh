@@ -26,7 +26,7 @@ install_bspwm_scripts() {
   local home="$1"
   local battery
   battery=$(detect_battery)
-  local scripts=("bspwm_resize" "low_bat_notifier.sh" "keybindings_rofi.sh" "screenshot.sh")
+  local scripts=("bspwm_resize" "low_bat_notifier.sh" "keybindings_rofi.sh" "screenshot.sh" "screenshot_region.sh")
 
   for script in "${scripts[@]}"; do
     render_theme_template "$PROJECT_ROOT/templates/bspwm/scripts/$script.in" \
