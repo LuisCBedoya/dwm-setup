@@ -51,14 +51,11 @@ shadow-exclude = [
   "window_type = 'notification'",
   "window_type = 'dock'",
   "window_type = 'desktop'",
-  "_GTK_FRAME_EXTENTS@:c",
   "class_g = 'Conky'",
   "class_g = 'Krita'",
   "class_g = 'Pinentry'",
   "class_g = 'feh'",
-  "name = 'Picture-in-Picture'",
-  "_NET_WM_STATE@:32a *= '_NET_WM_STATE_HIDDEN'",
-  "_NET_WM_STATE@:32a *= '_NET_WM_STATE_FULLSCREEN'"
+  "name = 'Picture-in-Picture'"
 ];
 
 fade-exclude = [
@@ -72,15 +69,13 @@ glx-no-stencil = true;
 glx-copy-from-front = false;
 glx-use-copysubbuffermesa = true;
 glx-no-rebind-pixmap = true;
-glx-swap-method = "undefined";
 
 # Detección de transparecias
 detect-client-opacity = true;
 detect-transient = true;
 detect-client-leader = true;
 
-# Refresh rate
-refresh-rate = 0;
+# Daño de pantalla
 use-damage = true;
 
 # DBus

@@ -215,40 +215,125 @@ backup_user_path() {
   if [[ -e "$dest" ]]; then
     return 0
   fi
-  run_root mkdir -p -- "$(dirname -- "$dest")"
+  make_user_dir "$(dirname -- "$dest")"
   run_root cp -a -- "$src" "$dest"
-  run_root chown -R "$TARGET_USER:$TARGET_GROUP" -- "$(dirname -- "$dest")" 2>/dev/null || true
+  run_root chown -R "$TARGET_USER:$TARGET_GROUP" -- "$dest" 2>/dev/null || true
   info "Backup: $src -> $dest"
 }
 
+# Crea un directorio del usuario. Se usa run_user para que también los
+# directorios padre queden con el propietario correcto: `install -d -o` solo
+# aplica el propietario al último componente.
 make_user_dir() {
-  run_root install -d -m 0755 -o "$TARGET_USER" -g "$TARGET_GROUP" "$1"
+  local dir="$1"
+  if dry_run; then
+    print_cmd mkdir -p -- "$dir"
+    return 0
+  fi
+  run_user mkdir -p -- "$dir"
 }
 
 make_root_dir() {
   run_root install -d -m 0755 "$1"
 }
 
+# Debe ejecutarse ANTES de renderizar/instalar cualquier configuración.
+backup_existing_configs() {
+  local home="$TARGET_HOME"
+  backup_root "/usr/local/bin/desktop-safe"
+  backup_root "/usr/local/bin/desktop-doctor"
+  backup_root "/usr/local/share/fonts/dwm-setup/desktop-logo.ttf"
+  backup_user_path "$home/.config/bspwm"
+  backup_user_path "$home/.config/sxhkd"
+  backup_user_path "$home/.config/polybar"
+  backup_user_path "$home/.config/picom"
+  backup_user_path "$home/.config/dunst"
+  backup_user_path "$home/.config/rofi"
+  backup_user_path "$home/.config/kitty"
+  backup_user_path "$home/.xinitrc"
+  backup_user_path "$home/.local/share/wallpapers/rocky.jpg"
+}
+
+# Corrige homes que quedaron con ~/.config, ~/.local o ~/.config-backup
+# propiedad de root por versiones anteriores del instalador.
+fix_user_topdirs() {
+  local path owner
+  dry_run && return 0
+  for path in \
+    "$TARGET_HOME/.config" \
+    "$TARGET_HOME/.local" \
+    "$TARGET_HOME/.local/share" \
+    "$TARGET_HOME/.local/state" \
+    "$TARGET_HOME/.config-backup" \
+    "$TARGET_HOME/.cache"; do
+    [[ -e "$path" ]] || continue
+    owner=$(stat -c '%u' -- "$path" 2>/dev/null || true)
+    if [[ -n "$owner" && "$owner" != "$TARGET_UID" ]]; then
+      warn "Corrigiendo propietario de $path (era uid $owner)"
+      # Solo el directorio: no recorremos configs de otras aplicaciones.
+      run_root chown "$TARGET_USER:$TARGET_GROUP" -- "$path"
+    fi
+  done
+}
+
+prepare_user_dirs() {
+  fix_user_topdirs
+  # Si una instalación anterior dejó subdirectorios gestionados como root,
+  # corregirlos antes de intentar escribir dentro.
+  chown_managed_paths
+  make_user_dir "$TARGET_HOME/.config"
+  make_user_dir "$TARGET_HOME/.local/share"
+  make_user_dir "$TARGET_HOME/.local/state"
+  make_user_dir "$TARGET_HOME/.cache"
+  make_user_dir "$TARGET_HOME/.config-backup/dwm-setup"
+  chown_managed_paths
+}
+
+# Red de seguridad final: todo lo que gestiona el instalador queda del usuario.
+# Los directorios padre se corrigen sin recursión; solo se recorre lo gestionado.
+chown_managed_paths() {
+  local path
+  dry_run && return 0
+  for path in \
+    "$TARGET_HOME/.config" \
+    "$TARGET_HOME/.local" \
+    "$TARGET_HOME/.local/share" \
+    "$TARGET_HOME/.local/state" \
+    "$TARGET_HOME/.config-backup" \
+    "$TARGET_HOME/.cache"; do
+    [[ -e "$path" ]] || continue
+    run_root chown "$TARGET_USER:$TARGET_GROUP" -- "$path" 2>/dev/null || true
+  done
+  for path in \
+    "$TARGET_HOME/.config/bspwm" \
+    "$TARGET_HOME/.config/sxhkd" \
+    "$TARGET_HOME/.config/polybar" \
+    "$TARGET_HOME/.config/picom" \
+    "$TARGET_HOME/.config/dunst" \
+    "$TARGET_HOME/.config/rofi" \
+    "$TARGET_HOME/.config/kitty" \
+    "$TARGET_HOME/.local/share/wallpapers" \
+    "$TARGET_HOME/.local/share/xorg" \
+    "$TARGET_HOME/.local/state/dwm-setup" \
+    "$TARGET_HOME/.cache/dwm-setup" \
+    "$TARGET_HOME/.config-backup/dwm-setup"; do
+    [[ -e "$path" ]] || continue
+    run_root chown -R "$TARGET_USER:$TARGET_GROUP" -- "$path" 2>/dev/null || true
+  done
+}
+
 init_logging() {
   local log_home="${LOG_HOME:-$HOME}"
   local log_dir="$log_home/.local/state/dwm-setup"
-  mkdir -p -- "$log_dir" 2>/dev/null || true
-  if [[ "$EUID" -eq 0 && -n "$TARGET_USER" ]]; then
-    chown -R "$TARGET_USER:$TARGET_GROUP" "$log_dir" 2>/dev/null || true
-  fi
+  run_user mkdir -p -- "$log_dir" 2>/dev/null || true
   LOG_FILE="$log_dir/install-$(timestamp).log"
-  : >"$LOG_FILE" 2>/dev/null || {
+  if ! run_root install -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" /dev/null "$LOG_FILE" 2>/dev/null; then
     # Fallback a ~/.cache si ~/.local/state falla
     log_dir="$log_home/.cache/dwm-setup"
-    mkdir -p -- "$log_dir" 2>/dev/null || true
-    if [[ "$EUID" -eq 0 && -n "$TARGET_USER" ]]; then
-      chown -R "$TARGET_USER:$TARGET_GROUP" "$log_dir" 2>/dev/null || true
-    fi
+    run_user mkdir -p -- "$log_dir" 2>/dev/null || true
     LOG_FILE="$log_dir/install-$(timestamp).log"
-    : >"$LOG_FILE" || die "No se pudo crear archivo de log en $LOG_FILE"
-  }
-  if [[ "$EUID" -eq 0 && -n "$TARGET_USER" ]]; then
-    chown "$TARGET_USER:$TARGET_GROUP" "$LOG_FILE" 2>/dev/null || true
+    run_root install -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" /dev/null "$LOG_FILE" \
+      || die "No se pudo crear archivo de log en $LOG_FILE"
   fi
   exec > >(tee -a "$LOG_FILE") 2>&1
   info "Log: $LOG_FILE"

@@ -1,8 +1,0 @@
-# Entorno de la sesión dwm. Editable; el instalador hace backup antes de reemplazarlo.
-# Se carga desde ~/.config/dwm/run.sh.
-DWM_KEYMAP="@KEYMAP@"
-DWM_WALLPAPER="@WALLPAPER@"
-DWM_FONT="@FONT@"
-DWM_FONT_SIZE="@FONT_SIZE@"
-DWM_RESOLUTION="@RESOLUTION@"
-DWM_THEME="@THEME@"

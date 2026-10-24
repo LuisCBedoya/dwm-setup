@@ -127,7 +127,11 @@ render_theme_template() {
     content="${content//@${extra_var}@/$extra_val}"
   done
 
-  run_root install -D -m "$perms" /dev/stdin "$output" <<<"$content"
+  local -a owner_args=()
+  if [[ -n "${TARGET_USER:-}" && -n "${TARGET_HOME:-}" && "$output" == "$TARGET_HOME"/* ]]; then
+    owner_args=(-o "$TARGET_USER" -g "$TARGET_GROUP")
+  fi
+  run_root install -D -m "$perms" "${owner_args[@]}" /dev/stdin "$output" <<<"$content"
   ok "Renderizado: $output"
 }
 

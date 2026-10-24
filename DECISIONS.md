@@ -749,3 +749,93 @@ notificaciones dunst diferenciadas para cada fin (work y break).
   de glifos, reset/end sin crash, y ambas notificaciones via dunst
   (`dunstctl count` saltó +1 por cada notificación esperada). Captura viva:
   `actual_18.png`.
+
+## ADR-032 — Barra final: 13 módulos, glifo JBM, sin `DesktopLogo` ni `dots`
+
+**Contexto:** ADR-026 añadió una fuente propia `DesktopLogo` (`U+E000`) y un
+módulo `dots`. ADR-028 sincronizó la config viva y dejó `dots` fuera de la
+barra; después la config viva siguió usando un glifo de JetBrainsMono Nerd
+Font (`U+F1A4`) para el logo. El usuario validó esa barra (13 módulos) y
+pidió no volver al logo propio ni a los tres puntos.
+
+**Decisión:**
+1. La barra final es la config viva: `logo`, `bspwm` + `polypomo`, `temp`,
+   `memory`, `cpu`, `xkeyboard`, `eth`, `wlan`, `battery`, `pipewire`,
+   `date`, `updates` (13 módulos; `wlan`/`battery` condicionales).
+2. Se retiran `assets/desktop-logo.ttf`, `templates/polybar/modules/dots.ini.in`,
+   `install_logo_font`, la comprobación `fc-list :charset=e000` y las
+   referencias documentales al logo U+E000 y a los tres puntos.
+3. `font-0` deja de ser `DesktopLogo` y pasa a JetBrainsMono Nerd Font; los
+   índices `font-1..5` se mantienen para no tocar los módulos.
+4. Las fuentes de polybar usan `@FONT@` para que el fallback de Nerd Font
+   funcione también en la barra.
+5. El instalador limpia restos de la versión anterior
+   (`/usr/local/share/fonts/dwm-setup`, `~/.local/share/fonts/DesktopLogo`
+   y `~/.config/polybar/modules/dots.ini`) con backup previo.
+
+**Consecuencias:**
+- La barra reproducible coincide con la captura viva de 2026-10-24.
+- Se elimina la “trampa de mantenimiento” de tener una fuente de logo como
+  `font-0`: cualquier texto sin `font-1` ya no sale con tofu.
+- Los ADR-026/027/028 quedan como historia; sus valores de logo/dots no se
+  usan.
+
+## ADR-033 — Backups previos y ownership automático del home
+
+**Contexto:** El instalador hacía los backups de usuario dentro de
+`install_user_configs`, que se ejecutaba después de renderizar bspwm,
+polybar, picom, etc. Por tanto el backup contenía los ficheros nuevos, no
+los anteriores. Además, varias `make_user_dir` se redefinían sin `-o/-g`, y
+`render_theme_template` instalaba como root; `~/.config`, `~/.local` y
+`~/.config-backup` podían quedar de root y el usuario tenía que ejecutar
+`sudo chown -R luc:luc ...` después de cada instalación. `bspwmrc` se
+instalaba 0644, así que bspwm no lo ejecutaba y había que hacer
+`chmod +x` a mano; sin bspwmrc no había sxhkd ni polybar, y el `kitty &` de
+`.xinitrc` era lo único visible.
+
+**Decisión:**
+1. `backup_existing_configs` se ejecuta en `install.sh` antes de
+   `preflight_repos` y de cualquier render. Incluye configs de usuario,
+   `.xinitrc`, wallpaper, `/usr/local/bin/desktop-*` y la fuente antigua.
+2. Una sola `make_user_dir` en `lib/common.sh`, basada en
+   `run_user mkdir -p`, para que todos los padres sean del usuario.
+3. `render_theme_template` añade `-o/-g` cuando el destino está dentro de
+   `$TARGET_HOME`.
+4. `prepare_user_dirs`, `fix_user_topdirs` y `chown_managed_paths` crean y
+   corrigen `~/.config`, `~/.local`, `~/.config-backup` y los logs.
+5. `bspwmrc` se instala 0755 y `.xinitrc` 0755; se elimina `kitty &` de
+   `.xinitrc`.
+6. `verify_install` comprueba `bspwmrc -x`, ausencia de placeholders,
+   módulos de polybar, `glx-swap-method`, ownership y sintaxis POSIX.
+
+**Consecuencias:**
+- Ya no hace falta `sudo chown -R` ni `chmod +x` después de instalar.
+- Si la instalación falla a mitad, el home no queda con ficheros root.
+- El backup contiene la versión anterior y sirve para recuperar.
+- `install.sh` debe terminar con código 0; la verificación ya no falla por
+  `bspwm -v` (devuelve `0.9.10`, no `bspwm...`).
+
+## ADR-034 — Sin dotfiles externos y sin autoarranque de X
+
+**Contexto:** La integración de dotfiles externos (`lib/dotfiles.sh`)
+promptaba por una URL, pero `[[ -n "${ASSUME_YES:-}" ]]` era verdadero
+incluso con `ASSUME_YES=0`, así que el prompt se saltaba siempre. Además,
+los `post_process_*` sustituían colores por `@COLOR_*@` y comandos por
+`@TERM@` sin volver a renderizar, dejando configs rotas. El usuario decidió
+mantener `startx` manual y usar este repositorio como fuente de configs.
+
+**Decisión:**
+1. Eliminar `lib/dotfiles.sh`, el prompt y las ramas `DOTFILES_DIR` de los
+   módulos. Las plantillas del repo son la única fuente de verdad.
+2. No añadir auto-login ni display manager: la sesión se inicia con
+   `startx` desde TTY1.
+3. Mantener `~/.bash_profile` sin bloques de autoarranque.
+4. `sxhkdrc` se conserva tal cual; la documentación avisa de que
+   `Super+Shift+b` (Firefox) y `Super+Shift+e` (VS Code) requieren apps que
+   no instala la fase 1.
+
+**Consecuencias:**
+- Menos modos de fallo y menos código muerto.
+- El usuario debe ejecutar `startx` a mano tras el login.
+- Si más adelante se quiere un repo de dotfiles, habrá que diseñarlo de
+  nuevo (copia + render + validación) y añadir un ADR.

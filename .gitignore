@@ -1,0 +1,9 @@
+# Python
+__pycache__/
+*.pyc
+
+# Capturas locales de validación
+/docs/images/
+
+# Logs sueltos
+*.log

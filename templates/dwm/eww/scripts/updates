@@ -1,7 +1,0 @@
-#!/bin/sh
-# Obtiene número de actualizaciones pendientes
-# Para uso en barra y eww
-
-# apt check (no necesita root)
-updates=$(apt list --upgradable 2>/dev/null | grep -c upgradable)
-[ -n "$updates" ] && echo "$updates" || echo "0"

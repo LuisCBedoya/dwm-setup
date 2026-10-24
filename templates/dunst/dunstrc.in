@@ -28,9 +28,10 @@
     dmenu = /usr/bin/rofi -dmenu -p dunst:
     browser = /usr/bin/xdg-open
     icon_position = left
-    min_icon_size = 32
+    icon_theme = "Adwaita"
+    min_icon_size = 16
     max_icon_size = 64
-    icon_path = /usr/share/icons/Paper/48x48/status/:/usr/share/icons/Paper/48x48/devices/
+    icon_path = /usr/share/icons/Adwaita/16x16/status/:/usr/share/icons/Adwaita/16x16/devices/
     line_height = 0
 
 [frame]

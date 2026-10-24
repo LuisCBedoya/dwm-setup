@@ -1,6 +1,0 @@
-#!/bin/sh
-# Obtiene SSID de WiFi conectado
-# Para uso en barra y eww
-
-ssid=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | grep '^yes:' | cut -d: -f2)
-[ -n "$ssid" ] && echo "$ssid" || echo "Desconectado"

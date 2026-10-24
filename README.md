@@ -5,68 +5,55 @@ Xorg, bspwm, sxhkd, polybar, picom, dunst, rofi, kitty, xwallpaper,
 flameshot, i3lock/xss-lock, PipeWire, cámara UVC y montaje de discos
 extraíbles con notificación.
 
-> **Estado:** el código de la fase 1b está implementado en este repositorio y
-> los checks locales/estáticos pasan, pero **todavía no se ha validado una
-> instalación real en una VM Debian 13 minimal ni en el hardware de
-> referencia**. No ejecutes la instalación real en el equipo principal hasta
-> completar la checklist de `docs/testing.md`.
+> **Estado:** fase 1b implementada y validada en la sesión viva del
+> 2026-10-24 (Debian 13, Intel + NVIDIA, 1920x1080). Falta la validación
+> desde cero en una VM Debian 13 minimal y subir el repositorio.
 >
-> El host actual tiene XFCE/LightDM y se usa solo como referencia; el
-> instalador está pensado para una instalación limpia.
+> La sesión se inicia **a mano** con `startx` desde TTY. No se instala
+> display manager ni auto-login.
 
-## Alcance de esta fase
+## Alcance
 
 Incluido:
 
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
-- **bspwm** como window manager + **sxhkd** para atajos.
-- **polybar** para barra de estado (workspaces 1-5 con dígitos árabes, CPU, RAM, temp, red, audio, batería, fecha con tres puntos `⋯`, pomodoro, updates, logo propio U+E000 en extremo izquierdo, barra **arriba**, 26px, fondo `#0D1117`, sin subrayados — réplica exacta del diseño de referencia).
-- picom, dunst, rofi, kitty, flameshot.
-- Bloqueo con i3lock y xss-lock.
-- Brillo, volumen, portapapeles y agente polkit.
+- **bspwm** + **sxhkd**.
+- **polybar** con **13 módulos**: logo, workspaces 1-5, pomodoro,
+  temperatura, RAM, CPU, teclado (`latam`), ethernet, WiFi, batería,
+  volumen, fecha y semáforo de actualizaciones.
+- **picom**, **dunst**, **rofi**, **kitty**, **flameshot**.
+- Bloqueo con **i3lock** + **xss-lock**.
+- Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
 - PipeWire + WirePlumber + ALSA + pavucontrol.
-- FFmpeg, `libavcodec-extra`, GStreamer completo y aceleración VA-API/VDPAU.
+- FFmpeg, `libavcodec-extra`, GStreamer y VA-API/VDPAU.
 - Cámara UVC (`uvcvideo`, `v4l-utils`, `libcamera-tools` opcional).
 - Almacenamiento extraíble con `udisks2` + `udiskie`: montaje automático y
   **solo notificación**; nunca se abre una aplicación automáticamente.
-- `thunar` como gestor de archivos (Super+Shift+F o rofi).
-- Fuente JetBrainsMono Nerd Font, wallpaper y tema **Nord**.
+- Thunar como gestor de archivos puntual (`Super+Shift+F`).
+- Fuente JetBrainsMono Nerd Font, wallpaper y tema Nord.
 - Backups, logs, `--dry-run` y diagnóstico con `desktop-doctor`.
-- NVIDIA detectada e instalada de forma condicional; no hay CUDA ni
-  instalación incondicional.
-- **Repo dotfiles opcional:** puedes dar una URL Git HTTPS con tus configs;
-  estructura esperada: `repo/config/.config/{bspwm,sxhkd,polybar,picom,dunst,rofi,kitty}`.
+- NVIDIA detectada e instalada de forma condicional.
 
-No incluido todavía (fases posteriores):
+No incluido todavía:
 
-- Neovim/IDE, navegadores, correo/Teams, música/reproductores.
-- Bluetooth, zathura, htop, lsd, ripgrep, nvitop/nvtop.
-- Node/nvm, VS Code, Firefox, Brave/Chromium.
-- XFCE, LightDM, Thunar o un entorno de escritorio completo.
+- Neovim/IDE, VS Code, Firefox/Brave/Chromium, correo, Teams, música.
+- Bluetooth, zathura, htop, lsd, ripgrep, nvitop/nvtop, Node/nvm.
+- XFCE, LightDM o un entorno de escritorio completo.
+- Repositorio de dotfiles externo: las plantillas de este repo son la
+  fuente de verdad.
 
 ## Requisitos
 
-- Debian 13 minimal instalado en x86_64.
-- Sistema con systemd.
-- `git` instalado para clonar el repositorio; el instalador instala el resto
-  de dependencias.
-- Usuario no-root con home real y `sudo`. El instalador detecta el usuario y
-  su home automáticamente; si se ejecuta como root, usa `SUDO_USER` o pregunta
-  el usuario destino.
-- Conexión a Internet durante la primera instalación: se descargan paquetes
-  y la Nerd Font. **Ya no se compila nada** (ni chadwm, ni eww, ni Ly).
+- Debian 13 minimal en x86_64, con systemd.
+- `git` instalado para clonar el repositorio.
+- Usuario no-root con home real y `sudo`.
+- Conexión a Internet durante la primera instalación.
 - UEFI o BIOS. Con NVIDIA, Secure Boot `enabled` o no detectable omite el
-  driver propietario; con Secure Boot desactivado se instala automáticamente
-  si hay GPU NVIDIA. La opción avanzada `--nvidia` permite forzarlo.
-- Fuentes `non-free-firmware`, `non-free` y `contrib` habilitadas si se
-  quieren firmware/drivers opcionales. Si faltan, el instalador ofrece
-  añadirlas con autorización explícita. `contrib` solo hace falta para
-  `nvidia-settings`; el driver NVIDIA está en `non-free`.
+  driver propietario; con Secure Boot desactivado se instala si hay GPU
+  NVIDIA. `--nvidia` permite forzarlo.
 
 ## Inicio rápido
-
-En una Debian 13 minimal (consola, con `git` e Internet):
 
 ```sh
 sudo apt update
@@ -80,120 +67,109 @@ chmod +x install.sh
 ./install.sh --dry-run
 
 # 2. Instalación real guiada (pide sudo; no guarda la contraseña)
-#    Opcionalmente te preguntará por un repo Git HTTPS de dotfiles
 ./install.sh
 
-# 3. Reiniciar y entrar en TTY1: ejecuta `startx`
+# 3. Reiniciar y entrar en TTY1 con tu usuario
 sudo reboot
+
+# 4. Iniciar la sesión
+startx
 ```
 
-El ejecutable es **`install.sh`**, no `installer.sh`. Si se ejecuta como
-usuario normal, el script pide `sudo -v` una vez y usa `sudo` para las
-operaciones de sistema. `sudo ./install.sh` también funciona: el instalador
-usa `SUDO_USER` para el usuario destino. Si se inicia como root sin
-`SUDO_USER`, pregunta el usuario.
+El instalador detecta usuario y home. Si se ejecuta como usuario normal,
+pide `sudo -v` una vez y usa `sudo` para las operaciones de sistema.
+`sudo ./install.sh` también funciona usando `SUDO_USER`.
 
-La primera instalación necesita Internet para descargar paquetes y la Nerd Font.
-**Ya no se descarga Zig, Ly, Cargo ni se compila nada.** En una VM de prueba
-la política automática omite el driver NVIDIA.
-
-Uso normal:
+## Opciones
 
 | Opción | Efecto |
 |---|---|
-| `./install.sh` | Instalación guiada; solo pregunta cuando hay una decisión real |
-| `./install.sh --dry-run` | Muestra el plan completo sin modificar el sistema |
+| `./install.sh` | Instalación guiada |
+| `./install.sh --dry-run` | Muestra el plan sin modificar nada |
 | `./install.sh --yes` | No pide confirmación; no modifica repositorios APT |
+| `./install.sh --help` | Ayuda |
+| `./install.sh --version` | Versión |
 
-Opciones avanzadas para automatización (no necesarias en uso normal):
-`--user`, `--home`, `--rebuild`, `--nvidia`, `--no-nvidia`, `--cuda`, `--no-cuda`,
-`--keymap`, `--font`, `--font-size`, `--resolution` y `--debug`. También están disponibles
-`--help` y `--version`.
+Opciones avanzadas: `--user`, `--home`, `--nvidia`, `--no-nvidia`,
+`--cuda`, `--no-cuda`, `--keymap`, `--font`, `--font-size`, `--resolution`
+y `--debug`.
 
 ## Qué hace el instalador
 
-1. **Detección**: Debian 13 y x86_64 se verifican antes de pedir `sudo`. Luego
-   detecta VM, CPU, GPU, Secure Boot, resolución, cámaras, batería, backlight,
-   WiFi, audio y tipo de sistema de archivos raíz.
-2. **Dotfiles opcional**: pregunta por una URL Git HTTPS de un repo `dotfiles`.
-   Si se da, lo clona, valida la estructura `config/.config/{7 carpetas}` y
-   las copia a `~/.config/`. Si faltan carpetas, pregunta si continuar con
-   templates integrados o abortar.
-3. **Preflight APT**: lee los componentes habilitados (`main`, `contrib`,
-   `non-free`, `non-free-firmware`). Si falta `main`, aborta. Si faltan
-   componentes opcionales, ofrece tres opciones: añadirlos automáticamente,
-   continuar sin ellos o cancelar. La opción 1 hace backup de las fuentes,
-   modifica solo entradas oficiales de Debian 13, ejecuta `apt update` y
-   vuelve a comprobar. `--dry-run` solo muestra el aviso; `--yes` continúa
-   sin modificar repositorios.
-4. **Paquetes**: grupos base, Xorg, compilación mínima, escritorio
-   (bspwm+sxhkd+polybar+apps), audio/códecs, cámara, almacenamiento, red,
-   fuentes, firmware, microcódigo y GPU.
-5. **Fuente**: descarga JetBrainsMono Nerd Font `3.5.1`, verifica SHA-256 y
-   ejecuta `fc-cache`. Si falla y no se pasó `--font`, usa `JetBrains Mono` de
-   Debian o `monospace`, y avisa.
-6. **Configuración**: renderiza templates de bspwm, sxhkd, polybar, picom,
-   dunst, rofi, kitty con paleta Nord; copia `~/.xinitrc`, wallpaper; instala
-   `desktop-safe` y `desktop-doctor` en `/usr/local/bin/`.
-7. **Verificación**: comprueba binarios, archivos, servicios y permisos.
-   La prueba gráfica real se hace después de entrar a la sesión con `startx`.
+1. **Detección**: Debian 13 y x86_64 antes de pedir `sudo`; después VM, CPU,
+   GPU, Secure Boot, resolución, cámaras, batería, backlight, WiFi, audio y
+   sistema de archivos raíz.
+2. **Directorios y backups**: crea `~/.config`, `~/.local`,
+   `~/.config-backup` como el usuario y guarda la versión anterior de las
+   configuraciones **antes** de escribir.
+3. **Preflight APT**: lee `main`, `contrib`, `non-free` y
+   `non-free-firmware`. Si falta `main`, aborta. Si faltan opcionales, ofrece
+   añadirlos con backup, continuar sin ellos o cancelar. `--dry-run` y
+   `--yes` no modifican repositorios.
+4. **Paquetes**: base, Xorg, compilación mínima, escritorio, audio/códecs,
+   cámara, almacenamiento, red, fuentes, firmware, microcódigo y GPU.
+5. **Fuente**: descarga JetBrainsMono Nerd Font 3.5.1, verifica SHA-256 y
+   ejecuta `fc-cache`. Si falla, usa JetBrains Mono o monospace y avisa.
+6. **Configuración**: renderiza bspwm, sxhkd, polybar, picom, dunst, rofi y
+   kitty con paleta Nord; instala `.xinitrc`, wallpaper,
+   `~/Pictures/Screenshots`, `desktop-safe` y `desktop-doctor`.
+7. **Limpieza**: retira restos de la barra anterior (`DesktopLogo` y
+   `dots.ini`) con backup previo.
+8. **Verificación**: comprueba binarios, ficheros, módulos de polybar,
+   placeholders, permisos, propiedad del home, servicios, versiones y
+   sintaxis POSIX de los binarios instalados.
 
 ### Backups y logs
 
-- Backups de sistema: `/var/backups/dwm-setup/<timestamp>/`
-- Backups de usuario: `~/.config-backup/dwm-setup/<timestamp>/`
-- Log: `~/.local/state/dwm-setup/install-<timestamp>.log` (fallback a `~/.cache/dwm-setup/`)
+- Sistema: `/var/backups/dwm-setup/<timestamp>/`
+- Usuario: `~/.config-backup/dwm-setup/<timestamp>/`
+- Log: `~/.local/state/dwm-setup/install-<timestamp>.log`
+  (fallback a `~/.cache/dwm-setup/`)
+- Log de sesión (autostart): `~/.local/state/dwm-setup/session.log`
 
-Si se elige añadir componentes APT, `/etc/apt/sources.list` y
-`/etc/apt/sources.list.d/` se guardan antes de editarlos. El log se escribe en
-el home del usuario destino. `--dry-run` no crea log ni modifica archivos.
+Los backups de usuario se hacen antes de renderizar. Si algo falla, la
+versión anterior está en `~/.config-backup/`.
 
 ### Sesión (startx)
 
-El instalador **no instala ningún display manager**. Genera `~/.xinitrc` que
-ejecuta `bspwm`; el `autostart` interno de bspwm levanta polybar, dunst, picom,
-udiskie, xss-lock, low_bat_notifier (si hay batería) y xwallpaper.
+No se instala ningún display manager. `~/.xinitrc` configura el teclado y
+hace `exec bspwm`; `bspwmrc` lanza sxhkd y el `autostart` interno, que
+levanta polybar, dunst, picom, xwallpaper, udiskie, xss-lock, lxpolkit y el
+notificador de batería baja.
 
-Para iniciar:
-1. Reinicia: `sudo reboot`
-2. En TTY1 entra con tu usuario.
-3. Ejecuta `startx`.
-
-Opcional: auto-login en TTY1 añadiendo a `~/.bash_profile`:
 ```sh
-if [[ -z $DISPLAY && $(tty) == /dev/tty1 ]]; then
-  exec startx
-fi
+# desde TTY1
+startx
+```
+
+Si algo falla, entra por `Ctrl+Alt+F3` y revisa:
+
+```sh
+desktop-doctor
+less ~/.local/state/dwm-setup/session.log
 ```
 
 ### Almacenamiento extraíble
 
-`bspwm/scripts/autostart` arranca:
-```sh
-udiskie --automount --notify
-```
-`udiskie` monta el dispositivo y muestra una notificación. No se abre ninguna
-ventana. `thunar` se abre manualmente con `Super+Shift+F`.
+`udiskie -N -a` monta el dispositivo y muestra una notificación. No se abre
+ninguna ventana. Thunar se abre manualmente con `Super+Shift+F`.
 
 ### Audio y vídeo
 
 PipeWire es el servidor; WirePlumber es el gestor de sesión. `pavucontrol`
-sirve para elegir dispositivos. La instalación incluye FFmpeg,
-`libavcodec-extra`, GStreamer base/good/bad/ugly/libav/vaapi y
-`ffmpegthumbnailer`. La aceleración VA-API/VDPAU depende de la GPU y de los
-drivers de firmware; `desktop-doctor` muestra el estado.
+sirve para elegir dispositivos. La aceleración VA-API/VDPAU depende de la
+GPU y del firmware; `desktop-doctor` muestra el estado.
 
 ### Cámara
 
-Se instala `v4l-utils`, y `libcamera-tools` si está disponible. La prueba real
-se ejecuta después de entrar a la sesión:
+Se instala `v4l-utils` y `libcamera-tools` si está disponible. La prueba
+real se ejecuta después de entrar en la sesión:
 
 ```sh
 desktop-doctor --camera
 ```
 
-Esto prueba `/dev/video*` con `ffmpeg` y crea un frame temporal. Si el usuario
-acaba de ser añadido al grupo `video`, hay que cerrar sesión y volver a entrar.
+Si acabas de ser añadido al grupo `video`, cierra sesión y vuelve a entrar.
 
 ## Diagnóstico y recuperación
 
@@ -208,12 +184,11 @@ desktop-safe reboot         # reiniciar
 ```
 
 Si algo falla:
+
 1. Entra por una TTY (`Ctrl+Alt+F3`).
-2. Ejecuta `startx` para usar `~/.xinitrc`.
-3. Revisa `journalctl -b` y el log del instalador.
-4. Comprueba que existe `~/.local/share/xorg` con permisos `0700` y propietario
-   del usuario. Si falta, créalo:
-   `sudo install -d -m 0700 -o "$USER" -g "$(id -gn)" ~/.local/share/xorg`.
+2. Ejecuta `startx`.
+3. Revisa `journalctl -b` y `~/.local/state/dwm-setup/`.
+4. Comprueba que `~/.config/bspwm/bspwmrc` tiene permiso de ejecución.
 
 ## Uso diario
 
@@ -221,13 +196,12 @@ Si algo falla:
 |---|---|
 | `Super+Return` | kitty |
 | `Super+d` | rofi (drun) |
-| `Super+Shift+b` | firefox |
-| `Super+Shift+e` | VS Code |
-| `Super+Shift+f` | thunar |
+| `Super+Shift+b` | Firefox (no instalado en fase 1) |
+| `Super+Shift+e` | VS Code (no instalado en fase 1) |
+| `Super+Shift+f` | Thunar |
 | `Super+Shift+l` | bloquear (desktop-safe lock) |
-| `Super+Shift+s` | captura de pantalla (rofi menu) |
-| `Print` | captura completa |
-| `Super+Print` | menú capturas |
+| `Print` | menú de capturas |
+| `Super+Print` | menú de capturas |
 | `Super+{h,j,k,l}` | foco ventanas |
 | `Super+Shift+{h,j,k,l}` | mover ventanas |
 | `Super+{1-5}` | ir a escritorio |
@@ -238,29 +212,29 @@ Si algo falla:
 | `XF86AudioRaise/Lower/Mute` | volumen |
 | `XF86MonBrightnessUp/Down` | brillo |
 
-`Super` es la tecla Windows. La barra polybar muestra **workspaces 1-5 con dígitos árabes** (enfocado = caja clara), logo propio (U+E000, fuente `DesktopLogo`) en el extremo izquierdo, CPU, RAM, temp, red (ethernet + wifi si hay), audio, fecha seguida de tres puntos `⋯`, pomodoro, updates y batería (si hay).
+`Super` es la tecla Windows. La barra muestra 13 módulos (logo, workspaces,
+pomodoro, temperatura, RAM, CPU, teclado, ethernet, WiFi, batería, volumen,
+fecha y updates); WiFi y batería solo aparecen si el hardware existe.
 
 ## Estructura del repositorio
 
 ```text
 install.sh                 Entrada principal
-lib/common.sh              Logs, sudo, backups, render de plantillas
+lib/common.sh              Logs, sudo, ownership, backups, render
 lib/detect.sh              Detección de sistema/hardware
 lib/packages.sh            Grupos de paquetes y Nerd Font
-lib/dotfiles.sh            Clonar repo dotfiles opcional
-lib/bspwm.sh               bspwm + autostart + xinitrc
+lib/bspwm.sh               bspwm, bspwmrc, autostart y .xinitrc
 lib/sxhkd.sh               sxhkdrc
 lib/polybar.sh             polybar config/modules/scripts/launch
 lib/picom.sh               picom.conf
 lib/dunst.sh               dunstrc
 lib/rofi.sh                rofi powermenu
 lib/kitty.sh               kitty.conf
-lib/config.sh              Configs de usuario y sesión
+lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/verify.sh              Verificación estática final
-lib/theme.sh               Paleta Nord y generadores de assets
-bin/desktop-safe           Acciones de sesión (lock/suspend/logout/poweroff/reboot)
-bin/desktop-doctor         Diagnóstico y prueba de cámara
-templates/colors/          palette-nord.sh
+lib/theme.sh               Paleta Nord y render
+bin/desktop-safe           Acciones de sesión
+bin/desktop-doctor         Diagnóstico y cámara (POSIX sh)
 templates/bspwm/           bspwmrc.in, autostart.in, scripts/
 templates/sxhkd/           sxhkdrc.in
 templates/polybar/         config.ini.in, modules/, scripts/
@@ -268,38 +242,31 @@ templates/picom/           picom.conf.in
 templates/dunst/           dunstrc.in
 templates/rofi/            powermenu.rasi.in
 templates/kitty/           kitty.conf.in
-assets/wallpaper.jpg       Wallpaper de referencia
-assets/desktop-logo.ttf    Fuente DesktopLogo (logo U+E000)
+templates/colors/          palette-nord.sh
+assets/wallpaper.jpg       Wallpaper
 docs/                      Hardware y testing
 ```
 
 ## Limitaciones conocidas
 
-- No hay validación real todavía en Debian 13 minimal ni en el hardware de
-  referencia; los checks locales y de dry-run no sustituyen esa prueba.
-- La cámara, el montaje USB, el audio/códecs y NVIDIA/PRIME necesitan hardware
-  real o pass-through de VM.
+- No hay validación desde cero en VM Debian 13 todavía; la sesión viva se
+  validó el 2026-10-24.
+- La cámara, el montaje USB, el audio/códecs y NVIDIA/PRIME necesitan
+  hardware real o pass-through de VM.
 - NVIDIA propietario y Secure Boot requiere MOK; si Secure Boot no está
-  desactivado, el driver se omite y se avisa. `--nvidia` permite forzarlo de
-  forma avanzada.
-- `libcamera-tools`, firmware y drivers propietarios son opcionales: el
-  preflight avisa de los componentes APT que faltan y de sus consecuencias.
+  desactivado, el driver se omite y se avisa.
+- `libcamera-tools`, firmware y drivers propietarios son opcionales.
 - El instalador no modifica repositorios por defecto. Solo la opción 1 del
-  menú, elegida explícitamente, añade componentes a entradas oficiales de
-  Debian 13, después de un backup. `main` nunca se añade automáticamente.
-  El auto-add solo reconoce hosts `*.debian.org`; con un mirror propio hay que
-  editar `sources.list` manualmente.
+  menú añade componentes a entradas oficiales de Debian 13, tras un backup.
 - No se instala ningún navegador, IDE, cliente de correo ni música.
-- El host de referencia tiene XFCE/LightDM: no se debe usar como destino de
-  la instalación real sin backup y validación previa.
+- `Super+Shift+b` y `Super+Shift+e` existen en `sxhkdrc` pero las apps no se
+  instalan en esta fase.
 
 ## Documentación
 
 - [`PROGRESS.md`](PROGRESS.md): estado real, pendientes y bloqueos.
 - [`AGENTS.md`](AGENTS.md): reglas para futuras sesiones/modelos.
-- [`DECISIONS.md`](DECISIONS.md): decisiones de arquitectura (ADR-022 migración).
-- [`docs/hardware.md`](docs/hardware.md): hardware de referencia y matriz de
-  detección.
-- [`docs/testing.md`](docs/testing.md): plan de pruebas y criterios de
-  aceptación.
+- [`DECISIONS.md`](DECISIONS.md): decisiones de arquitectura.
+- [`docs/hardware.md`](docs/hardware.md): hardware de referencia.
+- [`docs/testing.md`](docs/testing.md): plan de pruebas y criterios.
 - [`PLAN.md`](PLAN.md): plan antiguo, conservado solo como historia.

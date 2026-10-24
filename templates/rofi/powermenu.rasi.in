@@ -9,9 +9,8 @@
 }
 
 configuration {
-    modi: "powermenu";
     show-icons: true;
-    icon-theme: "Paper";
+    icon-theme: "Adwaita";
     font: "@FONT@ @FONT_SIZE@";
     dpi: 96;
 }

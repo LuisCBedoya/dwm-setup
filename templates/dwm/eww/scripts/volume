@@ -1,6 +1,0 @@
-#!/bin/sh
-# Obtiene volumen actual (0-100)
-# Usa pamixer (más limpio que pactl)
-
-v=$(pamixer --get-volume 2>/dev/null) || v=0
-echo "$v"

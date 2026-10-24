@@ -5,10 +5,14 @@ proyecto. Leer primero `README.md`, `PROGRESS.md` y `DECISIONS.md`.
 
 ## Objetivo
 
-Construir y validar un instalador reproducible de un escritorio mínimo para
-**Debian 13 (trixie)** con Xorg, Ly, chadwm, eww, barra status2d, picom,
-dunst, rofi, feh, kitty, flameshot, i3lock/xss-lock, PipeWire, cámara UVC y
-almacenamiento extraíble con notificación.
+Instalador reproducible de un escritorio mínimo para **Debian 13 (trixie)**
+con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
+**polybar**, **picom**, **dunst**, **rofi**, **kitty**, **flameshot**,
+**i3lock/xss-lock**, PipeWire, cámara UVC y almacenamiento extraíble con
+notificación.
+
+La barra final es la de la config viva: **13 módulos**, glifo del logo de
+JetBrainsMono Nerd Font, sin `dots` y sin fuente `DesktopLogo`.
 
 La fase 1 termina en el escritorio. No implementar todavía:
 
@@ -17,77 +21,93 @@ La fase 1 termina en el escritorio. No implementar todavía:
 - Correo, Teams.
 - Reproductores de música, mpv, cava o widgets de música.
 - Bluetooth, zathura, htop, lsd, ripgrep, nvitop/nvtop.
-- XFCE, LightDM, Thunar o un entorno de escritorio completo.
+- XFCE, LightDM, Thunar como entorno completo (Thunar sí se instala como
+  gestor de archivos puntual).
 
 ## Reglas de trabajo
 
-1. **No ejecutar la instalación real en el host actual**
-   (`/home/luc`, XFCE/LightDM) sin backup y sin una VM validada. Para pruebas
-   usar una VM Debian 13 minimal con snapshot.
+1. **No ejecutar la instalación real en un host con datos** sin backup y sin
+   una VM validada. Para pruebas usar una VM Debian 13 minimal con snapshot.
 2. **Mantener la idempotencia.** Volver a ejecutar el instalador no debe
-   romper el sistema. Usar backups y `--rebuild` para forzar compilaciones.
+   romper el sistema. Los backups se hacen **antes** de escribir.
 3. **Mantener `--dry-run` libre de modificaciones.** No debe descargar,
    instalar, escribir configuraciones ni habilitar servicios. Solo puede leer
    hardware y mostrar el plan.
 4. **No guardar contraseñas.** El instalador usa `sudo -v` y `sudo`; nunca
-   escribe credenciales ni crea archivos con contraseñas. Debian 13 y x86_64
-   se validan antes de pedir `sudo`.
+   escribe credenciales. Debian 13 y x86_64 se validan antes de pedir `sudo`.
 5. **Backups antes de reemplazar.** Sistema:
    `/var/backups/dwm-setup/<timestamp>/`; usuario:
-   `~/.config-backup/dwm-setup/<timestamp>/`.
-6. **Fallos visibles.** No ocultar errores de compilación, paquetes o
+   `~/.config-backup/dwm-setup/<timestamp>/`. El backup debe contener la
+   versión **anterior**, no la recién renderizada.
+6. **Propiedad correcta del home.** `~/.config`, `~/.local`,
+   `~/.config-backup` y los logs pertenecen al usuario, no a root. Usar
+   `make_user_dir`/`run_user` y `chown_managed_paths`; no crear directorios
+   con `install -d` como root sin `-o/-g` para el usuario.
+7. **Fallos visibles.** No ocultar errores de compilación, paquetes o
    servicios. Los grupos opcionales pueden avisar y continuar; los
    obligatorios deben detener la instalación.
-7. **No modificar repositorios APT sin autorización explícita.** El preflight
+8. **No modificar repositorios APT sin autorización explícita.** El preflight
    lee los componentes habilitados (`main`, `contrib`, `non-free`,
    `non-free-firmware`). Si falta `main`, aborta. Si faltan componentes
    opcionales, ofrece un menú: añadirlos, continuar sin ellos o cancelar.
    Solo la opción 1 modifica fuentes, y debe hacer backup, tocar únicamente
    entradas oficiales de Debian 13, ejecutar `apt update` y comprobar de
-   nuevo. `--dry-run` y `--yes` nunca modifican repositorios. Los paquetes de
-   `non-free`/`non-free-firmware`/`contrib` son opcionales y se detectan con
-   `apt-cache`.
-8. **No introducir PulseAudio como servidor.** PipeWire es el servidor;
+   nuevo. `--dry-run` y `--yes` nunca modifican repositorios.
+9. **No introducir PulseAudio como servidor.** PipeWire es el servidor;
    `pulseaudio-utils` solo aporta `pactl`.
-9. **No introducir NVIDIA/CUDA incondicionalmente.** La GPU se detecta; el
-   driver propietario es opcional y se omite con Secure Boot activo salvo
-   `--nvidia`.
-10. **No abrir gestores de archivos automáticamente** al montar USB.
-    `udiskie` solo monta y notifica; `pcmanfm` se abre con Mod+E.
-11. **Mantener las rutas portables.** Las plantillas usan `@HOME@`, `@FONT@`,
+10. **No introducir NVIDIA/CUDA incondicionalmente.** La GPU se detecta; el
+    driver propietario es opcional y se omite con Secure Boot activo salvo
+    `--nvidia`.
+11. **No abrir gestores de archivos automáticamente** al montar USB.
+    `udiskie` solo monta y notifica; Thunar se abre con `Super+Shift+f`.
+12. **Mantener las rutas portables.** Las plantillas usan `@HOME@`, `@FONT@`,
     `@FONT_SIZE@`, `@KEYMAP@`, `@WALLPAPER@`, `@RESOLUTION@`. No hardcodear
     `/home/luc`.
-12. **No renderizar `@DEFAULT_SINK@`.** Es una cadena literal de
-    `pactl` dentro de `config.h.in`, no una variable de plantilla.
-13. **Actualizar la documentación** (`PROGRESS.md`, `DECISIONS.md`,
+13. **No renderizar `@DEFAULT_SINK@`.** Es una cadena literal de `pactl`.
+14. **`bspwmrc` debe ser ejecutable.** bspwm no lo ejecuta si no tiene `+x`;
+    sin él no hay sxhkd, polybar ni autostart.
+15. **No lanzar `kitty` desde `.xinitrc`.** El terminal se abre con
+    `Super+Return`.
+16. **Actualizar la documentación** (`PROGRESS.md`, `DECISIONS.md`,
     `docs/testing.md`) cuando cambie el diseño o se valide una prueba.
-14. **Estilo:** Bash con `#!/usr/bin/env bash`, `set -Eeuo pipefail` en la
+17. **Estilo:** Bash con `#!/usr/bin/env bash`, `set -Eeuo pipefail` en la
     entrada, funciones pequeñas, `printf`, arrays citados y `shellcheck` si
     está disponible. Los scripts instalados que corren en sesión usan
-    `#!/bin/sh` POSIX.
+    `#!/bin/sh` POSIX; `desktop-doctor` y `desktop-safe` deben pasar `sh -n`.
 
 ## Estructura relevante
 
 | Archivo | Responsabilidad |
 |---|---|
 | `install.sh` | Flujo, opciones, confirmación, backups y resumen |
-| `lib/common.sh` | Logs, sudo, render, backups, helpers |
+| `lib/common.sh` | Logs, sudo, ownership, backups, render, helpers |
 | `lib/detect.sh` | Detección de sistema/hardware y usuario |
 | `lib/packages.sh` | Preflight APT, paquetes y Nerd Font |
-| `lib/dwm.sh` | chadwm |
-| `lib/eww.sh` | eww v0.6.0 y ajuste `time 0.3.35` (Rust 1.85) |
-| `lib/ly.sh` | Zig, Ly, config y `ly@tty2` |
-| `lib/config.sh` | Configs de usuario, `/usr/share/xsessions` |
-| `lib/verify.sh` | Verificación estática |
-| `bin/dwm-safe` | Acciones de sesión |
-| `bin/dwm-doctor` | Diagnóstico y cámara |
-| `templates/dwm/` | dwm/eww/barra/dunst/rofi/picom/sesión |
-| `templates/kitty/` | kitty |
+| `lib/bspwm.sh` | bspwm, bspwmrc, autostart, scripts y `.xinitrc` |
+| `lib/sxhkd.sh` | sxhkdrc |
+| `lib/polybar.sh` | config.ini, módulos, scripts y launch.sh |
+| `lib/picom.sh` | picom.conf |
+| `lib/dunst.sh` | dunstrc |
+| `lib/rofi.sh` | powermenu.rasi |
+| `lib/kitty.sh` | kitty.conf |
+| `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
+| `lib/verify.sh` | Verificación estática final |
+| `lib/theme.sh` | Paleta Nord y render de plantillas |
+| `bin/desktop-safe` | Acciones de sesión (lock/suspend/logout/poweroff) |
+| `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
+| `templates/bspwm/` | bspwmrc, autostart y scripts de sesión |
+| `templates/sxhkd/` | sxhkdrc |
+| `templates/polybar/` | config.ini, modules/ y scripts/ |
+| `templates/picom/` | picom.conf |
+| `templates/dunst/` | dunstrc |
+| `templates/rofi/` | powermenu.rasi |
+| `templates/kitty/` | kitty.conf |
+| `templates/colors/` | `palette-nord.sh` y helpers |
 | `assets/wallpaper.jpg` | Wallpaper |
-| `assets/desktop-logo.ttf` | Fuente `DesktopLogo` (logo U+E000) |
-| `src/chadwm/chadwm` | Fuente chadwm, vendorizada (commit `7991ac8`) |
-| `src/eww` | Fuente eww v0.6.0, vendorizada (commit `d87c2fd`) |
-| `legacy/` | Prototipo antiguo, no usado |
+
+Ya no existen `src/chadwm`, `src/eww`, `legacy/`, `lib/dwm.sh`,
+`lib/eww.sh`, `lib/ly.sh`, `templates/dwm/` ni la integración de dotfiles
+externos. No reañadirlos sin una decisión nueva en `DECISIONS.md`.
 
 ## Comandos de validación
 
@@ -95,40 +115,37 @@ La fase 1 termina en el escritorio. No implementar todavía:
 cd ~/dwm-setup
 
 # Sintaxis
-for f in install.sh lib/*.sh bin/dwm-safe bin/dwm-doctor \
-  templates/dwm/run.sh templates/dwm/scripts/bar.sh; do
-  bash -n "$f" || exit 1
-done
+for f in install.sh lib/*.sh; do bash -n "$f" || exit 1; done
+for f in bin/desktop-safe bin/desktop-doctor; do sh -n "$f" || exit 1; done
+bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
 
-# Plan sin cambios (no pregunta y no toca repositorios)
+# Plan sin cambios
 ./install.sh --dry-run
 
-# Comprobar atajos, sesión, tema y dunst del repo
-grep -RInE 'xss-lock|rofi|eww -c .*open --toggle|pcmanfm|--config.*rofi|dunstrc' templates
+# Comprobar restos y coherencia de la barra
+grep -RInE '@[A-Z][A-Z0-9_]*@' ~/.config/bspwm ~/.config/sxhkd \
+  ~/.config/polybar ~/.config/picom ~/.config/dunst ~/.config/rofi \
+  ~/.config/kitty ~/.xinitrc
+grep -nE 'modules-(left|right)' ~/.config/polybar/config.ini
+stat -c '%A %n' ~/.config/bspwm/bspwmrc ~/.xinitrc
 
 # ShellCheck (si está instalado)
-shellcheck install.sh lib/*.sh bin/dwm-safe bin/dwm-doctor
+shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor
 
 # Diagnóstico en una sesión instalada
-dwm-doctor
-dwm-doctor --camera
+desktop-doctor
+desktop-doctor --camera
 ```
-
-## Registro de decisiones
-
-Antes de cambiar una decisión importante (display manager, WM, servidor de
-audio, gestor de archivos, política NVIDIA, fases), añadir una entrada en
-`DECISIONS.md` con contexto, decisión y consecuencias. No reescribir la
-historia de `PLAN.md`; está marcado como obsoleto.
 
 ## Estado esperado al retomar
 
-- El código de fase 1 está implementado y los checks estáticos pasan.
-- Las fuentes de chadwm y eww están vendorizadas; el repo no usa submódulos.
-- El uso normal es `./install.sh`; el usuario/home se detectan y las flags
-  avanzadas solo son para automatización.
-- Hay backups y dry-run; falta validación real y subir el repo.
+- El código de fase 1b está implementado y los checks estáticos pasan.
+- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (13 módulos),
+  picom, dunst, lxpolkit, udiskie y xss-lock activos; `startx` manual.
+- Se corrigieron backups previos, ownership, `bspwmrc` 0755, picom,
+  `desktop-doctor`, batería baja y polkit.
+- Falta validar una instalación desde cero en VM Debian 13 y subir el repo.
 - `PROGRESS.md` contiene la lista de pruebas y bloqueos.
 - Si se completa una prueba real, actualizar `PROGRESS.md` y
   `docs/testing.md` con fecha, hardware, fuentes y resultados. Si no hay
-  resultado real, marcarlo como pendiente; no confundir con un check local.
+  resultado real, marcarlo como pendiente.

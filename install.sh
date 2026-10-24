@@ -23,8 +23,6 @@ source "$PROJECT_ROOT/lib/common.sh"
 source "$PROJECT_ROOT/lib/detect.sh"
 # shellcheck source=lib/packages.sh
 source "$PROJECT_ROOT/lib/packages.sh"
-# shellcheck source=lib/dotfiles.sh
-source "$PROJECT_ROOT/lib/dotfiles.sh"
 # shellcheck source=lib/bspwm.sh
 source "$PROJECT_ROOT/lib/bspwm.sh"
 # shellcheck source=lib/sxhkd.sh
@@ -61,16 +59,14 @@ El instalador detecta usuario, home, GPU, Secure Boot, resolución, cámara,
 batería y red. Solo pregunta cuando hay una decisión real, por ejemplo qué
 hacer si faltan componentes APT.
 
-Opcionalmente, puedes proporcionar un repo Git (HTTPS) con tus dotfiles.
-Estructura esperada: repo/config/.config/{bspwm,sxhkd,polybar,picom,dunst,rofi,kitty}
-
 Opciones avanzadas (automatización; normalmente no necesarias):
-  --user USUARIO, --home RUTA, --rebuild, --nvidia, --no-nvidia,
+  --user USUARIO, --home RUTA, --nvidia, --no-nvidia,
   --cuda, --no-cuda,
   --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
 
 Tema: Nord (vendorizado desde tu repo Bspwm)
 
+Sesión: startx manual desde TTY (no se instala display manager).
 Fases futuras (IDE, navegadores, música) no se instalan desde aquí.
 EOF
 }
@@ -90,7 +86,6 @@ parse_args() {
         TARGET_HOME="$2"; shift
         ;;
       --home=*) TARGET_HOME="${1#*=}" ;;
-      --rebuild) FORCE_REBUILD=1 ;;
       --nvidia) INSTALL_NVIDIA="yes" ;;
       --no-nvidia) INSTALL_NVIDIA="no" ;;
       --cuda) INSTALL_CUDA="yes" ;;
@@ -117,7 +112,7 @@ parse_args() {
       --resolution=*) DWM_RESOLUTION="${1#*=}" ;;
       --debug) DWM_DEBUG=1 ;;
       -h|--help) usage; exit 0 ;;
-      --version) printf 'dwm-setup 0.2.0 (fase 1b: bspwm+polybar)\n'; exit 0 ;;
+      --version) printf 'dwm-setup 0.3.0 (fase 1b: bspwm+polybar)\n'; exit 0 ;;
       *) die "Opción desconocida: $1 (usa --help)" ;;
     esac
     shift
@@ -145,7 +140,6 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/common.sh"
     "$PROJECT_ROOT/lib/detect.sh"
     "$PROJECT_ROOT/lib/packages.sh"
-    "$PROJECT_ROOT/lib/dotfiles.sh"
     "$PROJECT_ROOT/lib/bspwm.sh"
     "$PROJECT_ROOT/lib/sxhkd.sh"
     "$PROJECT_ROOT/lib/polybar.sh"
@@ -182,7 +176,6 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/modules/battery.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/pipewire.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/date.ini.in"
-    "$PROJECT_ROOT/templates/polybar/modules/dots.ini.in"
     "$PROJECT_ROOT/templates/polybar/scripts/updates-apt.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/polypomo.in"
     "$PROJECT_ROOT/templates/polybar/scripts/launch.sh.in"
@@ -191,7 +184,6 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/rofi/powermenu.rasi.in"
     "$PROJECT_ROOT/templates/kitty/kitty.conf.in"
     "$PROJECT_ROOT/assets/wallpaper.jpg"
-    "$PROJECT_ROOT/assets/desktop-logo.ttf"
   )
   for path in "${required[@]}"; do
     [[ -e "$path" ]] || die "Falta un archivo del proyecto: $path"
@@ -221,7 +213,6 @@ Log:                    $LOG_FILE
 Próximo paso:
   1. Reinicia el equipo: sudo reboot
   2. En TTY1 entra con tu usuario y ejecuta: startx
-     (o configura auto-login en ~/.bash_profile)
   3. Comprueba el escritorio: desktop-doctor
   4. Prueba la cámara real: desktop-doctor --camera
   5. Si algo falla, entra por TTY y usa: startx
@@ -229,13 +220,12 @@ Próximo paso:
 Atajos principales:
   Super+Return      kitty
   Super+d           rofi (drun)
-  Super+Shift+b     firefox
-  Super+Shift+e     VS Code
+  Super+Shift+b     firefox (no instalado en fase 1)
+  Super+Shift+e     VS Code (no instalado en fase 1)
   Super+Shift+f     thunar
   Super+Shift+l     bloquear
-  Super+Shift+s     captura de pantalla
-  Print             captura completa
-  Super+Print       menú capturas
+  Print             captura completa (menú)
+  Super+Print       menú de capturas
   Super+{h,j,k,l}   foco ventanas
   Super+Shift+{h,j,k,l} mover ventanas
   Super+{1-5}       ir a escritorio
@@ -247,6 +237,7 @@ Atajos principales:
   XF86MonBrightnessUp/Down    brillo
 
 Notas:
+  - No hay auto-login: la sesión se inicia a mano con startx.
   - El grupo video/audio/render requiere cerrar sesión y volver a entrar.
   - Los USB se montan solos y solo notifican; no se abre ninguna app.
   - No se instala ningún IDE, navegador ni reproductor de música.
@@ -272,6 +263,9 @@ main() {
 
   detect_all
 
+  # Crea ~/.config, ~/.local, ~/.config-backup con el propietario correcto.
+  prepare_user_dirs
+
   if ! dry_run; then
     LOG_HOME="$TARGET_HOME"
     init_logging
@@ -283,25 +277,17 @@ main() {
   # Cargar paleta Nord
   load_theme "nord"
 
-  # Prompt para repo dotfiles opcional
-  DOTFILES_DIR=""
-  if prompt_dotfiles_repo; then
-    DOTFILES_DIR=$(clone_dotfiles_repo "$DOTFILES_URL")
-    validate_dotfiles_structure "$DOTFILES_DIR"
-    prompt_missing_configs "${DOTFILES_MISSING[@]}"
-  else
-    info "Usando templates integrados con paleta Nord"
-  fi
-
-  # Los backups deben existir antes del preflight
+  # Los backups deben existir ANTES de cualquier escritura de configuración.
   local backup_ts
   backup_ts=$(timestamp)
   ROOT_BACKUP_DIR="/var/backups/dwm-setup/$backup_ts"
   USER_BACKUP_DIR="$TARGET_HOME/.config-backup/dwm-setup/$backup_ts"
 
-  if ! dry_run; then
-    run_root install -d -m 0755 -o "$TARGET_USER" -g "$TARGET_GROUP" "$USER_BACKUP_DIR"
-  fi
+  make_user_dir "$TARGET_HOME/.config-backup"
+  make_user_dir "$TARGET_HOME/.config-backup/dwm-setup"
+  make_user_dir "$USER_BACKUP_DIR"
+  run_root install -d -m 0755 "$ROOT_BACKUP_DIR"
+  backup_existing_configs
 
   preflight_repos
 
@@ -315,7 +301,7 @@ main() {
   fi
 
   install_packages
-  install_bspwm "nord"
+  install_bspwm
   install_sxhkd
   install_polybar
   install_picom

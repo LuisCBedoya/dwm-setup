@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Base loader para paletas de colores.
-# Se sourcea desde install.sh, lib/config.sh y run.sh.
-# Uso: source /path/to/templates/colors/palette-monolith.sh
+# Se sourcea desde install.sh y lib/theme.sh.
+# Uso: source /path/to/templates/colors/palette-nord.sh
 
 # Paleta activa (exportada por el archivo de paleta concreto)
 # Variables requeridas (todas en formato HEX #rrggbb):
