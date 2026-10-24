@@ -243,6 +243,7 @@ backup_existing_configs() {
   backup_root "/usr/local/bin/desktop-safe"
   backup_root "/usr/local/bin/desktop-doctor"
   backup_root "/usr/local/share/fonts/dwm-setup/desktop-logo.ttf"
+  backup_root "/etc/modprobe.d/alsa-fx504.conf"
   backup_user_path "$home/.config/bspwm"
   backup_user_path "$home/.config/sxhkd"
   backup_user_path "$home/.config/polybar"

@@ -160,6 +160,35 @@ PipeWire es el servidor; WirePlumber es el gestor de sesión. `pavucontrol`
 sirve para elegir dispositivos. La aceleración VA-API/VDPAU depende de la
 GPU y del firmware; `desktop-doctor` muestra el estado.
 
+`audio-watch.sh` arranca desde `autostart` y aplica esta prioridad:
+
+1. **Auriculares de cable** (`analog-output-headphones`).
+2. **HDMI** (`output:hdmi-stereo`).
+3. **Altavoces analógicos**.
+
+El watcher detecta las tarjetas/perfiles/puertos con `pactl`; no hardcodea
+nombres. Si el usuario tiene seleccionado un sink/source USB o Bluetooth,
+no lo pisa. Conserva volumen/mute y mueve los streams existentes.
+
+Comandos manuales:
+
+```sh
+~/.config/bspwm/scripts/audio-switch.sh auto
+~/.config/bspwm/scripts/audio-switch.sh headphones
+~/.config/bspwm/scripts/audio-switch.sh hdmi
+~/.config/bspwm/scripts/audio-switch.sh analog
+```
+
+Si el jack combo de 3.5 mm no expone el micrófono del headset, el watcher
+usa el micrófono interno. En el **ASUS FX504GE con ALC255** el instalador
+detecta el modelo y ofrece el fixup `alc255-asus`; en otros PCs no toca el
+kernel. Opciones: `--headset-quirk` (forzar) y `--no-headset-quirk`
+(omitir). El quirk requiere reiniciar.
+
+Dunst reproduce `message-new-instant.oga` en cada notificación mediante una
+regla con `script`; el sonido sale por el sink activo (HDMI, auriculares o
+altavoces). `sound-theme-freedesktop` se instala como dependencia.
+
 ### Cámara
 
 Se instala `v4l-utils` y `libcamera-tools` si está disponible. La prueba
@@ -250,15 +279,17 @@ lib/kitty.sh               kitty.conf
 lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/verify.sh              Verificación estática final
 lib/theme.sh               Paleta Nord y render
+lib/audio.sh               Quirk ALC255 condicionado por hardware
 bin/desktop-safe           Acciones de sesión
 bin/desktop-doctor         Diagnóstico y cámara (POSIX sh)
 templates/bspwm/           bspwmrc.in, autostart.in, scripts/
 templates/sxhkd/           sxhkdrc.in
 templates/polybar/         config.ini.in, modules/, scripts/
 templates/picom/           picom.conf.in
-templates/dunst/           dunstrc.in
+templates/dunst/           dunstrc.in, notification-sound.sh.in
 templates/rofi/            powermenu.rasi.in
 templates/kitty/           kitty.conf.in
+templates/modprobe/        alsa-fx504.conf (quirk ALC255)
 templates/colors/          palette-nord.sh
 assets/wallpaper.jpg       Wallpaper
 docs/                      Hardware y testing
@@ -282,6 +313,13 @@ docs/                      Hardware y testing
   `Super+Shift+e` es logout; el editor se movió a `Super+Shift+v`.
 - `Super+Shift+s` usa `scrot`: selecciona región y copia al portapapeles, sin
   dejar archivo. No tiene anotaciones; flameshot sigue instalado para eso.
+- El watcher de audio solo puede activar una salida a la vez (auriculares,
+  HDMI o altavoces). Si el usuario elige un headset USB/Bluetooth, no lo
+  pisa.
+- El quirk `alc255-asus` está condicionado a ASUS FX504GE/ALC255; en otros
+  PCs no se aplica. Requiere reinicio y está pendiente de validación en
+  hardware real.
+- Bluetooth queda fuera de fase 1; se configurará más adelante.
 
 ## Documentación
 

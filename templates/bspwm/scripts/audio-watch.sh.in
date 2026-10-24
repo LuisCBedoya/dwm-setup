@@ -1,0 +1,57 @@
+#!/bin/sh
+# audio-watch.sh — vigila HDMI y el jack de auriculares.
+# Prioridad: auriculares > HDMI > altavoces.
+# Si el usuario tiene un sink USB/Bluetooth seleccionado, no lo toca.
+
+set -u
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+switch="$script_dir/audio-switch.sh"
+
+# Evitar dos watchers si se reinicia bspwm/autostart.
+if command -v flock >/dev/null 2>&1; then
+  lock="${XDG_RUNTIME_DIR:-/tmp}/dwm-audio-watch.lock"
+  exec 9>"$lock" || exit 0
+  flock -n 9 || exit 0
+fi
+
+# Esperar a que PipeWire/PulseAudio esté disponible.
+i=0
+while ! pactl info >/dev/null 2>&1; do
+  i=$((i + 1))
+  [ "$i" -gt 120 ] && exit 0
+  sleep 0.5
+done
+
+state() {
+  cards=$(pactl list short cards 2>/dev/null || true)
+  [ -n "$cards" ] || { printf 'skip\n'; return; }
+
+  default=$(pactl get-default-sink 2>/dev/null || true)
+  case "$default" in
+    *usb*|*bluez*|*bluetooth*) printf 'skip\n'; return ;;
+  esac
+
+  if pactl list cards 2>/dev/null | grep -qE 'analog-output-headphones:.*, available\)'; then
+    printf 'headphones\n'
+    return
+  fi
+  if pactl list cards 2>/dev/null | grep -qE 'hdmi-output-[0-9]+:.*, available\)'; then
+    printf 'hdmi\n'
+    return
+  fi
+  printf 'analog\n'
+}
+
+last=""
+while :; do
+  current=$(state)
+  if [ "$current" = "skip" ]; then
+    last=""
+  elif [ "$current" != "$last" ]; then
+    if "$switch" "$current"; then
+      last="$current"
+    fi
+  fi
+  sleep 2
+done

@@ -80,11 +80,29 @@ aplicación. Thunar se abre manualmente con `Super+Shift+F`.
 ## Audio y vídeo
 
 PipeWire es el servidor; WirePlumber el gestor de sesión. Se instalan
-`alsa-utils`, `pavucontrol`, `pamixer`, FFmpeg, `libavcodec-extra`,
-GStreamer base/good/bad/ugly/libav/vaapi y `ffmpegthumbnailer`.
+`alsa-utils`, `pavucontrol`, `pamixer`, `pulseaudio-utils`,
+`sound-theme-freedesktop`, FFmpeg, `libavcodec-extra`, GStreamer
+base/good/bad/ugly/libav/vaapi y `ffmpegthumbnailer`.
 
-La aceleración VA-API/VDPAU depende de la GPU y del firmware. Comprobar con
-`vainfo`, `vdpauinfo` y `desktop-doctor`.
+En el host de referencia la tarjeta Intel HDA expone:
+
+- `card 0`, device 3: `HDMI 0 [24 TV]` con ELD válido (FL/FR, LPCM 2ch).
+- Perfil `output:hdmi-stereo` disponible.
+- Jack de auriculares combo 3.5 mm; perfil
+  `output:analog-stereo+input:analog-stereo`.
+
+`audio-watch.sh` aplica la prioridad auriculares > HDMI > altavoces
+detectando perfiles/puertos con `pactl`. Respeta sinks/sources USB/Bluetooth.
+No hardcodea tarjeta ni monitor.
+
+El codec es **Realtek ALC255**. En el FX504GE el micrófono del jack combo no
+aparece por defecto; el instalador detecta DMI + códec y ofrece el fixup
+`alc255-asus` (`/etc/modprobe.d/alsa-fx504.conf`). En otros PCs no se aplica.
+Requiere reinicio y es reversible.
+
+Dunst reproduce `message-new-instant.oga` en cada notificación con `paplay`
+(fallback `pw-play`). La aceleración VA-API/VDPAU depende de la GPU y del
+firmware. Comprobar con `vainfo`, `vdpauinfo` y `desktop-doctor`.
 
 ## Cámara
 

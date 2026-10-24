@@ -78,6 +78,40 @@ abre `rofi -show run`; `Super+d` sigue abriendo `rofi -show drun`.
 `j/k` solo pueden cambiar altura cuando el split es vertical (ventanas
 apiladas) o la ventana es flotante; es una limitación del tiling de bspwm.
 
+## Audio HDMI/auriculares y dunst (2026-10-24)
+
+Se añadió un watcher de audio genérico y sonido de notificación:
+
+- `audio-switch.sh` cambia entre `headphones`, `hdmi` y `analog` usando
+  perfiles/puertos detectados con `pactl`; no hardcodea tarjeta ni monitor.
+- `audio-watch.sh` aplica la prioridad **auriculares > HDMI > altavoces** y
+  respeta sinks/sources USB/Bluetooth seleccionados por el usuario.
+- Al cambiar de salida conserva volumen/mute y mueve los streams.
+- `notification-sound.sh` reproduce `message-new-instant.oga` con `paplay`
+  (fallback `pw-play`) en cada notificación de dunst.
+- `sound-theme-freedesktop` se añadió a `AUDIO_PKGS`.
+- Quirk `alc255-asus` para ASUS FX504GE/ALC255:
+  - Detecta DMI y códec.
+  - Pregunta en modo interactivo; `--yes` lo aplica si el hardware coincide.
+  - `--headset-quirk` fuerza; `--no-headset-quirk` desactiva.
+  - Backup del `.conf`, `update-initramfs -u` y aviso de reinicio.
+  - En otros PCs no se aplica.
+
+Probado en vivo:
+
+- `audio-switch.sh hdmi` activa `output:hdmi-stereo` y el sink HDMI.
+- `audio-switch.sh headphones` vuelve a `analog-stereo` con
+  `analog-output-headphones`, volumen 40% conservado.
+- Con auriculares conectados, el puerto de auriculares sigue disponible
+  aunque el perfil HDMI esté activo; el watcher puede volver a ellos.
+- Dunst reproduce el sonido: aparece un sink-input de `paplay` y la regla
+  `[notification-sound]` está cargada.
+- `notify-send` se ve y suena en el sink activo.
+
+Pendiente: reiniciar con el quirk ALC255 para confirmar que aparece el
+micrófono del jack combo. Si funciona, el watcher lo pondrá como fuente
+predeterminada; si no, se usará un headset USB.
+
 ## Correcciones aplicadas
 
 - **Backups antes de escribir**: `backup_existing_configs` se ejecuta antes

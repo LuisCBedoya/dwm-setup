@@ -165,11 +165,68 @@ Los atajos de apps no instaladas se dejan puestos para conservar la memoria
 muscular; no hacen nada hasta instalar la app. `Super+s/w/e` de i3 no tienen
 equivalente exacto en bspwm y no se mapean.
 
-## 7. Cámara, USB, audio y NVIDIA
+## 6b. Audio, HDMI, auriculares y dunst
+
+Comprobar que los scripts existen y son ejecutables:
+
+```sh
+ls -l ~/.config/bspwm/scripts/audio-switch.sh \
+  ~/.config/bspwm/scripts/audio-watch.sh \
+  ~/.config/dunst/scripts/notification-sound.sh
+```
+
+Pruebas manuales:
+
+```sh
+# Estado actual
+pactl get-default-sink
+pactl get-default-source
+pactl list cards | grep -E 'Active Profile|analog-output|hdmi-output'
+
+# Forzar salidas (sin watcher, o el watcher volverá a la prioridad)
+~/.config/bspwm/scripts/audio-switch.sh hdmi
+~/.config/bspwm/scripts/audio-switch.sh headphones
+~/.config/bspwm/scripts/audio-switch.sh analog
+```
+
+Criterios:
+
+- Con auriculares conectados, `analog-output-headphones` está disponible y
+  es el puerto activo.
+- Con HDMI conectado y sin auriculares, se activa `output:hdmi-stereo` y el
+  sink `*.hdmi-stereo`.
+- Con un sink/source USB/Bluetooth seleccionado, el watcher no lo pisa.
+- El volumen/mute se conserva al cambiar de sink.
+- `notify-send "Prueba" "Sonido"` muestra la notificación y aparece un
+  sink-input de `paplay`; se oye en el sink activo.
+- `dunstctl rules` incluye `notification-sound`.
+- En un PC sin HDMI/auriculares o en VM, el watcher no falla.
+
+Quirk ALC255 (solo ASUS FX504GE/ALC255):
+
+```sh
+# Detección en dry-run
+./install.sh --dry-run | grep -A2 'modprobe.d/alsa-fx504'
+
+# Tras instalar y reiniciar, con los auriculares conectados:
+pactl list sources | grep -A12 -i 'analog-input\|headset\|mic'
+pactl list cards | grep -E 'analog-input|Active Profile'
+timeout 5 parecord --device=alsa_input.pci-0000_00_1f.3.analog-stereo /tmp/mic-test.wav
+paplay /tmp/mic-test.wav
+```
+
+Si el quirk no funciona, revertir:
+
+```sh
+sudo rm -f /etc/modprobe.d/alsa-fx504.conf
+sudo /usr/sbin/update-initramfs -u
+sudo reboot
+```
+
+## 7. Cámara, USB y NVIDIA
 
 - `desktop-doctor --camera` con una cámara UVC real o virtual.
 - USB exFAT/NTFS/FAT: `udiskie` monta y notifica; no se abre Thunar.
-- Audio: `pavucontrol`, `pamixer`, `wpctl`; PipeWire/WirePlumber activos.
 - Vídeo H.264/HEVC: `ffmpeg`/GStreamer; `vainfo` si hay GPU.
 - NVIDIA: `nvidia-smi`, Secure Boot y MOK; Xorg puede usar Intel y PRIME.
 

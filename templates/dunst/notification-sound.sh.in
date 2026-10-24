@@ -1,0 +1,13 @@
+#!/bin/sh
+# notification-sound — sonido para cada notificación de dunst.
+# Usa el sink predeterminado (HDMI, auriculares o altavoces).
+
+set -u
+
+sound=/usr/share/sounds/freedesktop/stereo/message-new-instant.oga
+
+if command -v paplay >/dev/null 2>&1 && [ -r "$sound" ]; then
+  paplay "$sound" >/dev/null 2>&1 || true
+elif command -v pw-play >/dev/null 2>&1 && [ -r "$sound" ]; then
+  pw-play "$sound" >/dev/null 2>&1 || true
+fi

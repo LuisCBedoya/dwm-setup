@@ -915,3 +915,50 @@ decisión; el atajo `Super+Shift+b` se queda como no-op.
 - Scrot no dibuja flechas ni texto; para eso queda flameshot manual.
 - El script es POSIX sh y se instala con el resto de scripts de bspwm.
 - No queda basura en `/tmp` ni en `~/Pictures/Screenshots` por esta captura.
+
+## ADR-037 — Audio HDMI/auriculares, sonido dunst y quirk ALC255
+
+**Contexto:** En el host de referencia (ASUS FX504GE, Intel HDA + ALC255,
+monitor `24 TV` por HDMI y jack combo 3.5 mm) el perfil HDMI estaba
+disponible pero no activo, y `pavucontrol` solo mostraba la salida analógica.
+Con auriculares de cable, la salida cambiaba sola, pero el micrófono del jack
+combo no aparecía: solo existía `analog-input-mic` (interno). El usuario
+quiere que el sistema elija HDMI/auriculares automáticamente, sonido en cada
+notificación de dunst y micrófono de headset para Teams. El instalador se
+usará en otros PCs, así que el quirk no puede aplicarse a ciegas.
+
+**Decisión:**
+1. `audio-switch.sh` y `audio-watch.sh`:
+   - Prioridad **auriculares > HDMI > altavoces**.
+   - Detección dinámica con `pactl` de tarjetas, perfiles y puertos; sin
+     hardcodear `alsa_card.*`, monitor ni perfiles salvo fallback.
+   - Si el sink/source predeterminado es USB/Bluetooth, no se pisa.
+   - Conserva volumen/mute y mueve streams.
+   - Arranca desde `autostart`.
+2. `notification-sound.sh` con `paplay` y
+   `message-new-instant.oga`; fallback `pw-play`. Regla dunst
+   `[notification-sound]` sin filtros y `always_run_script = true`.
+   `sound-theme-freedesktop` se añade a `AUDIO_PKGS` y `paplay` a la
+   verificación.
+3. Quirk `alc255-asus`:
+   - Solo se propone si DMI coincide con `FX504GE`/`FX504` y el códec es
+     `Realtek ALC255`.
+   - En modo interactivo pregunta (por defecto sí); `--yes` lo aplica si el
+     hardware coincide; `--headset-quirk` fuerza; `--no-headset-quirk`
+     desactiva.
+   - Backup de `/etc/modprobe.d/alsa-fx504.conf`, `update-initramfs -u` y
+     aviso de reinicio.
+   - En cualquier otro PC no se toca el kernel.
+4. `lib/audio.sh` centraliza detección e instalación del quirk.
+5. `verify_install` comprueba scripts de audio, sonido de dunst y, si se
+   instaló, el `.conf` del quirk.
+
+**Consecuencias:**
+- El audio cambia solo cuando cambia el estado de HDMI/auriculares; una
+  selección manual se respeta hasta el siguiente cambio de hardware.
+- Solo puede haber una salida activa a la vez en la tarjeta analógica
+  (auriculares, HDMI o altavoces).
+- El quirk requiere reinicio y está pendiente de validación en el FX504GE;
+  si no funciona, se revierte y se usa un headset USB.
+- En PCs sin HDMI/auriculares o en VM, el watcher no falla.
+- Bluetooth sigue fuera de fase 1.

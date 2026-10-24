@@ -7,8 +7,13 @@ install_dunst() {
   section "Instalando dunst"
 
   make_user_dir "$home/.config/dunst"
+  make_user_dir "$home/.config/dunst/scripts"
   log "Renderizando dunstrc desde template"
   render_dunst_template "dunst/dunstrc" "$home/.config/dunst/dunstrc"
+
+  render_theme_template "$PROJECT_ROOT/templates/dunst/notification-sound.sh.in" \
+    "$home/.config/dunst/scripts/notification-sound.sh" 0755 \
+    "HOME=$TARGET_HOME"
 
   ok "dunst instalado"
 }

@@ -80,6 +80,14 @@ La fase 1 termina en el escritorio. No implementar todavía:
     apps que no están en fase 1 se dejan como bindings no-op. `Super+r`
     seguido de `h/j/k/l` redimensiona mediante cadena de sxhkd; `Escape` sale.
     No cambiar este mapa sin una decisión nueva.
+19. **Audio portable.** El watcher elige auriculares > HDMI > altavoces
+    detectando tarjetas/perfiles/puertos con `pactl`; no hardcodear
+    `alsa_card.*`, nombres de monitor ni perfiles salvo como fallback
+    documentado. Si el sink o source predeterminado es USB/Bluetooth, no se
+    pisa. El quirk `alc255-asus` solo se aplica en ASUS FX504GE con códec
+    ALC255; en otro hardware se omite. `--headset-quirk` fuerza y
+    `--no-headset-quirk` desactiva. El sonido de dunst usa
+    `sound-theme-freedesktop` y `paplay`/`pw-play`.
 
 ## Estructura relevante
 
@@ -99,15 +107,17 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paleta Nord y render de plantillas |
+| `lib/audio.sh` | Quirk ALC255 condicionado por DMI/códec |
 | `bin/desktop-safe` | Acciones de sesión (lock/suspend/logout/poweroff) |
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
 | `templates/bspwm/` | bspwmrc, autostart y scripts de sesión |
 | `templates/sxhkd/` | sxhkdrc |
 | `templates/polybar/` | config.ini, modules/ y scripts/ |
 | `templates/picom/` | picom.conf |
-| `templates/dunst/` | dunstrc |
+| `templates/dunst/` | dunstrc y notification-sound.sh |
 | `templates/rofi/` | powermenu.rasi |
 | `templates/kitty/` | kitty.conf |
+| `templates/modprobe/` | alsa-fx504.conf (quirk ALC255) |
 | `templates/colors/` | `palette-nord.sh` y helpers |
 | `assets/wallpaper.jpg` | Wallpaper |
 
@@ -150,6 +160,9 @@ desktop-doctor --camera
   picom, dunst, lxpolkit, udiskie y xss-lock activos; `startx` manual.
 - Se corrigieron backups previos, ownership, `bspwmrc` 0755, picom,
   `desktop-doctor`, batería baja y polkit.
+- Audio: watcher auriculares > HDMI > altavoces, sonido de dunst y quirk
+  ALC255 condicionado a ASUS FX504GE. La validación del quirk requiere
+  reinicio; el resto se probó en vivo el 2026-10-24.
 - Falta validar una instalación desde cero en VM Debian 13 y subir el repo.
 - `PROGRESS.md` contiene la lista de pruebas y bloqueos.
 - Si se completa una prueba real, actualizar `PROGRESS.md` y

@@ -4,7 +4,7 @@
 BASE_PKGS=(
   build-essential git curl ca-certificates xz-utils unzip tar file pkg-config
   procps pciutils usbutils dmidecode inxi bash-completion sudo less rsync
-  python3
+  python3 initramfs-tools
 )
 
 XORG_PKGS=(
@@ -25,7 +25,7 @@ BUILD_PKGS=(
 
 AUDIO_PKGS=(
   pipewire pipewire-pulse pipewire-alsa wireplumber
-  alsa-utils pavucontrol pulseaudio-utils pamixer
+  alsa-utils pavucontrol pulseaudio-utils pamixer sound-theme-freedesktop
   ffmpeg libavcodec-extra ffmpegthumbnailer
   gstreamer1.0-libav gstreamer1.0-plugins-base gstreamer1.0-plugins-good
   gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-vaapi
@@ -681,6 +681,7 @@ install_packages() {
     adwaita-icon-theme hicolor-icon-theme desktop-file-utils shared-mime-info
     xdg-utils xdg-user-dirs network-manager network-manager-gnome dbus-user-session dbus-x11
     pipewire pipewire-pulse wireplumber alsa-utils pavucontrol pulseaudio-utils pamixer
+    sound-theme-freedesktop
     ffmpeg libavcodec-extra gstreamer1.0-plugins-base gstreamer1.0-plugins-good
     gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-vaapi
     v4l-utils udisks2 gvfs gvfs-backends exfatprogs ntfs-3g dosfstools e2fsprogs

@@ -8,7 +8,7 @@ verify_install() {
   local path module line
 
   for cmd in bspwm sxhkd polybar picom dunst rofi feh kitty flameshot i3lock xss-lock \
-    brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer xwallpaper playerctl; do
+    brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
@@ -25,6 +25,8 @@ verify_install() {
     "$home/.config/bspwm/scripts/keybindings_rofi.sh" \
     "$home/.config/bspwm/scripts/screenshot.sh" \
     "$home/.config/bspwm/scripts/screenshot_region.sh" \
+    "$home/.config/bspwm/scripts/audio-switch.sh" \
+    "$home/.config/bspwm/scripts/audio-watch.sh" \
     "$home/.config/sxhkd/sxhkdrc" \
     "$home/.config/polybar/config.ini" \
     "$home/.config/polybar/launch.sh" \
@@ -47,6 +49,7 @@ verify_install() {
     "$home/.config/dunst/dunstrc" \
     "$home/.config/rofi/powermenu.rasi" \
     "$home/.config/kitty/kitty.conf" \
+    "$home/.config/dunst/scripts/notification-sound.sh" \
     "$home/.xinitrc" \
     "$home/.local/share/wallpapers/rocky.jpg" \
     "$home/.local/share/xorg" \
@@ -88,6 +91,19 @@ verify_install() {
       failures=$((failures + 1))
     fi
   done
+  if [[ -f "$home/.config/dunst/scripts/notification-sound.sh" && ! -x "$home/.config/dunst/scripts/notification-sound.sh" ]]; then
+    error "Script no ejecutable: $home/.config/dunst/scripts/notification-sound.sh"
+    failures=$((failures + 1))
+  fi
+
+  if [[ "${HEADSET_QUIRK_INSTALLED:-0}" -eq 1 ]]; then
+    if [[ -f /etc/modprobe.d/alsa-fx504.conf ]]; then
+      info "Quirk ALC255 instalado; requiere reiniciar para aplicar el micrófono"
+    else
+      error "Se esperaba /etc/modprobe.d/alsa-fx504.conf para el quirk ALC255"
+      failures=$((failures + 1))
+    fi
+  fi
 
   # Módulos de polybar referenciados en la barra
   if [[ -f "$home/.config/polybar/config.ini" ]]; then

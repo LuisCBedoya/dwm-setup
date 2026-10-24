@@ -36,6 +36,9 @@ fi
 # Sin -t: la barra no tiene bandeja de sistema.
 udiskie -N -a &
 
+# --- Audio: auriculares > HDMI > altavoces ---
+@HOME@/.config/bspwm/scripts/audio-watch.sh &
+
 # --- Bloqueo de pantalla (xss-lock + i3lock) ---
 xss-lock -- /usr/local/bin/desktop-safe lock &
 
