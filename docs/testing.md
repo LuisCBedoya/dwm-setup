@@ -215,7 +215,9 @@ Criterios:
   file /tmp/region.png        # dimensiones de la región
   ```
   No debe quedar el rectángulo de selección en pantalla ni temporales en
-  `/tmp/scrot.*`. Scrot usa `--line mode=edge`.
+  `/tmp/scrot.*`. Scrot usa `--line mode=edge,color=#FF00FF,width=2,opacity=255`
+  y un `xrefresh` posterior. Probar sobre una ventana blanca para confirmar
+  que la línea magenta se ve.
 - En un PC sin HDMI/auriculares o en VM, el watcher no falla.
 
 Quirk ALC255 (solo ASUS FX504GE/ALC255):

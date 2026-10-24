@@ -21,7 +21,8 @@ case "$choice" in
     notify-send "Captura" "Pantalla completa en clipboard"
     ;;
   *"Área seleccionada (clipboard)"*)
-    scrot -s --line mode=edge -q 100 - | xclip -selection clipboard -t image/png
+    scrot -s --line 'mode=edge,color=#FF00FF,width=2,opacity=255' -q 100 - | xclip -selection clipboard -t image/png
+    command -v xrefresh >/dev/null 2>&1 && xrefresh >/dev/null 2>&1 || true
     notify-send "Captura" "Área en clipboard"
     ;;
   *"Ventana activa (clipboard)"*)
@@ -34,8 +35,9 @@ case "$choice" in
     notify-send "Captura" "Pantalla completa guardada"
     ;;
   *"Área seleccionada"*)
-    scrot -s --line mode=edge -q 100 "$SHOT_DIR/%Y-%m-%d_%H-%M-%S.png" 2>/dev/null \
-      || scrot -s --line mode=edge -q 100 "/tmp/screenshot_%Y-%m-%d_%H-%M-%S.png"
+    scrot -s --line 'mode=edge,color=#FF00FF,width=2,opacity=255' -q 100 "$SHOT_DIR/%Y-%m-%d_%H-%M-%S.png" 2>/dev/null \
+      || scrot -s --line 'mode=edge,color=#FF00FF,width=2,opacity=255' -q 100 "/tmp/screenshot_%Y-%m-%d_%H-%M-%S.png"
+    command -v xrefresh >/dev/null 2>&1 && xrefresh >/dev/null 2>&1 || true
     notify-send "Captura" "Área seleccionada guardada"
     ;;
   *"Ventana activa"*)

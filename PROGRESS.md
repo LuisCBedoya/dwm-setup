@@ -95,9 +95,12 @@ Se añadió un watcher de audio genérico y sonido de notificación:
   al primero.
 - `gap_size = 6` deja 6 px entre notificaciones; comprobado con dos
   `notify-send` seguidos (captura `gap.png`).
-- `scrot -s --line mode=edge` sustituye a `--freeze`: selecciona bien y no
-  deja el rectángulo residual. Con XTest, la región 400x300 llega al
-  portapapeles y no queda temporal.
+- `scrot -s --line mode=edge` con borde magenta (`#FF00FF`, 2 px, opacidad
+  255) para que se vea sobre fondo blanco. `xrefresh` después de capturar
+  borra el rectángulo residual; `--freeze` se descartó porque capturaba la
+  pantalla completa con eventos sintéticos.
+- Con XTest, la región 400x300 llega al portapapeles, no queda temporal y
+  tras `xrefresh` no queda el rectángulo en pantalla.
 - `sound-theme-freedesktop` se añadió a `AUDIO_PKGS`.
 - Quirk `alc255-asus` para ASUS FX504GE/ALC255:
   - Detecta DMI y códec.

@@ -316,9 +316,11 @@ docs/                      Hardware y testing
   instalan en esta fase. `codium` requiere el repositorio de VSCodium.
   `Super+Shift+e` es logout; el editor se movió a `Super+Shift+v`.
 - `Super+Shift+s` usa `scrot`: selecciona región y copia al portapapeles, sin
-  dejar archivo. Usa `--line mode=edge` para evitar el rectángulo residual
-  de scrot; `--freeze` se descartó porque en pruebas capturaba la pantalla
-  completa. No tiene anotaciones; flameshot sigue instalado para eso.
+  dejar archivo. La línea de selección es magenta (`#FF00FF`), 2 px y opacidad
+  total para verse sobre fondo blanco; se usa `--line mode=edge` y un
+  `xrefresh` posterior para borrar el rectángulo residual. `--freeze` se
+  descartó porque en pruebas capturaba la pantalla completa. No tiene
+  anotaciones; flameshot sigue instalado para eso.
 - El watcher de audio solo puede activar una salida a la vez (auriculares,
   HDMI o altavoces). Si el usuario elige un headset USB/Bluetooth, no lo
   pisa.

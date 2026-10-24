@@ -90,7 +90,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `sound-theme-freedesktop` y `paplay`/`pw-play`; `stack_duplicates = false`
     hace que cada mensaje suene, `gap_size = 6` los separa y `flock` serializa
     sonidos simultáneos. Las capturas de región usan
-    `scrot -s --line mode=edge` para evitar el rectángulo residual.
+    `scrot -s --line mode=edge,color=#FF00FF,width=2,opacity=255` y un
+    `xrefresh` posterior para borrar el rectángulo residual; el magenta se
+    ve sobre fondo blanco.
 
 ## Estructura relevante
 

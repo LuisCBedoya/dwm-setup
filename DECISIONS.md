@@ -1015,3 +1015,31 @@ seleccionaba correctamente y no dejaba restos.
   problema con eventos sintéticos; si en otro PC funciona mejor, se puede
   cambiar, pero el valor probado es `mode=edge`.
 - Sin paquetes nuevos.
+
+## ADR-040 — Borde magenta de scrot y `xrefresh`
+
+**Contexto:** La línea de selección por defecto de scrot es fina y con
+opacidad baja; sobre un fondo blanco el usuario no veía la región. Además,
+con `mode=edge` el rectángulo podía quedar pintado en pantalla tras la
+captura. La prueba con una ventana blanca confirmó que el borde magenta se
+ve, pero el rectángulo residual seguía ahí; `xrefresh` lo borra.
+
+**Decisión:**
+1. Las capturas de área usan:
+   ```sh
+   scrot -s --line 'mode=edge,color=#FF00FF,width=2,opacity=255' -q 100 ...
+   ```
+   Magenta, 2 px, opacidad total.
+2. Después de capturar se ejecuta `xrefresh` (si está disponible) para
+   repintar la pantalla y eliminar el rectángulo residual.
+3. Se mantiene `mode=edge`; no se usa `--freeze`.
+4. Se aplica a `Super+Shift+s` y a las opciones de área del menú de capturas.
+
+**Consecuencias:**
+- La selección se ve sobre blanco y sobre fondos oscuros.
+- No queda el rectángulo residual tras la captura.
+- `xrefresh` puede provocar un repintado breve; en las pruebas no alteró
+  wallpaper ni ventanas.
+- Si `xrefresh` no está disponible, la captura sigue funcionando, pero el
+  rectángulo podría quedar visible.
+- Sin paquetes nuevos.
