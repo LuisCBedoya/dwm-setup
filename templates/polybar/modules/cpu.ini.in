@@ -3,7 +3,7 @@
 type = internal/cpu
 interval = 2
 format = <label>
-format-padding = 2
+format-padding = 1
 format-foreground = ${colors.foreground}
 label = "%{T3}%{T-} %percentage:2%% [C]"
 label-font = 1

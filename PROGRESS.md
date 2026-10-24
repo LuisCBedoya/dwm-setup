@@ -149,7 +149,13 @@ Se replicó la barra de referencia:
 - `dots` vuelve con `...` al final.
 - `xkeyboard`/`latam` eliminado de la barra.
 - Pomodoro pausa con `U+F04C` (dos barras) como la referencia.
-- Polybar cargó 13 módulos sin errores; captura `bar-design3.png`.
+- Separación compacta: `module-margin-left/right = 0`; padding 1 en
+  `updates`, `temp`, `memory`, `cpu`, `wlan`, `eth`, `pipewire`, `date` y
+  `dots`; 0 en `polypomo` y `battery`. Los huecos quedan en ~1-2 unidades.
+- Con `UPDATES_FAKE_FILE=0` el módulo de actualizaciones desaparece y no
+  muestra `# 0` (probado en vivo).
+- Polybar cargó 13 módulos sin errores; capturas `bar-design3.png` (diseño)
+  y `bar-spacing-final.png` (separación final).
 
 ## Correcciones aplicadas
 

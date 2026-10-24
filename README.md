@@ -22,7 +22,8 @@ Incluido:
 - **polybar** con **13 módulos**: logo StumbleUpon, workspaces 1-4,
   actualizaciones (`󰚌 # N`), pomodoro, temperatura `[T]`, RAM `[M]`, CPU
   `[C]`, WiFi (`NoC` si está desconectado), ethernet, volumen, batería,
-  fecha y tres puntos finales.
+  fecha y tres puntos finales. Separación compacta (`module-margin` 0,
+  padding 1).
 - **picom**, **dunst**, **rofi**, **kitty**, **flameshot**.
 - Bloqueo con **i3lock** + **xss-lock**.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).

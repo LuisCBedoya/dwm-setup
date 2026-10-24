@@ -88,6 +88,10 @@ Comprobado:
   StumbleUpon, `updates` con calavera y contador, `[T]/[M]/[C]`, `NoC`,
   `connected`, `dots` y sin `xkeyboard`. Polybar carga 13 módulos sin
   errores.
+- Separación final: `module-margin-left/right = 0`; padding 1 en los
+  módulos de texto y 0 en `polypomo`/`battery`. Con
+  `UPDATES_FAKE_FILE=0` el módulo `updates` desaparece y no muestra
+  `# 0`; captura `bar-spacing-final.png`.
 - `bspwmrc` y `.xinitrc` ejecutables; `.xinitrc` sin `kitty`.
 - Sin placeholders y sin ficheros root en `~/.config`.
 - `desktop-doctor` sin falsos `[FALTA]`; solo avisa de cámara ausente.

@@ -2,7 +2,7 @@
 [module/pipewire]
 type = internal/pulseaudio
 format-volume = <label-volume>
-format-volume-padding = 2
+format-volume-padding = 1
 format-volume-foreground = ${colors.foreground}
 label-volume = "%{T1}󰕾 %{T-} %percentage%%"
 label-volume-font = 1

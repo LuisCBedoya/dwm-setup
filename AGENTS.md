@@ -13,7 +13,9 @@ notificación.
 
 La barra final es la de la config viva: **13 módulos**, logo StumbleUpon
 (`U+F1A4`), workspaces 1-4, actualizaciones con calavera y contador, y tres
-puntos al final. Sin `xkeyboard` ni fuente `DesktopLogo`.
+puntos al final. Sin `xkeyboard` ni fuente `DesktopLogo`. Separación
+compacta: `module-margin-left/right = 0` y padding 1 en los módulos de
+texto.
 
 La fase 1 termina en el escritorio. No implementar todavía:
 

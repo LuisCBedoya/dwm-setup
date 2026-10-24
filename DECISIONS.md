@@ -1133,3 +1133,28 @@ fecha y tres puntos. La barra anterior tenía 5 workspaces, `latam`,
   `setxkbmap`.
 - Polybar cargó 13 módulos sin errores; captura de referencia
   `bar-design3.png`.
+
+## ADR-044 — Separación compacta entre módulos de polybar
+
+**Contexto:** Con el rediseño de ADR-043, los módulos de la derecha seguían
+demasiado separados respecto a la referencia. Los huecos grandes venían de
+`module-margin-left/right = 1`, `format-connected-padding = 3` en `wlan` y
+`eth`, y `format-padding = 2` en `temp`, `cpu` y `pipewire`.
+
+**Decisión:**
+1. `module-margin-left = 0` y `module-margin-right = 0` en `[bar/main]`.
+2. Padding 1 en `updates`, `temp`, `memory`, `cpu`, `wlan`, `eth`,
+   `pipewire`, `date` y `dots`.
+3. Padding 0 en `polypomo` y `battery`.
+4. No se cambian orden, colores, fuentes, altura ni la caja del workspace.
+
+**Consecuencias:**
+- Los huecos entre módulos quedan en ~1-2 unidades; los mayores recortes
+  son `wlan`/`eth` (de 3 a 1) y `temp`/`cpu`/`pipewire` (de 2 a 1).
+- El logo y los workspaces también quedan algo más juntos al anular el
+  margen global.
+- Con `UPDATES_FAKE_FILE=0`, `updates` desaparece y no muestra `# 0`; el
+  padding 1 no deja un hueco visible porque el grupo está alineado a la
+  derecha.
+- Verificado en vivo: polybar carga 13 módulos sin errores; captura
+  `bar-spacing-final.png`.

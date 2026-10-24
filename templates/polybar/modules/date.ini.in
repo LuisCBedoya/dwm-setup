@@ -4,6 +4,6 @@ type = internal/date
 interval = 1
 time = %I:%M %p
 label = %time%
-label-padding = 0
+label-padding = 1
 label-foreground = ${colors.foreground}
 label-font = 1
