@@ -81,8 +81,13 @@ Comprobado:
 
 - `bspwm 0.9.10`, `sxhkd 0.6.2`, `polybar 3.7.2` (13 módulos), `picom 12.5`,
   `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock`.
-- Barra: logo, workspaces 1-5, `25:00`, temperatura, RAM, CPU, `latam`,
-  eth `connected`, batería `BAT1`, volumen, fecha y updates.
+- Barra: logo StumbleUpon, workspaces 1-4, updates `󰚌 # N`, `25:00`,
+  temperatura `[T]`, RAM `[M]`, CPU `[C]`, WiFi `NoC`, eth `connected`,
+  volumen, batería `BAT1`, fecha y `dots`.
+- Barra rediseñada: 4 workspaces, caja blanca en el enfocado, logo
+  StumbleUpon, `updates` con calavera y contador, `[T]/[M]/[C]`, `NoC`,
+  `connected`, `dots` y sin `xkeyboard`. Polybar carga 13 módulos sin
+  errores.
 - `bspwmrc` y `.xinitrc` ejecutables; `.xinitrc` sin `kitty`.
 - Sin placeholders y sin ficheros root en `~/.config`.
 - `desktop-doctor` sin falsos `[FALTA]`; solo avisa de cámara ausente.
@@ -155,7 +160,7 @@ Criterios de aceptación:
 | `Alt+Tab` / `Alt+Shift+Tab` | ciclo | Siguiente/anterior ventana |
 | `Super+{h,j,k,l}` | foco | Cambia ventana |
 | `Super+Shift+{h,j,k,l}` | mover | Intercambia ventana |
-| `Super+{1-5}` | escritorios | Cambia escritorio |
+| `Super+{1-4}` | escritorios | Cambia escritorio |
 | `Super+r`, luego `h/j/k/l` | resize | Redimensiona; Escape sale |
 | `Print` | captura completa | Copia al portapapeles y muestra miniatura |
 | `Super+Print` | menú de capturas | Abre el menú y permite guardar en `~/Pictures/Screenshots` |

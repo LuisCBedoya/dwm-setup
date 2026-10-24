@@ -64,12 +64,12 @@ render_polybar_templates() {
     "modules/temp.ini"
     "modules/memory.ini"
     "modules/cpu.ini"
-    "modules/xkeyboard.ini"
     "modules/eth.ini"
     "modules/wlan.ini"
     "modules/battery.ini"
     "modules/pipewire.ini"
     "modules/date.ini"
+    "modules/dots.ini"
   )
 
   local m

@@ -19,9 +19,10 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
-- **polybar** con **13 módulos**: logo, workspaces 1-5, pomodoro,
-  temperatura, RAM, CPU, teclado (`latam`), ethernet, WiFi, batería,
-  volumen, fecha y semáforo de actualizaciones.
+- **polybar** con **13 módulos**: logo StumbleUpon, workspaces 1-4,
+  actualizaciones (`󰚌 # N`), pomodoro, temperatura `[T]`, RAM `[M]`, CPU
+  `[C]`, WiFi (`NoC` si está desconectado), ethernet, volumen, batería,
+  fecha y tres puntos finales.
 - **picom**, **dunst**, **rofi**, **kitty**, **flameshot**.
 - Bloqueo con **i3lock** + **xss-lock**.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
@@ -113,8 +114,8 @@ y `--debug`.
 6. **Configuración**: renderiza bspwm, sxhkd, polybar, picom, dunst, rofi y
    kitty con paleta Nord; instala `.xinitrc`, wallpaper,
    `~/Pictures/Screenshots`, `desktop-safe` y `desktop-doctor`.
-7. **Limpieza**: retira restos de la barra anterior (`DesktopLogo` y
-   `dots.ini`) con backup previo.
+7. **Limpieza**: retira restos de la barra anterior (`DesktopLogo`) con
+   backup previo.
 8. **Verificación**: comprueba binarios, ficheros, módulos de polybar,
    placeholders, permisos, propiedad del home, servicios, versiones y
    sintaxis POSIX de los binarios instalados.
@@ -249,8 +250,8 @@ Si algo falla:
 | `Alt+Tab` / `Alt+Shift+Tab` | siguiente / anterior ventana |
 | `Super+{h,j,k,l}` | foco ventanas |
 | `Super+Shift+{h,j,k,l}` | mover/intercambiar ventanas |
-| `Super+{1-5}` | ir a escritorio |
-| `Super+Shift+{1-5}` | mover ventana a escritorio |
+| `Super+{1-4}` | ir a escritorio |
+| `Super+Shift+{1-4}` | mover ventana a escritorio |
 | `Super+r`, luego `h/j/k/l` | redimensionar (Escape sale) |
 | `Super+m` | monocle/tiled |
 | `Print` | pantalla completa al portapapeles |
@@ -258,9 +259,10 @@ Si algo falla:
 | `XF86AudioRaise/Lower/Mute` | volumen |
 | `XF86MonBrightnessUp/Down` | brillo |
 
-`Super` es la tecla Windows. La barra muestra 13 módulos (logo, workspaces,
-pomodoro, temperatura, RAM, CPU, teclado, ethernet, WiFi, batería, volumen,
-fecha y updates); WiFi y batería solo aparecen si el hardware existe.
+`Super` es la tecla Windows. La barra muestra 13 módulos (logo StumbleUpon,
+workspaces 1-4, actualizaciones, pomodoro, temperatura, RAM, CPU, WiFi,
+ethernet, volumen, batería, fecha y puntos); WiFi y batería solo aparecen si
+el hardware existe. Las actualizaciones muestran `󰚌 # N` y se ocultan si N=0.
 
 Los atajos de apps que aún no están instaladas se dejan puestos para no
 cambiar la memoria muscular; no hacen nada hasta instalar la app. `codium`

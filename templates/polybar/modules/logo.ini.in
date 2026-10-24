@@ -1,4 +1,4 @@
-; logo — glifo actual de JetBrainsMono Nerd Font (U+F1A4)
+; logo — StumbleUpon (U+F1A4)
 [module/logo]
 type = custom/text
 format = "%{T1}%{T-}"

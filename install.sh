@@ -186,6 +186,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/modules/battery.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/pipewire.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/date.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/dots.ini.in"
     "$PROJECT_ROOT/templates/polybar/scripts/updates-apt.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/polypomo.in"
     "$PROJECT_ROOT/templates/polybar/scripts/launch.sh.in"
@@ -240,8 +241,8 @@ Atajos principales:
   Super+Print       menú de capturas
   Super+{h,j,k,l}   foco ventanas
   Super+Shift+{h,j,k,l} mover ventanas
-  Super+{1-5}       ir a escritorio
-  Super+Shift+{1-5} mover ventana a escritorio
+  Super+{1-4}       ir a escritorio
+  Super+Shift+{1-4} mover ventana a escritorio
   Super+Alt+{h,j,k,l} redimensionar
   Super+m           monocle/tiled
   Super+f           fullscreen

@@ -43,7 +43,6 @@ install_user_configs() {
   # Restos de la barra anterior: ya no se usan (el backup ya se hizo antes).
   run_root rm -rf "/usr/local/share/fonts/dwm-setup"
   run_root rm -rf "$home/.local/share/fonts/DesktopLogo"
-  run_root rm -f "$home/.config/polybar/modules/dots.ini"
   run_user fc-cache -f "$home/.local/share/fonts" >/dev/null 2>&1 || true
   run_root fc-cache -f /usr/local/share/fonts >/dev/null 2>&1 || true
 

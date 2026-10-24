@@ -109,11 +109,11 @@ alt + shift + Tab
 super + {_,shift + }c
     bspc node -f {next,prev}.local.!hidden.window
 
-# Escritorios (5)
+# Escritorios (4)
 super + bracket{left,right}
     bspc desktop -f {prev,next}.local
-super + {_,shift + }{1-5}
-    bspc {desktop -f,node -d} '^{1-5}'
+super + {_,shift + }{1-4}
+    bspc {desktop -f,node -d} '^{1-4}'
 
 # ─── Redimensionar: Super+r y luego h/j/k/l ───
 # Con ':' la cadena sigue activa tras la cola; Escape sale.

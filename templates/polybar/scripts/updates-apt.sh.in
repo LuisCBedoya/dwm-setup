@@ -1,5 +1,5 @@
 #!/bin/sh
-# updates-apt.sh — semáforo de actualizaciones por eventos (ADR-030)
+# updates-apt.sh — contador de actualizaciones por eventos
 # tail=true: vive como proceso durmiente y recalcula el conteo solo cuando
 # cambia el mtime de /var/lib/dpkg/status (instala/actualiza paquetes)
 # o de /var/lib/apt/lists (apt update). Reacción ≤ ~2,5 s, CPU ~0 en reposo.
@@ -10,9 +10,7 @@ apt_lists=${UPDATES_APT_LISTS:-/var/lib/apt/lists}
 gap=${UPDATES_GAP:-1}              # cada cuántos segundos vigilar (s)
 debounce=${UPDATES_DEBOUNCE:-1.5}  # calma requerida antes de recalcular (s)
 
-glyph=""                  # U+F192
-red='#F47067'                      # colors.alert
-green='#3FB950'                    # colors.nord14
+skull="󰚌"                # U+F068C (calavera)
 
 # Cuenta. UPDATES_FAKE_FILE permite probar el circuito sin apt (archivo
 # que contiene un número); por defecto usa la simulación real de apt.
@@ -30,9 +28,9 @@ estado() {
     ''|*[!0-9]*) updates=0 ;;
   esac
   if [ "$updates" -gt 0 ]; then
-    printf '%%{T1}%%{F%s}%s%%{F-}%%{T-}\n' "$red" "$glyph"
+    printf '%%{T3}%s%%{T-} # %s\n' "$skull" "$updates"
   else
-    printf '%%{T1}%%{F%s}%s%%{F-}%%{T-}\n' "$green" "$glyph"
+    printf '\n'
   fi
 }
 

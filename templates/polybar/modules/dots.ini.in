@@ -1,0 +1,7 @@
+; dots — tres puntos tras la hora
+[module/dots]
+type = custom/text
+format = "..."
+format-foreground = ${colors.foreground}
+format-font = 1
+format-padding = 1

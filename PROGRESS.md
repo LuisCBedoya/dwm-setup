@@ -15,7 +15,7 @@ ejecutable, picom arranque y la verificación final no falle.
 - Estado de validación real: **sesión viva validada**; falta la instalación
   desde cero en VM Debian 13 minimal.
 - Sesión: `startx` manual desde TTY; sin display manager ni auto-login.
-- Barra: 13 módulos, glifo JBM, sin `dots` y sin `DesktopLogo`.
+- Barra: 13 módulos, logo StumbleUpon, 4 workspaces y `dots`.
 
 ## Validación viva (2026-10-24)
 
@@ -26,13 +26,14 @@ Procesos comprobados:
 
 - `bspwm 0.9.10`
 - `sxhkd 0.6.2`
-- `polybar 3.7.2` con **13 módulos**: `logo`, `bspwm`, `polypomo`, `temp`,
-  `memory`, `cpu`, `xkeyboard`, `eth`, `wlan`, `battery`, `pipewire`,
-  `date`, `updates`.
+- `polybar 3.7.2` con **13 módulos**: `logo`, `bspwm`, `updates`,
+  `polypomo`, `temp`, `memory`, `cpu`, `wlan`, `eth`, `pipewire`,
+  `battery`, `date`, `dots`.
 - `picom` 12.5 activo (config sin `glx-swap-method`).
 - `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock` activos.
-- `BAT1`, `ACAD`, `enp3s0`, `wlo1`, teclado `latam`, batería y volumen
-  visibles en la barra.
+- `BAT1`, `ACAD`, `enp3s0`, `wlo1`, batería y volumen visibles en la barra;
+  `wlo1` sin conexión muestra `NoC`. El layout `latam` se aplica con
+  `setxkbmap` pero ya no ocupa un módulo de la barra.
 - `notify-send` funciona.
 
 Comprobaciones:
@@ -50,7 +51,8 @@ Comprobaciones:
 ## Mapa de atajos i3 (2026-10-24)
 
 Se adaptó `templates/sxhkd/sxhkdrc.in` a los atajos de i3 del usuario,
-manteniendo 5 escritorios, gaps 10, borde 2 y el wallpaper actual:
+manteniendo gaps 10, borde 2 y el wallpaper actual. El rediseño final
+redujo a 4 escritorios y reincorporó `dots`:
 
 - Apps: `Super+Return` kitty, `Super+Shift+s` scrot región+portapapeles,
   `Super+Shift+p` pcmanfm, `Super+Shift+b` chromium, `Super+Shift+v`
@@ -132,6 +134,23 @@ Pendiente: reiniciar con el quirk ALC255 para confirmar que aparece el
 micrófono del jack combo. Si funciona, el watcher lo pondrá como fuente
 predeterminada; si no, se usará un headset USB.
 
+## Rediseño polybar (2026-10-24)
+
+Se replicó la barra de referencia:
+
+- 4 escritorios (`1-4`); `bspwmrc` y `sxhkd` ajustados.
+- Logo StumbleUpon `U+F1A4` (sin cambio).
+- Workspace enfocado con caja blanca, texto oscuro, font-1 y padding 1.
+- Orden derecha: `updates`, `polypomo`, `temp`, `memory`, `cpu`, `wlan`,
+  `eth`, `pipewire`, `battery`, `date`, `dots`.
+- `updates` muestra `󰚌 # N`; si N=0 no muestra nada.
+- `temp [T]`, `memory [M]`, `cpu [C]`.
+- `wlan` muestra `󰖪 NoC` cuando está desconectado.
+- `dots` vuelve con `...` al final.
+- `xkeyboard`/`latam` eliminado de la barra.
+- Pomodoro pausa con `U+F04C` (dos barras) como la referencia.
+- Polybar cargó 13 módulos sin errores; captura `bar-design3.png`.
+
 ## Correcciones aplicadas
 
 - **Backups antes de escribir**: `backup_existing_configs` se ejecuta antes
@@ -150,9 +169,10 @@ predeterminada; si no, se usará un headset USB.
 - **Batería baja**: se pasa `BATTERY` al renderizar el script.
 - **`desktop-doctor`**: reescrito en POSIX sh; ya no usa `[[`,
   `WAYLAND_DISPLAY` sin `:-` ni `ls BAT* | xargs basename`.
-- **Barra**: font-0 pasa de `DesktopLogo` a JBM; se retiran
-  `assets/desktop-logo.ttf`, `dots.ini.in`, la instalación de la fuente y
-  las comprobaciones asociadas. Se añade limpieza idempotente de restos.
+- **Barra**: font-0 pasa de `DesktopLogo` a JBM; se retira
+  `assets/desktop-logo.ttf` y la instalación de la fuente. `dots.ini` se
+  retiró temporalmente y se reincorporó en el rediseño final; se añade
+  limpieza idempotente de restos.
 - **Limpieza**: eliminados `lib/dwm.sh`, `lib/eww.sh`, `lib/ly.sh`,
   `templates/dwm/`, paletas no usadas, `--rebuild` y la integración de
   dotfiles externos.

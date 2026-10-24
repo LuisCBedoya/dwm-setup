@@ -1095,3 +1095,41 @@ menú.
   salvo la caché del icono.
 - `Super+Print` conserva las opciones de guardar, ventana y clipboard.
 - Sin paquetes nuevos.
+
+## ADR-043 — Rediseño polybar según la referencia
+
+**Contexto:** El usuario aportó una captura de una barra con logo StumbleUpon,
+4 workspaces, un contador de actualizaciones con calavera, etiquetas
+`[T]/[M]/[C]`, estado WiFi `NoC`, Ethernet `connected`, volumen, batería,
+fecha y tres puntos. La barra anterior tenía 5 workspaces, `latam`,
+`updates` como semáforo al final y no tenía `dots`.
+
+**Decisión:**
+1. 4 workspaces en `bspwmrc` y `sxhkd` (`1-4`).
+2. Logo StumbleUpon `U+F1A4` sin cambios.
+3. `modules-right = updates polypomo temp memory cpu wlan eth pipewire
+   battery date dots`.
+4. `updates-apt.sh` pasa a mostrar `󰚌 # N` (calavera `U+F068C` + número)
+   y no muestra nada si N=0; sin colores rojo/verde.
+5. `temp` añade `[T]`, `memory` `[M]` y `cpu` `[C]`.
+6. `wlan` muestra `󰖪 NoC` cuando está desconectado.
+7. Se reincorpora `dots` con `...` al final.
+8. Se elimina `xkeyboard` de la barra.
+9. Workspace enfocado: fondo `#FFFFFF`, texto `#0D1117`, `font-1` y
+   `padding = 1` para acercarse a la referencia.
+10. Pomodoro en pausa usa `U+F04C` (dos barras) en vez de `U+F28B`.
+
+**Consecuencias:**
+- La barra coincide con la referencia en estructura, orden y colores; los
+  valores (temperatura, RAM, CPU, batería, hora, número de updates) son
+  datos reales y cambian.
+- Si no hay actualizaciones, el módulo `updates` queda vacío y no muestra
+  calavera ni `# 0`.
+- `wlo1` sin conexión muestra `NoC`; si no hay interfaz WiFi, el módulo no
+  se renderiza.
+- El workspace enfocado mantiene la altura completa de la barra (26 px) por
+  limitación de polybar 3.7; el ancho se ajusta con padding 1.
+- `xkeyboard` deja de renderizarse; el layout `latam` sigue aplicándose por
+  `setxkbmap`.
+- Polybar cargó 13 módulos sin errores; captura de referencia
+  `bar-design3.png`.

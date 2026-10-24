@@ -16,5 +16,8 @@ ramp-signal-3 = "%{T1}󰤢 %{T-}"
 ramp-signal-4 = "%{T1}󰖩 %{T-}"
 ramp-signal-foreground = ${colors.foreground}
 
-format-disconnected =
-label-disconnected =
+format-disconnected = <label-disconnected>
+format-disconnected-padding = 3
+format-disconnected-foreground = ${colors.foreground}
+label-disconnected = "%{T3}󰖪%{T-} NoC"
+label-disconnected-font = 1

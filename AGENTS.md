@@ -11,8 +11,9 @@ con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 **i3lock/xss-lock**, PipeWire, cámara UVC y almacenamiento extraíble con
 notificación.
 
-La barra final es la de la config viva: **13 módulos**, glifo del logo de
-JetBrainsMono Nerd Font, sin `dots` y sin fuente `DesktopLogo`.
+La barra final es la de la config viva: **13 módulos**, logo StumbleUpon
+(`U+F1A4`), workspaces 1-4, actualizaciones con calavera y contador, y tres
+puntos al final. Sin `xkeyboard` ni fuente `DesktopLogo`.
 
 La fase 1 termina en el escritorio. No implementar todavía:
 

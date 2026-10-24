@@ -19,7 +19,7 @@ SOCKDIR = os.environ.get("XDG_RUNTIME_DIR", "/var/tmp")
 SOCKFILE = os.path.join(SOCKDIR, "polypomo.sock")
 PLAY = "\ue002"
 BREAK = "\uec15"
-PAUSE = "\uf28b"
+PAUSE = "\uf04c"
 MSG_WORK_DONE = "Pomodoro terminado — tiempo de descansar"
 MSG_BREAK_DONE = "Descanso terminado — ¡a seguir!!"
 
