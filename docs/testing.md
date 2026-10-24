@@ -206,8 +206,16 @@ Criterios:
   notify-send "Prueba duplicado" "Mismo mensaje"
   dunstctl count displayed   # debe ser 2, no (2)
   ```
-  Deben verse dos notificaciones y oírse dos sonidos consecutivos (dos
-  sink-inputs distintos con `flock`).
+  Deben verse dos notificaciones separadas por `gap_size = 6` y oírse dos
+  sonidos consecutivos (dos sink-inputs distintos con `flock`).
+- Captura de región:
+  ```sh
+  # Super+Shift+s y arrastrar una región
+  xclip -selection clipboard -t image/png -o > /tmp/region.png
+  file /tmp/region.png        # dimensiones de la región
+  ```
+  No debe quedar el rectángulo de selección en pantalla ni temporales en
+  `/tmp/scrot.*`. Scrot usa `--line mode=edge`.
 - En un PC sin HDMI/auriculares o en VM, el watcher no falla.
 
 Quirk ALC255 (solo ASUS FX504GE/ALC255):

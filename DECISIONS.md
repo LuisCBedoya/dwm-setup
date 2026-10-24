@@ -989,3 +989,29 @@ que cada mensaje suene.
 - Si `flock` no está disponible, el sonido sigue funcionando sin serializar.
 - Validado en vivo: `dunstctl count displayed` 0 → 2 y dos sink-inputs
   consecutivos (2953 → 2978).
+
+## ADR-039 — Gap de dunst y scrot `mode=edge`
+
+**Contexto:** Con `stack_duplicates = false`, las notificaciones se muestran
+en una misma ventana separadas por una línea de 2 px; el usuario pidió una
+separación pequeña. Además, `scrot -s` dejaba restos del rectángulo de
+selección en pantalla. La solución documentada de scrot incluye
+`--freeze` y `--line mode=edge`; en pruebas con XTest, `-f` capturaba la
+pantalla completa en lugar de la región, mientras que `mode=edge`
+seleccionaba correctamente y no dejaba restos.
+
+**Decisión:**
+1. `gap_size = 6` en dunstrc. Dunst ignora `separator_height` cuando
+   `gap_size > 0` y dibuja un borde de `frame_width` alrededor de cada
+   notificación. Requiere compositor (picom).
+2. Las capturas de región usan `scrot -s --line mode=edge -q 100`; no se
+   usa `--freeze`.
+3. Se mantiene `stack_duplicates = false` y `flock` para el sonido.
+
+**Consecuencias:**
+- Dos notificaciones se ven como tarjetas separadas 6 px.
+- La selección de región funciona y no deja rectángulos residuales.
+- `--freeze` queda documentado como descartado en este entorno por el
+  problema con eventos sintéticos; si en otro PC funciona mejor, se puede
+  cambiar, pero el valor probado es `mode=edge`.
+- Sin paquetes nuevos.

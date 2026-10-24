@@ -88,7 +88,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
     ALC255; en otro hardware se omite. `--headset-quirk` fuerza y
     `--no-headset-quirk` desactiva. El sonido de dunst usa
     `sound-theme-freedesktop` y `paplay`/`pw-play`; `stack_duplicates = false`
-    hace que cada mensaje suene, y `flock` serializa sonidos simultáneos.
+    hace que cada mensaje suene, `gap_size = 6` los separa y `flock` serializa
+    sonidos simultáneos. Las capturas de región usan
+    `scrot -s --line mode=edge` para evitar el rectángulo residual.
 
 ## Estructura relevante
 

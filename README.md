@@ -189,8 +189,9 @@ Dunst reproduce `message-new-instant.oga` en cada notificación mediante una
 regla con `script`; el sonido sale por el sink activo (HDMI, auriculares o
 altavoces). `sound-theme-freedesktop` se instala como dependencia.
 `stack_duplicates = false` evita que dos mensajes idénticos se agrupen en
-un `(2)`; cada uno se muestra y suena. Los sonidos se serializan con
-`flock`, así que dos notificaciones seguidas suenan una tras otra.
+un `(2)`; cada uno se muestra y suena. `gap_size = 6` deja 6 px entre
+notificaciones. Los sonidos se serializan con `flock`, así que dos
+notificaciones seguidas suenan una tras otra.
 
 ### Cámara
 
@@ -315,7 +316,9 @@ docs/                      Hardware y testing
   instalan en esta fase. `codium` requiere el repositorio de VSCodium.
   `Super+Shift+e` es logout; el editor se movió a `Super+Shift+v`.
 - `Super+Shift+s` usa `scrot`: selecciona región y copia al portapapeles, sin
-  dejar archivo. No tiene anotaciones; flameshot sigue instalado para eso.
+  dejar archivo. Usa `--line mode=edge` para evitar el rectángulo residual
+  de scrot; `--freeze` se descartó porque en pruebas capturaba la pantalla
+  completa. No tiene anotaciones; flameshot sigue instalado para eso.
 - El watcher de audio solo puede activar una salida a la vez (auriculares,
   HDMI o altavoces). Si el usuario elige un headset USB/Bluetooth, no lo
   pisa.

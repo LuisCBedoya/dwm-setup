@@ -10,6 +10,7 @@
     follow = mouse
     separator_height = 2
     separator_color = frame
+    gap_size = 6
     padding = 12
     horizontal_padding = 12
     frame_width = 2

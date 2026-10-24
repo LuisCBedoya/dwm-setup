@@ -93,6 +93,11 @@ Se añadió un watcher de audio genérico y sonido de notificación:
   `(2)`; se muestran por separado y cada uno dispara el script.
 - `flock` serializa los sonidos: si llegan dos a la vez, el segundo espera
   al primero.
+- `gap_size = 6` deja 6 px entre notificaciones; comprobado con dos
+  `notify-send` seguidos (captura `gap.png`).
+- `scrot -s --line mode=edge` sustituye a `--freeze`: selecciona bien y no
+  deja el rectángulo residual. Con XTest, la región 400x300 llega al
+  portapapeles y no queda temporal.
 - `sound-theme-freedesktop` se añadió a `AUDIO_PKGS`.
 - Quirk `alc255-asus` para ASUS FX504GE/ALC255:
   - Detecta DMI y códec.

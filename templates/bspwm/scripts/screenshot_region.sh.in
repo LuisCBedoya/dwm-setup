@@ -8,7 +8,7 @@ tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/scrot.XXXXXX") || exit 1
 trap 'rm -rf "$tmpdir"' 0 1 2 15
 tmp="$tmpdir/capture.png"
 
-if ! scrot -s -q 100 "$tmp"; then
+if ! scrot -s --line mode=edge -q 100 "$tmp"; then
   # Selección cancelada o scrot falló.
   exit 0
 fi
