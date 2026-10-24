@@ -31,6 +31,185 @@ sustituyen una instalación real.
   componentes, menú, backup, edición limitada a Debian 13, `main` ausente,
   `--dry-run`/`--yes` sin cambios e idempotencia.
 
+## 0b. Validación parcial en host real: polybar (2026-10-21)
+
+> Esta sección conserva la medición de la iteración ADR-025 (13 módulos, logo
+> anterior). La medición final del logo, la fuente y los puntos está en **0c**;
+> no usar las medidas de 0b como estado final.
+
+Sesión bspwm ya instalada en Debian 13, 1920x1080, Xorg, polybar 3.7.2 y
+JetBrainsMono Nerd Font 3.5.1. No sustituye la instalación limpia en VM.
+
+Backups de los configs reemplazados:
+`~/.config-backup/dwm-setup/20261021-172323/` (primera iteración) y
+`~/.config-backup/dwm-setup/20261021-182732/` (ajuste final de espaciado).
+
+Comprobaciones:
+
+```sh
+# los templates no deben llevar escapes \uXXXX (polybar los muestra literales)
+grep -RIn '\u[0-9a-fA-F]\{4\}' templates/polybar && echo "HAY ESCAPES" || echo "OK"
+
+# cada glifo debe existir en la fuente instalada (devuelve la familia si existe)
+for cp in F035B F0200 F03D7 F057E F075F F091F F0920 F0921 F0922 F05A9; do
+  fc-list ":charset=$cp" family | grep -qi jetbrains || echo "FALTA U+$cp"
+done
+
+# arranque limpio de la iteración previa: 13 módulos y sin errores
+polybar -r main -c ~/.config/polybar/config.ini
+```
+
+Resultados:
+
+- 13 módulos cargados sin errores (la barra final añade `dots`: 14).
+- Iconos visibles: logo, updates, temp, memory, cpu, xkeyboard (`latam`), eth
+  (`connected`), battery (`100%`), pipewire, date; polypomo en `25:00`.
+- `BAT1`/`ACAD` detectados; `wlo1` (DOWN) detectada igualmente.
+- Espaciado de la barra ajustado a las unidades de polybar 3.7
+  (`padding-left/right = 1`, `format-padding = 2`, `label-focused-padding = 1`).
+
+### Ajuste de espaciado y claridad (2026-10-21)
+
+Valores de esta iteración:
+
+```sh
+grep -nE 'foreground =|module-margin|font-0' ~/.config/polybar/config.ini
+grep -nE 'format|padding' ~/.config/polybar/modules/logo.ini
+grep -n 'font' ~/.config/polybar/modules/bspwm.ini
+```
+
+- `foreground = #E6EDF3`, `font-0` SemiBold 10, `module-margin = 0`.
+- Logo `format` con un espacio final, sin `format-padding`; workspaces con
+  `font-0`.
+- Medición sobre `actual_03.png` (1920x26):
+  - logo 8-19; caja enfocada 26-49 (24×26); primer dígito a 15 px del logo
+    (7 px hasta la caja); workspaces 2-5 en 59/83/107/131.
+  - gaps de módulos 33-35 px; bloque derecho desde ~1092 px.
+- Referencia `yo.png` (medición final, ADR-026): logo 9-26; primer dígito 39;
+  caja 76-97 (22×19); puntos 1903-1912.
+- La caja de 19 px no se reproduce: en polybar 3.7.2 el fondo del label ocupa
+  toda la altura de la barra, tanto con JBM NF size 10/11 como con Noto Sans
+  CJK JP size 11. `format-padding-right` tampoco tiene efecto.
+- Captura: `actual_03.png`.
+
+Pendiente: reinstalar desde cero con `sudo ./install.sh`, repetir en VM y
+probar los atajos de sxhkd de extremo a extremo. La comparación de espaciado
+con `yo.png` ya se hizo (ADR-025); queda como diferencia conocida la altura de
+la caja enfocada (26 px vs 19 px).
+
+## 0c. Logo propio y tres puntos (2026-10-21)
+
+Sustituye la medición de 0b para el extremo izquierdo y la fecha. Se validó en
+la barra viva parcial (no es una instalación desde cero): Debian 13, Xorg
+1920x1080, bspwm + polybar 3.7.2.
+
+Implementación final:
+
+- `assets/desktop-logo.ttf`, familia **DesktopLogo**, glifo `U+E000` generado
+  desde el recorte `18x10+9+8` de `yo.png`; `pixelsize=10`, offset `2` y
+  espacio de 300 unidades (3 px).
+- `font-0` es DesktopLogo; `font-1` JBM SemiBold 10; `font-2` JBM Bold 10;
+  `font-3/4` JBM 11; `font-5` Noto Color Emoji. El logo hereda `font-0`; todos
+  los módulos de texto usan `font-1`; `updates` y `polypomo` añaden `%{T1}` y
+  `format-font = 1`.
+- Logo: `format = "%{O4}<glifo U+E000> %{F-}"`, sin `format-font`.
+- Fecha: `label-padding = 1`, `label-font = 1`. Módulo `dots`: `U+22EF`,
+  `format-font = 1`, `format-padding = 0`, al final de `modules-right`.
+- Barra: `padding-right = 2`. La fuente se instala a nivel sistema desde
+  `lib/polybar.sh`; `lib/verify.sh` comprueba el asset, `dots.ini.in` y
+  `fc-list :charset=e000`.
+
+Comprobaciones:
+
+```sh
+# los templates no deben llevar escapes \uXXXX (polybar los muestra literales)
+grep -RIn '\u[0-9a-fA-F]\{4\}' templates/polybar && echo "HAY ESCAPES" || echo "OK"
+
+# fuente del logo y glifo de los puntos
+fc-list :charset=e000 family
+fc-list :charset=22ef family | grep -qi jetbrains && echo "OK" || echo "FALTA"
+
+# referencias de fuente y formato
+grep -nE 'font-[0-9]|padding-right' ~/.config/polybar/config.ini
+grep -nE 'format|font|padding' templates/polybar/modules/logo.ini.in \
+  templates/polybar/modules/date.ini.in templates/polybar/modules/dots.ini.in
+
+# arranque limpio: 14 módulos y sin errores
+polybar -r main -c ~/.config/polybar/config.ini
+```
+
+Resultados:
+
+- 14 módulos cargados, una sola instancia de polybar y sin errores de parseo.
+- Logo en `x=9..26`, `y=8..17` (18×10); caja enfocada `x=33..48` (16×26);
+  primer dígito centrado en `x=39`. La referencia `yo.png` tiene el logo en
+  `x=9..26` y el primer dígito en `x=39`; su caja enfocada es `x=76..97`
+  (22×19).
+- Fecha `07:59 PM` con tres puntos en `x=1904..1911`; borde derecho de la
+  barra 1911. La referencia tiene los puntos en `x=1903..1912` y borde 1912.
+- `fc-list :charset=e000` encuentra la fuente de usuario de la barra viva. La
+  ruta de sistema `/usr/local/share/fonts/dwm-setup/desktop-logo.ttf` solo se
+  valida tras ejecutar el instalador real.
+- **Diferencia conocida:** la caja enfocada mide 16×26 frente a 22×19 de
+  `yo.png`. La altura es una limitación de polybar 3.7.2; el ancho se mantiene
+  para conservar el primer dígito en `x=39`.
+- **Trampa de mantenimiento:** `format-font`/`%{T4}` con la fuente privada en
+  una posición no primaria renderizaba tofu. La fuente del logo debe ser
+  `font-0`; cualquier módulo nuevo de texto debe declarar `font-1`.
+- Captura final: `actual_04.png`.
+
+Pendiente: instalación real con `sudo ./install.sh`, comprobar la fuente del
+sistema con `fc-list :charset=e000` y repetir la comparación en VM.
+
+## 0d. Restauración del espaciado entre módulos y workspaces (2026-10-21)
+
+Corrige la regresión de 0c: al reindexar las fuentes, los módulos de la
+derecha pasaron de `format-padding`/`label-padding = 6` a `2`, y bspwm de
+`label-focused-padding = 2`/JBM 11 a `1`/JBM SemiBold 10. La barra quedó con
+gaps visibles de 24–26 px y workspaces cada 16 px, frente a los gaps de
+33–35 px y workspaces cada 24 px de `actual_03`.
+
+Valores finales (template y barra viva):
+
+- `config.ini`: `padding-left = 1`, `padding-right = 1`,
+  `module-margin-left/right = 1`.
+- Módulos de la derecha: `format-padding`/`label-padding = 3`; `date`
+  `label-padding = 3`; `dots` `format-padding = 0`.
+- bspwm: `label-*-padding = 2`, `label-*-font = 3` (JBM 11).
+- logo: `format = "%{O1}<U+E000>%{O-4}%{F-}"`. El `O-4` posterior al glifo
+  compensa el `module-margin` global para que bspwm empiece en `x=30` sin
+  mover el glifo; el logo queda en `x=6..23`, 3 px a la izquierda de `yo.png`.
+
+Medición sobre `actual_10.png` (1920×26):
+
+- logo `x=6..23` (18×10); caja enfocada `x=30..53` (24×26); primer dígito
+  `x=39`; workspaces 2–5 en `62/86/110/134` (24 px entre cada uno).
+- bloque derecho desde ~`1124`; gaps entre módulos `32–34`; fecha→puntos
+  `21`; puntos `x=1908..1915`.
+- Referencia `yo.png`: logo `x=9..26`, primer dígito `x=39`, workspaces 2–4
+  en `61`, caja de 3 en `76..97`, workspace 4 en `106`; gaps `26–30`; puntos
+  `x=1903..1912`.
+- `actual_03` (estado anterior aceptado): logo `8..19`; caja `26..49`;
+  workspaces `59/83/107/131`; gaps `33–35`.
+
+La separación entre workspaces (24 px) y entre módulos (32–34 px) coincide
+con `actual_03`; el logo queda 3 px a la izquierda de `yo.png` y el bloque
+derecho 21 px a la derecha (porque la barra actual muestra menos módulos).
+La caja enfocada mide 24×26; los 19 px de altura de `yo.png` siguen siendo
+una limitación de polybar 3.7.2.
+
+Comprobaciones:
+
+```sh
+grep -nE 'padding-left|padding-right|module-margin' ~/.config/polybar/config.ini
+grep -RInE 'format-padding|format-.*-padding|label-.*-padding|label-padding' \
+  ~/.config/polybar/modules | sort
+grep -n 'format =' ~/.config/polybar/modules/logo.ini
+
+# captura de la ventana de polybar (no de la pantalla completa)
+import -window "$(xwininfo -root -tree | awk '/polybar-main_/ {print $1; exit}')" actual_10.png
+```
+
 ## 1. Preparar la VM
 
 Recomendado:

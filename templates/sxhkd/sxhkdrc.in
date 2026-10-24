@@ -3,27 +3,28 @@
 # Variables: @TERM@ @MENU@ @BROWSER@ @EDITOR@ @LOCK@ @SCREENSHOT@ @FILEMGR@ @KEYBINDINGS@
 
 # ─── Aplicaciones ───
-@TERM@
-    super + Return
+super + Return
+    @TERM@
 
-@MENU@
-    super + d
+super + d
+    @MENU@
 
-@BROWSER@
-    super + shift + b
+super + shift + b
+    @BROWSER@
 
-@EDITOR@
-    super + shift + e
+super + shift + e
+    @EDITOR@
 
-@FILEMGR@
-    super + shift + f
+super + shift + f
+    @FILEMGR@
 
-@LOCK@
-    super + shift + l
+super + shift + l
+    @LOCK@
 
-@SCREENSHOT@
-    Print
-    super + Print
+Print
+    @SCREENSHOT@
+super + Print
+    @SCREENSHOT@
 
 # ─── Sistema ───
 # Reiniciar / apagar bspwm

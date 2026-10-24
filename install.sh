@@ -182,6 +182,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/modules/battery.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/pipewire.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/date.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/dots.ini.in"
     "$PROJECT_ROOT/templates/polybar/scripts/updates-apt.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/polypomo.in"
     "$PROJECT_ROOT/templates/polybar/scripts/launch.sh.in"
@@ -190,6 +191,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/rofi/powermenu.rasi.in"
     "$PROJECT_ROOT/templates/kitty/kitty.conf.in"
     "$PROJECT_ROOT/assets/wallpaper.jpg"
+    "$PROJECT_ROOT/assets/desktop-logo.ttf"
   )
   for path in "${required[@]}"; do
     [[ -e "$path" ]] || die "Falta un archivo del proyecto: $path"

@@ -388,3 +388,364 @@ iconos chinos.
 - Módulos `wlan`/`battery` desaparecen silenciosamente en desktop/VM sin hardware.
 - Próxima validación en VM: comparar `startx` + screenshot lado a lado; afinar
   `pad`/`module-margin` si el espaciado no cuadra exactamente.
+
+## ADR-024 — Glifos Nerd Font 3.x literales y unidades de espaciado de polybar 3.7
+
+**Contexto:** La barra mostraba el texto `\uf2dd`, `\uf79f`, etc. en lugar de
+los iconos. Polybar 3.7.2 **no interpreta escapes `\uXXXX`** en los `.ini`:
+hay que escribir el carácter UTF-8 literal. Además, la fuente instalada es
+JetBrainsMono Nerd Font 3.5.1 y los codepoints MDI que usaba el repo original
+(`F85A`, `F6FF`, `F79F`, `FA7D`, `FA80`, `FAA8`) ya no existen en Nerd Fonts 3.
+Por último, en polybar 3.7 los valores de `padding`/`margin` sin unidad se
+interpretan como múltiplos del ancho del espacio de la fuente (tipo `SPACE`),
+no como píxeles: con `padding-left = 4` y `format-padding = 6` la barra quedaba
+demasiado separada. La detección de red solo miraba interfaces `UP` (omitía
+`wlo1`, que está DOWN) y `xkeyboard` usaba `%layout%` en `format` en lugar de
+`<label-layout>`.
+
+**Decisión:**
+1. Los templates de polybar llevan **glifos UTF-8 literales**; se prohíbe
+   `\uXXXX` en `templates/polybar/`.
+2. Mapeo a Nerd Fonts 3.5.1: memory `F035B`, eth `F0200`, updates `F03D7`,
+   pipewire `F057E`/`F075F`, wlan `F091F`/`F0920`/`F0921`/`F0922`/`F05A9`;
+   temp `F2CA`/`F2C8`/`F2C7`; logo `F2DD`, cpu `E266`, xkeyboard `F11C`,
+   battery `F240`-`F244`.
+3. Espaciado como la referencia (`var.pad = 2`): `padding-left/right = 1`,
+   `format-padding`/`label-padding = 2`, `label-focused-padding = 1`.
+4. `xkeyboard`: `format = <label-layout>` y
+   `label-layout = "<glifo> %layout%"`.
+5. Detección propia de polybar (`polybar_detect_*`) con
+   `ip -br link show` (sin `up`, incluye interfaces DOWN) y batería
+   `BAT*` + adaptador `AC*`/`ADP*`.
+6. Verificación: `fc-list ':charset=...'` para cada glifo y arranque de polybar
+   sin errores.
+
+**Consecuencias:**
+- Los iconos se renderizan y el espaciado se acerca al screenshot de referencia.
+- Un glifo que no exista en la fuente se verá como tofu; hay que comprobar la
+  cobertura antes de añadirlo.
+- `wlan` se mantiene aunque `wlo1` esté DOWN; con `format-disconnected` vacío
+  queda invisible (se puede mostrar `NoC` si se quiere).
+- Cualquier `padding` nuevo debe recordar que, sin sufijo `px`, el número son
+  espacios de la fuente, no píxeles.
+
+## ADR-025 — Ajuste fino de espaciado y claridad de la barra polybar
+
+**Contexto:** Con la barra ya funcional (ADR-023/024), la comparación con
+`yo.png` seguía mostrando demasiado aire: el hueco logo→primer workspace era
+42 px (referencia 15 px), los gaps entre módulos ~50 px (referencia ~30 px) y
+los módulos se percibían menos nítidos que el workspace enfocado, que parecía
+más grueso. Las capturas tienen el mismo color máximo de texto (`#C9D1D9`), así
+que la diferencia era de peso/tamaño/contraste, no de color. En polybar 3.7.2
+los `padding`/`margin` sin unidad son múltiplos del ancho del espacio de la
+fuente, y el fondo de un label interno ocupa toda la altura de la barra (26 px)
+tanto con JetBrainsMono Nerd Font size 10/11 como con Noto Sans CJK JP size 11:
+cambiar la fuente del workspace **no** reduce la caja a los 19 px de `yo.png`.
+`format-padding-right` no tiene efecto en polybar 3.7.2.
+
+**Decisión:**
+1. `foreground = #E6EDF3` (más claro que `#C9D1D9`) y `font-0` con
+   `JetBrainsMono Nerd Font:style=SemiBold:size=10`; los módulos heredan ese
+   peso/color. El workspace enfocado conserva texto oscuro sobre caja clara.
+2. `module-margin-left/right = 0`; se mantienen `padding-left/right = 1` y
+   `format-padding = 2` de los módulos.
+3. Logo sin `format-padding` y con **un espacio literal al final** del
+   `format`: el hueco logo→primer dígito queda en 15 px (7 px hasta el borde de
+   la caja enfocada), sin tocar el resto de módulos.
+4. Workspaces con `font-0` (SemiBold 10) en lugar de `font-2`; unifica el peso
+   con los módulos y evita depender de Noto Sans CJK.
+5. No se usa `format-padding` en el módulo bspwm: desplazaba el bloque entero
+   y dejaba el hueco logo→dígito en ~23 px, más separado que la referencia.
+
+**Consecuencias:**
+- Gaps de módulos ~33-35 px (antes ~50 px; referencia ~29-31 px), hueco
+  logo→primer dígito 15 px (antes 42 px), bloque derecho comienza ~1092 px.
+- La caja enfocada queda en 24×26 px; la de `yo.png` es 22×19 px. La altura es
+  una limitación de polybar 3.7.2 (el fondo del label ocupa la barra completa),
+  no de la fuente. Igualar los 19 px exigiría parchear polybar o usar un widget
+  propio; se documenta como diferencia conocida.
+- `format-padding-right` no debe usarse para espaciar un módulo: polybar lo
+  ignora silenciosamente. Usar `format-padding`, un espacio en `format` o
+  `module-margin` global.
+- Backup previo al cambio: `~/.config-backup/dwm-setup/20261021-182732/`.
+- La barra viva se validó con 13 módulos, `latam`, `connected`, `100%`, `45%`,
+  `25:00` y fecha; captura en `actual_03.png`.
+
+## ADR-026 — Logo propio (fuente `DesktopLogo`) y tres puntos tras la hora
+
+**Contexto:** El logo de `yo.png` no es el icono Nerd Font `U+F2DD`
+(`fa-superpowers`) ni una letra S tipográfica: es una marca pequeña de
+18×10 px con forma de arco y bloques. Ningún glifo de JetBrainsMono Nerd Font
+3.5.1 reproducía esa forma. Además, la fecha no llevaba los tres puntos que sí
+aparecen después de la hora en la referencia.
+
+Durante las pruebas se comprobó que en polybar 3.7.2 el glifo privado
+`U+E000` solo se renderiza de forma fiable cuando la fuente que lo contiene es
+`font-0`. Poner `DesktopLogo` en `font-4` y seleccionarla con `%{T4}` o con
+`format-font = 4` producía tofu. Por eso la fuente personalizada pasa a ser la
+fuente primaria de la barra y los módulos de texto usan explícitamente
+`font-1` (JetBrainsMono Nerd Font SemiBold 10).
+
+**Decisión:**
+1. Vendorizar `assets/desktop-logo.ttf` con familia **DesktopLogo**, generada
+   a partir del recorte `18x10+9+8` de `yo.png`. El glifo útil es `U+E000`, a
+   `pixelsize=10` y con offset vertical `2`; el espacio de la fuente mide
+   300 unidades (3 px a ese tamaño).
+2. Reordenar las fuentes de `templates/polybar/config.ini.in`:
+   - `font-0 = "DesktopLogo:pixelsize=10;2"`
+   - `font-1 = "JetBrainsMono Nerd Font:style=SemiBold:size=10;3"`
+   - `font-2 = "JetBrainsMono Nerd Font:style=Bold:size=10;3"`
+   - `font-3 = "JetBrainsMono Nerd Font:size=11;3"`
+   - `font-4 = "JetBrainsMono Nerd Font:size=11;5"`
+   - `font-5 = "Noto Color Emoji:scale=9:antialias=false;3"`
+   El logo ya no ocupa `font-4`: pasa a `font-0`. Las antiguas `font-0..3`
+   se desplazan a `font-1..4` y Noto sigue en `font-5`; la JBM Bold 12 que
+   llegó a probarse como `font-4` no queda en la configuración. Todos los
+   módulos de texto usan `font-1`; `updates` y `polypomo` añaden además
+   `%{T1}` y `format-font = 1`.
+3. El módulo `logo` no selecciona fuente: hereda `font-0` y usa
+   `format = "%{O4}<U+E000> %{F-}"` (con el carácter `U+E000` literal, no la
+   cadena `<U+E000>`). El offset de 4 px más el espacio de 3 px de la fuente
+   deja el logo en `x=9..26`, la caja enfocada en `x=33..48` y el primer dígito
+   en `x=39`, como la referencia.
+4. La fecha usa `label-padding = 1` y `label-font = 1`. Se añade el módulo
+   `dots` (`custom/text`, `U+22EF`, `font-1`, `format-padding = 0`) y se
+   incluye al final de `modules-right`. La barra usa `padding-right = 2`.
+5. `lib/polybar.sh` instala la fuente a nivel sistema en
+   `/usr/local/share/fonts/dwm-setup/desktop-logo.ttf`, ejecuta
+   `fc-cache -f /usr/local/share/fonts` y avisa si
+   `fc-list :charset=e000` no encuentra DesktopLogo. `install.sh` exige el
+   asset y `dots.ini.in`; `lib/verify.sh` comprueba ambos y la cobertura del
+   glifo. `--dry-run` solo muestra la instalación de la fuente.
+6. La barra viva se actualizó con la fuente de usuario
+   (`~/.local/share/fonts/DesktopLogo/DesktopLogo.ttf`) y la captura final es
+   `actual_04.png`.
+
+**Consecuencias:**
+- El logo queda en `x=9..26`, `y=8..17`, 18×10 px, y el primer dígito en
+  `x=39`; la referencia mide exactamente lo mismo. Los tres puntos quedan en
+  `x=1904..1911` con la fecha `07:59 PM`, frente a `1903..1912` de `yo.png`;
+  el borde derecho de la barra queda en 1911 (referencia 1912).
+- La caja enfocada mide 16×26 px y la referencia 22×19 px. La altura sigue
+  siendo una limitación de polybar 3.7.2; el ancho depende del padding del
+  label y no se fuerza para no mover el primer dígito de `x=39`.
+- **Trampa de mantenimiento:** como `font-0` es DesktopLogo, cualquier módulo
+  que no declare `font-1`/`format-font = 1` se renderizará con la fuente del
+  logo y mostrará tofu para texto normal. Las pruebas con `%{T4}` no son
+  suficientes; el glifo privado debe vivir en `font-0`.
+- `fc-list :charset=e000` encuentra la fuente de usuario en la barra viva, pero
+  la ruta de sistema `/usr/local/share/fonts/dwm-setup/desktop-logo.ttf` solo
+  se valida tras una instalación real. Hasta entonces, `verify_install`
+  fallará en ese punto si se ejecuta contra la barra viva.
+- El TTF incluye glifos auxiliares (`U+2009`, `U+E001`) no usados por el
+  formato actual; no se referencian en los templates.
+
+## ADR-027 — Restaurar la separación de módulos y workspaces
+
+**Contexto:** En ADR-026 se reindexaron las fuentes para que `DesktopLogo`
+fuera `font-0`. En la misma iteración se cambiaron los paddings de los
+módulos de la derecha de `format-padding`/`label-padding = 6` a `2`, y las
+etiquetas de bspwm de `label-focused-padding = 2`/JBM 11 a `1`/JBM SemiBold
+10. El resultado fue una barra con gaps visibles de 24–26 px entre módulos y
+workspaces cada 16 px, más compacta que `actual_03` (gaps 33–35 px,
+workspaces cada 24 px) y que la referencia `yo.png` (gaps 26–30 px). El hueco
+logo→primer dígito seguía siendo 13 px, pero la caja enfocada se había
+reducido de 24×26 a 16×26.
+
+**Decisión:**
+1. Restaurar la separación visible de `actual_03` con los valores que mejor
+   funcionan con las fuentes actuales:
+   - `config.ini`: `padding-left = 1`, `padding-right = 1`,
+     `module-margin-left/right = 1`.
+   - módulos de la derecha: `format-padding`/`label-padding = 3`; `date`
+     `label-padding = 3`; `dots` `format-padding = 0`.
+   - bspwm: `label-focused/occupied/urgent/empty-padding = 2`;
+     `label-*-font = 3` (JBM 11).
+   - logo: `format = "%{O1}<U+E000>%{O-4}%{F-}"`. El `O-4` posterior al
+     glifo compensa el `module-margin` global y deja el bloque bspwm en
+     `x=30` sin correr el logo.
+2. No volver a usar los valores numéricos antiguos a ciegas: el padding de
+   polybar se mide en unidades de espacio de la fuente activa. Con la fuente
+   nueva, `format-padding = 6` producía gaps de 48–49 px; `3` produce
+   `32–34`, que es el objetivo visual de `actual_03`. Si cambia la fuente de
+   los módulos, hay que medir otra vez.
+3. Mantener la fuente del logo en `font-0`, los módulos de texto con
+   `font-1` y los labels de bspwm con `font-3`; ninguna etiqueta de texto usa
+   `font-0`.
+
+**Consecuencias:**
+- Medición de `actual_10.png` (1920×26): logo `x=6..23` (18×10); caja
+  enfocada `x=30..53` (24×26); primer dígito `x=39`; workspaces 2–5 en
+  `62/86/110/134` (24 px); bloque derecho desde ~`1124`; gaps `32–34`;
+  fecha→puntos `21`; puntos `x=1908..1915`.
+- El logo queda 3 px a la izquierda de `yo.png` (`x=9..26`) y el bloque
+  derecho 21 px a la derecha de la referencia (~`1103`), porque la barra
+  actual muestra menos módulos. La separación entre workspaces y entre
+  módulos coincide con `actual_03`; la caja conserva la altura completa de
+  26 px por la limitación de polybar 3.7.2.
+- `actual_03` y `actual_04` quedan como capturas históricas; la referencia
+  de la barra viva pasa a ser `actual_10.png`.
+- El `%{O-4}` es sensible al `module-margin`: si se vuelve a cambiar el
+  margen global o el espacio del glifo, hay que recalcularlo para no mover
+  bspwm de `x=30`.
+
+## ADR-028 — La config viva pasa a ser la verdad (enmienda ADR-027)
+
+**Contexto:** Tras ADR-025/026/027, la barra quedó estable pero la iteración
+visual siguió en la config viva de `~/.config/polybar` (21–22 oct 2026): se
+agrandaron los iconos (`font-3 = "JetBrainsMono Nerd Font:size=14;3"`),
+subió el texto a `font-1 = "JetBrainsMono Nerd Font:style=SemiBold:size=11;3"`,
+los iconos pasaron a usarse via `%{T1}...%{T-}` y el texto via `font-1`,
+se redujeron los paddings (`padding-left/right = 0` en la barra;
+`format-padding`/`label-padding = 0/1/2` según módulo), cambió el orden de
+`modules-right` (dots fuera de la barra), el logo pasó a
+`"%{T1}<U+E000>%{T-}"` + `format-padding = 2`, el glifo de `dots` a `<U+F001D>`
+y `pipewire` usó `label-muted-font = 2`. El resultado se capturó en
+`actual_15.png` y el usuario lo dio por bueno.
+
+**Decisión:**
+1. Sincronizar los templates del repo con la config viva, que pasa a ser la
+   fuente de verdad: 14 módulos, `config.ini`, `polypomo.in` y
+   `launch.sh.in` copiados byte a byte desde lo vivo, con dos excepciones
+   re-templatizadas para conservar portabilidad:
+   - hardware: `@ETH_IFACE@`, `@WLAN_IFACE@`, `@BATTERY@`, `@AC_ADAPTER@`,
+     `@WLAN_MODULE@`, `@BATTERY_MODULE@` (el instalador detecta y completa;
+     en esta máquina renderizan `enp3s0`, `wlo1`, `BAT1`, `ACAD`,
+     `wlan`, `battery`).
+   - rutas de usuario: `@HOME@` en `include-directory` y `exec` de scripts.
+2. Separación de iconos y texto resuelta del lado del usuario: icono con
+   font dedicada (`font-3` size 14) y texto con `font-1` size 11; agrandar
+   iconos = tocar solo `font-3`. Aunque los labels usan `%{T1}`, el
+   `T-` posterior devuelve el control a `font-1`.
+3. Enmienda a ADR-027: los valores congelados de espaciado
+   (`padding 1`, `module-margin 1`, `format-padding 3`, bspwm `font-3`)
+   quedan reemplazados por los de esta ADR. ADR-027 sigue valiendo como
+   método (medir capturas en px; no tocar valores a ciegas) pero no como
+   valores.
+
+**Consecuencias:**
+- El render de los templates coincide byte-identical con la config viva
+  (validado con diff afectando los 15 archivos); `install.sh` ya no pisará
+  los retoques del usuario.
+- Gaps de módulos ya no son 32–34 px: varían por módulo según su padding
+  propio con el margen global 1. Si se vuelve a medir contra `yo.png`,
+  primero fijar los paddings de esta ADR (o definir la nueva referencia).
+- `dots` sigue existiendo como módulo y template, pero no está listado en
+  `modules-right`; si el usuario lo re-agrega, no hace falta cambiar nada
+  más.
+- La referencia visual viva pasa de `actual_10.png` a `actual_15.png`.
+
+## ADR-029 — updates como semáforo (rojo/verde) en vez de contador
+
+**Contexto:** El módulo `updates` mostraba el glifo `U+F192` de Nerd Font
+más el número de paquetes actualizables (`label = %output%` con el conteo
+del script). El usuario pidió quitar el número y que el punto mismo indique
+el estado: rojo con actualizaciones pendientes, verde con todo al día.
+
+**Decisión:**
+1. `updates-apt.sh` emite el glifo `U+F192` con color polybar embebido:
+   `%{F#F47067}` (`colors.alert`) si el conteo es > 0, `%{F#3FB950}`
+   (`colors.nord14`) si es 0, siempre con `%{T1}...%{T-}`. Ya no imprime el
+   número; el conteo queda como lógica interna para decidir el color.
+2. `updates.ini` pasa a `format = <label>` (sin icono en el módulo: llega
+   con color desde el script) y conserva `format-padding = 2`,
+   `format-font = 1`.
+3. Los colores van fijos en el script: el output de `custom/script` no
+   resuelve `${colors.*}`. Si cambia la paleta de `[colors]`, actualizar el
+   script.
+
+**Consecuencias:**
+- Medición real posterior: cada corrida de `apt-get -s upgrade` cuesta
+  ~0,5 s (no ~50 ms como se estimó al escribir esta ADR), porque parsea
+  ~50 MB de listas de apt. Derivó en ADR-030, que reemplaza el sondeo
+  por eventos.
+- El punto queda visible junto a la fecha (en `modules-right`, `date` antes
+  que `updates`).
+- Al materializar en vivo hay que renderizar `@HOME@`: copiar el template
+  sin sed rompe el `exec` (`@HOME@/.config...` literal → "not found").
+  Revisado: ningún placeholder queda en la config viva.
+
+## ADR-030 — Semáforo de updates por eventos (tail) en vez de sondeo
+
+**Contexto:** Medición de la iteración anterior (ADR-029): cada corrida de
+`apt-get -s upgrade` parsea ~50 MB de listas y cuesta ~0,5 s. Con
+`interval = 10` eso significaba ~3 s de CPU por minuto (~5% de un core) y
+un consumo de RAM transitorio de ~78 MB seis veces por minuto, solo para
+actualizar un punto que además podía tardar hasta 10 s en cambiar de
+color. La preocupación del usuario fue el costo en batería/sistema.
+
+**Decisión:**
+1. `updates-apt.sh` pasa a `tail = true`: un único proceso durmiente que
+   observa los mtimes de `/var/lib/dpkg/status` (cambios al instalar/
+   actualizar) y de `/var/lib/apt/lists` (`apt update`) cada 1 s, ejecuta
+   el conteo grande solo cuando cambia algo real, espera 1,5 s de calma
+   (debounce; un `apt upgrade` muta el archivo varias veces) y recalcula
+   una vez.
+2. La línea de salida es la misma de ADR-029 (glifo `U+F192` con color
+   embebido, rojo `#F47067` si hay pendientes, verde `#3FB950` si está al
+   día). `updates.ini` pierde `interval` y gana `tail = true`; el resto no
+   cambia.
+3. El módulo queda vivo el ciclo de la sesión; el estado inicial se imprime
+   inmediatamente al arrancar, no deja la barra vacía.
+4. Prueba sin tocar apt: rutas y tiempos sobreescribibles por entorno
+   (`UPDATES_DPKG_STATUS`, `UPDATES_APT_LISTS`, `UPDATES_GAP`,
+   `UPDATES_DEBOUNCE` y `UPDATES_FAKE_FILE` para simular el conteo).
+   Medido: reacción de 0 a N pendientes en ~2,4 s (gap 1 s + debounce
+   1,5 s) y vuelta a verde igual.
+
+**Consecuencias:**
+- CPU en reposo ~0% (solo dos `stat` por segundo); el costo de ~0,5 s de
+  CPU y ~78 MB de RAM ocurre una vez por cambio real de estado, no cada
+  10 s.
+- El script no termina: si el proceso muere (kill/OOM improbable), el
+  módulo queda vacío hasta recargar polybar. Para eso el loop no usa
+  `set -e` y una corrida fallida no lo mata.
+- Si en el futuro se quiere semáforo para otro origen (flatpak, pip), el
+  patrón mtime+debounce se reusa igual.
+- `-s` sigue siendo simulación: no toca locks ni escribe en el sistema.
+
+## ADR-031 — polypomo: glifos NF, descanso 5 min, dunst y acción reset
+
+**Contexto:** El pomodoro vendorizado usaba emoji (tomate `U+1F345`,
+playa `U+1F3D6`, pausa `U+23F8`) y el click derecho (`end`) crasheaba con
+`TypeError` cuando el timer estaba corriendo: `next_timer()` llamaba
+`save()` sin guard y `sqlite3.connect(None)` (`--saveto` nunca llega en el
+exec), mataba el proceso display y polybar reiniciaba el script
+(25:00 en pausa). El usuario también pidió descanso de 5 min y
+notificaciones dunst diferenciadas para cada fin (work y break).
+
+**Decisión:**
+1. Glifos JetBrainsMono Nerd Font (verificado con `fc-list :charset` que la
+   familia `JetBrainsMono Nerd Font` (la del `font-1`) contiene los tres
+   codepoints, así que no hace falta tocar fonts): detenido → `PAUSE` =
+   `U+F28B`; trabajo corriendo → `PLAY` = `U+E002` (reemplaza al tomate);
+   descanso corriendo → `BREAK` = `U+EC15`. El `show()` elige así: no
+   activo → pausa; activo+work → play; activo+break → descanso.
+2. Notificación al llegar a cero: `Timer` crea el endmsg; work →
+   `"Pomodoro terminado — tiempo de descansar"`, break →
+   `"Descanso terminado — ¡a seguir!!"` via `notify-send -t 0 -u critical
+   "Pomodoro" {endmsg}` (se dispara una vez por timer, flag `notified`).
+   Con `-t 0` la popup queda sticky hasta cerrarse (critical).
+3. Descanso por defecto de 3 → 5 min (`--breaktime default 5*60`; el
+   módulo no pasa args).
+4. `save()` con guard: `if not self.saveto: return`. Con eso `end` (que
+   queda disponible por CLI pero desconectado de clicks) no crashea.
+5. Acción nueva `reset`: `status.reset_timer()` → deja active=False,
+   status work, Timer 25:00 pausado; si hay DB y hay sesión abierta, la cierra
+   (UPDATE stop). `click-right = ... polypomo reset` (antes era `end`). Incluyo `reset` en el parser (`sub.add_parser("reset", ...)`).
+6. Corrección de portabilidad: las líneas `click-/scroll-` de
+   `polypomo.ini` usaban `/home/luc` literal; pasan a `@HOME@` (como las
+   líneas rest示范antes del template).
+
+**Consecuencias:**
+- Click derecho = reinicio limpio a 25:00 pausado, sin perder nada; click
+  derecho NO pasa a descanso. `polypomo end` sigue disponible por CLI y ya
+  no rompe.
+- Al llegar a cero el timer sigue contando en negativo hasta un `reset`
+  (comportamiento vendor; la notificación ocurre una vez).
+- Notificaciones críticas sticky: hay que cerrarlas a mano o se van al
+  history con `dunstctl close`.
+- E2E probado con socket aislado (`XDG_RUNTIME_DIR=/tmp/...`): transicion
+  de glifos, reset/end sin crash, y ambas notificaciones via dunst
+  (`dunstctl count` saltó +1 por cada notificación esperada). Captura viva:
+  `actual_18.png`.

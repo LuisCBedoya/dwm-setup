@@ -3,12 +3,13 @@
 type = custom/script
 exec = @HOME@/.config/polybar/scripts/polypomo
 tail = true
-format = <label>
-format-padding = 6
+format = "%{T1}<label>"
+format-padding = 0
+format-font = 1
 format-foreground = ${colors.foreground}
 label = %output%
 click-left = @HOME@/.config/polybar/scripts/polypomo toggle
-click-right = @HOME@/.config/polybar/scripts/polypomo end
+click-right = @HOME@/.config/polybar/scripts/polypomo reset
 click-middle = @HOME@/.config/polybar/scripts/polypomo lock
 scroll-up = @HOME@/.config/polybar/scripts/polypomo time +60
 scroll-down = @HOME@/.config/polybar/scripts/polypomo time -60

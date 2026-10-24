@@ -1,7 +1,6 @@
-; logo — glifo U+F2DD (fa-superpowers), idéntico al screenshot
+; logo — glifo del logo de referencia (U+E000, fuente DesktopLogo)
 [module/logo]
 type = custom/text
-content = "\uf2dd"
-content-foreground = ${colors.foreground}
-content-font = 4
-content-padding = 2
+format = "%{T1}%{T-}"
+format-padding = 2
+format-foreground = ${colors.foreground}

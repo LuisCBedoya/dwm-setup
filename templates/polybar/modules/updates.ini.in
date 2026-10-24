@@ -1,9 +1,10 @@
-; updates — cuenta paquetes actualizables via apt
+; updates — punto rojo/verde via apt (el color lo decide el script)
 [module/updates]
 type = custom/script
 exec = @HOME@/.config/polybar/scripts/updates-apt.sh
-interval = 300
+tail = true
 format = <label>
-format-padding = 6
+format-padding = 2
+format-font = 1
 format-foreground = ${colors.foreground}
 label = %output%

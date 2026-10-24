@@ -21,7 +21,7 @@ install_bspwm() {
     post_process_bspwm_config "$home/.config/bspwm/bspwmrc"
   else
     log "Renderizando bspwmrc desde template"
-    render_template "bspwm/bspwmrc" "$home/.config/bspwm/bspwmrc"
+    render_bspwm_template "bspwm/bspwmrc" "$home/.config/bspwm/bspwmrc"
   fi
   
   # Autostart
@@ -31,7 +31,7 @@ install_bspwm() {
     post_process_autostart "$home/.config/bspwm/scripts/autostart"
   else
     log "Renderizando autostart desde template"
-    render_template "bspwm/autostart" "$home/.config/bspwm/scripts/autostart" 0755
+    render_bspwm_template "bspwm/autostart" "$home/.config/bspwm/scripts/autostart" 0755
   fi
   
   # Scripts auxiliares
@@ -51,7 +51,8 @@ install_bspwm_scripts() {
     if [[ -n "${DOTFILES_DIR:-}" && -f "$DOTFILES_DIR/config/.config/bspwm/scripts/$script" ]]; then
       run_root cp -a "$DOTFILES_DIR/config/.config/bspwm/scripts/$script" "$home/.config/bspwm/scripts/"
     else
-      render_template "bspwm/scripts/$script" "$home/.config/bspwm/scripts/$script" 0755
+      render_theme_template "$PROJECT_ROOT/templates/bspwm/scripts/$script.in" "$home/.config/bspwm/scripts/$script" 0755 \
+        "HOME=$TARGET_HOME"
     fi
   done
   
@@ -60,7 +61,8 @@ install_bspwm_scripts() {
     run_root cp -a "$DOTFILES_DIR/config/.config/bspwm/scripts/i3lock-fancy" "$home/.config/bspwm/scripts/"
   else
     make_user_dir "$home/.config/bspwm/scripts/i3lock-fancy"
-    render_template "bspwm/scripts/i3lock-fancy/i3lock-fancy.sh" "$home/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh" 0755
+    render_theme_template "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in" "$home/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh" 0755 \
+      "HOME=$TARGET_HOME"
   fi
   
   # Hacer ejecutables
@@ -117,12 +119,12 @@ exec bspwm
 EOF
   
   # Renderizar placeholders
-  render_template_inline "$xinitrc"
+  render_bspwm_template_inline "$xinitrc"
   
   ok "Generado: $xinitrc"
 }
 
-render_template() {
+render_bspwm_template() {
   local template_rel="$1"
   local output="$2"
   local perms="${3:-0644}"
@@ -137,81 +139,42 @@ render_template() {
     return 0
   fi
   
-  local content
-  content=$(cat "$template")
-  
-  # Reemplazar variables de tema
-  source_theme_vars
-  for var in COLOR_BG COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
-             COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM \
-             COLOR_BORDER COLOR_ACCENT COLOR_ACCENT_ALT \
-             COLOR_GREEN COLOR_YELLOW COLOR_ORANGE COLOR_RED COLOR_CYAN \
-             COLOR_PURPLE COLOR_BLUE; do
-    content="${content//@${var}@/${!var}}"
-  done
-  
-  # Variables de entorno/usuario
-  content="${content//@HOME@/$TARGET_HOME}"
-  content="${content//@FONT@/$DWM_FONT}"
-  content="${content//@FONT_SIZE@/$DWM_FONT_SIZE}"
-  content="${content//@KEYMAP@/$DWM_KEYMAP}"
-  content="${content//@WALLPAPER@/$TARGET_HOME/.local/share/wallpapers/rocky.jpg}"
-  content="${content//@THEME_NAME@/nord}"
-  content="${content//@BAR_HEIGHT@/26}"
-  
-  # Detectar interfaces de red
+  # Detectar hardware para variables específicas de bspwm
   local eth_iface=$(detect_eth_iface)
   local wlan_iface=$(detect_wlan_iface)
   local battery=$(detect_battery)
   
-  content="${content//@ETH_IFACE@/$eth_iface}"
-  content="${content//@WLAN_IFACE@/$wlan_iface}"
-  content="${content//@BATTERY@/$battery}"
-  
-  run_root install -D -m "$perms" /dev/stdin "$output" <<<"$content"
-  ok "Renderizado: $output"
+  # Usar render_theme_template de lib/theme.sh (ya cargado)
+  render_theme_template "$template" "$output" "$perms" \
+    "HOME=$TARGET_HOME" \
+    "FONT=$DWM_FONT" \
+    "FONT_SIZE=$DWM_FONT_SIZE" \
+    "KEYMAP=$DWM_KEYMAP" \
+    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/rocky.jpg" \
+    "BAR_HEIGHT=26" \
+    "ETH_IFACE=$eth_iface" \
+    "WLAN_IFACE=$wlan_iface" \
+    "BATTERY=$battery"
 }
 
-render_template_inline() {
+render_bspwm_template_inline() {
   local file="$1"
   if dry_run; then return 0; fi
   
-  local content
-  content=$(cat "$file")
-  
-  source_theme_vars
-  for var in COLOR_BG COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
-             COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM \
-             COLOR_BORDER COLOR_ACCENT COLOR_ACCENT_ALT \
-             COLOR_GREEN COLOR_YELLOW COLOR_ORANGE COLOR_RED COLOR_CYAN \
-             COLOR_PURPLE COLOR_BLUE; do
-    content="${content//@${var}@/${!var}}"
-  done
-  
-  content="${content//@HOME@/$TARGET_HOME}"
-  content="${content//@FONT@/$DWM_FONT}"
-  content="${content//@FONT_SIZE@/$DWM_FONT_SIZE}"
-  content="${content//@KEYMAP@/$DWM_KEYMAP}"
-  content="${content//@WALLPAPER@/$TARGET_HOME/.local/share/wallpapers/rocky.jpg}"
-  content="${content//@THEME_NAME@/nord}"
-  content="${content//@BAR_HEIGHT@/26}"
-  
   local eth_iface=$(detect_eth_iface)
   local wlan_iface=$(detect_wlan_iface)
   local battery=$(detect_battery)
   
-  content="${content//@ETH_IFACE@/$eth_iface}"
-  content="${content//@WLAN_IFACE@/$wlan_iface}"
-  content="${content//@BATTERY@/$battery}"
-  
-  run_root install -D -m 0644 /dev/stdin "$file" <<<"$content"
-}
-
-source_theme_vars() {
-  # Cargar variables de color Nord
-  if [[ -f "$PROJECT_ROOT/templates/colors/palette-nord.sh" ]]; then
-    source "$PROJECT_ROOT/templates/colors/palette-nord.sh"
-  fi
+  render_theme_template "$file" "$file" 0644 \
+    "HOME=$TARGET_HOME" \
+    "FONT=$DWM_FONT" \
+    "FONT_SIZE=$DWM_FONT_SIZE" \
+    "KEYMAP=$DWM_KEYMAP" \
+    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/rocky.jpg" \
+    "BAR_HEIGHT=26" \
+    "ETH_IFACE=$eth_iface" \
+    "WLAN_IFACE=$wlan_iface" \
+    "BATTERY=$battery"
 }
 
 detect_eth_iface() {

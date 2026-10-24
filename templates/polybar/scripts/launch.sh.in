@@ -1,10 +1,10 @@
 #!/bin/bash
 # polybar launch.sh — generado desde template
-# Detecta hardware y lanza polybar con la config ya final (sin sed runtime)
+# Lanza polybar con la config ya renderizada (sin detección en runtime)
 
 set -eu
 
-killall -q polybar
+pkill -x polybar 2>/dev/null || true
 while pgrep -u "$UID" -x polybar >/dev/null; do sleep 0.1; done
 
 CONFIG="@HOME@/.config/polybar/config.ini"

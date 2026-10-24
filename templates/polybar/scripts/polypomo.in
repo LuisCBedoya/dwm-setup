@@ -17,17 +17,20 @@ import pathlib
 
 SOCKDIR = os.environ.get("XDG_RUNTIME_DIR", "/var/tmp")
 SOCKFILE = os.path.join(SOCKDIR, "polypomo.sock")
-TOMATO = "\U0001F345"
-BREAK = "\U0001F3D6"
-PAUSE = "\U000023F8"
+PLAY = "\ue002"
+BREAK = "\uec15"
+PAUSE = "\uf28b"
+MSG_WORK_DONE = "Pomodoro terminado — tiempo de descansar"
+MSG_BREAK_DONE = "Descanso terminado — ¡a seguir!!"
 
 class Exit(Exception):
     pass
 
 class Timer:
-    def __init__(self, remtime):
+    def __init__(self, remtime, endmsg):
         self.time = remtime
         self.notified = False
+        self.endmsg = endmsg
         self.tick()
 
     def __str__(self):
@@ -69,7 +72,7 @@ class Timer:
         if not self.notified and self.time < 0:
             self.notified = True
             try:
-                call(["notify-send", "-t", "0", "-u", "critical", "Pomodoro", "Timer reached zero"],
+                call(["notify-send", "-t", "0", "-u", "critical", "Pomodoro", self.endmsg],
                      stdout=DEVNULL, stderr=DEVNULL)
             except FileNotFoundError:
                 pass
@@ -82,16 +85,19 @@ class Status:
         self.worktime = worktime
         self.breaktime = breaktime
         self.status = "work"
-        self.timer = Timer(self.worktime)
+        self.timer = Timer(self.worktime, MSG_WORK_DONE)
         self.active = False
         self.locked = True
         self.saveto = saveto
 
     def show(self):
-        status = TOMATO if self.status == "work" else BREAK
         if not self.active:
-            status = PAUSE
-        sys.stdout.write("{} {}\n".format(status, self.timer))
+            glyph = PAUSE
+        elif self.status == "work":
+            glyph = PLAY
+        else:
+            glyph = BREAK
+        sys.stdout.write("{} {}\n".format(glyph, self.timer))
         sys.stdout.flush()
 
     def toggle(self):
@@ -120,13 +126,23 @@ class Status:
                 self.active = False
                 self.save()
             self.status = "break"
-            self.timer = Timer(self.breaktime)
+            self.timer = Timer(self.breaktime, MSG_BREAK_DONE)
         elif self.status == "break":
             self.active = False
             self.status = "work"
-            self.timer = Timer(self.worktime)
+            self.timer = Timer(self.worktime, MSG_WORK_DONE)
+
+    def reset_timer(self):
+        was_active = self.active
+        self.active = False
+        if self.saveto and was_active:
+            self.save()
+        self.status = "work"
+        self.timer = Timer(self.worktime, MSG_WORK_DONE)
 
     def save(self):
+        if not self.saveto:
+            return
         with setup_conn(self.saveto) as conn:
             if self.active:
                 conn.execute("INSERT INTO sessions VALUES (date('now'), time('now'), NULL)")
@@ -199,6 +215,8 @@ def check_actions(sock, status):
         status.toggle()
     elif action == "end":
         status.next_timer()
+    elif action == "reset":
+        status.reset_timer()
     elif action == "lock":
         status.toggle_lock()
     elif action.startswith("time"):
@@ -226,6 +244,10 @@ def action_toggle(args):
 def action_end(args):
     with setup_client() as s:
         s.send("end".encode("utf8"))
+
+def action_reset(args):
+    with setup_client() as s:
+        s.send("reset".encode("utf8"))
 
 def action_lock(args):
     with setup_client() as s:
@@ -259,12 +281,13 @@ class ValidateTime(argparse.Action):
 def parse_args():
     parser = argparse.ArgumentParser(description="Pomodoro timer for polybar")
     parser.add_argument("--worktime", type=int, default=25*60, help="Work timer in seconds")
-    parser.add_argument("--breaktime", type=int, default=3*60, help="Break timer in seconds")
+    parser.add_argument("--breaktime", type=int, default=5*60, help="Break timer in seconds")
     parser.add_argument("--saveto", type=pathlib.Path, default=None, help="Path to database")
     parser.set_defaults(func=action_display)
     sub = parser.add_subparsers()
     sub.add_parser("toggle", help="start/stop timer").set_defaults(func=action_toggle)
     sub.add_parser("end", help="end current timer").set_defaults(func=action_end)
+    sub.add_parser("reset", help="reiniciar el pomodoro a 25:00 en pausa").set_defaults(func=action_reset)
     sub.add_parser("lock", help="lock time actions").set_defaults(func=action_lock)
     sub.add_parser("exit", help="exit polypomo gracefully").set_defaults(func=action_exit)
     time = sub.add_parser("time", help="add/remove time")

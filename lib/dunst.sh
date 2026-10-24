@@ -14,7 +14,7 @@ install_dunst() {
     post_process_dunstrc "$home/.config/dunst/dunstrc"
   else
     log "Renderizando dunstrc desde template"
-    render_template "dunst/dunstrc" "$home/.config/dunst/dunstrc"
+    render_dunst_template "dunst/dunstrc" "$home/.config/dunst/dunstrc"
   fi
   
   ok "dunst instalado"
@@ -28,7 +28,7 @@ post_process_dunstrc() {
   fi
 }
 
-render_template() {
+render_dunst_template() {
   local template_rel="$1"
   local output="$2"
   local perms="${3:-0644}"
@@ -43,33 +43,13 @@ render_template() {
     return 0
   fi
   
-  local content
-  content=$(cat "$template")
-  
-  source_theme_vars
-  
-  for var in COLOR_BG COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
-             COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM \
-             COLOR_BORDER COLOR_ACCENT COLOR_ACCENT_ALT \
-             COLOR_GREEN COLOR_YELLOW COLOR_ORANGE COLOR_RED COLOR_CYAN \
-             COLOR_PURPLE COLOR_BLUE; do
-    content="${content//@${var}@/${!var}}"
-  done
-  
-  content="${content//@HOME@/$TARGET_HOME}"
-  content="${content//@FONT@/$DWM_FONT}"
-  content="${content//@FONT_SIZE@/$DWM_FONT_SIZE}"
-  content="${content//@KEYMAP@/$DWM_KEYMAP}"
-  content="${content//@THEME_NAME@/nord}"
-  
-  run_root install -D -m "$perms" /dev/stdin "$output" <<<"$content"
-  ok "Renderizado: $output"
-}
-
-source_theme_vars() {
-  if [[ -f "$PROJECT_ROOT/templates/colors/palette-nord.sh" ]]; then
-    source "$PROJECT_ROOT/templates/colors/palette-nord.sh"
-  fi
+  # Usar render_theme_template de lib/theme.sh (ya cargado)
+  render_theme_template "$template" "$output" "$perms" \
+    "HOME=$TARGET_HOME" \
+    "FONT=$DWM_FONT" \
+    "FONT_SIZE=$DWM_FONT_SIZE" \
+    "KEYMAP=$DWM_KEYMAP" \
+    "THEME_NAME=nord"
 }
 
 make_user_dir() {

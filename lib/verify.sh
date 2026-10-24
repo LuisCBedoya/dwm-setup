@@ -39,6 +39,7 @@ verify_install() {
     "$home/.config/polybar/modules/battery.ini" \
     "$home/.config/polybar/modules/pipewire.ini" \
     "$home/.config/polybar/modules/date.ini" \
+    "$home/.config/polybar/modules/dots.ini" \
     "$home/.config/polybar/scripts/updates-apt.sh" \
     "$home/.config/polybar/scripts/polypomo" \
     "$home/.config/picom/picom.conf" \
@@ -49,7 +50,8 @@ verify_install() {
     "$home/.local/share/wallpapers/rocky.jpg" \
     "$home/.local/share/xorg" \
     "/usr/local/bin/desktop-safe" \
-    "/usr/local/bin/desktop-doctor"; do
+    "/usr/local/bin/desktop-doctor" \
+    "/usr/local/share/fonts/dwm-setup/desktop-logo.ttf"; do
     if [[ -e "$path" ]]; then
       debug "ok: $path"
     else
@@ -57,6 +59,14 @@ verify_install() {
       failures=$((failures + 1))
     fi
   done
+
+  # Verificar la fuente propia del logo (U+E000)
+  if fc-list :charset=e000 2>/dev/null | grep -qi 'DesktopLogo'; then
+    debug "ok: fuente DesktopLogo"
+  else
+    error "Falta la fuente DesktopLogo; el logo de la barra no renderizará"
+    failures=$((failures + 1))
+  fi
 
   # Verificar scripts ejecutables
   for script in "$home/.config/bspwm/scripts/"* "$home/.config/polybar/scripts/"*; do

@@ -7,7 +7,7 @@ include-directory = @HOME@/.config/polybar/modules
 [colors]
 background = #0D1117
 background-alt = #0D1117
-foreground = #C9D1D9
+foreground = #E6EDF3
 foreground-alt = #6E7681
 primary = #58A6FF
 secondary = #A371F7
@@ -49,21 +49,21 @@ line-color = ${colors.background}
 border-size = 0
 border-color = ${colors.background}
 
-padding-left = 4
-padding-right = 4
+padding-left = 0
+padding-right = 0
 
 module-margin-left = 1
 module-margin-right = 1
 
-font-0 = "JetBrainsMono Nerd Font:size=10;3"
-font-1 = "JetBrainsMono Nerd Font:style=Bold:size=10;3"
-font-2 = "JetBrainsMono Nerd Font:size=11;3"
-font-3 = "JetBrainsMono Nerd Font:size=11;5"
-font-4 = "JetBrainsMono Nerd Font:style=Bold:size=12;3"
+font-0 = "DesktopLogo:pixelsize=10;2"
+font-1 = "JetBrainsMono Nerd Font:style=SemiBold:size=11;3"
+font-2 = "JetBrainsMono Nerd Font:style=Bold:size=10;3"
+font-3 = "JetBrainsMono Nerd Font:size=14;3"
+font-4 = "JetBrainsMono Nerd Font:size=11;5"
 font-5 = "Noto Color Emoji:scale=9:antialias=false;3"
 
 modules-left = logo bspwm
-modules-right = updates polypomo temp memory cpu xkeyboard eth @WLAN_MODULE@ @BATTERY_MODULE@ pipewire date
+modules-right =  polypomo temp memory cpu xkeyboard eth @WLAN_MODULE@ @BATTERY_MODULE@ pipewire date updates
 
 cursor-click = pointer
 cursor-scroll = ns-resize

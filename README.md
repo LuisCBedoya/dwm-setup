@@ -21,7 +21,7 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** como window manager + **sxhkd** para atajos.
-- **polybar** para barra de estado (workspaces 1-5 con dígitos árabes, CPU, RAM, temp, red, audio, batería, fecha, pomodoro, updates, logo U+F2DD en extremo izquierdo, barra **arriba**, 26px, fondo `#0D1117`, sin subrayados — réplica exacta del diseño de referencia).
+- **polybar** para barra de estado (workspaces 1-5 con dígitos árabes, CPU, RAM, temp, red, audio, batería, fecha con tres puntos `⋯`, pomodoro, updates, logo propio U+E000 en extremo izquierdo, barra **arriba**, 26px, fondo `#0D1117`, sin subrayados — réplica exacta del diseño de referencia).
 - picom, dunst, rofi, kitty, flameshot.
 - Bloqueo con i3lock y xss-lock.
 - Brillo, volumen, portapapeles y agente polkit.
@@ -238,7 +238,7 @@ Si algo falla:
 | `XF86AudioRaise/Lower/Mute` | volumen |
 | `XF86MonBrightnessUp/Down` | brillo |
 
-`Super` es la tecla Windows. La barra polybar muestra **workspaces 1-5 con dígitos árabes** (enfocado = caja clara), logo U+F2DD en el extremo izquierdo, CPU, RAM, temp, red (ethernet + wifi si hay), audio, fecha, pomodoro, updates y batería (si hay).
+`Super` es la tecla Windows. La barra polybar muestra **workspaces 1-5 con dígitos árabes** (enfocado = caja clara), logo propio (U+E000, fuente `DesktopLogo`) en el extremo izquierdo, CPU, RAM, temp, red (ethernet + wifi si hay), audio, fecha seguida de tres puntos `⋯`, pomodoro, updates y batería (si hay).
 
 ## Estructura del repositorio
 
@@ -269,6 +269,7 @@ templates/dunst/           dunstrc.in
 templates/rofi/            powermenu.rasi.in
 templates/kitty/           kitty.conf.in
 assets/wallpaper.jpg       Wallpaper de referencia
+assets/desktop-logo.ttf    Fuente DesktopLogo (logo U+E000)
 docs/                      Hardware y testing
 ```
 

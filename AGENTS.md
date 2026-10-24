@@ -84,6 +84,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/dwm/` | dwm/eww/barra/dunst/rofi/picom/sesión |
 | `templates/kitty/` | kitty |
 | `assets/wallpaper.jpg` | Wallpaper |
+| `assets/desktop-logo.ttf` | Fuente `DesktopLogo` (logo U+E000) |
 | `src/chadwm/chadwm` | Fuente chadwm, vendorizada (commit `7991ac8`) |
 | `src/eww` | Fuente eww v0.6.0, vendorizada (commit `d87c2fd`) |
 | `legacy/` | Prototipo antiguo, no usado |

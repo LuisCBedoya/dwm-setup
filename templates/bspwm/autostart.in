@@ -29,7 +29,7 @@ fi
 udiskie -N -a -t &
 
 # --- Bloqueo de pantalla (xss-lock + i3lock) ---
-xss-lock -- @HOME@/.local/bin/desktop-safe lock &
+xss-lock -- /usr/local/bin/desktop-safe lock &
 
 # --- Notificador de batería baja (solo si hay batería) ---
 if [ -d "/sys/class/power_supply/@BATTERY@" ] 2>/dev/null; then
