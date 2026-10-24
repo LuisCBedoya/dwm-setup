@@ -167,6 +167,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/bspwm/scripts/keybindings_rofi.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/screenshot.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/screenshot_region.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/screenshot_full.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/audio-switch.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/audio-watch.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
@@ -235,7 +236,7 @@ Atajos principales:
   Super+Shift+e     VS Code (no instalado en fase 1)
   Super+Shift+f     thunar
   Super+Shift+l     bloquear
-  Print             captura completa (menú)
+  Print             pantalla completa al portapapeles
   Super+Print       menú de capturas
   Super+{h,j,k,l}   foco ventanas
   Super+Shift+{h,j,k,l} mover ventanas

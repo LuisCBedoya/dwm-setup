@@ -104,6 +104,8 @@ Se añadió un watcher de audio genérico y sonido de notificación:
 - La notificación de captura muestra una miniatura de 64 px del recorte
   desde `~/.cache/dunst/last-screenshot.png`; comprobado con una captura de
   la notificación.
+- `Print` captura la pantalla completa y la copia al portapapeles con
+  miniatura; `Super+Print` mantiene el menú de capturas.
 - `sound-theme-freedesktop` se añadió a `AUDIO_PKGS`.
 - Quirk `alc255-asus` para ASUS FX504GE/ALC255:
   - Detecta DMI y códec.

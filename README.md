@@ -253,7 +253,8 @@ Si algo falla:
 | `Super+Shift+{1-5}` | mover ventana a escritorio |
 | `Super+r`, luego `h/j/k/l` | redimensionar (Escape sale) |
 | `Super+m` | monocle/tiled |
-| `Print` / `Super+Print` | menú de capturas |
+| `Print` | pantalla completa al portapapeles |
+| `Super+Print` | menú de capturas |
 | `XF86AudioRaise/Lower/Mute` | volumen |
 | `XF86MonBrightnessUp/Down` | brillo |
 
@@ -323,6 +324,9 @@ docs/                      Hardware y testing
   muestra una miniatura del recorte (64 px) desde
   `~/.cache/dunst/last-screenshot.png`. No tiene anotaciones; flameshot
   sigue instalado para eso.
+- `Print` captura toda la pantalla y la copia al portapapeles, también con
+  miniatura en la notificación y sin dejar archivo. `Super+Print` mantiene el
+  menú de capturas.
 - El watcher de audio solo puede activar una salida a la vez (auriculares,
   HDMI o altavoces). Si el usuario elige un headset USB/Bluetooth, no lo
   pisa.

@@ -157,7 +157,8 @@ Criterios de aceptación:
 | `Super+Shift+{h,j,k,l}` | mover | Intercambia ventana |
 | `Super+{1-5}` | escritorios | Cambia escritorio |
 | `Super+r`, luego `h/j/k/l` | resize | Redimensiona; Escape sale |
-| `Print` / `Super+Print` | capturas | Abre menú y guarda en `~/Pictures/Screenshots` |
+| `Print` | captura completa | Copia al portapapeles y muestra miniatura |
+| `Super+Print` | menú de capturas | Abre el menú y permite guardar en `~/Pictures/Screenshots` |
 | `XF86Audio*` | volumen | pamixer |
 | `XF86MonBrightness*` | brillo | brightnessctl |
 
@@ -220,6 +221,15 @@ Criterios:
   que la línea magenta se ve.
   La notificación de “Región copiada al portapapeles” debe mostrar una
   miniatura del recorte desde `~/.cache/dunst/last-screenshot.png` (64 px).
+- Captura completa:
+  ```sh
+  # Pulsar Print
+  xclip -selection clipboard -t image/png -o > /tmp/full.png
+  file /tmp/full.png          # 1920x1080 o resolución actual
+  ```
+  Debe copiarse al portapapeles, mostrar miniatura en la notificación y no
+  dejar temporales en `/tmp/scrot.*`. `Super+Print` debe seguir abriendo el
+  menú de capturas.
 - En un PC sin HDMI/auriculares o en VM, el watcher no falla.
 
 Quirk ALC255 (solo ASUS FX504GE/ALC255):

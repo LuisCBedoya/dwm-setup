@@ -40,7 +40,7 @@ super + shift + e
     /usr/local/bin/desktop-safe logout
 
 Print
-    @SCREENSHOT@
+    @HOME@/.config/bspwm/scripts/screenshot_full.sh
 super + Print
     @SCREENSHOT@
 

@@ -25,6 +25,7 @@ verify_install() {
     "$home/.config/bspwm/scripts/keybindings_rofi.sh" \
     "$home/.config/bspwm/scripts/screenshot.sh" \
     "$home/.config/bspwm/scripts/screenshot_region.sh" \
+    "$home/.config/bspwm/scripts/screenshot_full.sh" \
     "$home/.config/bspwm/scripts/audio-switch.sh" \
     "$home/.config/bspwm/scripts/audio-watch.sh" \
     "$home/.config/sxhkd/sxhkdrc" \

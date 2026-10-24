@@ -1072,3 +1072,26 @@ así que no se puede pasar directamente a dunst. `max_icon_size` ya está en
 - `~/.cache/dunst/last-screenshot.png` conserva la última captura; se puede
   borrar sin afectar a la funcionalidad.
 - Sin paquetes nuevos.
+
+## ADR-042 — `Print` captura pantalla completa al portapapeles
+
+**Contexto:** `Print` y `Super+Print` abrían el mismo menú de capturas. El
+usuario quiere `Print` como atajo directo de pantalla completa al
+portapapeles, manteniendo `Super+Shift+s` para región y `Super+Print` para el
+menú.
+
+**Decisión:**
+1. Nuevo `screenshot_full.sh`: `scrot -q 100` a un temporal, `xclip` al
+   portapapeles, copia a `~/.cache/dunst/last-screenshot.png` y notificación
+   con miniatura de 64 px. Sin archivo permanente.
+2. `Print` ejecuta `screenshot_full.sh`.
+3. `Super+Print` sigue ejecutando el menú `screenshot.sh`.
+4. `Super+Shift+s` sigue usando `screenshot_region.sh`.
+5. `screenshot_full.sh` se añade a la instalación y a `verify_install`.
+
+**Consecuencias:**
+- `Print` es inmediato y no muestra menú.
+- La captura completa se pega desde el portapapeles; no se guarda en disco,
+  salvo la caché del icono.
+- `Super+Print` conserva las opciones de guardar, ventana y clipboard.
+- Sin paquetes nuevos.

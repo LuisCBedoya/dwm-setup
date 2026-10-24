@@ -1,0 +1,25 @@
+#!/bin/sh
+# screenshot_full — captura toda la pantalla y la copia al portapapeles.
+# No deja archivo: usa un directorio temporal que se borra al salir.
+
+set -u
+
+tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/scrot.XXXXXX") || exit 1
+trap 'rm -rf "$tmpdir"' 0 1 2 15
+tmp="$tmpdir/capture.png"
+
+if ! scrot -q 100 "$tmp"; then
+  exit 0
+fi
+
+if xclip -selection clipboard -t image/png -i "$tmp"; then
+  thumb="$HOME/.cache/dunst/last-screenshot.png"
+  mkdir -p "$HOME/.cache/dunst" 2>/dev/null || true
+  if cp "$tmp" "$thumb" 2>/dev/null; then
+    notify-send -i "$thumb" "Captura" "Pantalla completa copiada al portapapeles"
+  else
+    notify-send "Captura" "Pantalla completa copiada al portapapeles"
+  fi
+else
+  notify-send -u critical "Captura" "No se pudo copiar la pantalla"
+fi

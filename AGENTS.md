@@ -79,7 +79,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `Super+Shift+d` rofi run, `Super+Shift+p/b/v/i/a`, `Alt+Tab`, etc.). Las
     apps que no están en fase 1 se dejan como bindings no-op. `Super+r`
     seguido de `h/j/k/l` redimensiona mediante cadena de sxhkd; `Escape` sale.
-    No cambiar este mapa sin una decisión nueva.
+    `Print` captura pantalla completa al portapapeles; `Super+Print` abre el
+    menú de capturas. No cambiar este mapa sin una decisión nueva.
 19. **Audio portable.** El watcher elige auriculares > HDMI > altavoces
     detectando tarjetas/perfiles/puertos con `pactl`; no hardcodear
     `alsa_card.*`, nombres de monitor ni perfiles salvo como fallback
