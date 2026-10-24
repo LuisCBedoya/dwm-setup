@@ -159,7 +159,8 @@ del usuario:
 - Fuentes: `font-1 = 10`, `font-3 = 13`; logo en `font-0 = 11`.
 - Separación: `module-margin-left/right = 0`; `updates`/`polypomo` 1/1;
   padding 1 en `temp`, `memory`, `cpu`, `pipewire`, `battery` y `date`;
-  `network` 0; `cpu` añade `%{O8}` a la derecha; volumen y batería juntos.
+  `network` 0; `cpu` muestra `%` y añade `%{O8}` a la derecha; volumen y
+  batería juntos.
 - Con `UPDATES_FAKE_FILE=0` el módulo de actualizaciones desaparece y no
   muestra `# 0` (probado en vivo).
 - Polybar cargó 11 módulos sin errores; capturas `bar-design3.png`

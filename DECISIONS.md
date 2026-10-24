@@ -1213,8 +1213,8 @@ se conserven en el repo y que una reinstalación no los revierta.
    `font-0` (`%{T0}`) para conservar su tamaño.
 4. Logo StumbleUpon `U+F1A4` sin espacio final y `format-padding = 1`.
 5. Sin etiquetas `[T]`, `[M]` ni `[C]`.
-6. `cpu` usa `label = "... %percentage%%{O8}"` para 8 px extra a la
-   derecha.
+6. `cpu` usa `label = "... %percentage%%%{O8}"`: porcentaje con signo `%`
+   y 8 px extra a la derecha.
 7. `updates` al final: calavera `U+F4F9` + espacio + número, sin `#`;
    `updates`/`polypomo` con padding 1/1.
 8. Se elimina `dots` del repo, de `lib/polybar.sh`, de `lib/verify.sh`,
