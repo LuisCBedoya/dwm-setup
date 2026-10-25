@@ -1328,3 +1328,67 @@ variante B.
 - `palette-nord.sh` queda como alternativa.
 - Captura `bar-warm.png`.
 - Sin commit hasta autorización explícita.
+
+## ADR-051 — Servicios systemd en polybar
+
+**Contexto:** El usuario quiere ver cuántos servicios systemd están activos y
+poder iniciarlos, detenerlos o reiniciarlos desde la barra, con `dmenu` y
+soporte para otros menús.
+
+**Decisión:**
+1. Añadir el módulo `services` a la variante A y a la variante B, antes de
+   `battery`.
+2. El módulo ejecuta `services.sh --count` y muestra un engranaje y el
+   número de servicios en ejecución; `interval = 10`.
+3. `services.sh` es un script POSIX común:
+   - `--count` usa `systemctl list-units --type=service --state=running`.
+   - Sin argumentos muestra primero los servicios y su estado
+     `enabled/disabled/static`; al elegir uno consulta `systemctl is-active`.
+   - Servicio activo: ofrece detener y reiniciar.
+   - Servicio parado o fallido: ofrece iniciar y reiniciar.
+   - Usa `dmenu` y cae a `rofi -dmenu` si falta.
+   - No usa `sudo`; `systemctl` recurre a polkit.
+4. Añadir `dmenu` a los paquetes de escritorio.
+5. Verificar el script y los módulos A/B; el módulo se oculta si no hay
+   `systemctl`.
+
+**Consecuencias:**
+- La variante A pasa a 12 módulos y la B a 14.
+- El botón no abre nada hasta hacer clic; no se ejecutan acciones
+  automáticamente.
+- El script se puede probar con `SYSTEMCTL` y un menú simulados.
+
+## ADR-052 — Atajo para alternar variantes de polybar
+
+**Contexto:** El usuario quiere cambiar entre la variante A (`actual`) y la
+B (`referencia`) sin escribir el comando en una terminal.
+
+**Decisión:**
+1. `polybar-variant` acepta `actual`, `referencia` y `toggle`.
+2. `toggle` lee `~/.config/polybar/variant` y elige la contraria; si no
+   existe, pasa a `referencia`.
+3. `sxhkd` mapea `Super+Alt+P` a `polybar-variant toggle`.
+4. El atajo se documenta en `README.md`, `AGENTS.md`, `PROGRESS.md` y
+   `docs/testing.md`.
+
+**Consecuencias:**
+- Cambiar de barra es inmediato y conserva la variante elegida al reiniciar.
+- `Super+Alt+Q/R` siguen siendo de bspwm; `Super+Alt+P` no colisiona.
+
+## ADR-053 — Sincronización de ajustes manuales de las barras
+
+**Contexto:** El usuario ajustó manualmente la variante A y el orden de un
+módulo en la B; esos cambios estaban solo en `~/.config/polybar`.
+
+**Decisión:**
+1. Variante A: altura 20 y orden derecho
+   `updates services polypomo temp memory cpu network pipewire battery date`.
+2. Variante B: `services` pasa justo después de `izq`:
+   `izq services temp memory cpu network pipewire battery`.
+3. Las plantillas, la documentación y el render del instalador reflejan
+   esos valores.
+4. Se conservan los 12/14 módulos y el atajo `Super+Alt+P`.
+
+**Consecuencias:**
+- Reinstalar no vuelve a la altura 26 ni al orden anterior.
+- La barra viva y el repositorio quedan sincronizados.

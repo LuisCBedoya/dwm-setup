@@ -4,8 +4,16 @@ set -eu
 
 case "${1:-}" in
   actual|referencia) variant="$1" ;;
+  toggle)
+    current=$(cat "@HOME@/.config/polybar/variant" 2>/dev/null || true)
+    if [ "$current" = "referencia" ]; then
+      variant="actual"
+    else
+      variant="referencia"
+    fi
+    ;;
   *)
-    printf 'Uso: %s actual|referencia\n' "$0" >&2
+    printf 'Uso: %s actual|referencia|toggle\n' "$0" >&2
     exit 1
     ;;
 esac

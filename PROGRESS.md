@@ -15,8 +15,8 @@ ejecutable, picom arranque y la verificación final no falle.
 - Estado de validación real: **sesión viva validada**; falta la instalación
   desde cero en VM Debian 13 minimal.
 - Sesión: `startx` manual desde TTY; sin display manager ni auto-login.
-- Barra: 11 módulos, logo StumbleUpon, 5 workspaces, red unificada y sin
-  `dots`; `updates` al final.
+- Barra A: 12 módulos; B: 14 módulos. Logo StumbleUpon, 5 workspaces,
+  red unificada, servicios systemd y fecha al final.
 
 ## Validación viva (2026-10-24)
 
@@ -27,9 +27,9 @@ Procesos comprobados:
 
 - `bspwm 0.9.10`
 - `sxhkd 0.6.2`
-- `polybar 3.7.2` con **11 módulos**: `logo`, `bspwm`, `polypomo`,
-  `temp`, `memory`, `cpu`, `network`, `pipewire`, `battery`, `date`,
-  `updates`.
+- `polybar 3.7.2`; variante A con **12 módulos** y variante B con
+  **14 módulos**: `logo`, `bspwm`, `polypomo`, `temp`, `memory`, `cpu`,
+  `network`, `services`, `pipewire`, `battery`, `date`, `updates`.
 - `picom` 12.5 activo (config sin `glx-swap-method`).
 - `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock` activos.
 - `BAT1`, `ACAD`, `enp3s0`, `wlo1`, batería y volumen visibles en la barra.
@@ -40,6 +40,11 @@ Procesos comprobados:
 - `low_bat_notifier.sh` avisa al 10 % descargando y al 99 % cargando
   (`Charging`/`Full`), una vez por evento. Probado con batería simulada
   mediante `POWER_SUPPLY_DIR` y un `notify-send` falso.
+- `services.sh` cuenta los servicios systemd en ejecución y abre un menú
+  `dmenu`/`rofi` con los servicios y su estado `enabled/disabled/static`.
+  Al elegir uno consulta `systemctl is-active` y ofrece detener/reiniciar
+  si está activo, o iniciar/reiniciar si está parado. Probado con un
+  `systemctl` y un menú simulados; la variante B cargó 14 módulos.
 
 Comprobaciones:
 
@@ -58,7 +63,7 @@ Comprobaciones:
 Se adaptó `templates/sxhkd/sxhkdrc.in` a los atajos de i3 del usuario,
 manteniendo gaps 10, borde 2 y el wallpaper actual. El rediseño final
 redujo a 5 escritorios; los ajustes manuales posteriores retiraron `dots`
-y movieron `updates` al final:
+y movieron `updates` al inicio de la derecha:
 
 - Apps: `Super+Return` kitty, `Super+Shift+s` scrot región+portapapeles,
   `Super+Shift+p` pcmanfm, `Super+Shift+b` chromium, `Super+Shift+v`
@@ -71,7 +76,8 @@ y movieron `updates` al final:
   sale. Se retiró `Super+Alt+{flechas}`.
 - Se añadieron `Super+Shift+c` (reload), `Super+Shift+r` (restart),
   `Super+Shift+space` (floating), `Super+a` (parent) y `Super+b/v`
-  (split h/v por preselección).
+  (split h/v por preselección). `Super+Alt+p` alterna las variantes de
+  polybar.
 - Se mantienen los extras: Thunar, lock, rofi drun, capturas, flags y
   multimedia.
 - `Super+s/w/e` de i3 (stacking/tabbed/toggle split) no tienen equivalente
@@ -149,10 +155,10 @@ del usuario:
 - Logo StumbleUpon `U+F1A4` en `font-0` (`%{T0}`), padding 1 y sin espacio
   final.
 - Workspace enfocado con caja blanca, texto oscuro, font-1 y padding 1.
-- Orden derecha: `polypomo`, `temp`, `memory`, `cpu`, `network`,
-  `pipewire`, `battery`, `date`, `updates`.
-- `updates` al final muestra calavera `U+F4F9` + número, sin `#`; si N=0
-  no muestra nada.
+- Orden derecha: `updates`, `services`, `polypomo`, `temp`, `memory`,
+  `cpu`, `network`, `pipewire`, `battery`, `date`.
+- `updates` al inicio de la derecha muestra calavera `U+F4F9` + número,
+  sin `#`; si N=0 no muestra nada. `date` queda al final.
 - Sin etiquetas `[T]`, `[M]` ni `[C]`.
 - Red unificada: `󰖩 connected` si hay WiFi; si no, `󰈀 connected` si hay
   Ethernet; si no hay ninguna, nada. Sin `NoC` ni SSID; WiFi tiene
@@ -166,7 +172,7 @@ del usuario:
   batería juntos.
 - Con `UPDATES_FAKE_FILE=0` el módulo de actualizaciones desaparece y no
   muestra `# 0` (probado en vivo).
-- Polybar cargó 11 módulos sin errores; capturas `bar-design3.png`
+- Polybar cargó 12 módulos sin errores; capturas `bar-design3.png`
   (diseño inicial), `bar-spacing-final.png` (separación) y
   `bar-user-final.png` (barra final).
 
@@ -174,9 +180,9 @@ del usuario:
 
 Variante B compacta, ajustada manualmente por el usuario:
 
-- 13 módulos: `date`, `day`, `updates`, `polypomo` y `der` a la izquierda;
-  `bspwm` al centro; `izq`, `temp`, `memory`, `cpu`, `network`, `pipewire`
-  y `battery` a la derecha.
+- 14 módulos: `date`, `day`, `updates`, `polypomo` y `der` a la izquierda;
+  `bspwm` al centro; `izq`, `services`, `temp`, `memory`, `cpu`, `network`,
+  `pipewire` y `battery` a la derecha.
 - 5 workspaces con glifos Font Awesome (`//`), padding 0.
 - Barra de 18 px, transparente; fondos de módulos oscuros.
 - `temp` conserva `format-warn-background` en warning; las flechas usan
@@ -188,7 +194,7 @@ Variante B compacta, ajustada manualmente por el usuario:
 - Añadidos `date.ini` y `updates.ini` que faltaban; updates muestra el
   contador con el script de apt.
 - `polybar-variant referencia|actual` cambia y guarda la elección.
-- Polybar carga 11 módulos sin errores; captura `bar-variant-b.png`.
+- Polybar carga 14 módulos sin errores; captura `bar-variant-b.png`.
 - La variante A no se toca.
 
 ## Paleta global Warm Charcoal (2026-10-25)
@@ -263,7 +269,8 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
 
 - [x] Sesión viva en Debian 13 (host de referencia).
 - [x] `desktop-doctor` sin falsos `[FALTA]`.
-- [x] Barra con 11 módulos y sin placeholders.
+- [x] Barra A con 12 módulos y B con 14; sin placeholders.
+- [x] Servicios systemd en polybar con menú dmenu/rofi.
 - [x] Picom, dunst, lxpolkit, udiskie y xss-lock activos.
 - [x] `bspwmrc` ejecutable y `.xinitrc` sin kitty.
 - [x] Ownership de `~/.config`, `~/.local` y `~/.config-backup`.

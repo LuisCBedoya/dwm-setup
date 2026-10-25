@@ -1,0 +1,13 @@
+; services — servicios systemd en ejecución; clic para gestionarlos
+[module/services]
+type = custom/script
+exec = @HOME@/.config/polybar/scripts/services.sh --count
+interval = 10
+exec-if = command -v systemctl >/dev/null 2>&1
+format = <label>
+format-padding = 1
+format-background = ${colors.module-bg}
+format-font = 1
+format-foreground = ${colors.foreground}
+label = 󰒓 %output%
+click-left = @HOME@/.config/polybar/scripts/services.sh

@@ -11,18 +11,19 @@ con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 **i3lock/xss-lock**, PipeWire, cámara UVC y almacenamiento extraíble con
 notificación.
 
-La barra final es la de la config viva: **11 módulos**, logo StumbleUpon
-(`U+F1A4`), workspaces 1-5, actualizaciones con calavera + número al final,
-red unificada (`󰖩/󰈀 connected`, sin `NoC`), volumen, batería, fecha y sin
-`dots`. Sin `xkeyboard`, `wlan`/`eth` separados ni fuente `DesktopLogo`.
+La barra final es la de la config viva: **12 módulos**, logo StumbleUpon
+(`U+F1A4`), workspaces 1-5, actualizaciones al inicio de la derecha, fecha al final,
+red unificada (`󰖩/󰈀 connected`, sin `NoC`), servicios systemd, volumen,
+batería y fecha; sin `dots`. Sin `xkeyboard`, `wlan`/`eth` separados ni
+fuente `DesktopLogo`.
 Fuentes: `font-1` 10 y `font-3` 13; logo en `font-0`. Separación compacta:
 `module-margin-left/right = 0`; `updates`/`polypomo` con padding 1/1;
 volumen y batería juntos.
 
-Hay una **variante B "referencia"** instalada aparte: 13 módulos, 5
+Hay una **variante B "referencia"** instalada aparte: 14 módulos, 5
 workspaces como círculos al centro; a la izquierda `date`, `day`, `updates`,
-pomodoro y `der`; a la derecha `izq`, temperatura, RAM, CPU, red, volumen y
-batería. Barra transparente de 18 px, fuentes 10/13 y flechas del color del
+pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
+volumen y batería. Barra transparente de 18 px, fuentes 10/13 y flechas del color del
 bloque; temperatura conserva fondo en warning. Se cambia con
 `~/.config/polybar/polybar-variant referencia` o `... actual`.
 
@@ -92,7 +93,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
     apps que no están en fase 1 se dejan como bindings no-op. `Super+r`
     seguido de `h/j/k/l` redimensiona mediante cadena de sxhkd; `Escape` sale.
     `Print` captura pantalla completa al portapapeles; `Super+Print` abre el
-    menú de capturas. No cambiar este mapa sin una decisión nueva.
+    menú de capturas. `Super+Alt+p` alterna las variantes A/B de polybar. No
+    cambiar este mapa sin una decisión nueva.
 19. **Audio portable.** El watcher elige auriculares > HDMI > altavoces
     detectando tarjetas/perfiles/puertos con `pactl`; no hardcodear
     `alsa_card.*`, nombres de monitor ni perfiles salvo como fallback
@@ -178,8 +180,9 @@ desktop-doctor --camera
 ## Estado esperado al retomar
 
 - El código de fase 1b está implementado y los checks estáticos pasan.
-- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (11 módulos),
-  picom, dunst, lxpolkit, udiskie y xss-lock activos; `startx` manual.
+- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 12 /
+  B 14 módulos), picom, dunst, lxpolkit, udiskie y xss-lock activos;
+  `startx` manual.
 - Se corrigieron backups previos, ownership, `bspwmrc` 0755, picom,
   `desktop-doctor`, batería baja y polkit.
 - Audio: watcher auriculares > HDMI > altavoces, sonido de dunst y quirk

@@ -1,0 +1,107 @@
+#!/bin/sh
+# services.sh — cuenta servicios systemd y los gestiona desde polybar.
+# Con --count imprime el número de servicios en ejecución.
+# Sin argumentos muestra los servicios y, al elegir uno, las acciones válidas.
+
+SYSTEMCTL=${SYSTEMCTL:-systemctl}
+NOTIFY_SEND=${NOTIFY_SEND:-notify-send}
+
+notify() {
+  command -v "$NOTIFY_SEND" >/dev/null 2>&1 || return 0
+  "$NOTIFY_SEND" "$@" >/dev/null 2>&1 || true
+}
+
+menu() {
+  prompt=$1
+  if command -v dmenu >/dev/null 2>&1; then
+    dmenu -i -p "$prompt"
+  elif command -v rofi >/dev/null 2>&1; then
+    rofi -dmenu -i -p "$prompt"
+  else
+    notify -u critical "Servicios" "Falta dmenu o rofi"
+    return 1
+  fi
+}
+
+count_services() {
+  if ! command -v "$SYSTEMCTL" >/dev/null 2>&1; then
+    printf '0\n'
+    return 0
+  fi
+
+  "$SYSTEMCTL" list-units --type=service --state=running \
+    --no-legend --plain --no-pager 2>/dev/null |
+    awk 'NF { count++ } END { print count + 0 }'
+}
+
+list_services() {
+  "$SYSTEMCTL" list-unit-files --type=service \
+    --no-legend --plain --no-pager 2>/dev/null |
+    awk 'NF >= 2 { print $1 "\t" $2 }'
+}
+
+interactive() {
+  if ! command -v "$SYSTEMCTL" >/dev/null 2>&1; then
+    notify -u critical "Servicios" "systemctl no está disponible"
+    exit 1
+  fi
+
+  services=$(list_services)
+  if [ -z "$services" ]; then
+    notify "Servicios" "No se encontraron servicios"
+    exit 0
+  fi
+
+  selected=$(printf '%s\n' "$services" | menu "Servicio")
+  [ -n "$selected" ] || exit 0
+
+  unit=$(printf '%s\n' "$selected" | cut -f1)
+  [ -n "$unit" ] || exit 0
+
+  active=$("$SYSTEMCTL" is-active "$unit" 2>/dev/null || true)
+
+  if [ "$active" = "active" ]; then
+    action=$(printf '%s\n' \
+      "Detener servicio" \
+      "Reiniciar servicio" | menu "Acción")
+  else
+    action=$(printf '%s\n' \
+      "Iniciar servicio" \
+      "Reiniciar servicio" | menu "Acción")
+  fi
+  [ -n "$action" ] || exit 0
+
+  case "$action" in
+    "Iniciar servicio")
+      verb=start
+      ;;
+    "Detener servicio")
+      verb=stop
+      ;;
+    "Reiniciar servicio")
+      verb=restart
+      ;;
+    *)
+      exit 0
+      ;;
+  esac
+
+  if "$SYSTEMCTL" "$verb" "$unit" >/dev/null 2>&1; then
+    notify "Servicios" "$unit: $verb correcto"
+  else
+    notify -u critical "Servicios" "No se pudo $verb $unit"
+  fi
+}
+
+case "${1:-}" in
+  --count)
+    count_services
+    ;;
+  "")
+    interactive
+    ;;
+  *)
+    printf 'Uso: %s [--count]\n' "$0" >&2
+    exit 2
+    ;;
+esac

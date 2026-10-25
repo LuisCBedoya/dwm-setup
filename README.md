@@ -19,11 +19,13 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
-- **polybar** con **11 módulos**: logo StumbleUpon, workspaces 1-5,
+- **polybar** con **12 módulos**: logo StumbleUpon, workspaces 1-5,
   pomodoro, temperatura, RAM, CPU, red unificada
-  (`󰖩/󰈀 connected`, sin `NoC`), volumen, batería, fecha y actualizaciones
-  (calavera + número). `font-1` 10 y `font-3` 13; logo en `font-0`.
-- **picom**, **dunst**, **rofi**, **kitty**, **flameshot**.
+  (`󰖩/󰈀 connected`, sin `NoC`), servicios systemd, volumen, batería, fecha
+  y actualizaciones (calavera + número). `font-1` 10 y `font-3` 13; logo en
+  `font-0`.
+- **picom**, **dunst**, **rofi** (y **dmenu** para el módulo de servicios),
+  **kitty**, **flameshot**.
 - Bloqueo con **i3lock** + **xss-lock**.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
 - PipeWire + WirePlumber + ALSA + pavucontrol.
@@ -243,6 +245,7 @@ Si algo falla:
 | `Super+Shift+e` | salir (desktop-safe logout) |
 | `Super+Shift+c` | recargar sxhkd y bspwm |
 | `Super+Shift+r` | reiniciar bspwm |
+| `Super+Alt+P` | alternar variante de polybar A/B |
 | `Super+Shift+space` | alternar floating |
 | `Super+Shift+q` | cerrar ventana |
 | `Super+a` | enfocar contenedor padre |
@@ -260,30 +263,36 @@ Si algo falla:
 | `XF86AudioRaise/Lower/Mute` | volumen |
 | `XF86MonBrightnessUp/Down` | brillo |
 
-`Super` es la tecla Windows. La barra muestra 11 módulos (logo StumbleUpon,
-workspaces 1-5, pomodoro, temperatura, RAM, CPU, red, volumen, batería,
-fecha y actualizaciones). La red muestra un solo `󰖩 connected` o
+`Super` es la tecla Windows. La barra muestra 12 módulos (logo StumbleUpon,
+workspaces 1-5, pomodoro, temperatura, RAM, CPU, red, servicios, volumen,
+batería, fecha y actualizaciones). La red muestra un solo `󰖩 connected` o
 `󰈀 connected` según la conexión activa; si no hay ninguna, no muestra nada.
-Las actualizaciones muestran calavera + número y se ocultan si N=0.
+Las actualizaciones muestran calavera + número y se ocultan si N=0. El módulo
+de servicios muestra un engranaje y el número de servicios systemd activos;
+al hacer clic abre un menú para iniciarlos, detenerlos o reiniciarlos.
 
 ### Variantes de polybar
 
 Hay dos barras instaladas:
 
-- **actual**: la barra compacta de 11 módulos (logo, workspaces 1-5,
-  pomodoro, temperatura, RAM, CPU, red, volumen, batería, fecha y updates).
-- **referencia**: variante compacta de 11 módulos. Workspaces como
-  círculos a la izquierda; a la derecha `izq`, pomodoro, temperatura, RAM,
-  CPU, red, volumen, batería, fecha y updates. Barra transparente, altura
-  26, fuentes 10/13 como la variante A, iconos JBM y círculos Font Awesome. El fondo de los módulos de la
-  derecha es oscuro semitransparente.
+- **actual**: la barra compacta de 12 módulos (logo, workspaces 1-5,
+  updates, servicios, pomodoro, temperatura, RAM, CPU, red, volumen,
+  batería y fecha).
+- **referencia**: variante de 14 módulos. Workspaces como círculos al
+  centro; a la izquierda `date`, `day`, `updates`, pomodoro y `der`; a la
+  derecha `izq`, servicios, temperatura, RAM, CPU, red, volumen y batería.
+  Barra transparente de 18 px, fuentes 10/13, iconos JBM y círculos Font
+  Awesome. El fondo de los módulos de la derecha es oscuro semitransparente.
 
 Cambiar de variante:
 
 ```sh
 ~/.config/polybar/polybar-variant actual
 ~/.config/polybar/polybar-variant referencia
+~/.config/polybar/polybar-variant toggle
 ```
+
+También se puede alternar con **`Super+Alt+P`**.
 
 La variante se guarda en `~/.config/polybar/variant` y `launch.sh` arranca
 la elegida al iniciar sesión.

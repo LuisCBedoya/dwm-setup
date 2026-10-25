@@ -17,6 +17,12 @@ verify_install() {
     fi
   done
 
+  if cmd_exists dmenu; then
+    debug "ok: dmenu"
+  else
+    info "dmenu no instalado; services.sh usará rofi -dmenu"
+  fi
+
   for path in \
     "$home/.config/bspwm/bspwmrc" \
     "$home/.config/bspwm/scripts/autostart" \
@@ -39,12 +45,14 @@ verify_install() {
     "$home/.config/polybar/modules/memory.ini" \
     "$home/.config/polybar/modules/cpu.ini" \
     "$home/.config/polybar/modules/network.ini" \
+    "$home/.config/polybar/modules/services.ini" \
     "$home/.config/polybar/modules/battery.ini" \
     "$home/.config/polybar/modules/pipewire.ini" \
     "$home/.config/polybar/modules/date.ini" \
     "$home/.config/polybar/scripts/updates-apt.sh" \
     "$home/.config/polybar/scripts/polypomo" \
     "$home/.config/polybar/scripts/network-status.sh" \
+    "$home/.config/polybar/scripts/services.sh" \
     "$home/.config/polybar/polybar-variant" \
     "$home/.config/polybar/variants/reference/config.ini" \
     "$home/.config/polybar/variants/reference/scripts/network-status.sh" \
@@ -63,6 +71,7 @@ verify_install() {
     "$home/.config/polybar/variants/reference/modules/temp.ini" \
     "$home/.config/polybar/variants/reference/modules/pipewire.ini" \
     "$home/.config/polybar/variants/reference/modules/network.ini" \
+    "$home/.config/polybar/variants/reference/modules/services.ini" \
     "$home/.config/polybar/variants/reference/modules/memory.ini" \
     "$home/.config/polybar/variants/reference/modules/cpu.ini" \
     "$home/.config/polybar/variants/reference/modules/xkeyboard.ini" \

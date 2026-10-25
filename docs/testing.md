@@ -69,8 +69,8 @@ grep -n 'glx-swap-method' ~/.config/picom/picom.conf && echo "MAL"
 grep -n 'icon-theme\|icon_theme' ~/.config/rofi/powermenu.rasi ~/.config/dunst/dunstrc
 ```
 
-Resultado esperado: sin placeholders, sin ficheros de root, 11 módulos,
-sin `glx-swap-method`, iconos Adwaita.
+Resultado esperado: sin placeholders, sin ficheros de root, 12 módulos en A
+y 14 en B, sin `glx-swap-method`, iconos Adwaita.
 
 ## 4. Validación en vivo (2026-10-24)
 
@@ -79,15 +79,16 @@ Host: Debian 13, kernel 6.12, Xorg 1920x1080, Intel UHD 630 + NVIDIA GTX
 
 Comprobado:
 
-- `bspwm 0.9.10`, `sxhkd 0.6.2`, `polybar 3.7.2` (11 módulos), `picom 12.5`,
-  `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock`.
+- `bspwm 0.9.10`, `sxhkd 0.6.2`, `polybar 3.7.2` (A 12 / B 14 módulos),
+  `picom 12.5`, `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock`.
 - Barra: logo StumbleUpon, workspaces 1-5, `25:00`, temperatura, RAM,
-  CPU, red `󰈀 connected`, volumen, batería `BAT1`, fecha y updates
-  (calavera + número) al final.
+  CPU, red `󰈀 connected`, servicios, volumen, batería `BAT1`, fecha;
+  updates (calavera + número) al inicio de la derecha.
 - Barra final: 5 workspaces, caja blanca en el enfocado, logo StumbleUpon
-  en `font-0`, `updates` al final con calavera + número, sin `[T]/[M]/[C]`,
+  en `font-0`, `updates` al inicio de la derecha con calavera + número,
+  sin `[T]/[M]/[C]`,
   red unificada, sin `dots` y sin `xkeyboard` ni `wlan`/`eth` separados
-  en la variante A. `font-1` 10 y `font-3` 13. Polybar carga 11 módulos
+  en la variante A. `font-1` 10 y `font-3` 13. Polybar carga 12 módulos
   sin errores.
 - Red: con WiFi down y Ethernet up solo `󰈀 connected` (sin `NoC`);
   `NETWORK_FAKE=wifi` muestra solo `󰖩 connected`; `NETWORK_FAKE=none` no
@@ -96,12 +97,11 @@ Comprobado:
   con padding 1/1; `cpu` con `%{O8}` a la derecha; volumen y batería con
   padding 1. Con `UPDATES_FAKE_FILE=0` el módulo `updates` desaparece y no
   muestra `# 0`; capturas `bar-spacing-final.png` y `bar-user-final.png`.
-- Variante B "referencia": 11 módulos, 5 círculos a la izquierda y a la
-  derecha `izq`, pomodoro, temperatura, RAM, CPU, red, volumen, batería,
-  fecha y updates. Barra de 20 px transparente, fuentes 9/10 y fondos
-  derechos oscuros. Cambia con
-  `~/.config/polybar/polybar-variant referencia`; captura
-  `bar-variant-b.png`. Polybar carga 11 módulos sin errores.
+- Variante B "referencia": 14 módulos, 5 círculos a la izquierda y a la
+  derecha `izq`, servicios, pomodoro, temperatura, RAM, CPU, red, volumen y
+  batería. Barra de 18 px transparente, fuentes 10/13 y fondos derechos
+  oscuros. Cambia con `~/.config/polybar/polybar-variant referencia`;
+  captura `bar-variant-b.png`. Polybar carga 14 módulos sin errores.
 - `polybar-variant actual` vuelve a la variante A y conserva su estilo.
 - `bspwmrc` y `.xinitrc` ejecutables; `.xinitrc` sin `kitty`.
 - Sin placeholders y sin ficheros root en `~/.config`.
@@ -115,6 +115,27 @@ Comprobado:
   `image/png`, sin temporales y con notificación de dunst.
 - `Super+Shift+d` abre `rofi -show run`; `Super+d` sigue abriendo
   `rofi -show drun`.
+- `polybar-variant toggle` probado: cambia B → A y A → B; sxhkd recargado
+  con el binding `Super+Alt+p`.
+
+### Servicios systemd (2026-10-25)
+
+`services.sh` se probó con un `systemctl` y un `dmenu` simulados para no
+tocar servicios reales:
+
+- `services.sh --count` devuelve el número de servicios en ejecución.
+- El primer menú muestra los servicios con `enabled`, `disabled` o
+  `static`, como `systemctl list-unit-files`.
+- Al elegir un servicio se consulta `systemctl is-active`.
+- Servicio activo: el menú ofrece solo detener y reiniciar.
+- Servicio parado o fallido: ofrece solo iniciar y reiniciar.
+- Seleccionar `cups.service` + detener ejecuta `systemctl stop cups.service`.
+- Seleccionar `cups.service` + reiniciar ejecuta
+  `systemctl restart cups.service`.
+- Seleccionar `test.service` + iniciar ejecuta `systemctl start test.service`.
+- No se ejecutan acciones sin seleccionarlas.
+- En la sesión viva, sin `dmenu`, el script cae a `rofi -dmenu`. El
+  instalador añade `dmenu` como paquete de escritorio.
 
 ### Notificador de batería (2026-10-25)
 
@@ -165,7 +186,7 @@ Criterios de aceptación:
 - No hay placeholders ni ficheros root en el home.
 - Tras `startx`, bspwm, sxhkd, polybar, picom, dunst, lxpolkit, udiskie y
   xss-lock están activos.
-- La barra muestra los módulos disponibles (11 en el host de referencia).
+- La barra muestra los módulos disponibles (12 en A y 14 en B).
 - `desktop-doctor` no reporta fallos.
 - El segundo backup contiene las configs anteriores.
 
@@ -187,6 +208,7 @@ Criterios de aceptación:
 | `Super+Shift+e` | logout | Cierra la sesión |
 | `Super+Shift+c` | reload | Recarga sxhkd/bspwm |
 | `Super+Shift+r` | restart | Reinicia bspwm |
+| `Super+Alt+p` | variante polybar | Alterna A/B |
 | `Super+Shift+space` | floating | Alterna flotante |
 | `Super+a` | parent | Enfoca contenedor padre |
 | `Super+b` / `Super+v` | split h/v | Preselección para la próxima ventana |

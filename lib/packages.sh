@@ -43,7 +43,7 @@ STORAGE_PKGS=(
 # bspwm + sxhkd + polybar + resto del escritorio
 DESKTOP_PKGS=(
   bspwm sxhkd polybar
-  picom dunst rofi feh kitty flameshot i3lock xss-lock
+  picom dunst rofi dmenu feh kitty flameshot i3lock xss-lock
   brightnessctl xclip thunar
   xwallpaper playerctl
   bluez redshift

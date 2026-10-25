@@ -49,6 +49,9 @@ super + alt + q
     bspc quit
 super + alt + r
     bspc wm -r
+# Alternar variante de polybar (A/B)
+super + alt + p
+    @HOME@/.config/polybar/polybar-variant toggle
 super + shift + c
     pkill -USR1 -x sxhkd; bspc wm -r
 super + shift + r
