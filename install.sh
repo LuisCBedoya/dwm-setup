@@ -35,6 +35,8 @@ source "$PROJECT_ROOT/lib/dunst.sh"
 source "$PROJECT_ROOT/lib/rofi.sh"
 # shellcheck source=lib/kitty.sh
 source "$PROJECT_ROOT/lib/kitty.sh"
+# shellcheck source=lib/zsh.sh
+source "$PROJECT_ROOT/lib/zsh.sh"
 # shellcheck source=lib/config.sh
 source "$PROJECT_ROOT/lib/config.sh"
 # shellcheck source=lib/verify.sh
@@ -149,6 +151,7 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/dunst.sh"
     "$PROJECT_ROOT/lib/rofi.sh"
     "$PROJECT_ROOT/lib/kitty.sh"
+    "$PROJECT_ROOT/lib/zsh.sh"
     "$PROJECT_ROOT/lib/config.sh"
     "$PROJECT_ROOT/lib/verify.sh"
     "$PROJECT_ROOT/lib/theme.sh"
@@ -222,6 +225,9 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/dunst/notification-sound.sh.in"
     "$PROJECT_ROOT/templates/rofi/powermenu.rasi.in"
     "$PROJECT_ROOT/templates/kitty/kitty.conf.in"
+    "$PROJECT_ROOT/templates/zsh/zshrc.in"
+    "$PROJECT_ROOT/templates/lsd/config.yml"
+    "$PROJECT_ROOT/templates/lsd/icons.yaml"
     "$PROJECT_ROOT/templates/modprobe/alsa-fx504.conf"
     "$PROJECT_ROOT/assets/wallpaper.jpg"
   )
@@ -352,6 +358,7 @@ main() {
   install_dunst
   install_rofi
   install_kitty
+  install_zsh
   install_user_configs
 
   if ! dry_run; then

@@ -46,6 +46,7 @@ DESKTOP_PKGS=(
   dunst rofi dmenu feh kitty flameshot i3lock xss-lock
   brightnessctl xclip thunar
   xwallpaper playerctl
+  zsh zsh-autosuggestions lsd
   bluez redshift
   scrot imagemagick
   lm-sensors upower acpi
@@ -676,6 +677,7 @@ install_packages() {
   local required_pkgs=(
     bspwm sxhkd polybar kitty dunst rofi feh xwallpaper
     udiskie brightnessctl xclip thunar playerctl flameshot i3lock xss-lock
+    zsh zsh-autosuggestions lsd
     libnotify-bin gir1.2-notify-0.7 lm-sensors upower acpi
     fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji fonts-noto-cjk
     adwaita-icon-theme hicolor-icon-theme desktop-file-utils shared-mime-info

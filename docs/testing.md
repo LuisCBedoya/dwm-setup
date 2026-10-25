@@ -122,6 +122,15 @@ Comprobado:
 - `polybar-variant cycle` probado: A arriba → A abajo → B arriba →
   B abajo; sxhkd recargado con el binding `Super+Alt+p`.
 
+### Zsh, Oh My Zsh y lsd (2026-10-25)
+
+- `zsh`, `zsh-autosuggestions` y `lsd` se instalan desde apt.
+- Si no existe `~/.oh-my-zsh`, se clona desde el repositorio oficial.
+- `.zshrc` conserva keybindings, opciones, aliases y autosuggestions.
+- `lsd` usa `~/.config/lsd/config.yml` e `icons.yaml`.
+- La shell de login del usuario queda en `/usr/bin/zsh`.
+- `kitty` arranca zsh, con Nord y `font_size 13`.
+
 ### Red y WiFi (2026-10-25)
 
 - `NETWORK_FAKE=both` muestra Ethernet aunque WiFi esté activo.

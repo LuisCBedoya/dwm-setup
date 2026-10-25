@@ -250,6 +250,8 @@ backup_existing_configs() {
   backup_user_path "$home/.config/dunst"
   backup_user_path "$home/.config/rofi"
   backup_user_path "$home/.config/kitty"
+  backup_user_path "$home/.zshrc"
+  backup_user_path "$home/.config/lsd"
   backup_user_path "$home/.xinitrc"
   backup_user_path "$home/.local/share/wallpapers/rocky.jpg"
 }
@@ -311,6 +313,8 @@ chown_managed_paths() {
     "$TARGET_HOME/.config/dunst" \
     "$TARGET_HOME/.config/rofi" \
     "$TARGET_HOME/.config/kitty" \
+    "$TARGET_HOME/.config/lsd" \
+    "$TARGET_HOME/.zshrc" \
     "$TARGET_HOME/.local/share/wallpapers" \
     "$TARGET_HOME/.local/share/xorg" \
     "$TARGET_HOME/.local/state/dwm-setup" \

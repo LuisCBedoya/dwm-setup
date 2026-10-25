@@ -7,7 +7,7 @@ proyecto. Leer primero `README.md`, `PROGRESS.md` y `DECISIONS.md`.
 
 Instalador reproducible de un escritorio mínimo para **Debian 13 (trixie)**
 con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
-**polybar**, **dunst**, **rofi**, **kitty**, **flameshot**,
+**polybar**, **dunst**, **rofi**, **kitty**, **flameshot**, **zsh/Oh My Zsh**, **lsd**,
 **i3lock/xss-lock**, PipeWire, cámara UVC y almacenamiento extraíble con
 notificación.
 
@@ -129,6 +129,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/dunst.sh` | dunstrc |
 | `lib/rofi.sh` | powermenu.rasi |
 | `lib/kitty.sh` | kitty.conf |
+| `lib/zsh.sh` | zsh, Oh My Zsh y lsd |
 | `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paleta Warm Charcoal y render de plantillas |
@@ -141,6 +142,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/dunst/` | dunstrc y notification-sound.sh |
 | `templates/rofi/` | powermenu.rasi |
 | `templates/kitty/` | kitty.conf |
+| `templates/zsh/` | zshrc |
+| `templates/lsd/` | config.yml e icons.yaml |
 | `templates/modprobe/` | alsa-fx504.conf (quirk ALC255) |
 | `templates/colors/` | `palette-warm.sh`, `palette-nord.sh` y helpers |
 | `assets/wallpaper.jpg` | Wallpaper |

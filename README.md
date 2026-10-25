@@ -26,7 +26,8 @@ Incluido:
   y actualizaciones (calavera + número). `font-1` 10 y `font-3` 13; logo en
   `font-0`.
 - **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**,
-  **flameshot**. Sin compositor; B usa pseudo-transparencia de polybar.
+  **flameshot**. Shell **zsh** con Oh My Zsh/agnoster, autosuggestions y
+  **lsd**. Sin compositor; B usa pseudo-transparencia de polybar.
 - Bloqueo con **i3lock** + **xss-lock**.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
 - PipeWire + WirePlumber + ALSA + pavucontrol.
@@ -330,6 +331,7 @@ lib/polybar.sh             polybar config/modules/scripts/launch
 lib/dunst.sh               dunstrc
 lib/rofi.sh                rofi powermenu
 lib/kitty.sh               kitty.conf
+lib/zsh.sh                 zsh, Oh My Zsh y lsd
 lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/verify.sh              Verificación estática final
 lib/theme.sh               Paleta Warm Charcoal y render
@@ -342,6 +344,8 @@ templates/polybar/         config.ini.in, modules/, scripts/ y variants/
 templates/dunst/           dunstrc.in, notification-sound.sh.in
 templates/rofi/            powermenu.rasi.in
 templates/kitty/           kitty.conf.in
+templates/zsh/             zshrc.in
+templates/lsd/             config.yml e icons.yaml
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
 templates/colors/          palette-warm.sh y palette-nord.sh
 assets/wallpaper.jpg       Wallpaper

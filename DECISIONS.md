@@ -1574,3 +1574,23 @@ prueba posterior en VM y a autorización explícita.
 **Consecuencias:**
 - La instalación prioriza estabilidad y reproducibilidad.
 - Ninguna limpieza de paquetes se ejecuta automáticamente.
+
+## ADR-064 — Reproducir zsh, Oh My Zsh y lsd
+
+**Contexto:** El usuario quiere que una instalación limpia incluya su shell
+zsh, Oh My Zsh con agnoster, zsh-autosuggestions, sus keybindings y lsd con
+sus iconos personalizados.
+
+**Decisión:**
+1. Instalar `zsh`, `zsh-autosuggestions` y `lsd`.
+2. Clonar Oh My Zsh en `~/.oh-my-zsh` si no existe.
+3. Instalar una `.zshrc` renderizada con keybindings, opciones, aliases y
+   autosuggestions.
+4. Instalar `~/.config/lsd/config.yml` e `icons.yaml`.
+5. Cambiar la shell del usuario a `/usr/bin/zsh`.
+6. Sincronizar kitty con Nord, `font_size 13` y `shell /usr/bin/zsh`.
+
+**Consecuencias:**
+- Una instalación limpia reproduce el entorno zsh/lsd actual.
+- Oh My Zsh requiere red la primera vez.
+- No se sobrescribe `~/.oh-my-zsh` si ya existe.

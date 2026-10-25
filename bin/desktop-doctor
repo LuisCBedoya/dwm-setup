@@ -47,7 +47,7 @@ check_exec() {
 print_header "Binarios esenciales"
 for c in bspwm sxhkd polybar dunst rofi kitty feh flameshot i3lock xss-lock \
          brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pamixer wpctl \
-         xwallpaper playerctl lxpolkit; do
+         xwallpaper playerctl lxpolkit zsh lsd; do
   check_cmd "$c"
 done
 
@@ -62,6 +62,9 @@ check_file "$CONFIG/polybar/launch.sh"
 check_file "$CONFIG/dunst/dunstrc"
 check_file "$CONFIG/rofi/powermenu.rasi"
 check_file "$CONFIG/kitty/kitty.conf"
+check_file "$HOME/.zshrc"
+check_file "$CONFIG/lsd/config.yml"
+check_file "$CONFIG/lsd/icons.yaml"
 check_file "$HOME/.xinitrc"
 check_file "$HOME/.local/share/wallpapers/rocky.jpg"
 check_dir "$HOME/Pictures/Screenshots"

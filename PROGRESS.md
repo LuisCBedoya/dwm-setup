@@ -75,6 +75,13 @@ servicios: `redshift`, `ssh`, `bluez`, `playerctl`, `acpi`,
 mantienen. Solo se sincronizaron formatos seguros de los scripts de red y
 volumen.
 
+## Shell zsh y lsd (2026-10-25)
+
+Se añadió al instalador `zsh`, `zsh-autosuggestions`, `lsd`, Oh My Zsh con
+agnoster y la configuración de lsd. La `.zshrc` conserva keybindings,
+opciones, aliases y autosuggestions. La shell de login se cambia a
+`/usr/bin/zsh`; kitty usa Nord, `font_size 13` y zsh.
+
 ## Mapa de atajos i3 (2026-10-24)
 
 Se adaptó `templates/sxhkd/sxhkdrc.in` a los atajos de i3 del usuario,

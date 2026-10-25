@@ -1,11 +1,11 @@
 # kitty.conf — generado desde template
-# Paleta: @THEME_NAME@ (Warm Charcoal)
+# Paleta: Nord
 
 font_family      @FONT@
 bold_font        auto
 italic_font      auto
 bold_italic_font auto
-font_size        @FONT_SIZE@
+font_size        13
 
 # UI
 window_padding_width    10
@@ -25,60 +25,60 @@ tab_powerline_style     slanted
 tab_activity_symbol     ●
 tab_inactive_text_alpha 0.5
 
-# Colorscheme Warm Charcoal
+# Colorscheme Nord
 # Polar Night
-background              @COLOR_BG@
+background              #18181a
 background_opacity      1.0
 dynamic_background_opacity no
-foreground              @COLOR_FG@
-selection_background    @COLOR_BG_ELEV@
-selection_foreground    @COLOR_FG@
+foreground              #d8d3cc
+selection_background    #2a2a2c
+selection_foreground    #d8d3cc
 
 # Cursor
-cursor                  @COLOR_ACCENT@
-cursor_text_color       @COLOR_BG@
+cursor                  #b9a99a
+cursor_text_color       #18181a
 
 # URL
-url_color               @COLOR_ACCENT_ALT@
+url_color               #8fa6b4
 
 # Tabs
-active_tab_background   @COLOR_ACCENT@
-active_tab_foreground   @COLOR_BG@
-inactive_tab_background @COLOR_BG_ALT@
-inactive_tab_foreground @COLOR_FG_MUTED@
-tab_bar_background      @COLOR_BG@
+active_tab_background   #b9a99a
+active_tab_foreground   #18181a
+inactive_tab_background #202022
+inactive_tab_foreground #8e8a85
+tab_bar_background      #18181a
 
 # Border
-window_border_color     @COLOR_BORDER@
-active_border_color     @COLOR_ACCENT@
-inactive_border_color   @COLOR_BG_ALT@
-bell_border_color       @COLOR_YELLOW@
+window_border_color     #3a3a3e
+active_border_color     #b9a99a
+inactive_border_color   #202022
+bell_border_color       #c9b18c
 
-# ANSI colors (Warm Charcoal)
+# ANSI colors (Nord)
 # Black
-color0  @COLOR_BG@
-color8  @COLOR_FG_MUTED@
+color0  #18181a
+color8  #8e8a85
 # Red
-color1  @COLOR_RED@
-color9  @COLOR_RED@
+color1  #c97a6d
+color9  #c97a6d
 # Green
-color2  @COLOR_GREEN@
-color10 @COLOR_GREEN@
+color2  #a8bfae
+color10 #a8bfae
 # Yellow
-color3  @COLOR_YELLOW@
-color11 @COLOR_YELLOW@
+color3  #c9b18c
+color11 #c9b18c
 # Blue
-color4  @COLOR_BLUE@
-color12 @COLOR_BLUE@
+color4  #8fa6b4
+color12 #8fa6b4
 # Magenta
-color5  @COLOR_PURPLE@
-color13 @COLOR_PURPLE@
+color5  #a99bb0
+color13 #a99bb0
 # Cyan
-color6  @COLOR_CYAN@
-color14 @COLOR_CYAN@
+color6  #8fa6b4
+color14 #8fa6b4
 # White
-color7  @COLOR_FG@
-color15 @COLOR_FG@
+color7  #d8d3cc
+color15 #d8d3cc
 
 # Scrollback
 scrollback_lines        10000
@@ -100,7 +100,8 @@ map kitty_mod+up    move_window_up
 map kitty_mod+down  move_window_down
 
 # Startup
-shell_integration     no-curse
+shell_integration     no-cursor
+shell /usr/bin/zsh
 wayland_titlebar_color system
 
 # Performance

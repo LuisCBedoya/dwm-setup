@@ -8,7 +8,8 @@ verify_install() {
   local path module line
 
   for cmd in bspwm sxhkd polybar dunst rofi feh kitty flameshot i3lock xss-lock \
-    brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl; do
+    brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl \
+    zsh lsd; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
@@ -21,6 +22,13 @@ verify_install() {
     debug "ok: dmenu"
   else
     info "dmenu no instalado; services.sh usará rofi -dmenu"
+  fi
+
+  if [[ "$(getent passwd "$TARGET_USER" 2>/dev/null | cut -d: -f7)" == "/usr/bin/zsh" ]]; then
+    debug "ok: shell zsh para $TARGET_USER"
+  else
+    error "La shell de $TARGET_USER no es /usr/bin/zsh"
+    failures=$((failures + 1))
   fi
 
   for path in \
@@ -83,6 +91,11 @@ verify_install() {
     "$home/.config/dunst/dunstrc" \
     "$home/.config/rofi/powermenu.rasi" \
     "$home/.config/kitty/kitty.conf" \
+    "$home/.zshrc" \
+    "$home/.config/lsd/config.yml" \
+    "$home/.config/lsd/icons.yaml" \
+    "$home/.oh-my-zsh/oh-my-zsh.sh" \
+    "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
     "$home/.config/dunst/scripts/notification-sound.sh" \
     "$home/.xinitrc" \
     "$home/.local/share/wallpapers/rocky.jpg" \
