@@ -83,7 +83,7 @@ render_polybar_templates() {
       "$home/.config/polybar/$m" 0644 "${common_vars[@]}"
   done
 
-  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/services.sh" "scripts/volume.sh")
+  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/network-menu.sh" "scripts/services.sh" "scripts/volume.sh")
   local s
   for s in "${scripts[@]}"; do
     render_theme_template "$PROJECT_ROOT/templates/polybar/$s.in" \

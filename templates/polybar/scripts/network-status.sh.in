@@ -1,6 +1,6 @@
 #!/bin/sh
-# network-status.sh — un solo indicador de red (WiFi > Ethernet)
-# Sin conexión no imprime nada; nunca muestra NoC ni el SSID.
+# network-status.sh — un solo indicador de red (Ethernet > WiFi)
+# Sin conexión muestra NoC; nunca muestra el SSID.
 # NETWORK_FAKE=wifi|eth|none permite probar los tres estados sin tocar la red.
 
 LC_ALL=C
@@ -28,15 +28,16 @@ if [ "$eth" -eq 0 ] && [ -n "@ETH_IFACE@" ] && [ -r "/sys/class/net/@ETH_IFACE@/
 fi
 
 case ${NETWORK_FAKE:-} in
-  wifi) wifi=1 ;;
+  wifi) wifi=1; eth=0 ;;
   eth) wifi=0; eth=1 ;;
+  both) wifi=1; eth=1 ;;
   none) wifi=0; eth=0 ;;
 esac
 
-if [ "$wifi" -eq 1 ]; then
-  printf '%%{T1}󰖩%%{T-} connected\n'
-elif [ "$eth" -eq 1 ]; then
+if [ "$eth" -eq 1 ]; then
   printf '%%{T1}󰈀%%{T-} connected\n'
+elif [ "$wifi" -eq 1 ]; then
+  printf '%%{T1}󰖩%%{T-} connected\n'
 else
-  printf '\n'
+  printf '%%{T1}󰖩%%{T-} NoC\n'
 fi

@@ -37,7 +37,7 @@ Procesos comprobados:
   Las críticas se cierran a los 10 s. Volumen máximo 120 % en pasos de 10.
 - `BAT1`, `ACAD`, `enp3s0`, `wlo1`, batería y volumen visibles en la barra.
   La red es un solo módulo: con WiFi down y Ethernet up muestra `󰈀 connected`;
-  no muestra `NoC`. El layout `latam` se aplica con `setxkbmap` pero ya no
+  sin conexión muestra `󰖩 NoC`. El layout `latam` se aplica con `setxkbmap` pero ya no
   ocupa un módulo de la barra.
 - `notify-send` funciona.
 - `low_bat_notifier.sh` avisa al 10 % descargando y al 99 % cargando
@@ -171,9 +171,8 @@ del usuario:
 - `updates` al inicio de la derecha muestra calavera `U+F4F9` + número,
   sin `#`; si N=0 no muestra nada. `date` queda al final.
 - Sin etiquetas `[T]`, `[M]` ni `[C]`.
-- Red unificada: `󰖩 connected` si hay WiFi; si no, `󰈀 connected` si hay
-  Ethernet; si no hay ninguna, nada. Sin `NoC` ni SSID; WiFi tiene
-  prioridad. `NETWORK_FAKE=wifi|eth|none` permite probar los tres estados.
+- Red unificada: `󰈀 connected` si hay Ethernet; si no, `󰖩 connected` si
+  hay WiFi; si no hay ninguna, `󰖩 NoC`. Sin SSID; Ethernet tiene prioridad. Clic en el módulo abre el menú WiFi (`nmcli`). `NETWORK_FAKE=wifi|eth|both|none` permite probar los estados.
 - Variante A sin `dots` ni `xkeyboard`; sin `wlan`/`eth` separados.
 - Pomodoro pausa con `U+F04C` (dos barras).
 - Fuentes: `font-1 = 10`, `font-3 = 13`; logo en `font-0 = 11`.

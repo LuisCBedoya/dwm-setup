@@ -89,9 +89,9 @@ Comprobado:
   red unificada, sin `dots` y sin `xkeyboard` ni `wlan`/`eth` separados
   en la variante A. `font-1` 10 y `font-3` 13. Polybar carga 12 módulos
   sin errores.
-- Red: con WiFi down y Ethernet up solo `󰈀 connected` (sin `NoC`);
-  `NETWORK_FAKE=wifi` muestra solo `󰖩 connected`; `NETWORK_FAKE=none` no
-  muestra nada. Captura `bar-network-final.png`.
+- Red: con WiFi down y Ethernet up solo `󰈀 connected`; `NETWORK_FAKE=wifi`
+  muestra solo `󰖩 connected`; `NETWORK_FAKE=none` muestra `󰖩 NoC`.
+  Captura `bar-network-final.png`.
 - Separación final: `module-margin-left/right = 0`; `updates`/`polypomo`
   con padding 1/1; `cpu` con `%{O8}` a la derecha; volumen y batería con
   padding 1. Con `UPDATES_FAKE_FILE=0` el módulo `updates` desaparece y no
@@ -121,6 +121,20 @@ Comprobado:
   `rofi -show drun`.
 - `polybar-variant cycle` probado: A arriba → A abajo → B arriba →
   B abajo; sxhkd recargado con el binding `Super+Alt+p`.
+
+### Red y WiFi (2026-10-25)
+
+- `NETWORK_FAKE=both` muestra Ethernet aunque WiFi esté activo.
+- `NETWORK_FAKE=wifi` muestra WiFi; `eth` muestra Ethernet; `none` muestra
+  `󰖩 NoC`, dejando el módulo clicable.
+- El módulo A/B tiene `click-left` a `network-menu.sh`.
+- El menú se probó con `nmcli` y `rofi` simulados: filas numeradas
+  (`1  SSID  80%  WPA2`), sin tabs visibles; una red WPA pide contraseña y
+  conecta; una red abierta conecta directamente.
+- Si ya existe un perfil por SSID pero no tiene PSK, se actualiza con
+  `nmcli connection modify ... wifi-sec.psk` y se vuelve a activar.
+- `nmcli` real lista redes WiFi; la sesión viva no se conectó a ninguna
+  red durante la prueba.
 
 ### Volumen, brillo y dunst (2026-10-25)
 

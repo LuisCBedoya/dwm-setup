@@ -52,6 +52,7 @@ verify_install() {
     "$home/.config/polybar/scripts/updates-apt.sh" \
     "$home/.config/polybar/scripts/polypomo" \
     "$home/.config/polybar/scripts/network-status.sh" \
+    "$home/.config/polybar/scripts/network-menu.sh" \
     "$home/.config/polybar/scripts/services.sh" \
     "$home/.config/polybar/scripts/volume.sh" \
     "$home/.config/polybar/polybar-variant" \

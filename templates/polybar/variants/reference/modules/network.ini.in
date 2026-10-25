@@ -1,4 +1,4 @@
-; network — un solo indicador, comparte el script actual
+; network — un solo indicador, Ethernet > WiFi; sin NoC
 [module/network]
 type = custom/script
 exec = @HOME@/.config/polybar/variants/reference/scripts/network-status.sh
@@ -9,3 +9,4 @@ format-background = ${colors.module-bg}
 format-font = 1
 format-foreground = ${colors.foreground}
 label = %output%
+click-left = @HOME@/.config/polybar/scripts/network-menu.sh

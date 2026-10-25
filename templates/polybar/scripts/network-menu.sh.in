@@ -1,0 +1,147 @@
+#!/bin/sh
+# network-menu.sh — lista redes WiFi y conecta con NetworkManager.
+# No guarda contraseñas; solo las pasa a nmcli durante la conexión.
+
+NMCLI=${NMCLI:-nmcli}
+NOTIFY_SEND=${NOTIFY_SEND:-notify-send}
+
+notify() {
+  command -v "$NOTIFY_SEND" >/dev/null 2>&1 || return 0
+  "$NOTIFY_SEND" "$@" >/dev/null 2>&1 || true
+}
+
+menu() {
+  prompt=$1
+  if command -v dmenu >/dev/null 2>&1; then
+    dmenu -i -p "$prompt"
+  elif command -v rofi >/dev/null 2>&1; then
+    rofi -dmenu -i -no-custom -theme-str 'listview { columns: 1; }' -p "$prompt"
+  else
+    notify -u critical "WiFi" "Falta dmenu o rofi"
+    return 1
+  fi
+}
+
+password_menu() {
+  prompt=$1
+  if command -v rofi >/dev/null 2>&1; then
+    rofi -dmenu -password -p "$prompt"
+  elif command -v dmenu >/dev/null 2>&1; then
+    dmenu -p "$prompt"
+  else
+    notify -u critical "WiFi" "Falta rofi o dmenu para la contraseña"
+    return 1
+  fi
+}
+
+if ! command -v "$NMCLI" >/dev/null 2>&1; then
+  notify -u critical "WiFi" "nmcli no está disponible"
+  exit 1
+fi
+
+wifi_iface=$("$NMCLI" -t -f DEVICE,TYPE device status 2>/dev/null |
+  awk -F: '$2 == "wifi" {print $1; exit}')
+if [ -z "$wifi_iface" ]; then
+  notify "WiFi" "No hay una interfaz WiFi"
+  exit 0
+fi
+
+"$NMCLI" device wifi rescan >/dev/null 2>&1 || true
+
+map=$(mktemp) || {
+  notify -u critical "WiFi" "No se pudo crear el archivo temporal"
+  exit 1
+}
+trap 'rm -f "$map"' EXIT HUP INT TERM
+
+raw=$("$NMCLI" -t -f IN-USE,SSID,SIGNAL,SECURITY device wifi list 2>/dev/null)
+entries=$(printf '%s\n' "$raw" | awk -F: -v mapfile="$map" '
+  {
+    inuse=$1
+    ssid=$2
+    signal=$3
+    security=$4
+    gsub(/^[ \t]+|[ \t]+$/, "", inuse)
+    gsub(/\\:/, ":", ssid)
+    if (ssid == "" || seen[ssid]++) next
+    label = ssid "  " signal "%"
+    if (security != "" && security != "--") label = label "  " security
+    n++
+    printf "%d  %s\n", n, label
+    printf "%d\t%s\t%s\n", n, ssid, security > mapfile
+  }')
+
+if [ -z "$entries" ]; then
+  notify "WiFi" "No se encontraron redes"
+  exit 0
+fi
+
+selected=$(printf '%s\n' "$entries" | menu "WiFi")
+[ -n "$selected" ] || exit 0
+
+index=$(printf '%s\n' "$selected" | awk '{print $1}')
+[ -n "$index" ] || exit 0
+
+selected_data=$(awk -F '\t' -v n="$index" '$1 == n { print; exit }' "$map")
+ssid=$(printf '%s\n' "$selected_data" | cut -f2)
+security=$(printf '%s\n' "$selected_data" | cut -f3)
+[ -n "$ssid" ] || exit 0
+
+find_profile() {
+  target=$1
+  "$NMCLI" -t -f NAME,TYPE connection show 2>/dev/null |
+    while IFS=: read -r name type; do
+      [ "$type" = "802-11-wireless" ] || continue
+      profile_ssid=$("$NMCLI" -g 802-11-wireless.ssid connection show "$name" 2>/dev/null || true)
+      if [ "$profile_ssid" = "$target" ]; then
+        printf '%s\n' "$name"
+        break
+      fi
+    done
+}
+
+profile=$(find_profile "$ssid")
+secure=0
+if [ -n "$security" ] && [ "$security" != "--" ]; then
+  secure=1
+fi
+
+if [ -n "$profile" ]; then
+  error=$("$NMCLI" --wait 30 connection up "$profile" 2>&1)
+  if [ $? -eq 0 ]; then
+    notify "WiFi" "Conectado a $ssid"
+    exit 0
+  fi
+  if [ "$secure" -eq 1 ]; then
+    password=$(password_menu "Contraseña para $ssid")
+    [ -n "$password" ] || exit 0
+    modify_error=$("$NMCLI" connection modify "$profile" \
+      wifi-sec.key-mgmt wpa-psk wifi-sec.psk "$password" 2>&1)
+    if [ $? -ne 0 ]; then
+      notify -u critical "WiFi" "No se pudo actualizar $ssid: $modify_error"
+      exit 1
+    fi
+    error=$("$NMCLI" --wait 30 connection up "$profile" 2>&1)
+    if [ $? -eq 0 ]; then
+      notify "WiFi" "Conectado a $ssid"
+      exit 0
+    fi
+  fi
+  notify -u critical "WiFi" "No se pudo conectar a $ssid: $error"
+  exit 1
+fi
+
+if [ "$secure" -eq 1 ]; then
+  password=$(password_menu "Contraseña para $ssid")
+  [ -n "$password" ] || exit 0
+  error=$("$NMCLI" --wait 30 device wifi connect "$ssid" password "$password" 2>&1)
+else
+  error=$("$NMCLI" --wait 30 device wifi connect "$ssid" 2>&1)
+fi
+if [ $? -eq 0 ]; then
+  notify "WiFi" "Conectado a $ssid"
+  exit 0
+fi
+
+notify -u critical "WiFi" "No se pudo conectar a $ssid: $error"
+exit 1

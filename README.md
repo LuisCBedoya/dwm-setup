@@ -21,7 +21,8 @@ Incluido:
 - **bspwm** + **sxhkd**.
 - **polybar** con **12 módulos**: logo StumbleUpon, workspaces 1-5,
   pomodoro, temperatura, RAM, CPU, red unificada
-  (`󰖩/󰈀 connected`, sin `NoC`), servicios systemd, volumen, batería, fecha
+  (`󰖩/󰈀 connected`, `󰖩 NoC` sin conexión), servicios systemd, volumen,
+  batería, fecha
   y actualizaciones (calavera + número). `font-1` 10 y `font-3` 13; logo en
   `font-0`.
 - **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**,
@@ -271,8 +272,10 @@ Si algo falla:
 `Super` es la tecla Windows. La barra muestra 12 módulos (13 si hay
 backlight): logo StumbleUpon, workspaces 1-5, pomodoro, temperatura, RAM,
 CPU, red, servicios, volumen, batería, fecha y actualizaciones. La red muestra un solo `󰖩 connected` o
-`󰈀 connected` según la conexión activa; si no hay ninguna, no muestra nada.
-Las actualizaciones muestran calavera + número y se ocultan si N=0. El módulo
+`󰈀 connected`; Ethernet tiene prioridad si el cable está conectado. Si no
+hay conexión, muestra `󰖩 NoC` y sigue siendo clicable. Al hacer clic en el módulo se abre un menú
+WiFi para elegir y conectar una red. Las actualizaciones muestran calavera +
+número y se ocultan si N=0. El módulo
 de servicios muestra un engranaje y el número de servicios systemd activos;
 al hacer clic abre un menú para iniciarlos, detenerlos o reiniciarlos.
 El volumen llega como máximo a 120 % y sube/baja de 10 en 10. Las

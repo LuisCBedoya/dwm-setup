@@ -1501,3 +1501,56 @@ de brillo cuando el hardware lo permita.
 - Las notificaciones críticas desaparecen sin clic.
 - El volumen nunca supera 120 %.
 - En equipos sin backlight no aparece el módulo de brillo.
+
+## ADR-060 — Menú WiFi y prioridad Ethernet
+
+**Contexto:** El usuario quiere conectarse a redes WiFi haciendo clic en el
+módulo de red, manteniendo Ethernet como prioridad cuando el cable está
+conectado.
+
+**Decisión:**
+1. `network-status.sh` muestra Ethernet antes que WiFi.
+2. Los módulos A/B añaden `click-left` a `network-menu.sh`.
+3. `network-menu.sh` lista redes con `nmcli device wifi list`.
+4. Conexiones abiertas o guardadas se intentan directamente; las redes con
+   seguridad piden contraseña mediante un menú oculto de `rofi`.
+5. No se usa `sudo`; NetworkManager aplica sus permisos.
+6. La contraseña no se guarda en el repositorio ni en el script.
+
+**Consecuencias:**
+- El módulo muestra Ethernet si hay cable, aunque WiFi esté conectado.
+- El menú WiFi sigue disponible con Ethernet conectado.
+- `nmcli` guarda el perfil de conexión si el usuario lo autoriza.
+
+## ADR-061 — Mostrar NoC cuando no hay conexión
+
+**Contexto:** El módulo de red quedaba vacío sin Ethernet ni WiFi, por lo que
+no había una zona clara para hacer clic y abrir el menú WiFi.
+
+**Decisión:**
+1. Cuando `eth=0` y `wifi=0`, `network-status.sh` muestra `󰖩 NoC`.
+2. El módulo conserva `click-left` para abrir `network-menu.sh`.
+3. Se mantiene la prioridad Ethernet > WiFi > NoC.
+
+**Consecuencias:**
+- El módulo siempre es visible y clicable.
+- `NETWORK_FAKE=none` ahora produce `󰖩 NoC`.
+
+## ADR-062 — Actualizar perfiles WiFi existentes sin PSK
+
+**Contexto:** NetworkManager tenía perfiles `ARRIS-AF51` y
+`ARRIS-AF51-5G` con `key-mgmt=wpa-psk` pero sin PSK. El primer intento de
+conexión sin contraseña reutilizaba el perfil vacío y la contraseña
+posterior no se aplicaba.
+
+**Decisión:**
+1. Buscar el perfil WiFi por SSID antes de conectar.
+2. Si existe, probar `nmcli connection up`; si falla, pedir contraseña y
+   actualizar el perfil con `nmcli connection modify ... wifi-sec.psk`.
+3. Si no existe, pedir contraseña antes de crear un perfil seguro.
+4. Mostrar el error real de `nmcli` en la notificación.
+5. Mantener las redes abiertas sin prompt.
+
+**Consecuencias:**
+- Los perfiles vacíos se reparan sin borrarlos manualmente.
+- La contraseña se guarda en el perfil de NetworkManager, no en el script.

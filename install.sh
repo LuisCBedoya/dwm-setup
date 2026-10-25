@@ -188,6 +188,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/scripts/updates-apt.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/polypomo.in"
     "$PROJECT_ROOT/templates/polybar/scripts/network-status.sh.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/network-menu.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/services.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/volume.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/launch.sh.in"
