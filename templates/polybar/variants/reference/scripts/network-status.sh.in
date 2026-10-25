@@ -35,9 +35,9 @@ case ${NETWORK_FAKE:-} in
 esac
 
 if [ "$eth" -eq 1 ]; then
-  printf '%%{T1}󰈀%%{T-} connected\n'
+  printf '%%{T1}󰈀 %%{T-}connected\n'
 elif [ "$wifi" -eq 1 ]; then
-  printf '%%{T1}󰖩%%{T-} connected\n'
+  printf '%%{T1}󰖩 %%{T-}connected\n'
 else
-  printf '%%{T1}󰖩%%{T-} NoC\n'
+  printf '%%{T1}󰖩 %%{T-}NoC\n'
 fi

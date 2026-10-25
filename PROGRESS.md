@@ -66,6 +66,15 @@ Comprobaciones:
 - Home simulado (`/tmp/opencode/fakehome`) renderizado y `verify_install`
   pasa con código 0.
 
+## Pasada de estabilidad (2026-10-25)
+
+Se verificó que el repo y la sesión viva siguen pasando `--dry-run` y
+`verify_install`. No se desinstalaron paquetes ni se deshabilitaron
+servicios: `redshift`, `ssh`, `bluez`, `playerctl`, `acpi`,
+`network-manager-gnome`, `flameshot`, `dmenu` y el grupo de compilación se
+mantienen. Solo se sincronizaron formatos seguros de los scripts de red y
+volumen.
+
 ## Mapa de atajos i3 (2026-10-24)
 
 Se adaptó `templates/sxhkd/sxhkdrc.in` a los atajos de i3 del usuario,

@@ -36,9 +36,9 @@ set_volume() {
 case "${1:-status}" in
   status)
     if is_muted; then
-      printf '%%{T1}󰝟%%{T-} muted\n'
+      printf '%%{T1}󰝟 %%{T-}muted\n'
     else
-      printf '%%{T1}󰕾%%{T-} %s%%\n' "$(get_volume)"
+      printf '%%{T1}󰕾 %%{T-}%s%%\n' "$(get_volume)"
     fi
     ;;
   up)

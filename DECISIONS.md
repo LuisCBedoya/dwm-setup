@@ -1554,3 +1554,23 @@ posterior no se aplicaba.
 **Consecuencias:**
 - Los perfiles vacíos se reparan sin borrarlos manualmente.
 - La contraseña se guarda en el perfil de NetworkManager, no en el script.
+
+## ADR-063 — Pasada de estabilidad sin retirar paquetes
+
+**Contexto:** El usuario quiere que el instalador reproduzca el sistema
+estable actual. La reducción de paquetes o servicios queda supeditada a una
+prueba posterior en VM y a autorización explícita.
+
+**Decisión:**
+1. No desinstalar paquetes ni deshabilitar servicios en este equipo.
+2. Mantener `redshift`, `ssh`, `bluez`, `playerctl`, `acpi`,
+   `network-manager-gnome`, `flameshot`, `dmenu` y `BUILD_PKGS` en el
+   conjunto actual.
+3. Mantener `picom` fuera del instalador, pero no purgar el paquete ya
+   instalado sin permiso.
+4. Sincronizar únicamente formato y documentación seguros.
+5. Reservar la optimización agresiva para una instalación limpia en VM.
+
+**Consecuencias:**
+- La instalación prioriza estabilidad y reproducibilidad.
+- Ninguna limpieza de paquetes se ejecuta automáticamente.
