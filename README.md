@@ -1,7 +1,7 @@
 # bspwm + polybar · Debian 13 (fase 1b)
 
 Instalador reproducible de un escritorio mínimo sobre **Debian 13 (trixie)**:
-Xorg, bspwm, sxhkd, polybar, picom, dunst, rofi, kitty, xwallpaper,
+Xorg, bspwm, sxhkd, polybar, dunst, rofi, kitty, xwallpaper,
 flameshot, i3lock/xss-lock, PipeWire, cámara UVC y montaje de discos
 extraíbles con notificación.
 
@@ -24,8 +24,8 @@ Incluido:
   (`󰖩/󰈀 connected`, sin `NoC`), servicios systemd, volumen, batería, fecha
   y actualizaciones (calavera + número). `font-1` 10 y `font-3` 13; logo en
   `font-0`.
-- **picom**, **dunst**, **rofi** (y **dmenu** para el módulo de servicios),
-  **kitty**, **flameshot**.
+- **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**,
+  **flameshot**. Sin compositor; B usa pseudo-transparencia de polybar.
 - Bloqueo con **i3lock** + **xss-lock**.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
 - PipeWire + WirePlumber + ALSA + pavucontrol.
@@ -114,8 +114,8 @@ y `--debug`.
    cámara, almacenamiento, red, fuentes, firmware, microcódigo y GPU.
 5. **Fuente**: descarga JetBrainsMono Nerd Font 3.5.1, verifica SHA-256 y
    ejecuta `fc-cache`. Si falla, usa JetBrains Mono o monospace y avisa.
-6. **Configuración**: renderiza bspwm, sxhkd, polybar, picom, dunst, rofi y
-   kitty con paleta Warm Charcoal; instala `.xinitrc`, wallpaper,
+6. **Configuración**: renderiza bspwm, sxhkd, polybar, dunst, rofi y kitty
+   con paleta Warm Charcoal; instala `.xinitrc`, wallpaper,
    `~/Pictures/Screenshots`, `desktop-safe` y `desktop-doctor`.
 7. **Limpieza**: retira restos de la barra anterior (`DesktopLogo`) con
    backup previo.
@@ -138,8 +138,8 @@ versión anterior está en `~/.config-backup/`.
 
 No se instala ningún display manager. `~/.xinitrc` configura el teclado y
 hace `exec bspwm`; `bspwmrc` lanza sxhkd y el `autostart` interno, que
-levanta polybar, dunst, picom, xwallpaper, udiskie, xss-lock, lxpolkit y el
-notificador de batería baja.
+levanta polybar, dunst, xwallpaper, udiskie, xss-lock, lxpolkit y el
+notificador de batería baja. No se arranca ningún compositor.
 
 ```sh
 # desde TTY1
@@ -245,13 +245,14 @@ Si algo falla:
 | `Super+Shift+e` | salir (desktop-safe logout) |
 | `Super+Shift+c` | recargar sxhkd y bspwm |
 | `Super+Shift+r` | reiniciar bspwm |
-| `Super+Alt+P` | alternar variante de polybar A/B |
+| `Super+Alt+P` | ciclo A arriba → A abajo → B arriba → B abajo |
 | `Super+Shift+space` | alternar floating |
 | `Super+Shift+q` | cerrar ventana |
 | `Super+a` | enfocar contenedor padre |
 | `Super+b` / `Super+v` | split horizontal / vertical (preselección) |
 | `Super+f` | fullscreen |
 | `Alt+Tab` / `Alt+Shift+Tab` | siguiente / anterior ventana |
+| `Super+Ctrl+Tab` / `Super+Ctrl+Shift+Tab` | siguiente / anterior escritorio |
 | `Super+{h,j,k,l}` | foco ventanas |
 | `Super+Shift+{h,j,k,l}` | mover/intercambiar ventanas |
 | `Super+{1-5}` | ir a escritorio |
@@ -263,26 +264,35 @@ Si algo falla:
 | `XF86AudioRaise/Lower/Mute` | volumen |
 | `XF86MonBrightnessUp/Down` | brillo |
 
-`Super` es la tecla Windows. La barra muestra 12 módulos (logo StumbleUpon,
-workspaces 1-5, pomodoro, temperatura, RAM, CPU, red, servicios, volumen,
-batería, fecha y actualizaciones). La red muestra un solo `󰖩 connected` o
+`Ctrl+Tab` queda libre para navegadores y editores. `Super+Ctrl+Tab` y
+`Super+Ctrl+Shift+Tab` cambian de escritorio; `Super+Left/Right` y
+`Super+1..5` siguen disponibles.
+
+`Super` es la tecla Windows. La barra muestra 12 módulos (13 si hay
+backlight): logo StumbleUpon, workspaces 1-5, pomodoro, temperatura, RAM,
+CPU, red, servicios, volumen, batería, fecha y actualizaciones. La red muestra un solo `󰖩 connected` o
 `󰈀 connected` según la conexión activa; si no hay ninguna, no muestra nada.
 Las actualizaciones muestran calavera + número y se ocultan si N=0. El módulo
 de servicios muestra un engranaje y el número de servicios systemd activos;
 al hacer clic abre un menú para iniciarlos, detenerlos o reiniciarlos.
+El volumen llega como máximo a 120 % y sube/baja de 10 en 10. Las
+notificaciones críticas de dunst se cierran solas a los 10 s. El brillo
+aparece solo si el equipo tiene backlight y también cambia de 10 en 10.
 
 ### Variantes de polybar
 
 Hay dos barras instaladas:
 
-- **actual**: la barra compacta de 12 módulos (logo, workspaces 1-5,
-  updates, servicios, pomodoro, temperatura, RAM, CPU, red, volumen,
-  batería y fecha).
-- **referencia**: variante de 14 módulos. Workspaces como círculos al
-  centro; a la izquierda `date`, `day`, `updates`, pomodoro y `der`; a la
-  derecha `izq`, servicios, temperatura, RAM, CPU, red, volumen y batería.
-  Barra transparente de 18 px, fuentes 10/13, iconos JBM y círculos Font
-  Awesome. El fondo de los módulos de la derecha es oscuro semitransparente.
+- **actual**: la barra compacta de 12 módulos (13 con backlight): logo,
+  workspaces 1-5, updates, servicios, pomodoro, temperatura, RAM, CPU,
+  red, volumen, batería, fecha y brillo opcional.
+- **referencia**: variante de 14 módulos (15 con backlight). Workspaces
+  como círculos al centro; a la izquierda `date`, `day`, `updates`, pomodoro
+  y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
+  volumen, batería y brillo opcional.
+  Barra de 18 px con pseudo-transparencia, fuentes 10/13, iconos JBM y
+  círculos Font Awesome. Solo el centro queda transparente; los bloques
+  laterales son oscuros y opacos.
 
 Cambiar de variante:
 
@@ -290,9 +300,11 @@ Cambiar de variante:
 ~/.config/polybar/polybar-variant actual
 ~/.config/polybar/polybar-variant referencia
 ~/.config/polybar/polybar-variant toggle
+~/.config/polybar/polybar-variant cycle
 ```
 
-También se puede alternar con **`Super+Alt+P`**.
+`Super+Alt+P` recorre el ciclo **A arriba → A abajo → B arriba → B
+abajo**. La posición se guarda en `~/.config/polybar/position`.
 
 La variante se guarda en `~/.config/polybar/variant` y `launch.sh` arranca
 la elegida al iniciar sesión.
@@ -312,7 +324,6 @@ lib/packages.sh            Grupos de paquetes y Nerd Font
 lib/bspwm.sh               bspwm, bspwmrc, autostart y .xinitrc
 lib/sxhkd.sh               sxhkdrc
 lib/polybar.sh             polybar config/modules/scripts/launch
-lib/picom.sh               picom.conf
 lib/dunst.sh               dunstrc
 lib/rofi.sh                rofi powermenu
 lib/kitty.sh               kitty.conf
@@ -324,8 +335,7 @@ bin/desktop-safe           Acciones de sesión
 bin/desktop-doctor         Diagnóstico y cámara (POSIX sh)
 templates/bspwm/           bspwmrc.in, autostart.in, scripts/
 templates/sxhkd/           sxhkdrc.in
-templates/polybar/         config.ini.in, modules/, scripts/
-templates/picom/           picom.conf.in
+templates/polybar/         config.ini.in, modules/, scripts/ y variants/
 templates/dunst/           dunstrc.in, notification-sound.sh.in
 templates/rofi/            powermenu.rasi.in
 templates/kitty/           kitty.conf.in

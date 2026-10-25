@@ -43,7 +43,7 @@ STORAGE_PKGS=(
 # bspwm + sxhkd + polybar + resto del escritorio
 DESKTOP_PKGS=(
   bspwm sxhkd polybar
-  picom dunst rofi dmenu feh kitty flameshot i3lock xss-lock
+  dunst rofi dmenu feh kitty flameshot i3lock xss-lock
   brightnessctl xclip thunar
   xwallpaper playerctl
   bluez redshift
@@ -674,7 +674,7 @@ install_packages() {
     return 0
   fi
   local required_pkgs=(
-    bspwm sxhkd polybar kitty picom dunst rofi feh xwallpaper
+    bspwm sxhkd polybar kitty dunst rofi feh xwallpaper
     udiskie brightnessctl xclip thunar playerctl flameshot i3lock xss-lock
     libnotify-bin gir1.2-notify-0.7 lm-sensors upower acpi
     fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji fonts-noto-cjk

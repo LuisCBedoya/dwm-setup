@@ -7,7 +7,7 @@ verify_install() {
   local home="$TARGET_HOME"
   local path module line
 
-  for cmd in bspwm sxhkd polybar picom dunst rofi feh kitty flameshot i3lock xss-lock \
+  for cmd in bspwm sxhkd polybar dunst rofi feh kitty flameshot i3lock xss-lock \
     brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
@@ -53,6 +53,7 @@ verify_install() {
     "$home/.config/polybar/scripts/polypomo" \
     "$home/.config/polybar/scripts/network-status.sh" \
     "$home/.config/polybar/scripts/services.sh" \
+    "$home/.config/polybar/scripts/volume.sh" \
     "$home/.config/polybar/polybar-variant" \
     "$home/.config/polybar/variants/reference/config.ini" \
     "$home/.config/polybar/variants/reference/scripts/network-status.sh" \
@@ -78,7 +79,6 @@ verify_install() {
     "$home/.config/polybar/variants/reference/modules/fs.ini" \
     "$home/.config/polybar/variants/reference/modules/date.ini" \
     "$home/.config/polybar/variants/reference/modules/updates.ini" \
-    "$home/.config/picom/picom.conf" \
     "$home/.config/dunst/dunstrc" \
     "$home/.config/rofi/powermenu.rasi" \
     "$home/.config/kitty/kitty.conf" \
@@ -191,18 +191,11 @@ verify_install() {
     fi
   fi
 
-  # Picom: la opción eliminada en picom 12 impide arrancar.
-  if [[ -f "$home/.config/picom/picom.conf" ]] && grep -q 'glx-swap-method' "$home/.config/picom/picom.conf"; then
-    error "picom.conf contiene glx-swap-method (eliminado en picom 12)"
-    failures=$((failures + 1))
-  fi
-
   # Placeholders sin renderizar en todas las configuraciones instaladas.
   for path in \
     "$home/.config/bspwm" \
     "$home/.config/sxhkd" \
     "$home/.config/polybar" \
-    "$home/.config/picom" \
     "$home/.config/dunst" \
     "$home/.config/rofi" \
     "$home/.config/kitty"; do
@@ -239,7 +232,6 @@ verify_install() {
     "$home/.config/bspwm" \
     "$home/.config/sxhkd" \
     "$home/.config/polybar" \
-    "$home/.config/picom" \
     "$home/.config/dunst" \
     "$home/.config/rofi" \
     "$home/.config/kitty" \

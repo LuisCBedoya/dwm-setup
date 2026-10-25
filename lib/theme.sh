@@ -192,23 +192,6 @@ generate_dunstrc() {
   render_theme_template "$PROJECT_ROOT/templates/dunst/dunstrc.in" "$output" 0644
 }
 
-# Genera picom.conf
-generate_picom_conf() {
-  local theme="${1:-$THEME_NAME}"
-  local output="$PROJECT_ROOT/templates/picom/picom.conf"
-
-  if dry_run; then
-    log "[dry-run] generate_picom_conf $theme -> $output"
-    return 0
-  fi
-
-  if [[ "$THEME_NAME" != "$theme" ]]; then
-    load_theme "$theme"
-  fi
-
-  render_theme_template "$PROJECT_ROOT/templates/picom/picom.conf.in" "$output" 0644
-}
-
 # Genera kitty theme
 generate_kitty_theme() {
   local theme="${1:-$THEME_NAME}"
@@ -282,7 +265,6 @@ generate_all_desktop_assets() {
 
   generate_rofi_colors "$theme"
   generate_dunstrc "$theme"
-  generate_picom_conf "$theme"
   generate_kitty_theme "$theme"
 
   ok "Assets de tema generados"

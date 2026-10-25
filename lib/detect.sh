@@ -259,7 +259,7 @@ resolve_target_user() {
     TARGET_HOME="$user_home"
   fi
   # La sesión usa $HOME (el home real del login). Instalar las configuraciones
-  # en otro directorio dejaría la sesión sin eww/dunst/picom/barra.
+  # en otro directorio dejaría la sesión sin dunst/barra.
   if [[ "$(realpath -m -- "$TARGET_HOME")" != "$(realpath -m -- "$user_home")" ]]; then
     die "--home debe coincidir con el home real de $TARGET_USER ($user_home). El instalador no soporta homes alternativos."
   fi

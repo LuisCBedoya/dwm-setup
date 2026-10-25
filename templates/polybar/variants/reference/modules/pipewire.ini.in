@@ -1,18 +1,16 @@
-; pipewire — volumen
+; pipewire — volumen con máximo 120 % y pasos de 10 %
 [module/pipewire]
-type = internal/pulseaudio
-format-volume = <label-volume>
-format-volume-padding = 1
-format-volume-background = ${colors.module-bg}
-format-volume-foreground = ${colors.foreground}
-label-volume = " %{T1}%{F#B9A99A} %{F-}%{T-}%percentage%%"
-label-volume-font = 1
-
-format-muted = <label-muted>
-format-muted-padding = 1
-format-muted-background = ${colors.module-bg}
-format-muted-foreground = ${colors.foreground}
-label-muted = " %{T1}%{F#B9A99A} %{F-}%{T-}muted"
-label-muted-font = 2
-
+type = custom/script
+exec = @HOME@/.config/polybar/scripts/volume.sh status
+interval = 1
+exec-if = command -v pamixer >/dev/null 2>&1
+format = <label>
+format-padding = 1
+format-background = ${colors.module-bg}
+format-font = 1
+format-foreground = ${colors.foreground}
+label = %output%
+click-left = @HOME@/.config/polybar/scripts/volume.sh mute
 click-right = pavucontrol
+scroll-up = @HOME@/.config/polybar/scripts/volume.sh up
+scroll-down = @HOME@/.config/polybar/scripts/volume.sh down

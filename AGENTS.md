@@ -7,11 +7,12 @@ proyecto. Leer primero `README.md`, `PROGRESS.md` y `DECISIONS.md`.
 
 Instalador reproducible de un escritorio mínimo para **Debian 13 (trixie)**
 con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
-**polybar**, **picom**, **dunst**, **rofi**, **kitty**, **flameshot**,
+**polybar**, **dunst**, **rofi**, **kitty**, **flameshot**,
 **i3lock/xss-lock**, PipeWire, cámara UVC y almacenamiento extraíble con
 notificación.
 
-La barra final es la de la config viva: **12 módulos**, logo StumbleUpon
+La barra final es la de la config viva: **12 módulos** (**13 con backlight**),
+logo StumbleUpon
 (`U+F1A4`), workspaces 1-5, actualizaciones al inicio de la derecha, fecha al final,
 red unificada (`󰖩/󰈀 connected`, sin `NoC`), servicios systemd, volumen,
 batería y fecha; sin `dots`. Sin `xkeyboard`, `wlan`/`eth` separados ni
@@ -20,8 +21,8 @@ Fuentes: `font-1` 10 y `font-3` 13; logo en `font-0`. Separación compacta:
 `module-margin-left/right = 0`; `updates`/`polypomo` con padding 1/1;
 volumen y batería juntos.
 
-Hay una **variante B "referencia"** instalada aparte: 14 módulos, 5
-workspaces como círculos al centro; a la izquierda `date`, `day`, `updates`,
+Hay una **variante B "referencia"** instalada aparte: 14 módulos (15 con
+backlight), 5 workspaces como círculos al centro; a la izquierda `date`, `day`, `updates`,
 pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
 volumen y batería. Barra transparente de 18 px, fuentes 10/13 y flechas del color del
 bloque; temperatura conserva fondo en warning. Se cambia con
@@ -93,7 +94,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
     apps que no están en fase 1 se dejan como bindings no-op. `Super+r`
     seguido de `h/j/k/l` redimensiona mediante cadena de sxhkd; `Escape` sale.
     `Print` captura pantalla completa al portapapeles; `Super+Print` abre el
-    menú de capturas. `Super+Alt+p` alterna las variantes A/B de polybar. No
+    menú de capturas. `Super+Alt+p` cicla A arriba → A abajo → B arriba → B abajo.
+    `Super+Ctrl+Tab` y `Super+Ctrl+Shift+Tab` cambian de escritorio. No
     cambiar este mapa sin una decisión nueva.
 19. **Audio portable.** El watcher elige auriculares > HDMI > altavoces
     detectando tarjetas/perfiles/puertos con `pactl`; no hardcodear
@@ -124,7 +126,6 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/bspwm.sh` | bspwm, bspwmrc, autostart, scripts y `.xinitrc` |
 | `lib/sxhkd.sh` | sxhkdrc |
 | `lib/polybar.sh` | config.ini, módulos, scripts y launch.sh |
-| `lib/picom.sh` | picom.conf |
 | `lib/dunst.sh` | dunstrc |
 | `lib/rofi.sh` | powermenu.rasi |
 | `lib/kitty.sh` | kitty.conf |
@@ -137,7 +138,6 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/bspwm/` | bspwmrc, autostart y scripts de sesión |
 | `templates/sxhkd/` | sxhkdrc |
 | `templates/polybar/` | config.ini, modules/, scripts/ y variants/ |
-| `templates/picom/` | picom.conf |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
 | `templates/rofi/` | powermenu.rasi |
 | `templates/kitty/` | kitty.conf |
@@ -164,7 +164,7 @@ bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
 
 # Comprobar restos y coherencia de la barra
 grep -RInE '@[A-Z][A-Z0-9_]*@' ~/.config/bspwm ~/.config/sxhkd \
-  ~/.config/polybar ~/.config/picom ~/.config/dunst ~/.config/rofi \
+  ~/.config/polybar ~/.config/dunst ~/.config/rofi \
   ~/.config/kitty ~/.xinitrc
 grep -nE 'modules-(left|right)' ~/.config/polybar/config.ini
 stat -c '%A %n' ~/.config/bspwm/bspwmrc ~/.xinitrc
@@ -181,9 +181,9 @@ desktop-doctor --camera
 
 - El código de fase 1b está implementado y los checks estáticos pasan.
 - La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 12 /
-  B 14 módulos), picom, dunst, lxpolkit, udiskie y xss-lock activos;
-  `startx` manual.
-- Se corrigieron backups previos, ownership, `bspwmrc` 0755, picom,
+  B 14 módulos), dunst, lxpolkit, udiskie y xss-lock activos; `startx`
+  manual. Sin compositor; B usa pseudo-transparencia de polybar.
+- Se corrigieron backups previos, ownership, `bspwmrc` 0755,
   `desktop-doctor`, batería baja y polkit.
 - Audio: watcher auriculares > HDMI > altavoces, sonido de dunst y quirk
   ALC255 condicionado a ASUS FX504GE. La validación del quirk requiere

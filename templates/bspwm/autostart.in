@@ -22,9 +22,6 @@ mkdir -p "$HOME/Pictures/Screenshots" 2>/dev/null || true
 # --- Notificaciones ---
 dunst &
 
-# --- Compositor ---
-picom --config @HOME@/.config/picom/picom.conf &
-
 # --- Wallpaper ---
 if command -v xwallpaper >/dev/null 2>&1; then
   xwallpaper --zoom @WALLPAPER@ &
@@ -56,12 +53,4 @@ xsetroot -cursor_name left_ptr &
 # --- Polkit agent (lxpolkit es el que está instalado) ---
 if command -v lxpolkit >/dev/null 2>&1; then
   lxpolkit &
-fi
-
-# --- Aviso si picom no arrancó ---
-sleep 1
-if ! pgrep -x picom >/dev/null 2>&1; then
-  command -v notify-send >/dev/null 2>&1 && \
-    notify-send -u critical "picom no arrancó" \
-      "Revisa ~/.local/state/dwm-setup/session.log"
 fi

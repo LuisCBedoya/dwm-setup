@@ -1392,3 +1392,112 @@ módulo en la B; esos cambios estaban solo en `~/.config/polybar`.
 **Consecuencias:**
 - Reinstalar no vuelve a la altura 26 ni al orden anterior.
 - La barra viva y el repositorio quedan sincronizados.
+
+## ADR-054 — Ctrl+Tab para cambiar de escritorio
+
+**Contexto:** El usuario pidió cambiar de escritorio con `Ctrl+Tab`.
+
+**Decisión:**
+1. `Ctrl+Tab` → `bspc desktop -f next.local`.
+2. `Ctrl+Shift+Tab` → `bspc desktop -f prev.local`.
+3. Se mantienen `Super+Left/Right` y `Super+1..5`.
+
+**Consecuencias:**
+- `Ctrl+Tab` es global y deja de llegar a navegadores y editores.
+- La decisión prioriza el cambio de escritorio sobre el cambio de pestañas.
+
+## ADR-055 — Super+Ctrl+Tab para escritorios
+
+**Contexto:** El atajo global `Ctrl+Tab` quitaba el cambio de pestañas a los
+navegadores y editores.
+
+**Decisión:**
+1. Retirar `Ctrl+Tab` y `Ctrl+Shift+Tab`.
+2. Usar `Super+Ctrl+Tab` → `bspc desktop -f next.local`.
+3. Usar `Super+Ctrl+Shift+Tab` → `bspc desktop -f prev.local`.
+4. Mantener `Super+Left/Right` y `Super+1..5`.
+
+**Consecuencias:**
+- `Ctrl+Tab` vuelve a funcionar en las aplicaciones.
+- `Super+Ctrl+Tab` no colisiona con los atajos actuales de bspwm o sxhkd.
+
+## ADR-056 — Retirar picom y usar pseudo-transparencia en B
+
+**Contexto:** El usuario pidió eliminar picom y conservar únicamente la
+transparencia del módulo central de la variante B.
+
+**Decisión:**
+1. Retirar picom del instalador, autostart, verificación, diagnóstico y
+   plantillas; no se instala ni se arranca.
+2. La variante B usa `pseudo-transparency = true` y mantiene
+   `background = #00000000`; solo el centro queda transparente.
+3. Los fondos laterales de B pasan a ser opacos (`module-bg = #1F1F21`).
+4. Kitty queda opaca (`background_opacity 1.0`), porque sin compositor no
+   puede mezclar transparencia.
+5. La variante A no cambia.
+
+**Consecuencias:**
+- Desaparecen blur y transparencia real de kitty/polybar.
+- B conserva el centro transparente mediante el wallpaper y polybar.
+- El paquete picom ya instalado no se desinstala automáticamente; puede
+  quitarse con `sudo apt remove picom`.
+
+## ADR-057 — Ciclo de variante y posición de polybar
+
+**Contexto:** El usuario quiere que `Super+Alt+P` recorra las dos variantes
+y sus dos posiciones.
+
+**Decisión:**
+1. `polybar-variant cycle` recorre:
+   `actual/top → actual/bottom → referencia/top → referencia/bottom`.
+2. La posición se guarda en `~/.config/polybar/position`.
+3. `launch.sh` exporta `POLYBAR_BOTTOM`; las configuraciones usan
+   `bottom = ${env:POLYBAR_BOTTOM:false}`.
+4. El atajo `Super+Alt+P` llama a `polybar-variant cycle`.
+5. Se conservan `actual`, `referencia` y `toggle` para cambiar solo la
+   variante.
+
+**Consecuencias:**
+- Un solo atajo controla las cuatro combinaciones.
+- La posición y la variante persisten entre reinicios.
+
+## ADR-058 — Padding dinámico para la barra arriba/abajo
+
+**Contexto:** Al mover polybar al borde inferior, bspwm seguía reservando
+`top_padding = 26` y dejaba las ventanas tapar la barra.
+
+**Decisión:**
+1. `bspwmrc` lee `~/.config/polybar/position` y configura:
+   - arriba: `top_padding = 26`, `bottom_padding = 0`;
+   - abajo: `top_padding = 0`, `bottom_padding = 26`.
+2. `launch.sh` vuelve a aplicar esos padding cada vez que cambia la posición.
+3. La altura reservada se mantiene en 26 px, igual que la configuración
+   anterior.
+4. Los cuatro estados del ciclo conservan la variante y la posición.
+
+**Consecuencias:**
+- La barra inferior no se oculta debajo de las ventanas.
+- El cambio de posición es inmediato y persiste al reiniciar.
+
+## ADR-059 — Volumen 120 %, dunst crítico y brillo condicional
+
+**Contexto:** El usuario pidió que las notificaciones urgentes se cierren
+solas, que el volumen llegue a 120 % en pasos de 10 y que exista un módulo
+de brillo cuando el hardware lo permita.
+
+**Decisión:**
+1. `[urgency_critical] timeout = 10` y quitar `-t 0` de `polypomo`.
+2. Sustituir `internal/pulseaudio` por `volume.sh`:
+   - máximo 120 %;
+   - pasos de 10 %;
+   - scroll, teclas de volumen, mute y `pavucontrol`.
+3. Añadir `@BRIGHTNESS_MODULE@` a A/B y un módulo `internal/backlight` con
+   `scroll-interval = 10`.
+4. El módulo de brillo solo se incluye si `lib/detect.sh` encuentra
+   `/sys/class/backlight`.
+5. Mantener `brightnessctl` para las teclas de brillo.
+
+**Consecuencias:**
+- Las notificaciones críticas desaparecen sin clic.
+- El volumen nunca supera 120 %.
+- En equipos sin backlight no aparece el módulo de brillo.

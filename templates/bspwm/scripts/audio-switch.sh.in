@@ -26,7 +26,7 @@ save_volume() {
 
 restore_volume() {
   command -v pamixer >/dev/null 2>&1 || return 0
-  pamixer --set-volume "$VOL" >/dev/null 2>&1 || true
+  pamixer --allow-boost --set-volume "$VOL" >/dev/null 2>&1 || true
   if [ "$MUTE" = "true" ]; then
     pamixer --mute >/dev/null 2>&1 || true
   else

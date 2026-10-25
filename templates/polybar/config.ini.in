@@ -37,7 +37,7 @@ monitor = ${env:MONITOR:}
 width = 100%
 height = 20
 radius = 0
-bottom = false
+bottom = ${env:POLYBAR_BOTTOM:false}
 fixed-center = true
 
 background = ${colors.background}
@@ -63,7 +63,7 @@ font-4 = "@FONT@:size=11;5"
 font-5 = "Noto Color Emoji:scale=9:antialias=false;3"
 
 modules-left = logo bspwm
-modules-right = updates services polypomo temp memory cpu network pipewire @BATTERY_MODULE@ date
+modules-right = updates services polypomo temp memory cpu network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ date
 
 cursor-click = pointer
 cursor-scroll = ns-resize

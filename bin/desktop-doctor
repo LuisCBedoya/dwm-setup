@@ -45,7 +45,7 @@ check_exec() {
 
 # ─── Binarios ───
 print_header "Binarios esenciales"
-for c in bspwm sxhkd polybar picom dunst rofi kitty feh flameshot i3lock xss-lock \
+for c in bspwm sxhkd polybar dunst rofi kitty feh flameshot i3lock xss-lock \
          brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pamixer wpctl \
          xwallpaper playerctl lxpolkit; do
   check_cmd "$c"
@@ -59,17 +59,12 @@ check_file "$CONFIG/bspwm/scripts/autostart"
 check_file "$CONFIG/sxhkd/sxhkdrc"
 check_file "$CONFIG/polybar/config.ini"
 check_file "$CONFIG/polybar/launch.sh"
-check_file "$CONFIG/picom/picom.conf"
 check_file "$CONFIG/dunst/dunstrc"
 check_file "$CONFIG/rofi/powermenu.rasi"
 check_file "$CONFIG/kitty/kitty.conf"
 check_file "$HOME/.xinitrc"
 check_file "$HOME/.local/share/wallpapers/rocky.jpg"
 check_dir "$HOME/Pictures/Screenshots"
-
-if [ -f "$CONFIG/picom/picom.conf" ] && grep -q 'glx-swap-method' "$CONFIG/picom/picom.conf" 2>/dev/null; then
-  printf '  [MAL] picom.conf contiene glx-swap-method (eliminado en picom 12)\n'
-fi
 
 # ─── Servicios ───
 print_header "Servicios systemd"
@@ -120,7 +115,7 @@ if [ "$found_bat" -eq 1 ]; then printf '\n'; else printf 'ninguna\n'; fi
 # ─── Procesos (si estamos en sesión gráfica) ───
 if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then
   print_header "Procesos en sesión actual"
-  for p in bspwm sxhkd polybar picom dunst lxpolkit udiskie xss-lock; do
+  for p in bspwm sxhkd polybar dunst lxpolkit udiskie xss-lock; do
     if pgrep -x "$p" >/dev/null 2>&1; then
       printf '  [RUNNING] %s\n' "$p"
     else

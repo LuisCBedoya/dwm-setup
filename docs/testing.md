@@ -34,7 +34,7 @@ Se puede validar el render sin tocar el home real:
 
 ```sh
 # Ajustar TARGET_HOME a /tmp/opencode/fakehome y ejecutar las funciones
-# install_bspwm/install_sxhkd/install_polybar/install_picom/install_dunst/
+# install_bspwm/install_sxhkd/install_polybar/install_dunst/
 # install_rofi/install_kitty. Después:
 grep -RInE '@[A-Z][A-Z0-9_]*@' /tmp/opencode/fakehome/.config \
   /tmp/opencode/fakehome/.xinitrc
@@ -56,21 +56,20 @@ Criterios:
 
 ```sh
 grep -RInE '@[A-Z][A-Z0-9_]*@' ~/.config/bspwm ~/.config/sxhkd \
-  ~/.config/polybar ~/.config/picom ~/.config/dunst ~/.config/rofi \
+  ~/.config/polybar ~/.config/dunst ~/.config/rofi \
   ~/.config/kitty ~/.xinitrc
 
-find ~/.config/bspwm ~/.config/sxhkd ~/.config/polybar ~/.config/picom \
+find ~/.config/bspwm ~/.config/sxhkd ~/.config/polybar \
   ~/.config/dunst ~/.config/rofi ~/.config/kitty -not -user "$USER" -print
 
 grep -nE 'font-[0-9]|modules-(left|right)|include-directory' \
   ~/.config/polybar/config.ini
 
-grep -n 'glx-swap-method' ~/.config/picom/picom.conf && echo "MAL"
 grep -n 'icon-theme\|icon_theme' ~/.config/rofi/powermenu.rasi ~/.config/dunst/dunstrc
 ```
 
 Resultado esperado: sin placeholders, sin ficheros de root, 12 módulos en A
-y 14 en B, sin `glx-swap-method`, iconos Adwaita.
+y 14 en B, sin picom, iconos Adwaita.
 
 ## 4. Validación en vivo (2026-10-24)
 
@@ -80,7 +79,7 @@ Host: Debian 13, kernel 6.12, Xorg 1920x1080, Intel UHD 630 + NVIDIA GTX
 Comprobado:
 
 - `bspwm 0.9.10`, `sxhkd 0.6.2`, `polybar 3.7.2` (A 12 / B 14 módulos),
-  `picom 12.5`, `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock`.
+  `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock`.
 - Barra: logo StumbleUpon, workspaces 1-5, `25:00`, temperatura, RAM,
   CPU, red `󰈀 connected`, servicios, volumen, batería `BAT1`, fecha;
   updates (calavera + número) al inicio de la derecha.
@@ -99,10 +98,15 @@ Comprobado:
   muestra `# 0`; capturas `bar-spacing-final.png` y `bar-user-final.png`.
 - Variante B "referencia": 14 módulos, 5 círculos a la izquierda y a la
   derecha `izq`, servicios, pomodoro, temperatura, RAM, CPU, red, volumen y
-  batería. Barra de 18 px transparente, fuentes 10/13 y fondos derechos
-  oscuros. Cambia con `~/.config/polybar/polybar-variant referencia`;
+  batería. Barra de 18 px con pseudo-transparencia, fuentes 10/13 y fondos
+  derechos opacos; solo el centro es transparente. Cambia con
+  `~/.config/polybar/polybar-variant referencia`;
   captura `bar-variant-b.png`. Polybar carga 14 módulos sin errores.
 - `polybar-variant actual` vuelve a la variante A y conserva su estilo.
+- Sin picom, B carga con `pseudo-transparency = true`; `pgrep -x picom`
+  no devuelve proceso y el centro de B muestra el wallpaper.
+- Al poner la barra abajo, `top_padding` pasa a 0 y `bottom_padding` a 26;
+  las ventanas no tapan la barra. Al volver arriba se invierte.
 - `bspwmrc` y `.xinitrc` ejecutables; `.xinitrc` sin `kitty`.
 - Sin placeholders y sin ficheros root en `~/.config`.
 - `desktop-doctor` sin falsos `[FALTA]`; solo avisa de cámara ausente.
@@ -115,8 +119,18 @@ Comprobado:
   `image/png`, sin temporales y con notificación de dunst.
 - `Super+Shift+d` abre `rofi -show run`; `Super+d` sigue abriendo
   `rofi -show drun`.
-- `polybar-variant toggle` probado: cambia B → A y A → B; sxhkd recargado
-  con el binding `Super+Alt+p`.
+- `polybar-variant cycle` probado: A arriba → A abajo → B arriba →
+  B abajo; sxhkd recargado con el binding `Super+Alt+p`.
+
+### Volumen, brillo y dunst (2026-10-25)
+
+- `volume.sh` se probó con `pamixer`: 80 → 90 → 100 → 110 → 120, sin
+  superar 120, y bajada a 110. Se restauró el volumen original.
+- Las notificaciones críticas se cierran solas: `displayed` pasa de 1 a 0
+  tras 10 segundos.
+- `brightness.ini` se instala y solo se referencia si `BACKLIGHT` existe.
+  Este host no tiene `/sys/class/backlight`; en hardware con backlight el
+  módulo usa `scroll-interval = 10`.
 
 ### Servicios systemd (2026-10-25)
 
@@ -184,9 +198,10 @@ Criterios de aceptación:
 - `./install.sh` termina con código 0.
 - No hace falta `chown` ni `chmod` manual.
 - No hay placeholders ni ficheros root en el home.
-- Tras `startx`, bspwm, sxhkd, polybar, picom, dunst, lxpolkit, udiskie y
-  xss-lock están activos.
-- La barra muestra los módulos disponibles (12 en A y 14 en B).
+- Tras `startx`, bspwm, sxhkd, polybar, dunst, lxpolkit, udiskie y
+  xss-lock están activos; no hay proceso picom.
+- La barra muestra los módulos disponibles (12 en A y 14 en B; 13/15 si
+  hay backlight).
 - `desktop-doctor` no reporta fallos.
 - El segundo backup contiene las configs anteriores.
 
@@ -208,12 +223,13 @@ Criterios de aceptación:
 | `Super+Shift+e` | logout | Cierra la sesión |
 | `Super+Shift+c` | reload | Recarga sxhkd/bspwm |
 | `Super+Shift+r` | restart | Reinicia bspwm |
-| `Super+Alt+p` | variante polybar | Alterna A/B |
+| `Super+Alt+p` | ciclo polybar | A arriba → A abajo → B arriba → B abajo |
 | `Super+Shift+space` | floating | Alterna flotante |
 | `Super+a` | parent | Enfoca contenedor padre |
 | `Super+b` / `Super+v` | split h/v | Preselección para la próxima ventana |
 | `Super+f` | fullscreen | Alterna fullscreen |
 | `Alt+Tab` / `Alt+Shift+Tab` | ciclo | Siguiente/anterior ventana |
+| `Super+Ctrl+Tab` / `Super+Ctrl+Shift+Tab` | escritorios | Siguiente/anterior escritorio |
 | `Super+{h,j,k,l}` | foco | Cambia ventana |
 | `Super+Shift+{h,j,k,l}` | mover | Intercambia ventana |
 | `Super+{1-5}` | escritorios | Cambia escritorio |

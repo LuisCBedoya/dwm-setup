@@ -74,7 +74,7 @@ class Timer:
             if not self.notified:
                 self.notified = True
                 try:
-                    call(["notify-send", "-t", "0", "-u", "critical", "Pomodoro", self.endmsg],
+                    call(["notify-send", "-u", "critical", "Pomodoro", self.endmsg],
                          stdout=DEVNULL, stderr=DEVNULL)
                 except FileNotFoundError:
                     pass

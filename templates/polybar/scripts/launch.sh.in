@@ -20,6 +20,29 @@ if [ -r "@HOME@/.config/polybar/variant" ]; then
   variant=$(cat "@HOME@/.config/polybar/variant" 2>/dev/null || printf 'actual')
 fi
 
+position="top"
+if [ -r "@HOME@/.config/polybar/position" ]; then
+  position=$(cat "@HOME@/.config/polybar/position" 2>/dev/null || printf 'top')
+fi
+case "$position" in
+  bottom) POLYBAR_BOTTOM=true ;;
+  *) POLYBAR_BOTTOM=false ;;
+esac
+export POLYBAR_BOTTOM
+
+if command -v bspc >/dev/null 2>&1; then
+  case "$position" in
+    bottom)
+      bspc config top_padding 0 || true
+      bspc config bottom_padding 26 || true
+      ;;
+    *)
+      bspc config top_padding 26 || true
+      bspc config bottom_padding 0 || true
+      ;;
+  esac
+fi
+
 case "$variant" in
   referencia)
     CONFIG="@HOME@/.config/polybar/variants/reference/config.ini"

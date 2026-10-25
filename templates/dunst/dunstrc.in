@@ -55,7 +55,7 @@
     background = "@COLOR_BG@"
     foreground = "@COLOR_FG@"
     frame_color = "@COLOR_RED@"
-    timeout = 0
+    timeout = 10
 
 [test]
     summary = "*test*"

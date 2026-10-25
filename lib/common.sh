@@ -247,7 +247,6 @@ backup_existing_configs() {
   backup_user_path "$home/.config/bspwm"
   backup_user_path "$home/.config/sxhkd"
   backup_user_path "$home/.config/polybar"
-  backup_user_path "$home/.config/picom"
   backup_user_path "$home/.config/dunst"
   backup_user_path "$home/.config/rofi"
   backup_user_path "$home/.config/kitty"
@@ -309,7 +308,6 @@ chown_managed_paths() {
     "$TARGET_HOME/.config/bspwm" \
     "$TARGET_HOME/.config/sxhkd" \
     "$TARGET_HOME/.config/polybar" \
-    "$TARGET_HOME/.config/picom" \
     "$TARGET_HOME/.config/dunst" \
     "$TARGET_HOME/.config/rofi" \
     "$TARGET_HOME/.config/kitty" \

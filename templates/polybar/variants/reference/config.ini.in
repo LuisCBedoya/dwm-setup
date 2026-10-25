@@ -5,7 +5,7 @@ include-directory = @HOME@/.config/polybar/variants/reference/modules
 
 [colors]
 background = #00000000
-module-bg = #CC1F1F21
+module-bg = #1F1F21
 foreground = #D8D3CC
 foreground-alt = #8E8A85
 primary = #B9A99A
@@ -20,7 +20,7 @@ monitor = ${env:MONITOR:}
 width = 100%
 height = 18
 radius = 0
-bottom = false
+bottom = ${env:POLYBAR_BOTTOM:false}
 fixed-center = true
 
 background = ${colors.background}
@@ -47,7 +47,7 @@ font-5 = "@FONT@:size=52;0"
 
 modules-center =  bspwm
 modules-left = date day updates polypomo der 
-modules-right = izq services temp memory cpu network pipewire @BATTERY_MODULE@
+modules-right = izq services temp memory cpu network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@
 
 cursor-click = pointer
 cursor-scroll = ns-resize
@@ -58,6 +58,6 @@ override-redirect = true
 
 [settings]
 screenchange-reload = true
-pseudo-transparency = false
+pseudo-transparency = true
 
 ; vim:ft=dosini

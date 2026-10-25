@@ -65,8 +65,8 @@ el driver salvo `--nvidia`; hace falta configurar MOK.
   `scripts/autostart`.
 - `~/.local/share/xorg` se crea con modo `0700` y propietario del usuario
   para que Xorg escriba su log sin root.
-- `autostart` levanta polybar, dunst, picom, xwallpaper, udiskie,
-  xss-lock, lxpolkit y el notificador de batería.
+- `autostart` levanta polybar, dunst, xwallpaper, udiskie, xss-lock,
+  lxpolkit y el notificador de batería. Sin compositor.
 - Log de sesión: `~/.local/state/dwm-setup/session.log`.
 
 ## Almacenamiento extraíble

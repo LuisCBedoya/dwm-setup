@@ -1,0 +1,64 @@
+#!/bin/sh
+# volume.sh — volumen con máximo 120 % y pasos de 10 %.
+# Uso: volume.sh status|up|down|mute
+
+STEP=${VOLUME_STEP:-10}
+MAX=${VOLUME_MAX:-120}
+PAMIXER=${PAMIXER:-pamixer}
+
+notify() {
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send "$@" >/dev/null 2>&1 || true
+}
+
+get_volume() {
+  value=$("$PAMIXER" --get-volume 2>/dev/null || printf '0')
+  case "$value" in
+    ''|*[!0-9]*) value=0 ;;
+  esac
+  printf '%s\n' "$value"
+}
+
+is_muted() {
+  [ "$("$PAMIXER" --get-mute 2>/dev/null || printf 'false')" = "true" ]
+}
+
+set_volume() {
+  value=$1
+  [ "$value" -lt 0 ] && value=0
+  [ "$value" -gt "$MAX" ] && value=$MAX
+  "$PAMIXER" --allow-boost --set-volume "$value" >/dev/null 2>&1 || {
+    notify -u critical "Volumen" "No se pudo cambiar el volumen"
+    return 1
+  }
+}
+
+case "${1:-status}" in
+  status)
+    if is_muted; then
+      printf '%%{T1}󰝟%%{T-} muted\n'
+    else
+      printf '%%{T1}󰕾%%{T-} %s%%\n' "$(get_volume)"
+    fi
+    ;;
+  up)
+    current=$(get_volume)
+    [ "$current" -gt "$MAX" ] && current=$MAX
+    set_volume $((current + STEP))
+    ;;
+  down)
+    current=$(get_volume)
+    [ "$current" -gt "$MAX" ] && current=$MAX
+    set_volume $((current - STEP))
+    ;;
+  mute)
+    "$PAMIXER" --toggle-mute >/dev/null 2>&1 || {
+      notify -u critical "Volumen" "No se pudo cambiar el mute"
+      exit 1
+    }
+    ;;
+  *)
+    printf 'Uso: %s status|up|down|mute\n' "$0" >&2
+    exit 2
+    ;;
+esac

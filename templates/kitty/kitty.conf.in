@@ -28,8 +28,8 @@ tab_inactive_text_alpha 0.5
 # Colorscheme Warm Charcoal
 # Polar Night
 background              @COLOR_BG@
-background_opacity      0.85
-dynamic_background_opacity yes
+background_opacity      1.0
+dynamic_background_opacity no
 foreground              @COLOR_FG@
 selection_background    @COLOR_BG_ELEV@
 selection_foreground    @COLOR_FG@

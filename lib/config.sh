@@ -6,7 +6,7 @@ install_user_configs() {
   local home="$TARGET_HOME"
 
   if dry_run; then
-    log "[dry-run] instalar ~/.config/{bspwm,sxhkd,polybar,picom,dunst,rofi,kitty}"
+    log "[dry-run] instalar ~/.config/{bspwm,sxhkd,polybar,dunst,rofi,kitty}"
     log "[dry-run] instalar ~/.xinitrc, wallpaper y ~/Pictures/Screenshots"
     log "[dry-run] preparar ~/.local/share/xorg (0700) para el log de Xorg sin root"
     log "[dry-run] instalar /usr/local/bin/desktop-safe y desktop-doctor"
@@ -21,7 +21,6 @@ install_user_configs() {
   make_user_dir "$home/.config/sxhkd"
   make_user_dir "$home/.config/polybar/modules"
   make_user_dir "$home/.config/polybar/scripts"
-  make_user_dir "$home/.config/picom"
   make_user_dir "$home/.config/dunst"
   make_user_dir "$home/.config/rofi"
   make_user_dir "$home/.config/kitty"

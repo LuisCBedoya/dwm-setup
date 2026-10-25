@@ -29,8 +29,6 @@ source "$PROJECT_ROOT/lib/bspwm.sh"
 source "$PROJECT_ROOT/lib/sxhkd.sh"
 # shellcheck source=lib/polybar.sh
 source "$PROJECT_ROOT/lib/polybar.sh"
-# shellcheck source=lib/picom.sh
-source "$PROJECT_ROOT/lib/picom.sh"
 # shellcheck source=lib/dunst.sh
 source "$PROJECT_ROOT/lib/dunst.sh"
 # shellcheck source=lib/rofi.sh
@@ -148,7 +146,6 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/bspwm.sh"
     "$PROJECT_ROOT/lib/sxhkd.sh"
     "$PROJECT_ROOT/lib/polybar.sh"
-    "$PROJECT_ROOT/lib/picom.sh"
     "$PROJECT_ROOT/lib/dunst.sh"
     "$PROJECT_ROOT/lib/rofi.sh"
     "$PROJECT_ROOT/lib/kitty.sh"
@@ -184,6 +181,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/modules/xkeyboard.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/network.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/services.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/brightness.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/battery.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/pipewire.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/date.ini.in"
@@ -191,6 +189,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/scripts/polypomo.in"
     "$PROJECT_ROOT/templates/polybar/scripts/network-status.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/services.sh.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/volume.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/launch.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/polybar-variant.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/config.ini.in"
@@ -211,13 +210,13 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/pipewire.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/network.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/services.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/brightness.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/memory.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/cpu.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/xkeyboard.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/fs.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/date.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/updates.ini.in"
-    "$PROJECT_ROOT/templates/picom/picom.conf.in"
     "$PROJECT_ROOT/templates/dunst/dunstrc.in"
     "$PROJECT_ROOT/templates/dunst/notification-sound.sh.in"
     "$PROJECT_ROOT/templates/rofi/powermenu.rasi.in"
@@ -349,7 +348,6 @@ main() {
   install_bspwm
   install_sxhkd
   install_polybar
-  install_picom
   install_dunst
   install_rofi
   install_kitty

@@ -51,7 +51,7 @@ super + alt + r
     bspc wm -r
 # Alternar variante de polybar (A/B)
 super + alt + p
-    @HOME@/.config/polybar/polybar-variant toggle
+    @HOME@/.config/polybar/polybar-variant cycle
 super + shift + c
     pkill -USR1 -x sxhkd; bspc wm -r
 super + shift + r
@@ -113,6 +113,10 @@ super + {_,shift + }c
     bspc node -f {next,prev}.local.!hidden.window
 
 # Escritorios (5)
+super + ctrl + Tab
+    bspc desktop -f next.local
+super + ctrl + shift + Tab
+    bspc desktop -f prev.local
 super + bracket{left,right}
     bspc desktop -f {prev,next}.local
 super + {_,shift + }{1-5}
@@ -135,11 +139,11 @@ super + {Left,Down,Up,Right}
 
 # ─── Multimedia ───
 XF86AudioRaiseVolume
-    pamixer -i 5
+    @HOME@/.config/polybar/scripts/volume.sh up
 XF86AudioLowerVolume
-    pamixer -d 5
+    @HOME@/.config/polybar/scripts/volume.sh down
 XF86AudioMute
-    pamixer -t
+    @HOME@/.config/polybar/scripts/volume.sh mute
 
 XF86MonBrightnessUp
     brightnessctl set +10%
@@ -148,11 +152,11 @@ XF86MonBrightnessDown
 
 # Fallback F-keys
 F2
-    pamixer -i 5
+    @HOME@/.config/polybar/scripts/volume.sh up
 F1
-    pamixer -d 5
+    @HOME@/.config/polybar/scripts/volume.sh down
 F3
-    pamixer -t
+    @HOME@/.config/polybar/scripts/volume.sh mute
 F12
     brightnessctl set +10%
 F11

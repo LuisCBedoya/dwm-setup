@@ -1,0 +1,13 @@
+; brightness — brillo del backlight; solo se incluye si hay hardware
+[module/brightness]
+type = internal/backlight
+card = @BRIGHTNESS@
+enable-scroll = true
+scroll-interval = 10
+use-actual-brightness = true
+format = <label>
+format-padding = 1
+format-background = ${colors.module-bg}
+format-font = 1
+format-foreground = ${colors.foreground}
+label = " %{T1}󰃠 %{T-}%percentage%%"

@@ -8,7 +8,7 @@ La fase 1b está implementada y validada en la sesión viva del host de
 referencia (Debian 13, Intel UHD 630 + NVIDIA GTX 1050 Ti Mobile,
 1920x1080). El instalador se ha corregido para que los backups se hagan
 antes de escribir, el home quede con el propietario correcto, `bspwmrc` sea
-ejecutable, picom arranque y la verificación final no falle.
+ejecutable, la barra arranque y la verificación final no falle.
 
 - Estado del código: implementado; `bash -n`, `sh -n`, `--dry-run` y
   verificación sobre home simulado pasan.
@@ -30,8 +30,11 @@ Procesos comprobados:
 - `polybar 3.7.2`; variante A con **12 módulos** y variante B con
   **14 módulos**: `logo`, `bspwm`, `polypomo`, `temp`, `memory`, `cpu`,
   `network`, `services`, `pipewire`, `battery`, `date`, `updates`.
-- `picom` 12.5 activo (config sin `glx-swap-method`).
+  Con backlight se añade `brightness` (A 13 / B 15).
+- Sin compositor. La variante B usa `pseudo-transparency` de polybar para
+  dejar transparente solo el centro.
 - `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock` activos.
+  Las críticas se cierran a los 10 s. Volumen máximo 120 % en pasos de 10.
 - `BAT1`, `ACAD`, `enp3s0`, `wlo1`, batería y volumen visibles en la barra.
   La red es un solo módulo: con WiFi down y Ethernet up muestra `󰈀 connected`;
   no muestra `NoC`. El layout `latam` se aplica con `setxkbmap` pero ya no
@@ -45,6 +48,11 @@ Procesos comprobados:
   Al elegir uno consulta `systemctl is-active` y ofrece detener/reiniciar
   si está activo, o iniciar/reiniciar si está parado. Probado con un
   `systemctl` y un menú simulados; la variante B cargó 14 módulos.
+- `volume.sh` limita el volumen a 120 % y cambia de 10 en 10; probado
+  subiendo 80→90→100→110→120 y bajando a 110.
+- Las notificaciones críticas de dunst se cierran a los 10 s; comprobado con
+  `dunstctl count displayed`. El módulo de brillo queda condicionado a que
+  exista backlight; en este host no hay `/sys/class/backlight`.
 
 Comprobaciones:
 
@@ -52,7 +60,7 @@ Comprobaciones:
   `exec bspwm` y ya no lanza `kitty`.
 - Sin placeholders `@...@` en las configuraciones vivas.
 - `low_bat_notifier.sh` contiene `BATTERY="BAT1"`.
-- Sin ficheros root en `~/.config/{bspwm,sxhkd,polybar,picom,dunst,rofi,kitty}`.
+- Sin ficheros root en `~/.config/{bspwm,sxhkd,polybar,dunst,rofi,kitty}`.
 - `desktop-doctor` (repo) muestra todos los binarios/configs/procesos OK;
   solo avisa de que no hay cámara.
 - Home simulado (`/tmp/opencode/fakehome`) renderizado y `verify_install`
@@ -72,12 +80,15 @@ y movieron `updates` al inicio de la derecha:
   bindings no-op.
 - `Super+Shift+e` pasa a logout; el editor se mueve a `Super+Shift+v`.
 - `Alt+Tab` / `Alt+Shift+Tab` ciclan ventanas visibles del escritorio.
+- `Super+Ctrl+Tab` / `Super+Ctrl+Shift+Tab` cambian al escritorio
+  siguiente/anterior.
 - `Super+r` + `h/j/k/l` redimensiona con cadena de sxhkd (`:`); `Escape`
   sale. Se retiró `Super+Alt+{flechas}`.
 - Se añadieron `Super+Shift+c` (reload), `Super+Shift+r` (restart),
   `Super+Shift+space` (floating), `Super+a` (parent) y `Super+b/v`
-  (split h/v por preselección). `Super+Alt+p` alterna las variantes de
-  polybar.
+  (split h/v por preselección). `Super+Alt+p` cicla A/B y su posición
+  superior/inferior. El padding de bspwm se invierte para que la barra
+  inferior no quede tapada.
 - Se mantienen los extras: Thunar, lock, rofi drun, capturas, flags y
   multimedia.
 - `Super+s/w/e` de i3 (stacking/tabbed/toggle split) no tienen equivalente
@@ -221,10 +232,10 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
   `sudo chown -R` manual.
 - **`bspwmrc` 0755**: bspwm ya lo ejecuta y arranca sxhkd, polybar y el
   autostart. El `kitty &` de `.xinitrc` se eliminó.
-- **Picom**: se quitó `glx-swap-method` (eliminado en picom 12), `refresh-rate`
-  y condiciones deprecadas; arranca sin errores.
+- **Sin compositor**: se retiró picom. La B usa transparencia simulada de
+  polybar solo en el centro; los bloques laterales son opacos.
 - **Autostart**: sin `set -e`, log en `~/.local/state/dwm-setup/session.log`,
-  `lxpolkit`, `udiskie -N -a` sin `-t`, aviso si picom no arranca.
+  `lxpolkit` y `udiskie -N -a` sin `-t`.
 - **Batería baja**: se pasa `BATTERY` al renderizar el script.
 - **`desktop-doctor`**: reescrito en POSIX sh; ya no usa `[[`,
   `WAYLAND_DISPLAY` sin `:-` ni `ls BAT* | xargs basename`.
@@ -251,13 +262,12 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
 - [x] bspwm instalado desde apt + bspwmrc 0755 + autostart + scripts.
 - [x] sxhkd instalado desde apt + sxhkdrc renderizado.
 - [x] polybar instalado desde apt + config.ini, modules/, scripts/, launch.sh.
-- [x] picom instalado desde apt + picom.conf moderno.
 - [x] dunst instalado desde apt + dunstrc (Adwaita).
 - [x] rofi instalado desde apt + powermenu.rasi (Adwaita).
 - [x] kitty instalado desde apt + kitty.conf.
 - [x] Sesión: `~/.xinitrc` → `bspwm`; autostart interno.
 - [x] `desktop-safe` para lock/suspend/logout/poweroff/reboot.
-- [x] `desktop-doctor` POSIX para bspwm/sxhkd/polybar/picom/cámara.
+- [x] `desktop-doctor` POSIX para bspwm/sxhkd/polybar/cámara.
 - [x] Verificación estática final (`verify_install`).
 - [x] Backups de sistema y usuario antes de escribir.
 - [x] Ownership automático del home y logs.
@@ -305,7 +315,6 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
 | `bspwmrc` sin `+x` | Alto | Se instala 0755 y `verify_install` lo comprueba |
 | Backups tardíos | Alto | `backup_existing_configs` antes de escribir |
 | Directorios root en el home | Medio | `make_user_dir` + `chown_managed_paths` |
-| Picom no arranca | Medio | Config sin `glx-swap-method`; log de sesión |
 | Módulo battery/red inexistente | Bajo | Batería condicional; red oculta si no hay conexión |
 | Nerd Font no descarga | Bajo | Fallback a JetBrains Mono/monospace |
 | Glifo Nerd Font 3.x incorrecto | Bajo | Verificar con `fc-list :charset=...` |

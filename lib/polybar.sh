@@ -36,6 +36,11 @@ render_polybar_templates() {
     battery_module="battery"
   fi
 
+  local brightness_module=""
+  if [[ -n "${BACKLIGHT:-}" && -d "/sys/class/backlight/$BACKLIGHT" ]]; then
+    brightness_module="brightness"
+  fi
+
   local common_vars=(
     "HOME=$TARGET_HOME"
     "FONT=$DWM_FONT"
@@ -48,6 +53,9 @@ render_polybar_templates() {
     "BATTERY=$battery"
     "AC_ADAPTER=$ac_adapter"
     "BATTERY_MODULE=$battery_module"
+    "BACKLIGHT=${BACKLIGHT:-}"
+    "BRIGHTNESS=${BACKLIGHT:-}"
+    "BRIGHTNESS_MODULE=$brightness_module"
   )
 
   render_theme_template "$PROJECT_ROOT/templates/polybar/config.ini.in" \
@@ -63,6 +71,7 @@ render_polybar_templates() {
     "modules/cpu.ini"
     "modules/network.ini"
     "modules/services.ini"
+    "modules/brightness.ini"
     "modules/battery.ini"
     "modules/pipewire.ini"
     "modules/date.ini"
@@ -74,7 +83,7 @@ render_polybar_templates() {
       "$home/.config/polybar/$m" 0644 "${common_vars[@]}"
   done
 
-  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/services.sh")
+  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/services.sh" "scripts/volume.sh")
   local s
   for s in "${scripts[@]}"; do
     render_theme_template "$PROJECT_ROOT/templates/polybar/$s.in" \
@@ -102,6 +111,7 @@ render_polybar_templates() {
     "modules/pipewire.ini"
     "modules/network.ini"
     "modules/services.ini"
+    "modules/brightness.ini"
     "modules/memory.ini"
     "modules/cpu.ini"
     "modules/xkeyboard.ini"

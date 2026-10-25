@@ -12,11 +12,40 @@ case "${1:-}" in
       variant="referencia"
     fi
     ;;
+  cycle)
+    current_variant=$(cat "@HOME@/.config/polybar/variant" 2>/dev/null || true)
+    current_position=$(cat "@HOME@/.config/polybar/position" 2>/dev/null || true)
+    case "${current_variant:-actual}:${current_position:-top}" in
+      actual:top)
+        variant="actual"
+        position="bottom"
+        ;;
+      actual:bottom)
+        variant="referencia"
+        position="top"
+        ;;
+      referencia:top)
+        variant="referencia"
+        position="bottom"
+        ;;
+      referencia:bottom)
+        variant="actual"
+        position="top"
+        ;;
+      *)
+        variant="actual"
+        position="top"
+        ;;
+    esac
+    ;;
   *)
-    printf 'Uso: %s actual|referencia|toggle\n' "$0" >&2
+    printf 'Uso: %s actual|referencia|toggle|cycle\n' "$0" >&2
     exit 1
     ;;
 esac
 
 printf '%s\n' "$variant" > "@HOME@/.config/polybar/variant"
+if [ -n "${position:-}" ]; then
+  printf '%s\n' "$position" > "@HOME@/.config/polybar/position"
+fi
 exec "@HOME@/.config/polybar/launch.sh"
