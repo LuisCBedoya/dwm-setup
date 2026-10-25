@@ -8,10 +8,13 @@ install_polybar() {
 
   make_user_dir "$home/.config/polybar/modules"
   make_user_dir "$home/.config/polybar/scripts"
+  make_user_dir "$home/.config/polybar/variants/reference/modules"
+  make_user_dir "$home/.config/polybar/variants/reference/scripts"
 
   log "Renderizando polybar desde templates"
   render_polybar_templates "$home"
   render_launch_script "$home"
+  render_variant_script "$home"
 
   ok "polybar instalado"
 }
@@ -39,7 +42,7 @@ render_polybar_templates() {
     "FONT_SIZE=$DWM_FONT_SIZE"
     "KEYMAP=$DWM_KEYMAP"
     "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/rocky.jpg"
-    "THEME_NAME=nord"
+    "THEME_NAME=warm"
     "ETH_IFACE=$eth_iface"
     "WLAN_IFACE=$wlan_iface"
     "BATTERY=$battery"
@@ -76,6 +79,49 @@ render_polybar_templates() {
     render_theme_template "$PROJECT_ROOT/templates/polybar/$s.in" \
       "$home/.config/polybar/$s" 0755 "${common_vars[@]}"
   done
+
+  # Variante 2: referencia (powerline + transparencia central)
+  local variant_dir="$home/.config/polybar/variants/reference"
+  render_theme_template \
+    "$PROJECT_ROOT/templates/polybar/variants/reference/config.ini.in" \
+    "$variant_dir/config.ini" 0644 "${common_vars[@]}"
+
+  local variant_modules=(
+    "modules/time.ini"
+    "modules/day.ini"
+    "modules/sep-dash.ini"
+    "modules/sep-bar.ini"
+    "modules/arrow.ini"
+    "modules/der.ini"
+    "modules/izq.ini"
+    "modules/polypomo.ini"
+    "modules/bspwm.ini"
+    "modules/battery.ini"
+    "modules/temp.ini"
+    "modules/pipewire.ini"
+    "modules/network.ini"
+    "modules/memory.ini"
+    "modules/cpu.ini"
+    "modules/xkeyboard.ini"
+    "modules/fs.ini"
+    "modules/date.ini"
+    "modules/updates.ini"
+  )
+
+  local vm
+  for vm in "${variant_modules[@]}"; do
+    render_theme_template \
+      "$PROJECT_ROOT/templates/polybar/variants/reference/$vm.in" \
+      "$variant_dir/$vm" 0644 "${common_vars[@]}"
+  done
+
+  local variant_scripts=("scripts/network-status.sh" "scripts/updates-apt.sh" "scripts/arrow.sh")
+  local vs
+  for vs in "${variant_scripts[@]}"; do
+    render_theme_template \
+      "$PROJECT_ROOT/templates/polybar/variants/reference/$vs.in" \
+      "$variant_dir/$vs" 0755 "${common_vars[@]}"
+  done
 }
 
 render_launch_script() {
@@ -96,6 +142,16 @@ render_launch_script() {
   run_root install -D -m 0755 -o "$TARGET_USER" -g "$TARGET_GROUP" \
     /dev/stdin "$launch" <<<"$content"
   ok "Generado: $launch"
+}
+
+render_variant_script() {
+  local home="$1"
+  local script="$home/.config/polybar/polybar-variant"
+
+  render_theme_template \
+    "$PROJECT_ROOT/templates/polybar/scripts/polybar-variant.in" \
+    "$script" 0755 "HOME=$TARGET_HOME"
+  ok "Generado: $script"
 }
 
 # Detección de hardware propia de polybar.

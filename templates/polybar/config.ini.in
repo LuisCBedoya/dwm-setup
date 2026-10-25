@@ -1,36 +1,36 @@
 ; polybar config.ini — generado desde template, no editar directamente
-; Paleta exacta del screenshot (GitHub Dark / Nord-modificada)
+; Paleta exacta del screenshot (Warm Charcoal)
 ; Barra TOP, full-width, sin subrayados, sin bloques de fondo
 
 include-directory = @HOME@/.config/polybar/modules
 
 [colors]
-background = #0D1117
-background-alt = #0D1117
-foreground = #E6EDF3
-foreground-alt = #6E7681
-primary = #58A6FF
-secondary = #A371F7
-alert = #F47067
-disabled = #6E7681
+background = #18181A
+background-alt = #202022
+foreground = #D8D3CC
+foreground-alt = #8E8A85
+primary = #B9A99A
+secondary = #8FA6B4
+alert = #C97A6D
+disabled = #5E5E62
 
-; Alias Nord para compatibilidad con módulos portados
-nord0 = #0D1117
-nord1 = #0D1117
-nord2 = #161B22
-nord3 = #21262D
-nord4 = #C9D1D9
-nord5 = #8B949E
-nord6 = #C9D1D9
-nord7 = #58A6FF
-nord8 = #79C0FF
-nord9 = #58A6FF
-nord10 = #388BF8
-nord11 = #F47067
-nord12 = #D29922
-nord13 = #D29922
-nord14 = #3FB950
-nord15 = #A371F7
+; Alias para módulos portados
+nord0 = #18181A
+nord1 = #202022
+nord2 = #2A2A2C
+nord3 = #35353A
+nord4 = #D8D3CC
+nord5 = #8E8A85
+nord6 = #E6E1DA
+nord7 = #8FA6B4
+nord8 = #A7BAC7
+nord9 = #B9A99A
+nord10 = #6E8494
+nord11 = #C97A6D
+nord12 = #C9B18C
+nord13 = #D6C1A0
+nord14 = #A8BFAE
+nord15 = #A99BB0
 
 [bar/main]
 monitor = ${env:MONITOR:}

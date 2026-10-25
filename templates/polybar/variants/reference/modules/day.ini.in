@@ -1,0 +1,11 @@
+; day — fecha
+[module/day]
+type = internal/date
+interval = 60
+date = %A %d.%m
+label = %date%
+format = <label>
+format-padding = 1
+format-background = ${colors.module-bg}
+format-foreground = ${colors.foreground}
+label-font = 1

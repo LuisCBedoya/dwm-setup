@@ -1,0 +1,10 @@
+; cpu — uso de CPU
+[module/cpu]
+type = internal/cpu
+interval = 2
+format = <label>
+format-padding = 2
+format-background = ${colors.module-bg}
+format-foreground = ${colors.foreground}
+label = "%{T3} %{T-}%percentage%%"
+label-font = 1

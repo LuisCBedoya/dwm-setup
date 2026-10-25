@@ -69,13 +69,17 @@ class Timer:
         now = time.time()
         delta = now - self.previous
         self.time -= delta
-        if not self.notified and self.time < 0:
-            self.notified = True
-            try:
-                call(["notify-send", "-t", "0", "-u", "critical", "Pomodoro", self.endmsg],
-                     stdout=DEVNULL, stderr=DEVNULL)
-            except FileNotFoundError:
-                pass
+        if self.time <= 0:
+            self.time = 0
+            if not self.notified:
+                self.notified = True
+                try:
+                    call(["notify-send", "-t", "0", "-u", "critical", "Pomodoro", self.endmsg],
+                         stdout=DEVNULL, stderr=DEVNULL)
+                except FileNotFoundError:
+                    pass
+            return True
+        return False
 
     def change(self, op, seconds):
         self.time = op(self.time, seconds)
@@ -110,7 +114,8 @@ class Status:
 
     def update(self):
         if self.active:
-            self.timer.update()
+            if self.timer.update():
+                self.next_timer()
         self.timer.tick()
 
     def change(self, op, seconds):
@@ -119,6 +124,11 @@ class Status:
         seconds = int(seconds)
         op = operator.add if op == "add" else operator.sub
         self.timer.change(op, seconds)
+        limit = self.worktime if self.status == "work" else self.breaktime
+        if self.timer.time > limit:
+            self.timer.time = limit
+        if self.timer.time < 0:
+            self.timer.time = 0
 
     def next_timer(self):
         if self.status == "work":

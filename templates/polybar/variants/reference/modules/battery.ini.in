@@ -1,0 +1,39 @@
+; battery — batería con icono ámbar
+[module/battery]
+type = internal/battery
+battery = @BATTERY@
+adapter = @AC_ADAPTER@
+full-at = 100
+
+format-charging = <animation-charging><label-charging>
+format-charging-padding = 1
+format-charging-background = ${colors.module-bg}
+format-charging-foreground = ${colors.foreground}
+label-charging = %percentage%%
+label-charging-font = 1
+animation-charging-0 = "%{T3} %{T-}"
+animation-charging-1 = "%{T3} %{T-}"
+animation-charging-2 = "%{T3} %{T-}"
+animation-charging-3 = "%{T3} %{T-}"
+animation-charging-4 = "%{T3} %{T-}"
+animation-charging-foreground = ${colors.primary}
+animation-charging-framerate = 750
+
+format-discharging = <ramp-capacity><label-discharging>
+format-discharging-padding = 1
+format-discharging-background = ${colors.module-bg}
+format-discharging-foreground = ${colors.foreground}
+label-discharging = %percentage%%
+label-discharging-font = 1
+
+label-full = "%{T1} %{T-}100%"
+label-full-foreground = ${colors.foreground}
+label-full-background = ${colors.module-bg}
+label-full-padding = 1
+
+ramp-capacity-0 = "%{T1} %{T-}"
+ramp-capacity-1 = "%{T1} %{T-}"
+ramp-capacity-2 = "%{T1} %{T-}"
+ramp-capacity-3 = "%{T1} %{T-}"
+ramp-capacity-4 = "%{T1} %{T-}"
+ramp-capacity-foreground = ${colors.primary}

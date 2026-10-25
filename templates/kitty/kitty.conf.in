@@ -1,5 +1,5 @@
 # kitty.conf — generado desde template
-# Paleta: @THEME_NAME@ (Nord)
+# Paleta: @THEME_NAME@ (Warm Charcoal)
 
 font_family      @FONT@
 bold_font        auto
@@ -25,9 +25,11 @@ tab_powerline_style     slanted
 tab_activity_symbol     ●
 tab_inactive_text_alpha 0.5
 
-# Colorscheme Nord
+# Colorscheme Warm Charcoal
 # Polar Night
 background              @COLOR_BG@
+background_opacity      0.85
+dynamic_background_opacity yes
 foreground              @COLOR_FG@
 selection_background    @COLOR_BG_ELEV@
 selection_foreground    @COLOR_FG@
@@ -52,7 +54,7 @@ active_border_color     @COLOR_ACCENT@
 inactive_border_color   @COLOR_BG_ALT@
 bell_border_color       @COLOR_YELLOW@
 
-# ANSI colors (Nord)
+# ANSI colors (Warm Charcoal)
 # Black
 color0  @COLOR_BG@
 color8  @COLOR_FG_MUTED@

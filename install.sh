@@ -159,6 +159,7 @@ check_project_layout() {
     "$PROJECT_ROOT/bin/desktop-safe"
     "$PROJECT_ROOT/bin/desktop-doctor"
     "$PROJECT_ROOT/templates/colors/base.sh"
+    "$PROJECT_ROOT/templates/colors/palette-warm.sh"
     "$PROJECT_ROOT/templates/colors/palette-nord.sh"
     "$PROJECT_ROOT/templates/bspwm/bspwmrc.in"
     "$PROJECT_ROOT/templates/bspwm/autostart.in"
@@ -189,6 +190,30 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/scripts/polypomo.in"
     "$PROJECT_ROOT/templates/polybar/scripts/network-status.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/launch.sh.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/polybar-variant.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/config.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/scripts/network-status.sh.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/scripts/updates-apt.sh.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/scripts/arrow.sh.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/time.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/day.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/sep-dash.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/sep-bar.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/arrow.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/der.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/izq.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/polypomo.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/bspwm.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/battery.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/temp.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/pipewire.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/network.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/memory.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/cpu.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/xkeyboard.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/fs.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/date.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/updates.ini.in"
     "$PROJECT_ROOT/templates/picom/picom.conf.in"
     "$PROJECT_ROOT/templates/dunst/dunstrc.in"
     "$PROJECT_ROOT/templates/dunst/notification-sound.sh.in"
@@ -221,6 +246,7 @@ EOF
 Fase 1b instalada para: $TARGET_USER
 Home:                   $TARGET_HOME
 Log:                    $LOG_FILE
+Variantes polybar:      ~/.config/polybar/polybar-variant actual|referencia
 
 Próximo paso:
   1. Reinicia el equipo: sudo reboot
@@ -240,8 +266,8 @@ Atajos principales:
   Super+Print       menú de capturas
   Super+{h,j,k,l}   foco ventanas
   Super+Shift+{h,j,k,l} mover ventanas
-  Super+{1-4}       ir a escritorio
-  Super+Shift+{1-4} mover ventana a escritorio
+  Super+{1-5}       ir a escritorio
+  Super+Shift+{1-5} mover ventana a escritorio
   Super+Alt+{h,j,k,l} redimensionar
   Super+m           monocle/tiled
   Super+f           fullscreen
@@ -290,7 +316,7 @@ main() {
   print_detection
 
   # Cargar paleta Nord
-  load_theme "nord"
+  load_theme "warm"
 
   # Los backups deben existir ANTES de cualquier escritura de configuración.
   local backup_ts

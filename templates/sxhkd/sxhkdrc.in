@@ -1,5 +1,5 @@
 # sxhkdrc — generado desde template, no editar directamente
-# Paleta: @THEME_NAME@ (Nord)
+# Paleta: @THEME_NAME@ (Warm Charcoal)
 # Mapa basado en los atajos de i3 del usuario.
 
 # ─── Aplicaciones (mapa de i3) ───
@@ -109,11 +109,11 @@ alt + shift + Tab
 super + {_,shift + }c
     bspc node -f {next,prev}.local.!hidden.window
 
-# Escritorios (4)
+# Escritorios (5)
 super + bracket{left,right}
     bspc desktop -f {prev,next}.local
-super + {_,shift + }{1-4}
-    bspc {desktop -f,node -d} '^{1-4}'
+super + {_,shift + }{1-5}
+    bspc {desktop -f,node -d} '^{1-5}'
 
 # ─── Redimensionar: Super+r y luego h/j/k/l ───
 # Con ':' la cadena sigue activa tras la cola; Escape sale.

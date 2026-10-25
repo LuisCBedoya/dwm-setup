@@ -1,19 +1,45 @@
 #!/bin/sh
-# low_bat_notifier — notifica cuando la batería está baja
+# low_bat_notifier — avisa al 10 % descargando y al 99 % cargando
 # Solo se ejecuta si existe la batería (verificado en autostart)
 
 BATTERY="@BATTERY@"
-THRESHOLD=15
-CHECK_INTERVAL=60
+LOW_THRESHOLD=${LOW_THRESHOLD:-10}
+HIGH_THRESHOLD=${HIGH_THRESHOLD:-99}
+CHECK_INTERVAL=${CHECK_INTERVAL:-60}
+POWER_SUPPLY_DIR=${POWER_SUPPLY_DIR:-/sys/class/power_supply}
+NOTIFY_SEND=${NOTIFY_SEND:-notify-send}
+
+low_notified=0
+high_notified=0
 
 while true; do
-  if [ -d "/sys/class/power_supply/$BATTERY" ]; then
-    capacity=$(cat "/sys/class/power_supply/$BATTERY/capacity" 2>/dev/null)
-    status=$(cat "/sys/class/power_supply/$BATTERY/status" 2>/dev/null)
-    
-    if [ "$capacity" -le "$THRESHOLD" ] && [ "$status" = "Discharging" ]; then
-      notify-send -u critical "Batería baja" "Nivel: ${capacity}% — Conecte el cargador"
+  if [ -d "$POWER_SUPPLY_DIR/$BATTERY" ]; then
+    capacity=$(cat "$POWER_SUPPLY_DIR/$BATTERY/capacity" 2>/dev/null)
+    status=$(cat "$POWER_SUPPLY_DIR/$BATTERY/status" 2>/dev/null)
+
+    case "$capacity" in
+      ''|*[!0-9]*) capacity="" ;;
+    esac
+
+    if [ -n "$capacity" ]; then
+      if [ "$status" = "Discharging" ] && [ "$capacity" -le "$LOW_THRESHOLD" ]; then
+        if [ "$low_notified" -eq 0 ]; then
+          "$NOTIFY_SEND" -u critical "Batería baja" "Nivel: ${capacity}% — Conecte el cargador"
+          low_notified=1
+        fi
+      else
+        low_notified=0
+      fi
+
+      if { [ "$status" = "Charging" ] || [ "$status" = "Full" ]; } && [ "$capacity" -ge "$HIGH_THRESHOLD" ]; then
+        if [ "$high_notified" -eq 0 ]; then
+          "$NOTIFY_SEND" -u normal "Batería al ${capacity}%" "Desconecta el cargador para cuidar la batería"
+          high_notified=1
+        fi
+      else
+        high_notified=0
+      fi
     fi
   fi
-  sleep $CHECK_INTERVAL
+  sleep "$CHECK_INTERVAL"
 done

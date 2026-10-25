@@ -1,0 +1,6 @@
+#!/bin/sh
+# arrow.sh — flechas powerline para la variante B
+case "${1:-}" in
+  der) printf '%s\n' '' ;;
+  izq) printf '%s\n' '' ;;
+esac

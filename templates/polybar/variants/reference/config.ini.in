@@ -1,0 +1,63 @@
+; polybar config.ini — variante "referencia" (powerline/transparente)
+; Barra TOP: izquierda y derecha con fondo oscuro; centro transparente.
+
+include-directory = @HOME@/.config/polybar/variants/reference/modules
+
+[colors]
+background = #00000000
+module-bg = #CC1F1F21
+foreground = #D8D3CC
+foreground-alt = #8E8A85
+primary = #B9A99A
+secondary = #8FA6B4
+alert = #C97A6D
+disabled = #5E5E62
+selected = #E6E1DA
+empty = #6B6B70
+
+[bar/main]
+monitor = ${env:MONITOR:}
+width = 100%
+height = 18
+radius = 0
+bottom = false
+fixed-center = true
+
+background = ${colors.background}
+foreground = ${colors.foreground}
+
+line-size = 0
+line-color = ${colors.background}
+
+border-size = 0
+border-color = ${colors.background}
+
+padding-left = 0
+padding-right = 0
+
+module-margin-left = 0
+module-margin-right = 0
+
+font-0 = "@FONT@:style=SemiBold:size=11;3"
+font-1 = "@FONT@:style=SemiBold:size=10;3"
+font-2 = "@FONT@:style=Bold:size=10;3"
+font-3 = "@FONT@:size=13;3"
+font-4 = "Font Awesome 6 Free:style=Solid:pixelsize=9;3"
+font-5 = "@FONT@:size=52;0"
+
+modules-center =  bspwm
+modules-left = date day updates polypomo der 
+modules-right = izq temp memory cpu network pipewire @BATTERY_MODULE@
+
+cursor-click = pointer
+cursor-scroll = ns-resize
+
+enable-ipc = true
+wm-restack = bspwm
+override-redirect = true
+
+[settings]
+screenchange-reload = true
+pseudo-transparency = false
+
+; vim:ft=dosini

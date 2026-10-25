@@ -1230,3 +1230,101 @@ se conserven en el repo y que una reinstalación no los revierta.
   también los archivos vivos no usados.
 - Polybar cargó 11 módulos sin errores; captura `bar-user-final.png`.
 - Verificado con `verify_install`, home simulado y `--dry-run`.
+
+## ADR-048 — Dos variantes de polybar y 5 workspaces
+
+**Contexto:** El usuario quiere conservar la barra actual (variante A) y
+añadir una segunda (variante B) basada en una referencia powerline con
+5 workspaces circulares, centro transparente, hora/fecha/pomodoro a la
+izquierda y estadísticas a la derecha. Eligió 5 workspaces globales, red
+unificada y que el `3%` de la referencia sea el uso de `/home`.
+
+**Decisión:**
+1. `bspwmrc` y `sxhkd` pasan a 5 escritorios (`1-5`). La variante A
+   conserva su estilo, pero muestra 5 números.
+2. La variante A sigue en `~/.config/polybar/config.ini` y sus módulos.
+3. La variante B vive en `~/.config/polybar/variants/reference/`:
+   - 15 módulos: hora, fecha, separadores, pomodoro, flecha, bspwm, batería,
+     temperatura, volumen, red, RAM, CPU, `xkeyboard` y `fs`.
+   - Workspaces con glifos de `bspwm_circle` adaptados a FA6
+     (`` enfocado, `` ocupado, `` vacío), sin caja de fondo;
+     el `` original se ve cuadrado en FA6.
+   - Barra transparente (`#00000000`); centro sin fondo; bloques izquierdo
+     y derecho con `#B31E1E2E`; flecha powerline azul.
+   - Sin logo, sin `dots` y sin updates.
+   - Red unificada con un `network-status.sh` propio de la variante, usando
+     el icono de red de la referencia; sin `No connection`.
+   - SSD con `internal/fs` sobre `/home`.
+   - Iconos de volumen, RAM, red y SSD adaptados de la referencia; los
+     glifos no presentes en las fuentes instaladas se sustituyen por
+     equivalentes disponibles.
+4. `polybar-variant actual|referencia` guarda la elección en
+   `~/.config/polybar/variant` y reinicia; `launch.sh` lee ese archivo.
+5. Se instalan ambas variantes y se verifican; no se cambia la variante A
+   salvo los 5 workspaces.
+
+**Consecuencias:**
+- La variante A mantiene su estilo y ahora muestra 5 workspaces; los
+  atajos son `Super+1..5`.
+- La variante B carga 15 módulos; captura `bar-variant-b.png`.
+- El centro de la variante B deja ver el wallpaper; izquierda/derecha son
+  oscuros semitransparentes.
+- `polybar-variant actual` vuelve a la barra actual.
+- Sin paquetes nuevos.
+- Los cambios quedan sin commit hasta que el usuario lo autorice.
+
+## ADR-049 — Variante B compacta final
+
+**Contexto:** El usuario ajustó manualmente la variante B: la dejó en 20 px,
+con `bspwm` a la izquierda y un bloque derecho compacto. Al probarla faltaban
+`date.ini` y `updates.ini`, y los iconos Font Awesome de memoria/red quedaban
+más altos que el texto.
+
+**Decisión:**
+1. Barra de 11 módulos:
+   `modules-left = bspwm`;
+   `modules-right = izq polypomo temp memory cpu network pipewire battery date updates`.
+2. Altura 20, fuentes `font-0=10`, `font-1=9`, `font-3=11`.
+3. `font-4` Font Awesome con offset `;3` para los círculos y
+   `font-6 = @FONT@:size=8;3` para iconos, de modo que no se recorten con
+   altura 20.
+4. Workspaces con `//`, padding 0.
+5. Añadir `date.ini` y `updates.ini` a la variante B. `updates` reutiliza
+   `updates-apt.sh` y muestra el contador.
+6. `izq` usa `format` (no `content`, que está deprecado) y color
+   `${colors.secondary}`.
+7. `memory` y `network` usan iconos MDI alineados en vez de glifos FA que
+   quedaban altos.
+8. La variante A no se toca.
+
+**Consecuencias:**
+- Polybar carga 11 módulos sin errores y sin warnings de `content`.
+- Updates vuelve a mostrarse al final.
+- Los iconos de memoria/red quedan alineados con el texto.
+- La barra queda compacta, transparente y con fondos derechos oscuros.
+- Captura `bar-variant-b.png`.
+- Sin commit hasta autorización explícita.
+
+
+## ADR-050 — Paleta global Warm Charcoal
+
+**Contexto:** El usuario aportó una referencia visual con carbón cálido,
+azul grisáceo y beige, y pidió aplicarla a todo el sistema, no solo a la
+variante B.
+
+**Decisión:**
+1. Nueva paleta `templates/colors/palette-warm.sh` y tema por defecto
+   `warm`; `install.sh` carga `warm`.
+2. Colores base: `#18181A`, `#202022`, `#2A2A2C`, texto `#D8D3CC`, muted
+   `#8E8A85`, beige `#B9A99A`, azul `#8FA6B4`, alerta `#C97A6D`.
+3. Polybar A y B actualizan sus bloques `[colors]`; A conserva su layout.
+4. Kitty, rofi, dunst, bspwm, i3lock y scripts de sesión se renderizan con
+   la nueva paleta.
+5. La variante B conserva los ajustes manuales de layout del usuario.
+6. Se mantiene picom selectivo: blur solo para kitty/Polybar.
+
+**Consecuencias:**
+- Toda la sesión usa la misma paleta cálida.
+- `palette-nord.sh` queda como alternativa.
+- Captura `bar-warm.png`.
+- Sin commit hasta autorización explícita.

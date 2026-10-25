@@ -1,0 +1,8 @@
+[module/der]
+type = custom/script
+exec = @HOME@/.config/polybar/variants/reference/scripts/arrow.sh der
+interval = 3600
+format = <label>
+label = "%{T5}%output%%{T-}"
+label-font = 5
+format-foreground = ${colors.module-bg}

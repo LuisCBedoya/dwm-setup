@@ -1,0 +1,58 @@
+#!/bin/sh
+# updates-apt.sh — contador de actualizaciones por eventos
+# tail=true: vive como proceso durmiente y recalcula el conteo solo cuando
+# cambia el mtime de /var/lib/dpkg/status (instala/actualiza paquetes)
+# o de /var/lib/apt/lists (apt update). Reacción ≤ ~2,5 s, CPU ~0 en reposo.
+
+# Rutas y tiempos sobreescribibles por entorno (para pruebas)
+dpkg_status=${UPDATES_DPKG_STATUS:-/var/lib/dpkg/status}
+apt_lists=${UPDATES_APT_LISTS:-/var/lib/apt/lists}
+gap=${UPDATES_GAP:-1}              # cada cuántos segundos vigilar (s)
+debounce=${UPDATES_DEBOUNCE:-1.5}  # calma requerida antes de recalcular (s)
+
+skull=" "                # U+F4F9 (calavera)
+
+# Cuenta. UPDATES_FAKE_FILE permite probar el circuito sin apt (archivo
+# que contiene un número); por defecto usa la simulación real de apt.
+count() {
+  if [ -n "${UPDATES_FAKE_FILE:-}" ]; then
+    cat "$UPDATES_FAKE_FILE"
+    return 0
+  fi
+  apt-get -s -o Debug::NoLocking=1 upgrade 2>/dev/null | grep -c '^Inst ' || true
+}
+
+estado() {
+  updates=$(count)
+  case "$updates" in
+    ''|*[!0-9]*) updates=0 ;;
+  esac
+  if [ "$updates" -gt 0 ]; then
+    printf '%%{T3}%s%%{T-}%s\n' "$skull" "$updates"
+  else
+    printf '\n'
+  fi
+}
+
+# firma del estado: mtime de dpkg/status y del directorio de listas
+sig() {
+  stat -c '%y %n' "$dpkg_status" "$apt_lists" 2>/dev/null | sha1sum | cut -d ' ' -f1
+}
+
+# Estado inicial inmediato (antes del loop): la barra arranca con la
+# condición actual, no vacía.
+prev=$(sig)
+estado
+
+# Loop vivo: nunca sale; si algo falla en una vuelta, la siguiente re-testea.
+while :; do
+  sleep "$gap"
+  cur=$(sig)
+  [ "$cur" = "$prev" ] && continue
+  # debounce: durante un apt real el archivo cambia varias veces; esperar
+  # calma y luego recalcular una sola vez
+  sleep "$debounce"
+  cur=$(sig)
+  estado
+  prev=$cur
+done

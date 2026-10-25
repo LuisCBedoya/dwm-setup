@@ -1,0 +1,11 @@
+; updates — calavera + número; vacío si 0
+[module/updates]
+type = custom/script
+exec = @HOME@/.config/polybar/variants/reference/scripts/updates-apt.sh
+tail = true
+format = <label>
+format-padding = 1
+format-background = ${colors.module-bg}
+format-font = 1
+format-foreground = ${colors.foreground}
+label = %output%

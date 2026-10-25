@@ -12,12 +12,19 @@ con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 notificación.
 
 La barra final es la de la config viva: **11 módulos**, logo StumbleUpon
-(`U+F1A4`), workspaces 1-4, actualizaciones con calavera + número al final,
+(`U+F1A4`), workspaces 1-5, actualizaciones con calavera + número al final,
 red unificada (`󰖩/󰈀 connected`, sin `NoC`), volumen, batería, fecha y sin
 `dots`. Sin `xkeyboard`, `wlan`/`eth` separados ni fuente `DesktopLogo`.
 Fuentes: `font-1` 10 y `font-3` 13; logo en `font-0`. Separación compacta:
 `module-margin-left/right = 0`; `updates`/`polypomo` con padding 1/1;
 volumen y batería juntos.
+
+Hay una **variante B "referencia"** instalada aparte: 13 módulos, 5
+workspaces como círculos al centro; a la izquierda `date`, `day`, `updates`,
+pomodoro y `der`; a la derecha `izq`, temperatura, RAM, CPU, red, volumen y
+batería. Barra transparente de 18 px, fuentes 10/13 y flechas del color del
+bloque; temperatura conserva fondo en warning. Se cambia con
+`~/.config/polybar/polybar-variant referencia` o `... actual`.
 
 La fase 1 termina en el escritorio. No implementar todavía:
 
@@ -101,6 +108,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
     ve sobre fondo blanco. La notificación usa como icono
     `~/.cache/dunst/last-screenshot.png` (64 px) para mostrar el recorte.
 
+20. **No commitear sin permiso.** No ejecutar `git commit` ni `git add`
+    definitivo sin autorización explícita del usuario.
+
 ## Estructura relevante
 
 | Archivo | Responsabilidad |
@@ -118,19 +128,19 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/kitty.sh` | kitty.conf |
 | `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
 | `lib/verify.sh` | Verificación estática final |
-| `lib/theme.sh` | Paleta Nord y render de plantillas |
+| `lib/theme.sh` | Paleta Warm Charcoal y render de plantillas |
 | `lib/audio.sh` | Quirk ALC255 condicionado por DMI/códec |
 | `bin/desktop-safe` | Acciones de sesión (lock/suspend/logout/poweroff) |
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
 | `templates/bspwm/` | bspwmrc, autostart y scripts de sesión |
 | `templates/sxhkd/` | sxhkdrc |
-| `templates/polybar/` | config.ini, modules/ y scripts/ |
+| `templates/polybar/` | config.ini, modules/, scripts/ y variants/ |
 | `templates/picom/` | picom.conf |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
 | `templates/rofi/` | powermenu.rasi |
 | `templates/kitty/` | kitty.conf |
 | `templates/modprobe/` | alsa-fx504.conf (quirk ALC255) |
-| `templates/colors/` | `palette-nord.sh` y helpers |
+| `templates/colors/` | `palette-warm.sh`, `palette-nord.sh` y helpers |
 | `assets/wallpaper.jpg` | Wallpaper |
 
 Ya no existen `src/chadwm`, `src/eww`, `legacy/`, `lib/dwm.sh`,

@@ -1,6 +1,6 @@
 # Progreso — fase 1b (bspwm + polybar)
 
-Última actualización: 2026-10-24
+Última actualización: 2026-10-25
 
 ## Resumen
 
@@ -15,7 +15,7 @@ ejecutable, picom arranque y la verificación final no falle.
 - Estado de validación real: **sesión viva validada**; falta la instalación
   desde cero en VM Debian 13 minimal.
 - Sesión: `startx` manual desde TTY; sin display manager ni auto-login.
-- Barra: 11 módulos, logo StumbleUpon, 4 workspaces, red unificada y sin
+- Barra: 11 módulos, logo StumbleUpon, 5 workspaces, red unificada y sin
   `dots`; `updates` al final.
 
 ## Validación viva (2026-10-24)
@@ -37,6 +37,9 @@ Procesos comprobados:
   no muestra `NoC`. El layout `latam` se aplica con `setxkbmap` pero ya no
   ocupa un módulo de la barra.
 - `notify-send` funciona.
+- `low_bat_notifier.sh` avisa al 10 % descargando y al 99 % cargando
+  (`Charging`/`Full`), una vez por evento. Probado con batería simulada
+  mediante `POWER_SUPPLY_DIR` y un `notify-send` falso.
 
 Comprobaciones:
 
@@ -54,7 +57,7 @@ Comprobaciones:
 
 Se adaptó `templates/sxhkd/sxhkdrc.in` a los atajos de i3 del usuario,
 manteniendo gaps 10, borde 2 y el wallpaper actual. El rediseño final
-redujo a 4 escritorios; los ajustes manuales posteriores retiraron `dots`
+redujo a 5 escritorios; los ajustes manuales posteriores retiraron `dots`
 y movieron `updates` al final:
 
 - Apps: `Super+Return` kitty, `Super+Shift+s` scrot región+portapapeles,
@@ -142,7 +145,7 @@ predeterminada; si no, se usará un headset USB.
 Se partió de la barra de referencia y se aplicaron los ajustes manuales
 del usuario:
 
-- 4 escritorios (`1-4`); `bspwmrc` y `sxhkd` ajustados.
+- 5 escritorios (`1-5`); `bspwmrc` y `sxhkd` ajustados.
 - Logo StumbleUpon `U+F1A4` en `font-0` (`%{T0}`), padding 1 y sin espacio
   final.
 - Workspace enfocado con caja blanca, texto oscuro, font-1 y padding 1.
@@ -154,7 +157,7 @@ del usuario:
 - Red unificada: `󰖩 connected` si hay WiFi; si no, `󰈀 connected` si hay
   Ethernet; si no hay ninguna, nada. Sin `NoC` ni SSID; WiFi tiene
   prioridad. `NETWORK_FAKE=wifi|eth|none` permite probar los tres estados.
-- Sin `dots`, sin `xkeyboard`, sin `wlan`/`eth` separados.
+- Variante A sin `dots` ni `xkeyboard`; sin `wlan`/`eth` separados.
 - Pomodoro pausa con `U+F04C` (dos barras).
 - Fuentes: `font-1 = 10`, `font-3 = 13`; logo en `font-0 = 11`.
 - Separación: `module-margin-left/right = 0`; `updates`/`polypomo` 1/1;
@@ -166,6 +169,40 @@ del usuario:
 - Polybar cargó 11 módulos sin errores; capturas `bar-design3.png`
   (diseño inicial), `bar-spacing-final.png` (separación) y
   `bar-user-final.png` (barra final).
+
+## Variante B — referencia (2026-10-24)
+
+Variante B compacta, ajustada manualmente por el usuario:
+
+- 13 módulos: `date`, `day`, `updates`, `polypomo` y `der` a la izquierda;
+  `bspwm` al centro; `izq`, `temp`, `memory`, `cpu`, `network`, `pipewire`
+  y `battery` a la derecha.
+- 5 workspaces con glifos Font Awesome (`//`), padding 0.
+- Barra de 18 px, transparente; fondos de módulos oscuros.
+- `temp` conserva `format-warn-background` en warning; las flechas usan
+  `${colors.module-bg}`.
+- Fuentes como la variante A: `font-1=10`, `font-3=13`; iconos T1/T3,
+  sin `font-6`; `font-4` Font Awesome para los círculos de bspwm.
+- `memory` y `network` usan iconos MDI alineados; `izq` es una flecha
+  powerline.
+- Añadidos `date.ini` y `updates.ini` que faltaban; updates muestra el
+  contador con el script de apt.
+- `polybar-variant referencia|actual` cambia y guarda la elección.
+- Polybar carga 11 módulos sin errores; captura `bar-variant-b.png`.
+- La variante A no se toca.
+
+## Paleta global Warm Charcoal (2026-10-25)
+
+Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
+
+- `palette-warm.sh` como tema por defecto; `load_theme warm`.
+- Polybar A y B con colores nuevos (A mantiene su layout).
+- Kitty, rofi, dunst, bspwm, i3lock y scripts de sesión renderizados con
+  la nueva paleta.
+- Bordes bspwm aplicados en vivo.
+- `dunstctl reload` y reinicio de polybar.
+- Captura `bar-warm.png`.
+- La variante B mantiene además los ajustes manuales de layout del usuario.
 
 ## Correcciones aplicadas
 

@@ -1,0 +1,8 @@
+; separador -
+[module/sep-dash]
+type = custom/text
+format = "-"
+format-padding = 1
+format-background = ${colors.module-bg}
+format-foreground = ${colors.foreground-alt}
+format-font = 1

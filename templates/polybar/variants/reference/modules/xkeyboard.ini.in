@@ -1,0 +1,10 @@
+; xkeyboard — layout latam
+[module/xkeyboard]
+type = internal/xkeyboard
+blacklist-0 = num lock
+format = <label-layout>
+label-layout = "%{T1} %{T-} %layout%"
+format-padding = 1
+format-background = ${colors.module-bg}
+format-foreground = ${colors.foreground}
+label-layout-font = 1

@@ -81,13 +81,14 @@ Comprobado:
 
 - `bspwm 0.9.10`, `sxhkd 0.6.2`, `polybar 3.7.2` (11 módulos), `picom 12.5`,
   `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock`.
-- Barra: logo StumbleUpon, workspaces 1-4, `25:00`, temperatura, RAM,
+- Barra: logo StumbleUpon, workspaces 1-5, `25:00`, temperatura, RAM,
   CPU, red `󰈀 connected`, volumen, batería `BAT1`, fecha y updates
   (calavera + número) al final.
-- Barra final: 4 workspaces, caja blanca en el enfocado, logo StumbleUpon
+- Barra final: 5 workspaces, caja blanca en el enfocado, logo StumbleUpon
   en `font-0`, `updates` al final con calavera + número, sin `[T]/[M]/[C]`,
-  red unificada, sin `dots` y sin `xkeyboard` ni `wlan`/`eth` separados.
-  `font-1` 10 y `font-3` 13. Polybar carga 11 módulos sin errores.
+  red unificada, sin `dots` y sin `xkeyboard` ni `wlan`/`eth` separados
+  en la variante A. `font-1` 10 y `font-3` 13. Polybar carga 11 módulos
+  sin errores.
 - Red: con WiFi down y Ethernet up solo `󰈀 connected` (sin `NoC`);
   `NETWORK_FAKE=wifi` muestra solo `󰖩 connected`; `NETWORK_FAKE=none` no
   muestra nada. Captura `bar-network-final.png`.
@@ -95,6 +96,13 @@ Comprobado:
   con padding 1/1; `cpu` con `%{O8}` a la derecha; volumen y batería con
   padding 1. Con `UPDATES_FAKE_FILE=0` el módulo `updates` desaparece y no
   muestra `# 0`; capturas `bar-spacing-final.png` y `bar-user-final.png`.
+- Variante B "referencia": 11 módulos, 5 círculos a la izquierda y a la
+  derecha `izq`, pomodoro, temperatura, RAM, CPU, red, volumen, batería,
+  fecha y updates. Barra de 20 px transparente, fuentes 9/10 y fondos
+  derechos oscuros. Cambia con
+  `~/.config/polybar/polybar-variant referencia`; captura
+  `bar-variant-b.png`. Polybar carga 11 módulos sin errores.
+- `polybar-variant actual` vuelve a la variante A y conserva su estilo.
 - `bspwmrc` y `.xinitrc` ejecutables; `.xinitrc` sin `kitty`.
 - Sin placeholders y sin ficheros root en `~/.config`.
 - `desktop-doctor` sin falsos `[FALTA]`; solo avisa de cámara ausente.
@@ -107,6 +115,25 @@ Comprobado:
   `image/png`, sin temporales y con notificación de dunst.
 - `Super+Shift+d` abre `rofi -show run`; `Super+d` sigue abriendo
   `rofi -show drun`.
+
+### Notificador de batería (2026-10-25)
+
+`low_bat_notifier.sh` se probó con una batería simulada y un `notify-send`
+falso:
+
+```sh
+POWER_SUPPLY_DIR=/tmp/opencode/bat-test \
+NOTIFY_SEND=/tmp/opencode/bat-test/notify-send \
+CHECK_INTERVAL=1 ~/.config/bspwm/scripts/low_bat_notifier.sh
+```
+
+Resultados:
+
+- 10 % descargando: aviso `critical` una vez; 9 % no duplica.
+- Subir a 15 % reinicia el estado; volver a 10 % avisa otra vez.
+- 99 % `Charging`: aviso para desconectar el cargador una vez.
+- 100 % `Full`: no duplica; bajar a 98 % reinicia el estado.
+- Capacidad vacía o no numérica: no notifica.
 
 Pendiente de la prueba real completa:
 
@@ -167,7 +194,7 @@ Criterios de aceptación:
 | `Alt+Tab` / `Alt+Shift+Tab` | ciclo | Siguiente/anterior ventana |
 | `Super+{h,j,k,l}` | foco | Cambia ventana |
 | `Super+Shift+{h,j,k,l}` | mover | Intercambia ventana |
-| `Super+{1-4}` | escritorios | Cambia escritorio |
+| `Super+{1-5}` | escritorios | Cambia escritorio |
 | `Super+r`, luego `h/j/k/l` | resize | Redimensiona; Escape sale |
 | `Print` | captura completa | Copia al portapapeles y muestra miniatura |
 | `Super+Print` | menú de capturas | Abre el menú y permite guardar en `~/Pictures/Screenshots` |

@@ -1,0 +1,8 @@
+; flecha/powerline al final del bloque izquierdo
+[module/arrow]
+type = custom/text
+format = ""
+format-padding = 0
+format-background = ${colors.module-bg}
+format-foreground = ${colors.secondary}
+format-font = 3

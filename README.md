@@ -19,7 +19,7 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
-- **polybar** con **11 módulos**: logo StumbleUpon, workspaces 1-4,
+- **polybar** con **11 módulos**: logo StumbleUpon, workspaces 1-5,
   pomodoro, temperatura, RAM, CPU, red unificada
   (`󰖩/󰈀 connected`, sin `NoC`), volumen, batería, fecha y actualizaciones
   (calavera + número). `font-1` 10 y `font-3` 13; logo en `font-0`.
@@ -32,7 +32,8 @@ Incluido:
 - Almacenamiento extraíble con `udisks2` + `udiskie`: montaje automático y
   **solo notificación**; nunca se abre una aplicación automáticamente.
 - Thunar como gestor de archivos puntual (`Super+Shift+F`).
-- Fuente JetBrainsMono Nerd Font, wallpaper y tema Nord.
+- Fuente JetBrainsMono Nerd Font, wallpaper y paleta **Warm Charcoal**
+  (`#18181A`, `#202022`, `#D8D3CC`, `#B9A99A`, `#8FA6B4`).
 - Backups, logs, `--dry-run` y diagnóstico con `desktop-doctor`.
 - NVIDIA detectada e instalada de forma condicional.
 
@@ -112,7 +113,7 @@ y `--debug`.
 5. **Fuente**: descarga JetBrainsMono Nerd Font 3.5.1, verifica SHA-256 y
    ejecuta `fc-cache`. Si falla, usa JetBrains Mono o monospace y avisa.
 6. **Configuración**: renderiza bspwm, sxhkd, polybar, picom, dunst, rofi y
-   kitty con paleta Nord; instala `.xinitrc`, wallpaper,
+   kitty con paleta Warm Charcoal; instala `.xinitrc`, wallpaper,
    `~/Pictures/Screenshots`, `desktop-safe` y `desktop-doctor`.
 7. **Limpieza**: retira restos de la barra anterior (`DesktopLogo`) con
    backup previo.
@@ -250,8 +251,8 @@ Si algo falla:
 | `Alt+Tab` / `Alt+Shift+Tab` | siguiente / anterior ventana |
 | `Super+{h,j,k,l}` | foco ventanas |
 | `Super+Shift+{h,j,k,l}` | mover/intercambiar ventanas |
-| `Super+{1-4}` | ir a escritorio |
-| `Super+Shift+{1-4}` | mover ventana a escritorio |
+| `Super+{1-5}` | ir a escritorio |
+| `Super+Shift+{1-5}` | mover ventana a escritorio |
 | `Super+r`, luego `h/j/k/l` | redimensionar (Escape sale) |
 | `Super+m` | monocle/tiled |
 | `Print` | pantalla completa al portapapeles |
@@ -260,10 +261,32 @@ Si algo falla:
 | `XF86MonBrightnessUp/Down` | brillo |
 
 `Super` es la tecla Windows. La barra muestra 11 módulos (logo StumbleUpon,
-workspaces 1-4, pomodoro, temperatura, RAM, CPU, red, volumen, batería,
+workspaces 1-5, pomodoro, temperatura, RAM, CPU, red, volumen, batería,
 fecha y actualizaciones). La red muestra un solo `󰖩 connected` o
 `󰈀 connected` según la conexión activa; si no hay ninguna, no muestra nada.
 Las actualizaciones muestran calavera + número y se ocultan si N=0.
+
+### Variantes de polybar
+
+Hay dos barras instaladas:
+
+- **actual**: la barra compacta de 11 módulos (logo, workspaces 1-5,
+  pomodoro, temperatura, RAM, CPU, red, volumen, batería, fecha y updates).
+- **referencia**: variante compacta de 11 módulos. Workspaces como
+  círculos a la izquierda; a la derecha `izq`, pomodoro, temperatura, RAM,
+  CPU, red, volumen, batería, fecha y updates. Barra transparente, altura
+  26, fuentes 10/13 como la variante A, iconos JBM y círculos Font Awesome. El fondo de los módulos de la
+  derecha es oscuro semitransparente.
+
+Cambiar de variante:
+
+```sh
+~/.config/polybar/polybar-variant actual
+~/.config/polybar/polybar-variant referencia
+```
+
+La variante se guarda en `~/.config/polybar/variant` y `launch.sh` arranca
+la elegida al iniciar sesión.
 
 Los atajos de apps que aún no están instaladas se dejan puestos para no
 cambiar la memoria muscular; no hacen nada hasta instalar la app. `codium`
@@ -286,7 +309,7 @@ lib/rofi.sh                rofi powermenu
 lib/kitty.sh               kitty.conf
 lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/verify.sh              Verificación estática final
-lib/theme.sh               Paleta Nord y render
+lib/theme.sh               Paleta Warm Charcoal y render
 lib/audio.sh               Quirk ALC255 condicionado por hardware
 bin/desktop-safe           Acciones de sesión
 bin/desktop-doctor         Diagnóstico y cámara (POSIX sh)
@@ -298,7 +321,7 @@ templates/dunst/           dunstrc.in, notification-sound.sh.in
 templates/rofi/            powermenu.rasi.in
 templates/kitty/           kitty.conf.in
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
-templates/colors/          palette-nord.sh
+templates/colors/          palette-warm.sh y palette-nord.sh
 assets/wallpaper.jpg       Wallpaper
 docs/                      Hardware y testing
 ```

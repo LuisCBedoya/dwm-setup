@@ -1,10 +1,10 @@
-; bspwm — workspaces 1-4 con dígitos árabes, solo el enfocado tiene caja clara
+; bspwm — workspaces 1-5 con dígitos árabes, solo el enfocado tiene caja clara
 [module/bspwm]
 type = internal/bspwm
 
 label-focused = %name%
-label-focused-background = #FFFFFF
-label-focused-foreground = #0D1117
+label-focused-background = #E6E1DA
+label-focused-foreground = #18181A
 label-focused-padding = 1
 label-focused-font = 1
 

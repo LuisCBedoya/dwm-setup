@@ -5,9 +5,29 @@
 set -eu
 
 pkill -x polybar 2>/dev/null || true
-while pgrep -u "$UID" -x polybar >/dev/null; do sleep 0.1; done
+tries=0
+while pgrep -u "$UID" -x polybar >/dev/null; do
+  tries=$((tries + 1))
+  if [ "$tries" -ge 20 ]; then
+    pkill -9 -u "$UID" -x polybar 2>/dev/null || true
+    break
+  fi
+  sleep 0.1
+done
 
-CONFIG="@HOME@/.config/polybar/config.ini"
+variant="actual"
+if [ -r "@HOME@/.config/polybar/variant" ]; then
+  variant=$(cat "@HOME@/.config/polybar/variant" 2>/dev/null || printf 'actual')
+fi
+
+case "$variant" in
+  referencia)
+    CONFIG="@HOME@/.config/polybar/variants/reference/config.ini"
+    ;;
+  *)
+    CONFIG="@HOME@/.config/polybar/config.ini"
+    ;;
+esac
 
 polybar -r main -c "$CONFIG" &
 

@@ -45,6 +45,30 @@ verify_install() {
     "$home/.config/polybar/scripts/updates-apt.sh" \
     "$home/.config/polybar/scripts/polypomo" \
     "$home/.config/polybar/scripts/network-status.sh" \
+    "$home/.config/polybar/polybar-variant" \
+    "$home/.config/polybar/variants/reference/config.ini" \
+    "$home/.config/polybar/variants/reference/scripts/network-status.sh" \
+    "$home/.config/polybar/variants/reference/scripts/updates-apt.sh" \
+    "$home/.config/polybar/variants/reference/scripts/arrow.sh" \
+    "$home/.config/polybar/variants/reference/modules/time.ini" \
+    "$home/.config/polybar/variants/reference/modules/day.ini" \
+    "$home/.config/polybar/variants/reference/modules/sep-dash.ini" \
+    "$home/.config/polybar/variants/reference/modules/sep-bar.ini" \
+    "$home/.config/polybar/variants/reference/modules/arrow.ini" \
+    "$home/.config/polybar/variants/reference/modules/der.ini" \
+    "$home/.config/polybar/variants/reference/modules/izq.ini" \
+    "$home/.config/polybar/variants/reference/modules/polypomo.ini" \
+    "$home/.config/polybar/variants/reference/modules/bspwm.ini" \
+    "$home/.config/polybar/variants/reference/modules/battery.ini" \
+    "$home/.config/polybar/variants/reference/modules/temp.ini" \
+    "$home/.config/polybar/variants/reference/modules/pipewire.ini" \
+    "$home/.config/polybar/variants/reference/modules/network.ini" \
+    "$home/.config/polybar/variants/reference/modules/memory.ini" \
+    "$home/.config/polybar/variants/reference/modules/cpu.ini" \
+    "$home/.config/polybar/variants/reference/modules/xkeyboard.ini" \
+    "$home/.config/polybar/variants/reference/modules/fs.ini" \
+    "$home/.config/polybar/variants/reference/modules/date.ini" \
+    "$home/.config/polybar/variants/reference/modules/updates.ini" \
     "$home/.config/picom/picom.conf" \
     "$home/.config/dunst/dunstrc" \
     "$home/.config/rofi/powermenu.rasi" \
@@ -91,6 +115,22 @@ verify_install() {
       failures=$((failures + 1))
     fi
   done
+  if [[ ! -x "$home/.config/polybar/polybar-variant" ]]; then
+    error "polybar-variant no es ejecutable"
+    failures=$((failures + 1))
+  fi
+  if [[ ! -x "$home/.config/polybar/variants/reference/scripts/network-status.sh" ]]; then
+    error "network-status.sh de la variante referencia no es ejecutable"
+    failures=$((failures + 1))
+  fi
+  if [[ ! -x "$home/.config/polybar/variants/reference/scripts/updates-apt.sh" ]]; then
+    error "updates-apt.sh de la variante referencia no es ejecutable"
+    failures=$((failures + 1))
+  fi
+  if [[ ! -x "$home/.config/polybar/variants/reference/scripts/arrow.sh" ]]; then
+    error "arrow.sh de la variante referencia no es ejecutable"
+    failures=$((failures + 1))
+  fi
   if [[ -f "$home/.config/dunst/scripts/notification-sound.sh" && ! -x "$home/.config/dunst/scripts/notification-sound.sh" ]]; then
     error "Script no ejecutable: $home/.config/dunst/scripts/notification-sound.sh"
     failures=$((failures + 1))
@@ -119,6 +159,25 @@ verify_install() {
     done < <(awk -F'=' '/^modules-(left|right)/ {print $0}' "$home/.config/polybar/config.ini")
     if ! grep -q '^include-directory' "$home/.config/polybar/config.ini"; then
       error "Falta include-directory en polybar/config.ini"
+      failures=$((failures + 1))
+    fi
+  fi
+
+  # Módulos de la variante referencia
+  local variant_config="$home/.config/polybar/variants/reference/config.ini"
+  if [[ -f "$variant_config" ]]; then
+    while IFS= read -r line; do
+      line="${line#*=}"
+      for module in $line; do
+        [[ -n "$module" ]] || continue
+        if [[ ! -f "$home/.config/polybar/variants/reference/modules/$module.ini" ]]; then
+          error "Variante referencia: falta el módulo '$module.ini'"
+          failures=$((failures + 1))
+        fi
+      done
+    done < <(awk -F'=' '/^modules-(left|right|center)/ {print $0}' "$variant_config")
+    if ! grep -q '^include-directory' "$variant_config"; then
+      error "Falta include-directory en la variante referencia"
       failures=$((failures + 1))
     fi
   fi

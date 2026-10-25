@@ -1,0 +1,11 @@
+; time — hora del día
+[module/time]
+type = internal/date
+interval = 1
+time = %H:%M
+label = "%{T3}󰥔%{T-} %time%"
+format = <label>
+format-padding = 1
+format-background = ${colors.module-bg}
+format-foreground = ${colors.foreground}
+label-font = 1

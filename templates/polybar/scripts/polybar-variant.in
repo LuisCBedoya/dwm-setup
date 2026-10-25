@@ -1,0 +1,14 @@
+#!/bin/sh
+# polybar-variant — cambia entre las dos variantes de la barra
+set -eu
+
+case "${1:-}" in
+  actual|referencia) variant="$1" ;;
+  *)
+    printf 'Uso: %s actual|referencia\n' "$0" >&2
+    exit 1
+    ;;
+esac
+
+printf '%s\n' "$variant" > "@HOME@/.config/polybar/variant"
+exec "@HOME@/.config/polybar/launch.sh"

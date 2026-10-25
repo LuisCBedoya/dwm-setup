@@ -33,5 +33,5 @@ render_kitty_template() {
     "FONT=$DWM_FONT" \
     "FONT_SIZE=$DWM_FONT_SIZE" \
     "KEYMAP=$DWM_KEYMAP" \
-    "THEME_NAME=nord"
+    "THEME_NAME=warm"
 }

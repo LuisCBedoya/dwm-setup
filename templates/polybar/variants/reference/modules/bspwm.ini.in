@@ -1,0 +1,19 @@
+; bspwm — workspaces compactos con glifos de bspwm_circle
+[module/bspwm]
+type = internal/bspwm
+
+label-focused = "%{T4} %{O2}"
+label-focused-foreground = ${colors.selected}
+label-focused-padding = 0
+
+label-occupied = "%{T4} %{O2}"
+label-occupied-foreground = #8E8A85
+label-occupied-padding = 0
+
+label-urgent = "%{T4} %{O2}"
+label-urgent-foreground = ${colors.alert}
+label-urgent-padding = 0
+
+label-empty = "%{T4} %{O2}"
+label-empty-foreground = ${colors.empty}
+label-empty-padding = 0

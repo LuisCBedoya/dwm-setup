@@ -1,0 +1,10 @@
+; memory — RAM
+[module/memory]
+type = internal/memory
+interval = 2
+format = <label>
+format-padding = 0
+format-background = ${colors.module-bg}
+format-foreground = ${colors.foreground}
+label = "%{T1} %{T-}%percentage_used:2%%"
+label-font = 1
