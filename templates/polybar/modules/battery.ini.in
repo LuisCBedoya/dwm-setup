@@ -9,11 +9,11 @@ format-charging-padding = 1
 format-charging-foreground = ${colors.foreground}
 label-charging = %percentage%%
 label-charging-font = 1
-animation-charging-0 = "%{T3}%{T-} "
-animation-charging-1 = "%{T3}%{T-} "
-animation-charging-2 = "%{T3}%{T-} "
-animation-charging-3 = "%{T3}%{T-} "
-animation-charging-4 = "%{T3}%{T-} "
+animation-charging-0 = "%{T3}󰂄%{O5}%{T-}"
+animation-charging-1 = "%{T3}󰂄%{O5}%{T-}"
+animation-charging-2 = "%{T3}󰂄%{O5}%{T-}"
+animation-charging-3 = "%{T3}󰂄%{O5}%{T-}"
+animation-charging-4 = "%{T3}󰂄%{O5}%{T-}"
 animation-charging-foreground = ${colors.primary}
 animation-charging-framerate = 750
 
@@ -23,14 +23,14 @@ format-discharging-foreground = ${colors.foreground}
 label-discharging = %percentage%%
 label-discharging-font = 1
 
-label-full = "%{T1} %{T-} 100%"
+label-full = "%{T1}󰁹%{O5}%{T-}100%"
 label-full-foreground = ${colors.primary}
 label-full-font = 1
 label-full-padding = 0
 
-ramp-capacity-0 = "%{T1} %{T-}"
-ramp-capacity-1 = "%{T1} %{T-}"
-ramp-capacity-2 = "%{T1} %{T-}"
-ramp-capacity-3 = "%{T1} %{T-}"
-ramp-capacity-4 = "%{T1} %{T-}"
+ramp-capacity-0 = "%{T1}󰁺%{O5}%{T-}"
+ramp-capacity-1 = "%{T1}󰁽%{O5}%{T-}"
+ramp-capacity-2 = "%{T1}󰁿%{O5}%{T-}"
+ramp-capacity-3 = "%{T1}󰂁%{O5}%{T-}"
+ramp-capacity-4 = "%{T1}󰁹%{O5}%{T-}"
 ramp-capacity-foreground = ${colors.foreground}

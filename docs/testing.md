@@ -80,7 +80,7 @@ Comprobado:
 
 - `bspwm 0.9.10`, `sxhkd 0.6.2`, `polybar 3.7.2` (A 12 / B 14 módulos),
   `dunst 1.12.2`, `lxpolkit`, `udiskie -N -a`, `xss-lock`.
-- Barra: logo StumbleUpon, workspaces 1-5, `25:00`, temperatura, RAM,
+- Barra: logo StumbleUpon, workspaces 1-7, `25:00`, temperatura, RAM,
   CPU, red `󰈀 connected`, servicios, volumen, batería `BAT1`, fecha;
   updates (calavera + número) al inicio de la derecha.
 - Barra final: 5 workspaces, caja blanca en el enfocado, logo StumbleUpon
@@ -149,6 +149,50 @@ Comprobado:
 - El menú WiFi (`network-menu.sh`) abre con `rofi -dmenu`, no dmenu.
 - `services.sh` también prefiere rofi; dmenu queda como respaldo.
 - Capturas: `gaps-bar30.png`, `net-rofi2.png`.
+
+### Ajustes manuales persistidos (2026-10-25)
+
+- `diff` entre la config viva y la renderizada: sin diferencias en
+  polybar, kitty, bspwm, sxhkd y rofi.
+- Batería con `%{O5}` en ambos módulos.
+- `~/.zshrc` usa `cypher` y el PATH de opencode con `$HOME`.
+
+### Arranque de zsh (2026-10-25)
+
+- `zsh -i -c exit` → 54-62 ms (antes ~119 ms).
+- `zprof` muestra un solo `compinit` (el de Oh My Zsh).
+- Las completions siguen funcionando; no se tocaron los `zstyle`.
+
+### Arranque de kitty (2026-10-25)
+
+- `busctl --user list` muestra `org.freedesktop.portal.Desktop` y el
+  backend GTK activos.
+- `systemctl --user is-active xdg-desktop-portal` → `active`.
+- Portal Settings responde en ~7 ms.
+- `kitty --help` → ~141 ms; apertura de ventana → ~250-296 ms
+  (antes ~870 ms).
+- `find /usr/lib/kitty -name '*.opt-2.pyc' | wc -l` → 170.
+
+### Iconos de batería MDI (2026-10-25)
+
+- La rampa usa 󰁺 󰁽 󰁿 󰂁 󰁹.
+- Cargando muestra 󰂄; llena, 󰁹.
+- Verificado en las variantes A y B con la batería al 95-96 %.
+- Los glifos existen en JetBrainsMono Nerd Font (`font-1`/`font-3`).
+
+### Siete escritorios (2026-10-25)
+
+- `bspc query -D --names` → `1 2 3 4 5 6 7`.
+- `Super+7` cambia al escritorio 7; `Super+Shift+7` mueve la ventana.
+- La barra B muestra los 7 círculos centrados.
+- `sxhkdrc` ya no contiene `{1-5}`.
+
+### Kitty sin barra de pestañas (2026-10-25)
+
+- `tab_bar_style hidden` en `kitty.conf`.
+- Una kitty nueva no muestra la barra ni el título `zsh`.
+- `Ctrl+Shift+T` sigue abriendo pestañas sin barra visible.
+- `kitty` arranca sin avisos de configuración.
 
 ### Contador en monocle (2026-10-25)
 
@@ -404,7 +448,7 @@ Criterios de aceptación:
 | `Super+Ctrl+Tab` / `Super+Ctrl+Shift+Tab` | escritorios | Siguiente/anterior escritorio |
 | `Super+{h,j,k,l}` | foco | Cambia ventana |
 | `Super+Shift+{h,j,k,l}` | mover | Intercambia ventana |
-| `Super+{1-5}` | escritorios | Cambia escritorio |
+| `Super+{1-7}` | escritorios | Cambia escritorio |
 | `Super+r`, luego `h/j/k/l` | resize | Redimensiona; Escape sale |
 | `Print` | captura completa | Copia al portapapeles y muestra miniatura |
 | `Super+Print` | menú de capturas | Abre el menú y permite guardar en `~/Pictures/Screenshots` |

@@ -52,6 +52,7 @@ DESKTOP_PKGS=(
   bluez redshift
   scrot imagemagick
   lm-sensors upower acpi
+  xdg-desktop-portal xdg-desktop-portal-gtk
 )
 
 NETWORK_PKGS=(network-manager network-manager-gnome dbus-user-session dbus-x11)

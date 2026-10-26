@@ -5,7 +5,7 @@
 pgrep -x sxhkd > /dev/null || sxhkd -c @HOME@/.config/sxhkd/sxhkdrc &
 
 # Monitores y escritorios
-bspc monitor -d 1 2 3 4 5
+bspc monitor -d 1 2 3 4 5 6 7
 
 # Geometría
 bspc config border_width         1

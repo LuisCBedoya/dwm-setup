@@ -19,14 +19,14 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
-- **polybar** con **12 módulos**: logo StumbleUpon, workspaces 1-5,
+- **polybar** con **12 módulos**: logo StumbleUpon, workspaces 1-7,
   pomodoro, temperatura, RAM, CPU, red unificada
   (`󰖩/󰈀 connected`, `󰖩 NoC` sin conexión), servicios systemd, volumen,
   batería, fecha
   y actualizaciones (calavera + número). `font-1` 10 y `font-3` 13; logo en
   `font-0`.
 - **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**,
-  **flameshot**. Shell **zsh** con Oh My Zsh/agnoster, autosuggestions y
+  **flameshot**. Shell **zsh** con Oh My Zsh/cypher, autosuggestions y
   **lsd**. Sin compositor; la barra B usa fondo sólido `#262626`.
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo,
   **ueberzug** para previsualizar imágenes y carátulas. Texto, código y
@@ -269,8 +269,8 @@ Si algo falla:
 | `Super+Ctrl+Tab` / `Super+Ctrl+Shift+Tab` | siguiente / anterior escritorio |
 | `Super+{h,j,k,l}` | foco ventanas |
 | `Super+Shift+{h,j,k,l}` | mover/intercambiar ventanas |
-| `Super+{1-5}` | ir a escritorio |
-| `Super+Shift+{1-5}` | mover ventana a escritorio |
+| `Super+{1-7}` | ir a escritorio |
+| `Super+Shift+{1-7}` | mover ventana a escritorio |
 | `Super+r`, luego `h/j/k/l` | redimensionar (Escape sale) |
 | `Super+m` | monocle/tiled |
 | `Print` | pantalla completa al portapapeles |
@@ -283,7 +283,7 @@ Si algo falla:
 `Super+1..5` siguen disponibles.
 
 `Super` es la tecla Windows. La barra muestra 12 módulos (13 si hay
-backlight): logo StumbleUpon, workspaces 1-5, pomodoro, temperatura, RAM,
+backlight): logo StumbleUpon, workspaces 1-7, pomodoro, temperatura, RAM,
 CPU, red, servicios, volumen, batería, fecha y actualizaciones. La red muestra un solo `󰖩 connected` o
 `󰈀 connected`; Ethernet tiene prioridad si el cable está conectado. Si no
 hay conexión, muestra `󰖩 NoC` y sigue siendo clicable. Al hacer clic en el módulo se abre un menú
@@ -300,7 +300,7 @@ aparece solo si el equipo tiene backlight y también cambia de 10 en 10.
 Hay dos barras instaladas:
 
 - **actual**: la barra compacta de 12 módulos (13 con backlight): logo,
-  workspaces 1-5, updates, servicios, pomodoro, temperatura, RAM, CPU,
+  workspaces 1-7, updates, servicios, pomodoro, temperatura, RAM, CPU,
   red, volumen, batería, fecha y brillo opcional. En monocle añade un
   contador `[N]` junto a los workspaces.
 - **referencia**: variante de 14 módulos (15 con backlight). Workspaces

@@ -13,6 +13,13 @@ install_kitty() {
   render_kitty_template "kitty/colorshemes/monochromatic.conf" \
     "$home/.config/kitty/colorshemes/monochromatic.conf"
 
+  # kitty arranca Python con -OO; Debian no trae los .opt-2.pyc.
+  if [[ -d /usr/lib/kitty && -d /usr/lib/python3.13 ]]; then
+    log "Compilando caché opt-2 de Python para kitty"
+    run_root python3 -OO -m compileall -q /usr/lib/kitty /usr/lib/python3.13 \
+      || warn "No se pudo compilar la caché opt-2 de Python"
+  fi
+
   ok "kitty instalado"
 }
 

@@ -6,7 +6,7 @@ bindkey '\C-H' backward-kill-word
 bindkey '^[k' up-line-or-search
 bindkey '^[j' down-line-or-search
 
-ZSH_THEME="agnoster"
+ZSH_THEME="cypher"
 
 plugins=(git sudo)
 source $ZSH/oh-my-zsh.sh
@@ -28,8 +28,7 @@ setopt pushdminus
 setopt no_nomatch
 
 # Completion.
-autoload -Uz compinit
-compinit
+# Oh My Zsh ya ejecuta compinit con su propio ZSH_COMPDUMP.
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'       # Case insensitive tab completion
 zstyle ':completion:*' rehash true                              # automatically find new executables in path
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"         # Colored completion (different colors for dirs/files/etc)
@@ -57,3 +56,6 @@ SAVEHIST=10000
 alias ls='lsd --group-dirs first'
 alias tt="tmux"
 alias vi="nvim"
+
+# opencode
+export PATH="$HOME/.opencode/bin:$PATH"

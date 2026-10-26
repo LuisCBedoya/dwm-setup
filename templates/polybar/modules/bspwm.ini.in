@@ -1,4 +1,4 @@
-; bspwm — workspaces 1-5 con dígitos árabes, solo el enfocado tiene caja clara
+; bspwm — workspaces 1-7 con dígitos árabes, solo el enfocado tiene caja clara
 [module/bspwm]
 type = internal/bspwm
 

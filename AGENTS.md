@@ -14,7 +14,7 @@ notificación.
 
 La barra final es la de la config viva: **12 módulos** (**13 con backlight**),
 logo StumbleUpon
-(`U+F1A4`), workspaces 1-5, actualizaciones al inicio de la derecha, fecha al final,
+(`U+F1A4`), workspaces 1-7, actualizaciones al inicio de la derecha, fecha al final,
 red unificada (`󰖩/󰈀 connected`, Ethernet prioritario, `󰖩 NoC` sin conexión), servicios systemd, volumen,
 batería y fecha; sin `dots`. Sin `xkeyboard`, `wlan`/`eth` separados ni
 fuente `DesktopLogo`.

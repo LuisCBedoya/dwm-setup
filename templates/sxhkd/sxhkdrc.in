@@ -122,8 +122,8 @@ super + ctrl + shift + Tab
     bspc desktop -f prev.local
 super + bracket{left,right}
     bspc desktop -f {prev,next}.local
-super + {_,shift + }{1-5}
-    bspc {desktop -f,node -d} '^{1-5}'
+super + {_,shift + }{1-7}
+    bspc {desktop -f,node -d} '^{1-7}'
 
 # ─── Redimensionar: Super+r y luego h/j/k/l ───
 # Con ':' la cadena sigue activa tras la cola; Escape sale.

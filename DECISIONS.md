@@ -2019,3 +2019,109 @@ barra solo mientras esté en monocle.
 - El contador solo aparece en monocle.
 - Se actualiza en un segundo al abrir o cerrar ventanas.
 - No requiere `jq` ni dependencias extra.
+
+## ADR-087 — Kitty sin barra de pestañas
+
+**Contexto:** kitty mostraba una barra inferior con el título `zsh`
+incluso con una sola pestaña, porque `tab_bar_min_tabs` era 1. El usuario
+usará herdr y no necesita la barra.
+
+**Decisión:**
+1. `tab_bar_style hidden`.
+2. Eliminar `tab_bar_edge` y `tab_bar_min_tabs`.
+3. Mantener los atajos de pestañas de kitty.
+
+**Consecuencias:**
+- Desaparece el badge `zsh` de la esquina inferior izquierda.
+- Las pestañas siguen existiendo, pero sin barra visible.
+
+## ADR-088 — Siete escritorios
+
+**Contexto:** el entorno tenía 5 escritorios y el usuario quiere 7.
+
+**Decisión:**
+1. `bspwmrc` crea `1 2 3 4 5 6 7`.
+2. `sxhkdrc` cubre `Super+{1-7}` y `Super+Shift+{1-7}`.
+3. En sesiones existentes se añaden con `bspc monitor -a 6 7`.
+
+**Consecuencias:**
+- La barra muestra 7 workspaces en ambas variantes.
+- Los atajos 6 y 7 funcionan sin reiniciar sesión.
+
+## ADR-089 — Iconos de batería estilo MDI
+
+**Contexto:** la batería usaba iconos de Font Awesome. El usuario quiere
+el estilo de 󰁹 para la rampa.
+
+**Decisión:**
+1. Rampa: 󰁺 (0), 󰁽 (1), 󰁿 (2), 󰂁 (3), 󰁹 (4).
+2. Cargando: 󰂄 en los cinco frames.
+3. Batería llena: 󰁹.
+4. Solo se modifican los glifos de los módulos de batería de A y B.
+
+**Consecuencias:**
+- La barra mantiene el porcentaje y los colores existentes.
+- Los iconos nuevos están en JetBrainsMono Nerd Font.
+
+## ADR-090 — Arranque rápido de kitty
+
+**Contexto:** abrir kitty tardaba ~0,9 s. No era la configuración: ocurría
+igual con `-c NONE`.
+
+**Diagnóstico:**
+1. `xdg-desktop-portal` no estaba instalado. GLFW consulta
+   `org.freedesktop.portal.Settings` y esperaba ~0,7 s hasta el timeout.
+2. Tras instalarlo, el backend GTK fallaba porque el servicio de
+   `systemd --user` no tenía `DISPLAY`/`XAUTHORITY`; el portal entraba en
+   timeout de 30 s.
+3. Kitty lanza Python con `optimize=2`, pero Debian solo trae
+   `.pyc` normales. Sin `.opt-2.pyc`, Python recompilaba 170 módulos en
+   cada arranque (~0,5 s).
+
+**Decisión:**
+1. Añadir `xdg-desktop-portal` y `xdg-desktop-portal-gtk` a
+   `DESKTOP_PKGS`.
+2. El autostart importa `DISPLAY` y `XAUTHORITY` al bus de usuario y
+   reinicia el portal.
+3. `lib/kitty.sh` ejecuta
+   `python3 -OO -m compileall -q /usr/lib/kitty /usr/lib/python3.13`.
+4. `desktop-doctor` comprueba los dos binarios del portal.
+
+**Consecuencias:**
+- Arranque de kitty ~250-296 ms en vez de ~870 ms.
+- El portal funciona también para diálogos de archivos y otras apps.
+- La caché `opt-2` debe regenerarse si una actualización de Python o
+  kitty la invalida; el instalador lo hace en cada ejecución.
+
+## ADR-091 — Un solo compinit en zsh
+
+**Contexto:** tras arreglar kitty, el prompt de zsh seguía tardando
+~100-120 ms. El perfil mostraba `compinit` ejecutado dos veces: una desde
+Oh My Zsh y otra desde `.zshrc`.
+
+**Decisión:**
+1. Quitar `autoload -Uz compinit; compinit` de `.zshrc`.
+2. Mantener los `zstyle` de completions; Oh My Zsh ejecuta `compinit`
+   con su propio `ZSH_COMPDUMP`.
+
+**Consecuencias:**
+- `zsh -i -c exit` pasa de ~119 ms a 54-62 ms.
+- `compaudit` se ejecuta la mitad de veces.
+- Si en el futuro se quita Oh My Zsh, habrá que volver a añadir `compinit`.
+
+## ADR-092 — Persistir ajustes manuales de polybar y zsh
+
+**Contexto:** el usuario ajustó a mano el espaciado de los iconos de
+batería (`%{O5}` en vez de espacios) y cambió zsh a `cypher` con el PATH
+de opencode. Esos cambios se perdían al reinstalar.
+
+**Decisión:**
+1. `animation-charging`, `label-full` y `ramp-capacity` usan `%{O5}` en
+   los módulos de batería de A y B.
+2. `templates/zsh/zshrc.in` usa `ZSH_THEME="cypher"` y añade
+   `export PATH="$HOME/.opencode/bin:$PATH"`.
+3. Se actualiza la documentación que mencionaba `agnoster`.
+
+**Consecuencias:**
+- La configuración viva y las plantillas vuelven a coincidir.
+- Reinstalar no revierte el tema ni el espaciado de la batería.

@@ -110,7 +110,7 @@ Debian 13, sin apvlv. No se modifica el atajo de Thunar.
 ## Shell zsh y lsd (2026-10-25)
 
 Se añadió al instalador `zsh`, `zsh-autosuggestions`, `lsd`, Oh My Zsh con
-agnoster y la configuración de lsd. La `.zshrc` conserva keybindings,
+cypher y la configuración de lsd. La `.zshrc` conserva keybindings,
 opciones, aliases y autosuggestions. La shell de login se cambia a
 `/usr/bin/zsh`; kitty usa Nord, `font_size 13` y zsh.
 
@@ -254,6 +254,60 @@ Variante B compacta, ajustada manualmente por el usuario:
 - `polybar-variant referencia|actual` cambia y guarda la elección.
 - Polybar carga 14 módulos sin errores; captura `bar-variant-b.png`.
 - La variante A no se toca.
+
+## Ajustes manuales guardados (2026-10-25)
+
+- Batería A y B: los espacios literales pasan a `%{O5}` en
+  `animation-charging`, `label-full` y `ramp-capacity`.
+- `.zshrc`: `ZSH_THEME="cypher"` y `export PATH="$HOME/.opencode/bin:$PATH"`.
+- Todo lo demás de polybar, kitty, bspwm, sxhkd y rofi coincide ya con
+  las plantillas.
+- Re-renderizado y comprobado sin diferencias contra la config viva.
+
+## Arranque de zsh sin compinit duplicado (2026-10-25)
+
+- `.zshrc` llamaba a `compinit` después de cargar Oh My Zsh, que ya lo
+  ejecuta con su propio `ZSH_COMPDUMP`.
+- Se elimina la llamada manual; los `zstyle` de completions se mantienen.
+- Medición: `zsh -i -c exit` pasa de ~119 ms a 54-62 ms.
+- `compaudit` baja de 4 llamadas a 2.
+
+## Arranque de kitty: portal y caché opt-2 (2026-10-25)
+
+- Causa 1: `xdg-desktop-portal` no estaba instalado y el backend GTK no
+  tenía `DISPLAY` en el bus de `systemd --user`; GLFW esperaba ~0,7 s.
+- Causa 2: kitty lanza Python con `-OO` y Debian no trae `.opt-2.pyc`;
+  Python recompilaba los módulos en cada arranque.
+- Añadidos `xdg-desktop-portal` y `xdg-desktop-portal-gtk` a
+  `DESKTOP_PKGS`.
+- Autostart importa `DISPLAY`/`XAUTHORITY` y reinicia el portal.
+- `lib/kitty.sh` compila la caché `opt-2` de `/usr/lib/kitty` y
+  `/usr/lib/python3.13`.
+- Medición: arranque 870 → 250-296 ms; `kitty --help` 636 → 141 ms.
+
+## Iconos de batería MDI (2026-10-25)
+
+- Rampa de capacidad con iconos Material Design:
+  󰁺 󰁽 󰁿 󰂁 󰁹.
+- Carga con 󰂄 y batería llena con 󰁹.
+- Aplicado solo en los módulos de batería de las variantes A y B; no se
+  tocaron colores, fuentes, porcentajes ni el resto de la barra.
+
+## Siete escritorios (2026-10-25)
+
+- `bspwmrc` pasa de 5 a 7 escritorios: `bspc monitor -d 1 2 3 4 5 6 7`.
+- `sxhkdrc` cubre `Super+{1-7}` y `Super+Shift+{1-7}`.
+- En vivo se añadieron con `bspc monitor -a 6 7`; sxhkd recargado.
+- Las barras A y B muestran los 7 workspaces automáticamente.
+- Captura `desktops7-crop.png`.
+
+## Kitty sin barra de pestañas (2026-10-25)
+
+- `tab_bar_style` pasa de `powerline` a `hidden`.
+- Se eliminan `tab_bar_edge` y `tab_bar_min_tabs`.
+- El badge `zsh` de la esquina inferior izquierda desaparece.
+- Los atajos de pestañas siguen funcionando; el usuario usará herdr.
+- Captura `kitty-notab-win.png`.
 
 ## Contador de ventanas en monocle (2026-10-25)
 

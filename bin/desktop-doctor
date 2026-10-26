@@ -51,6 +51,9 @@ for c in bspwm sxhkd polybar dunst rofi kitty feh flameshot i3lock xss-lock \
   check_cmd "$c"
 done
 
+check_file "/usr/libexec/xdg-desktop-portal"
+check_file "/usr/libexec/xdg-desktop-portal-gtk"
+
 # ─── Configs ───
 print_header "Archivos de configuración"
 check_file "$CONFIG/bspwm/bspwmrc"

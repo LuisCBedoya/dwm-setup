@@ -326,8 +326,8 @@ Atajos principales:
   Super+Print       menú de capturas
   Super+{h,j,k,l}   foco ventanas
   Super+Shift+{h,j,k,l} mover ventanas
-  Super+{1-5}       ir a escritorio
-  Super+Shift+{1-5} mover ventana a escritorio
+  Super+{1-7}       ir a escritorio
+  Super+Shift+{1-7} mover ventana a escritorio
   Super+Alt+{h,j,k,l} redimensionar
   Super+m           monocle/tiled
   Super+f           fullscreen

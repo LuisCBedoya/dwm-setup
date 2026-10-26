@@ -10,6 +10,12 @@ LOG_FILE="$LOG_DIR/session.log"
 exec >>"$LOG_FILE" 2>&1
 printf '\n[%s] autostart\n' "$(date '+%Y-%m-%d %H:%M:%S')"
 
+# --- Portal de escritorio: DISPLAY en el bus de systemd --user ---
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl --user import-environment DISPLAY XAUTHORITY 2>/dev/null || true
+  systemctl --user restart xdg-desktop-portal 2>/dev/null || true
+fi
+
 # Esperar a que X esté listo
 sleep 0.5
 
