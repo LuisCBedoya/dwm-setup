@@ -2125,3 +2125,29 @@ de opencode. Esos cambios se perdían al reinstalar.
 **Consecuencias:**
 - La configuración viva y las plantillas vuelven a coincidir.
 - Reinstalar no revierte el tema ni el espaciado de la batería.
+
+## ADR-093 — Evitar el bloqueo de bspwm por scripts de polybar
+
+**Contexto:** el escritorio se congeló: Xorg respondía, pero `bspc`
+quedaba colgado. bspwm estaba bloqueado en `sock_alloc_send_pskb` con
+213 KB pendientes en su socket.
+
+**Causa:**
+1. Polybar murió durante un reinicio mientras `updates-apt.sh`
+   (`tail = true`) seguía ejecutándose.
+2. El script heredó el descriptor del socket de bspwm y nunca lo leyó.
+3. Al quedar huérfano, nadie drenó el socket y bspwm se bloqueó al
+   escribir.
+
+**Decisión:**
+1. `launch.sh` usa `flock` para serializar reinicios.
+2. Antes de arrancar polybar, mata los grupos de `updates-apt.sh` y
+   `polypomo` que hayan quedado huérfanos.
+3. `updates-apt.sh` guarda el PID de polybar y termina si desaparece.
+4. El descriptor del lock se cierra antes de lanzar polybar para no
+   heredarlo.
+
+**Consecuencias:**
+- Un reinicio de barra ya no puede bloquear bspwm.
+- Si polybar cae, sus scripts `tail=true` terminan solos.
+- `launch.sh` también sirve para recuperar una sesión ya bloqueada.

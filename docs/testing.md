@@ -150,6 +150,15 @@ Comprobado:
 - `services.sh` también prefiere rofi; dmenu queda como respaldo.
 - Capturas: `gaps-bar30.png`, `net-rofi2.png`.
 
+### Congelación de bspwm (2026-10-25)
+
+- Síntoma: `bspc` se queda colgado; Xorg sigue respondiendo.
+- Causa: `updates-apt.sh` huérfano retiene el socket de bspwm
+  (`send-q` 213504).
+- `launch.sh` con `flock` y limpieza de huérfanos.
+- `updates-apt.sh` sale si su polybar desaparece.
+- Prueba: `pkill -x polybar` + esperar 4 s deja `bspc query -D` operativo.
+
 ### Ajustes manuales persistidos (2026-10-25)
 
 - `diff` entre la config viva y la renderizada: sin diferencias en

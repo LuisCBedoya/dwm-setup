@@ -44,9 +44,25 @@ sig() {
 prev=$(sig)
 estado
 
-# Loop vivo: nunca sale; si algo falla en una vuelta, la siguiente re-testea.
+# Si polybar desaparece, este proceso debe salir: si queda huérfano
+# retiene su socket de bspwm y puede bloquear el gestor de ventanas.
+parent_pid=$PPID
+parent_comm=$(cat "/proc/$parent_pid/comm" 2>/dev/null || true)
+if [ "$parent_comm" = "polybar" ]; then
+  watch_pid=$parent_pid
+else
+  watch_pid=$(awk '/^PPid:/{print $2}' "/proc/$parent_pid/status" 2>/dev/null || true)
+fi
+case "$watch_pid" in
+  ''|0|1) watch_pid= ;;
+esac
+
+# Loop vivo: sale si polybar desaparece; si algo falla, la siguiente vuelta re-testea.
 while :; do
   sleep "$gap"
+  if [ -n "$watch_pid" ] && [ ! -d "/proc/$watch_pid" ]; then
+    exit 0
+  fi
   cur=$(sig)
   [ "$cur" = "$prev" ] && continue
   # debounce: durante un apt real el archivo cambia varias veces; esperar

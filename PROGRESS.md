@@ -255,6 +255,20 @@ Variante B compacta, ajustada manualmente por el usuario:
 - Polybar carga 14 módulos sin errores; captura `bar-variant-b.png`.
 - La variante A no se toca.
 
+## Congelación de bspwm por script huérfano (2026-10-25)
+
+- Polybar murió durante un reinicio mientras `updates-apt.sh`
+  (`tail = true`) seguía vivo.
+- El script heredó el socket de bspwm y no lo leía; bspwm llenó el buffer
+  (213 KB) y se bloqueó en `sock_alloc_send_pskb`.
+- Recuperación: matar los grupos de `updates-apt.sh` y relanzar polybar.
+- Prevención:
+  - `flock` en `launch.sh` para serializar reinicios.
+  - `launch.sh` mata scripts huérfanos (`updates-apt.sh`, `polypomo`)
+    antes de arrancar.
+  - `updates-apt.sh` termina si su polybar desaparece.
+- Probado: matar polybar deja bspwm respondiendo; relanzar funciona.
+
 ## Ajustes manuales guardados (2026-10-25)
 
 - Batería A y B: los espacios literales pasan a `%{O5}` en

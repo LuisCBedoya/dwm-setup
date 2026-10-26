@@ -4,6 +4,28 @@
 
 set -eu
 
+# Serializa los reinicios: dos launch.sh a la vez pueden matarse entre sí.
+LOCK="${XDG_RUNTIME_DIR:-$HOME/.cache}/polybar-launch.lock"
+exec 9>"$LOCK" 2>/dev/null || true
+if command -v flock >/dev/null 2>&1; then
+  flock -w 10 9 || exit 0
+fi
+
+# Scripts tail=true de polybar que, si quedan huérfanos, retienen el
+# socket de bspwm y pueden bloquear el gestor de ventanas.
+cleanup_polybar_orphans() {
+  local p pgid
+  for p in $(pgrep -x updates-apt.sh 2>/dev/null || true) \
+           $(pgrep -x polypomo 2>/dev/null || true); do
+    pgid=$(ps -o pgid= -p "$p" 2>/dev/null | tr -d ' ')
+    if [ -n "$pgid" ]; then
+      kill -TERM -"$pgid" 2>/dev/null || kill "$p" 2>/dev/null || true
+    else
+      kill "$p" 2>/dev/null || true
+    fi
+  done
+}
+
 pkill -x polybar 2>/dev/null || true
 tries=0
 while pgrep -u "$UID" -x polybar >/dev/null; do
@@ -14,6 +36,8 @@ while pgrep -u "$UID" -x polybar >/dev/null; do
   fi
   sleep 0.1
 done
+
+cleanup_polybar_orphans
 
 variant="actual"
 if [ -r "@HOME@/.config/polybar/variant" ]; then
@@ -56,6 +80,8 @@ case "$variant" in
     ;;
 esac
 
+# El lock no debe heredarse: polybar y sus scripts lo retendrían.
+exec 9>&-
 polybar -r main -c "$CONFIG" &
 
 echo "Polybar iniciado"
