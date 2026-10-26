@@ -31,9 +31,11 @@ install_user_configs() {
   run_root install -d -m 0700 -o "$TARGET_USER" -g "$TARGET_GROUP" \
     "$home/.local/share/xorg"
 
-  # Wallpaper
+  # Wallpaper principal y alternativo
   run_root install -D -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" \
     "$PROJECT_ROOT/assets/wallpaper.png" "$home/.local/share/wallpapers/wallpaper.png"
+  run_root install -D -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" \
+    "$PROJECT_ROOT/assets/wallpaper-alt.png" "$home/.local/share/wallpapers/wallpaper-alt.png"
 
   # Binarios del sistema
   run_root install -D -m 0755 "$PROJECT_ROOT/bin/desktop-safe" "/usr/local/bin/desktop-safe"

@@ -1980,3 +1980,23 @@ defecto la imagen `Descargas/Nothing2/contents/images/2337x1080.png`.
 - Instalaciones limpias usan el wallpaper Nothing sin depender de
   `~/Descargas`.
 - El wallpaper anterior se conserva en el backup del usuario.
+
+## ADR-085 — Wallpaper alternativo seleccionable
+
+**Contexto:** además de Nothing2, el usuario tiene Nothing1, del mismo
+estilo, y quiere poder alternarlo sin editar archivos.
+
+**Decisión:**
+1. Vendorizar Nothing1 como `assets/wallpaper-alt.png`, redimensionado a
+   2560 px de ancho en PNG (918 KB).
+2. `wallpaper.sh` con `apply`, `primary`, `alt` y `toggle`; guarda la
+   elección en `~/.config/bspwm/wallpaper`.
+3. Atajo `Super+Alt+W` para alternar.
+4. El autostart ejecuta `wallpaper.sh apply` para respetar la última
+   elección.
+5. `lib/config.sh` instala las dos imágenes.
+
+**Consecuencias:**
+- Se puede cambiar de wallpaper sin terminal ni editar rutas.
+- La elección sobrevive a reinicios de sesión.
+- Instalaciones limpias incluyen ambas imágenes.

@@ -255,6 +255,18 @@ Variante B compacta, ajustada manualmente por el usuario:
 - Polybar carga 14 módulos sin errores; captura `bar-variant-b.png`.
 - La variante A no se toca.
 
+## Wallpaper alternativo Nothing1 (2026-10-25)
+
+- `Descargas/Nothing1/contents/images/5521x2487.png` optimizado a
+  2560x1153 PNG (918 KB) como `assets/wallpaper-alt.png`.
+- Nuevo `wallpaper.sh`: `apply`, `primary`, `alt`, `toggle`; guarda el
+  estado en `~/.config/bspwm/wallpaper`.
+- Atajo `Super+Alt+W` para alternar.
+- Autostart aplica la wallpaper guardada.
+- `lib/config.sh` instala ambas imágenes.
+- Probado en vivo: Nothing2 (principal) y Nothing1 (alternativa).
+  Capturas `wall-primary.png` y `wall-alt.png`.
+
 ## Borde 1, gap 0 y wallpaper Nothing (2026-10-25)
 
 - `border_width` 2 → 1 y `window_gap` 4 → 0 en

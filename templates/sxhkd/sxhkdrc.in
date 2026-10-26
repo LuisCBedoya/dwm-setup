@@ -52,6 +52,9 @@ super + alt + r
 # Alternar variante de polybar (A/B)
 super + alt + p
     @HOME@/.config/polybar/polybar-variant cycle
+# Alternar wallpaper principal / alternativo
+super + alt + w
+    @HOME@/.config/bspwm/scripts/wallpaper.sh toggle
 super + shift + c
     pkill -USR1 -x sxhkd; bspc wm -r
 super + shift + r

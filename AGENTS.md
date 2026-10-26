@@ -169,7 +169,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/themes/` | Windows-10-Dark |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
 | `templates/colors/` | `palette-mono.sh`, `palette-warm.sh`, `palette-nord.sh` y helpers |
-| `assets/wallpaper.png` | Wallpaper |
+| `assets/wallpaper.png` | Wallpaper principal |
+| `assets/wallpaper-alt.png` | Wallpaper alternativo |
 
 Ya no existen `src/chadwm`, `src/eww`, `legacy/`, `lib/dwm.sh`,
 `lib/eww.sh`, `lib/ly.sh`, `templates/dwm/` ni la integración de dotfiles

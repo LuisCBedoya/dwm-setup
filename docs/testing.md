@@ -150,6 +150,14 @@ Comprobado:
 - `services.sh` también prefiere rofi; dmenu queda como respaldo.
 - Capturas: `gaps-bar30.png`, `net-rofi2.png`.
 
+### Wallpaper alternativo (2026-10-25)
+
+- `wallpaper.sh primary` aplica Nothing2 y guarda `primary`.
+- `wallpaper.sh toggle` aplica Nothing1 y guarda `alt`.
+- `wallpaper.sh apply` respeta la última elección en el autostart.
+- `Super+Alt+W` está en sxhkdrc y sxhkd se recargó con `-USR1`.
+- Ambas imágenes instaladas en `~/.local/share/wallpapers/`.
+
 ### Borde 1, gap 0 y wallpaper (2026-10-25)
 
 - `bspc config border_width` → `1`; `bspc config window_gap` → `0`.

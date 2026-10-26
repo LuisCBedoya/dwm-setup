@@ -1,0 +1,56 @@
+#!/bin/sh
+# wallpaper.sh — alterna entre el wallpaper principal y el alternativo.
+set -u
+
+STATE_DIR="$HOME/.config/bspwm"
+STATE_FILE="$STATE_DIR/wallpaper"
+PRIMARY="$HOME/.local/share/wallpapers/wallpaper.png"
+ALT="$HOME/.local/share/wallpapers/wallpaper-alt.png"
+
+usage() {
+  printf 'Uso: %s [apply|primary|alt|toggle]\n' "$0" >&2
+  exit 1
+}
+
+current=primary
+if [ -r "$STATE_FILE" ]; then
+  current=$(cat "$STATE_FILE" 2>/dev/null || printf 'primary')
+fi
+
+case "${1:-apply}" in
+  primary) mode=primary ;;
+  alt) mode=alt ;;
+  toggle)
+    case "$current" in
+      alt) mode=primary ;;
+      *) mode=alt ;;
+    esac
+    ;;
+  apply) mode=$current ;;
+  *) usage ;;
+esac
+
+case "$mode" in
+  alt) image=$ALT ;;
+  *) mode=primary; image=$PRIMARY ;;
+esac
+
+# Si la alternativa no existe, vuelve a la principal.
+if [ ! -r "$image" ]; then
+  mode=primary
+  image=$PRIMARY
+fi
+[ -r "$image" ] || exit 1
+
+if command -v xwallpaper >/dev/null 2>&1; then
+  xwallpaper --zoom "$image" || exit 1
+elif command -v feh >/dev/null 2>&1; then
+  feh --bg-fill "$image" || exit 1
+else
+  exit 1
+fi
+
+mkdir -p "$STATE_DIR" 2>/dev/null || true
+printf '%s\n' "$mode" > "$STATE_FILE"
+
+exit 0

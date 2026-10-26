@@ -259,6 +259,7 @@ Si algo falla:
 | `Super+Shift+c` | recargar sxhkd y bspwm |
 | `Super+Shift+r` | reiniciar bspwm |
 | `Super+Alt+P` | ciclo A arriba → A abajo → B arriba → B abajo |
+| `Super+Alt+W` | alterna wallpaper principal / alternativo |
 | `Super+Shift+space` | alternar floating |
 | `Super+Shift+q` | cerrar ventana |
 | `Super+a` | enfocar contenedor padre |
@@ -370,7 +371,8 @@ templates/themes/          Windows-10-Dark
 templates/modprobe/        i915.conf y nvidia.conf
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
 templates/colors/          palette-mono.sh, palette-warm.sh y palette-nord.sh
-assets/wallpaper.png       Wallpaper
+assets/wallpaper.png       Wallpaper principal
+assets/wallpaper-alt.png   Wallpaper alternativo
 docs/                      Hardware y testing
 ```
 

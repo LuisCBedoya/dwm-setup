@@ -101,6 +101,7 @@ verify_install() {
     "$home/.config/ranger/scope.sh" \
     "$home/.config/ranger/epub-cover.sh" \
     "$home/.config/bspwm/scripts/dunst-position.sh" \
+    "$home/.config/bspwm/scripts/wallpaper.sh" \
     "$home/.config/zathura/zathurarc" \
     "$home/.themes/Windows-10-Dark/index.theme" \
     "$home/.config/gtk-3.0/settings.ini" \
@@ -115,6 +116,7 @@ verify_install() {
     "/usr/share/icons/Papirus/index.theme" \
     "$home/.xinitrc" \
     "$home/.local/share/wallpapers/wallpaper.png" \
+    "$home/.local/share/wallpapers/wallpaper-alt.png" \
     "$home/.local/share/xorg" \
     "$home/Pictures/Screenshots" \
     "/usr/local/bin/desktop-safe" \

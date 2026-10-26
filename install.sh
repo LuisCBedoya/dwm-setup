@@ -200,6 +200,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/bspwm/scripts/audio-watch.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/thunar-defaults.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/dunst-position.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/wallpaper.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
     "$PROJECT_ROOT/templates/sxhkd/sxhkdrc.in"
     "$PROJECT_ROOT/templates/polybar/config.ini.in"
@@ -276,6 +277,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/modprobe/i915.conf"
     "$PROJECT_ROOT/templates/modprobe/nvidia.conf"
     "$PROJECT_ROOT/assets/wallpaper.png"
+    "$PROJECT_ROOT/assets/wallpaper-alt.png"
   )
   for path in "${required[@]}"; do
     [[ -e "$path" ]] || die "Falta un archivo del proyecto: $path"
