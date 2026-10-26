@@ -1700,3 +1700,283 @@ internos porque los iconos de Papirus son SVG y faltaba el cargador
 - El repo crece unos 3 MB por el tema.
 - Los iconos Papirus no se vendorizan; vienen de Debian.
 - Las apps que usan GSettings y las que leen settings.ini quedan alineadas.
+
+## ADR-071 — VLC con paleta oscura nativa
+
+**Contexto:** VLC 3.0.24 usa Qt5 y arrancaba con la paleta clara del sistema.
+La opción nativa `qt-dark-palette` estaba desactivada en `vlcrc`.
+
+**Decisión:**
+1. Activar `qt-dark-palette=1` en `~/.config/vlc/vlcrc`.
+2. No instalar `qt5-gtk-platformtheme` ni depender del tema GTK para VLC.
+3. Editar solo esa clave si `vlcrc` ya existe; nunca reemplazar el archivo
+   completo del usuario.
+4. Si no existe `vlcrc`, crearlo desde `templates/vlc/vlcrc.in` con permisos
+   `0600`.
+5. Verificar la clave en `lib/verify.sh` y en `desktop-doctor`.
+
+**Consecuencias:**
+- VLC arranca en modo oscuro sin paquetes extra.
+- Los ajustes previos del usuario en `vlcrc` se conservan.
+- VLC reescribe `vlcrc` al salir; el valor se mantiene.
+
+## ADR-072 — Paleta global Mono Slate
+
+**Contexto:** la paleta Warm Charcoal (beige/azul) no coincidía con la
+referencia visual del usuario: negro, blancos, grises y un único azul
+tenue. Además, polybar, kitty y el menú de rofi tenían colores
+hardcodeados y no seguían la paleta.
+
+**Decisión:**
+1. Nueva `templates/colors/palette-mono.sh` y `DEFAULT_THEME="mono"`.
+2. Refactorizar polybar A/B, módulos `bspwm`/`fs`, kitty, rofi
+   (`powermenu.rasi` y `config.rasi`), dunst, bspwm, i3lock y zathura
+   para usar solo `@COLOR_*@`.
+3. Incorporar `templates/rofi/config.rasi.in` (menú de aplicaciones).
+4. Añadir `templates/zathura/zathurarc.in` con fondo oscuro y `recolor`.
+5. Añadir `--theme mono|warm|nord`; quitar los `THEME_NAME=warm` fijos.
+6. Sustituir el wallpaper por un grafito 2560x1440 con halo azul tenue.
+7. `lib/verify.sh` rechaza colores fuera de la paleta activa, salvo
+   `#FF00FF` (scrot) y `#00000000` (transparencia de la barra B).
+
+**Consecuencias:**
+- Cambiar de paleta es un flag del instalador.
+- Las configuraciones renderizadas no vuelven a divergir del tema.
+- Warm Charcoal y Nord quedan como alternativas completas.
+- El tema GTK Windows-10-Dark se mantiene; su azul de selección encaja
+  con el acento tenue.
+
+## ADR-073 — Paleta Mono Slate exacta con acento azul
+
+**Contexto:** la referencia final del usuario define una escala concreta
+(`#000000`, `#0E0E0E`, `#1A1A1A`, `#2A2A2A`, `#4A4A4A`, `#8C8C8C`,
+`#F2F2F2`) y un único acento rojo `#D71921`. El usuario pidió mantener la
+escala y sustituir el rojo por el azul del token `const` (`#569CD6`).
+
+**Decisión:**
+1. `palette-mono.sh` usa exactamente esos grises.
+2. `COLOR_ACCENT`, `COLOR_RED` y `COLOR_BLUE` apuntan a `#569CD6`; el
+   rojo desaparece de la paleta.
+3. `COLOR_ACCENT_ALT=#D9D9D9`, `COLOR_GREEN=#B8B8B8`, `COLOR_YELLOW=#E9E9E9`,
+   `COLOR_CYAN=#6E6E6E`, `COLOR_PURPLE=#B8B8B8` para no introducir tonos
+   fuera de la escala.
+4. Wallpaper regenerado con base `#000000` y halo `#569CD6`.
+
+**Consecuencias:**
+- El acento cromático es único y azul.
+- Foco de ventana, cursor, borde de rofi, dunst crítico y resaltados de
+  zathura comparten el mismo azul.
+- `lib/verify.sh` sigue validando que no haya hex fuera de la paleta.
+
+## ADR-074 — Thunar con la paleta global y modo minimalista
+
+**Contexto:** Thunar seguía usando el azul `#004D8C` del tema
+`Windows-10-Dark` y mostraba menú, panel lateral y barra de estado, lo
+que rompía la estética monocromática del escritorio.
+
+**Decisión:**
+1. Añadir `~/.config/gtk-3.0/gtk.css` y `gtk-4.0/gtk.css` con
+   `@define-color` y selectores para ventana, vista, toolbar, menú,
+   sidebar, barra de estado, botones y scrollbars, usando `@COLOR_*@`.
+2. Compactar espaciado y eliminar sombras, degradados y esquinas
+   redondeadas.
+3. Ocultar menú, panel lateral y barra de estado mediante
+   `thunar-defaults.sh`, que solo escribe si la propiedad no existe.
+4. Mantener accesibles los controles: Ctrl+M muestra el menú y F9 el
+   panel lateral.
+5. Verificar los CSS en `lib/verify.sh` y `desktop-doctor`.
+
+**Consecuencias:**
+- Thunar usa la misma paleta que polybar, kitty, rofi y dunst.
+- El modo minimalista es reversible sin tocar el tema.
+- Los cambios del usuario en xfconf se respetan en reinstalaciones.
+
+## ADR-075 — Superficie #1A1A1A y barra B opaca
+
+**Contexto:** el escritorio usaba `#000000` como fondo de terminal, Thunar y
+barra. El usuario pidió el gris de su referencia (`#1A1A1A`) para que no se
+viera "demasiado negro", y reportó bordes anaranjados.
+
+**Decisión:**
+1. `COLOR_BG` y `COLOR_BG_ALT` pasan a `#1A1A1A`; `COLOR_BG_ELEV` y
+   `COLOR_BG_HOVER` a `#2A2A2A`. El wallpaper y el fondo raíz siguen
+   negros.
+2. La variante B deja de usar `#00000000`: la barra pasa a `#1A1A1A`
+   sólido, con los módulos al mismo tono.
+3. Aplicar `bspwmrc` en vivo tras renderizar. bspwm no recarga el archivo
+   solo, por eso el borde enfocado seguía en el beige `#b9a99a` de Warm
+   Charcoal.
+
+**Consecuencias:**
+- Terminal, Thunar, rofi, dunst, zathura y barras comparten superficie.
+- El escritorio negro mantiene contraste con las ventanas.
+- El borde enfocado es azul `#569CD6` y el normal `#1A1A1A`.
+
+## ADR-076 — Gaps de 4 px, barra de 30 px y menús con rofi
+
+**Contexto:** el usuario había subido a mano la altura de ambas barras a
+30 px, pero el instalador y `launch.sh` seguían usando 20/18 px de altura
+y 26 px de padding, por lo que el cambio se perdía y las ventanas podían
+meterse debajo de la barra. Además, `network-menu.sh` y `services.sh`
+preferían dmenu si estaba instalado, y el usuario tiene dmenu.
+
+**Decisión:**
+1. `window_gap` pasa de 10 a 4 px; `border_width` sigue en 2.
+2. `BAR_HEIGHT=30` se define en `install.sh` y se usa en:
+   - `templates/polybar/config.ini.in` (`height = @BAR_HEIGHT@`)
+   - `templates/polybar/variants/reference/config.ini.in`
+   - `templates/bspwm/bspwmrc.in` (padding superior/inferior)
+   - `templates/polybar/scripts/launch.sh.in` (padding al cambiar variante)
+   - `lib/bspwm.sh` y `lib/polybar.sh` al renderizar.
+3. Los menús de red y servicios usan rofi primero y dmenu como respaldo.
+
+**Consecuencias:**
+- La altura de la barra sobrevive a reinstalaciones y al ciclo A/B.
+- Las ventanas no se solapan con la barra.
+- Los menús salen con el tema Mono Slate de rofi.
+
+## ADR-077 — Borde enfocado gris claro
+
+**Contexto:** el borde de la ventana enfocada era el azul `#569CD6`. Al
+usuario le resultaba demasiado llamativo y quería un blanco/gris tenue que
+se diferenciara del resto.
+
+**Decisión:**
+1. `focused_border_color` usa `COLOR_ACCENT_ALT` (`#D9D9D9`).
+2. `normal_border_color` sigue en `#1A1A1A` y `active_border_color` en
+   `#2A2A2A`.
+3. El azul `#569CD6` se mantiene solo en cursor de kitty, borde de rofi y
+   dunst.
+
+**Consecuencias:**
+- El foco se distingue por un contorno claro y neutro.
+- La paleta no cambia: `#D9D9D9` ya existía como `COLOR_ACCENT_ALT`.
+
+## ADR-078 — Superficie #2F2F2F
+
+**Contexto:** el usuario pidió subir la superficie principal de `#1A1A1A` a
+`#2F2F2F`. Ese cambio hacía que el hover `#2A2A2A` quedara más oscuro que
+el fondo y que el borde normal (que usaba `COLOR_BG`) desapareciera.
+
+**Decisión:**
+1. `COLOR_BG` y `COLOR_BG_ALT` → `#2F2F2F`.
+2. `COLOR_BG_ELEV` y `COLOR_BG_HOVER` → `#3A3A3A`.
+3. `COLOR_BORDER` → `#1A1A1A`.
+4. `normal_border_color` usa `COLOR_BORDER`; `active_border_color` usa
+   `COLOR_BG_ELEV`.
+5. El wallpaper se mantiene negro.
+
+**Consecuencias:**
+- Barra, terminal, Thunar, rofi, dunst y zathura comparten `#2F2F2F`.
+- Los estados hover/elevado y los contornos siguen visibles.
+- `lib/verify.sh` valida que no aparezcan colores fuera de la paleta.
+
+## ADR-079 — Superficie #2A2A2A
+
+**Contexto:** tras subir la superficie a `#2F2F2F`, el usuario la quería un
+poco más oscura.
+
+**Decisión:**
+1. `COLOR_BG` y `COLOR_BG_ALT` → `#2A2A2A`.
+2. `COLOR_BG_ELEV` y `COLOR_BG_HOVER` se mantienen en `#3A3A3A`.
+3. `COLOR_BORDER` se mantiene en `#1A1A1A`, visible sobre el nuevo fondo.
+
+**Consecuencias:**
+- Barra, terminal, Thunar, rofi, dunst y zathura usan `#2A2A2A`.
+- El hover y los bordes siguen diferenciándose.
+
+## ADR-080 — Superficie #262626
+
+**Contexto:** el usuario seguía ajustando el tono y pidió bajar un poco más
+la superficie, de `#2A2A2A` a `#262626`.
+
+**Decisión:**
+1. `COLOR_BG` y `COLOR_BG_ALT` → `#262626`.
+2. `COLOR_BG_ELEV`/`COLOR_BG_HOVER` se mantienen en `#3A3A3A`.
+3. `COLOR_BORDER` se mantiene en `#1A1A1A`.
+
+**Consecuencias:**
+- Barra, terminal, Thunar, rofi, dunst y zathura usan `#262626`.
+- El contraste con hover y bordes se mantiene.
+
+## ADR-081 — Kitty #212121 y paleta de terminal
+
+**Contexto:** el usuario añadió `colorshemes/monochromatic.conf` a kitty,
+pero el `include` estaba al principio y las líneas posteriores de la
+plantilla lo sobrescribían. Además, la rampa empezaba en `#444444`, casi
+invisible sobre fondo oscuro. También pidió un fondo de terminal algo más
+oscuro que el escritorio.
+
+**Decisión:**
+1. `COLOR_TERM_BG=#212121` solo para kitty.
+2. El tema del terminal se mueve a
+   `templates/kitty/colorshemes/monochromatic.conf.in` y se instala en
+   `~/.config/kitty/colorshemes/`.
+3. `include` va al final de `kitty.conf`.
+4. Rampa ANSI de grises con contraste:
+   `#2a2a2a`, `#5f5f5f`, `#6e6e6e`, `#8c8c8c`, `#a8a8a8`, `#c0c0c0`,
+   `#d0d0d0`, `#d9d9d9`, `#e0e0e0`, `#f2f2f2`, `#ffffff`.
+5. `render_theme_template` sustituye `COLOR_TERM_*`; las paletas warm y
+   nord definen sus equivalentes.
+
+**Consecuencias:**
+- La terminal tiene su propio fondo sin cambiar el resto del escritorio.
+- `ls` y `lsd` distinguen tipos de archivo sin salir de la gama de grises.
+- El tema sobrevive a reinstalaciones.
+
+## ADR-082 — Kitty #1C1C1C
+
+**Contexto:** el usuario quería la terminal un poco más oscura que
+`#212121`.
+
+**Decisión:**
+1. `COLOR_TERM_BG` → `#1C1C1C`; el resto del escritorio sigue en
+   `#262626`.
+2. Se eliminan claves de kitty que esta versión ignora
+   (`window_min_width`, `window_min_height`, `decorations`,
+   `tab_bar_margin`, `tab_inactive_text_alpha`) para que el log de
+   arranque quede limpio.
+
+**Consecuencias:**
+- La terminal se separa visualmente del resto de superficies.
+- `kitty` no imprime avisos de configuración desconocida.
+
+## ADR-083 — Dunst sigue la posición de polybar
+
+**Contexto:** con la barra abajo, las notificaciones seguían saliendo
+arriba. El usuario quiere `top-right` con barra arriba y `bottom-right`
+con barra abajo.
+
+**Decisión:**
+1. Nuevo `dunst-position.sh`: lee `~/.config/polybar/position` y ajusta
+   `origin` en `dunstrc`; luego `dunstctl reload`.
+2. Se ejecuta en autostart antes de `dunst &` y desde `launch.sh` al
+   cambiar variante/posición.
+3. `dunstrc` usa `top-right` como valor base; `offset = (10, 40)` deja
+   10 px entre la notificación y la barra de 30 px.
+
+**Consecuencias:**
+- Las notificaciones nunca tapan la barra.
+- El cambio de esquina es automático con `Super+Alt+P`.
+- No hace falta reiniciar dunst ni la sesión.
+
+## ADR-084 — Borde 1, gap 0 y wallpaper Nothing
+
+**Contexto:** el usuario ajustó a mano `border_width=1` y `window_gap=0`
+en bspwm y quiere que se mantenga. También quiere como wallpaper por
+defecto la imagen `Descargas/Nothing2/contents/images/2337x1080.png`.
+
+**Decisión:**
+1. `templates/bspwm/bspwmrc.in` usa `border_width 1` y `window_gap 0`.
+2. El wallpaper se vendoriza como `assets/wallpaper.png` (PNG original)
+   y se instala en `~/.local/share/wallpapers/wallpaper.png`.
+3. Se actualizan todas las referencias de `rocky.jpg` a `wallpaper.png`
+   y se elimina `assets/wallpaper.jpg`.
+4. `common.sh` respalda tanto `rocky.jpg` (antiguo) como
+   `wallpaper.png`.
+
+**Consecuencias:**
+- Ventanas sin separación y con contorno de 1 px.
+- Instalaciones limpias usan el wallpaper Nothing sin depender de
+  `~/Descargas`.
+- El wallpaper anterior se conserva en el backup del usuario.

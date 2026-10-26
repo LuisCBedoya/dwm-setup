@@ -98,8 +98,7 @@ Comprobado:
   muestra `# 0`; capturas `bar-spacing-final.png` y `bar-user-final.png`.
 - Variante B "referencia": 14 módulos, 5 círculos a la izquierda y a la
   derecha `izq`, servicios, pomodoro, temperatura, RAM, CPU, red, volumen y
-  batería. Barra de 18 px con pseudo-transparencia, fuentes 10/13 y fondos
-  derechos opacos; solo el centro es transparente. Cambia con
+  batería. Barra de 30 px con fondo sólido `#262626`, fuentes 10/13. Cambia con
   `~/.config/polybar/polybar-variant referencia`;
   captura `bar-variant-b.png`. Polybar carga 14 módulos sin errores.
 - `polybar-variant actual` vuelve a la variante A y conserva su estilo.
@@ -127,6 +126,102 @@ Comprobado:
 - `mime ^text` y las extensiones de código/Markdown se abren con `nvim`.
 - `rifle -l archivo.md` muestra `nvim -- "$@"`.
 - El resto de formatos sigue con zathura, VLC o feh.
+
+### VLC oscuro (2026-10-25)
+
+- `grep -n '^qt-dark-palette=1$' ~/.config/vlc/vlcrc` debe devolver la clave.
+- Al abrir `vlc`, la ventana, menús y lista de reproducción salen oscuros.
+- VLC 3.0.24 en Debian 13 admite `--qt-dark-palette`.
+- No requiere `qt5-gtk-platformtheme`.
+
+### Borde enfocado gris (2026-10-25)
+
+- `bspc config focused_border_color` → `#d9d9d9`.
+- `normal_border_color` → `#1a1a1a`; `active_border_color` → `#3a3a3a`.
+- Visualmente el borde claro se distingue sobre ventanas `#262626` y fondo
+  negro, sin el azul anterior.
+
+### Gaps, barra de 30 y menús rofi (2026-10-25)
+
+- `window_gap` baja de 10 a 4 px; `border_width` sigue en 2.
+- `BAR_HEIGHT=30` se usa en polybar A/B, en `bspwmrc` y en `launch.sh`.
+- `bspc config window_gap` → `4`; `bottom_padding` → `30`.
+- El menú WiFi (`network-menu.sh`) abre con `rofi -dmenu`, no dmenu.
+- `services.sh` también prefiere rofi; dmenu queda como respaldo.
+- Capturas: `gaps-bar30.png`, `net-rofi2.png`.
+
+### Borde 1, gap 0 y wallpaper (2026-10-25)
+
+- `bspc config border_width` → `1`; `bspc config window_gap` → `0`.
+- `assets/wallpaper.png` (2337x1080, PNG) instalado en
+  `~/.local/share/wallpapers/wallpaper.png`.
+- `xwallpaper --zoom` lo muestra correctamente en 1920x1080.
+- `install.sh --dry-run` y `verify_install` encuentran el nuevo asset.
+
+### Dunst según posición de polybar (2026-10-25)
+
+- `dunst-position.sh` lee `~/.config/polybar/position`.
+- Con `bottom`: `origin = bottom-right`, notificación por encima de la
+  barra (offset 40 px).
+- Con `top`: `origin = top-right`, notificación por debajo de la barra.
+- Cambia automáticamente al ciclar con `Super+Alt+P` (lo llama
+  `launch.sh`).
+- `dunstctl reload` aplica el cambio sin reiniciar la sesión.
+
+### Kitty #1C1C1C (2026-10-25)
+
+- `colorshemes/monochromatic.conf` con `background #1c1c1c`.
+- Píxel comprobado en ventana real: `(28,28,28)`.
+- `kitty` arranca sin avisos de claves desconocidas.
+
+### Kitty y paleta de terminal (2026-10-25)
+
+- `kitty.conf` incluye `colorshemes/monochromatic.conf` al final.
+- Fondo de kitty `#1C1C1C`; barra y Thunar siguen en `#262626`.
+- Rampa ANSI con contraste: `ls` distingue directorios y archivos.
+- Comprobado en ventana real: fondo `(33,33,33)`.
+- `verify_install` valida `COLOR_TERM_*` y el archivo del tema.
+
+### Superficie y bordes (2026-10-25)
+
+- Kitty, Thunar, rofi, dunst, zathura y polybar usan `#262626` como
+  superficie; el wallpaper sigue negro.
+- Captura: barra A y B y ventanas con fondo `(47,47,47)`.
+- `bspc config focused_border_color` devuelve `#d9d9d9` y el borde normal
+  `#1a1a1a`; ya no queda el beige `#b9a99a` de Warm Charcoal.
+- `thunar` y una kitty nueva muestran fondo `#1a1a1a`.
+
+### Thunar minimalista y CSS GTK (2026-10-25)
+
+Probado en vivo con Thunar 4.20.2:
+
+- `~/.config/gtk-3.0/gtk.css` y `gtk-4.0/gtk.css` cargan sin errores.
+- IconView: fondo `#000000`, texto `#F2F2F2`, selección `#569CD6` con
+  texto `#000000` (comprobado con `Gtk.StyleContext`).
+- Thunar arranca sin menú, sin panel lateral y sin barra de estado:
+  `last-menubar-visible=false`, `last-statusbar-visible=false`,
+  `last-side-pane=THUNAR_SIDEPANE_TYPE_HIDDEN_SHORTCUTS`.
+- Ctrl+M recupera el menú y F9 el panel lateral (defaults de
+  `~/.config/Thunar/accels.scm`).
+- `thunar-defaults.sh` no pisa propiedades existentes.
+- `desktop-doctor` reconoce los CSS y el script.
+
+### Paleta Mono Slate (2026-10-25)
+
+Probado en vivo en ASUS FX504GE, Debian 13, 1920x1080:
+
+- `./install.sh --dry-run` muestra `Tema: mono — Mono Slate (grises + azul tenue)`.
+- Paleta exacta de referencia con acento azul `#569CD6` en lugar del rojo
+  `#D71921`; comprobado en vivo (barra A/B, rofi, dunst, kitty, zathura).
+- `./install.sh --theme warm` y `--theme nord` siguen funcionando; un tema
+  inexistente aborta con la lista de disponibles.
+- Render en home temporal: polybar A/B, kitty, rofi, dunst, bspwm,
+  zathura y wallpaper sin `@COLOR_` pendientes.
+- `lib/verify.sh` falla si se inyecta `#123456` en una config renderizada.
+- En vivo: barra A y B monocromas, workspace enfocado blanco, rofi con
+  borde azul, dunst normal/crítico con borde azul, zathura oscuro y
+  wallpaper grafito con halo tenue.
+- `desktop-doctor` reconoce `rofi/config.rasi` y `zathura/zathurarc`.
 
 ### Tema GTK e iconos (2026-10-25)
 

@@ -7,8 +7,9 @@ install_rofi() {
   section "Instalando rofi"
 
   make_user_dir "$home/.config/rofi"
-  log "Renderizando rofi powermenu desde template"
+  log "Renderizando rofi powermenu y config desde templates"
   render_rofi_template "rofi/powermenu.rasi" "$home/.config/rofi/powermenu.rasi"
+  render_rofi_template "rofi/config.rasi" "$home/.config/rofi/config.rasi"
 
   ok "rofi instalado"
 }
@@ -33,5 +34,5 @@ render_rofi_template() {
     "FONT=$DWM_FONT" \
     "FONT_SIZE=$DWM_FONT_SIZE" \
     "KEYMAP=$DWM_KEYMAP" \
-    "THEME_NAME=warm"
+    "THEME_NAME=$THEME_NAME"
 }

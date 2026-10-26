@@ -25,7 +25,7 @@ volumen y batería juntos.
 Hay una **variante B "referencia"** instalada aparte: 14 módulos (15 con
 backlight), 5 workspaces como círculos al centro; a la izquierda `date`, `day`, `updates`,
 pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
-volumen y batería. Barra transparente de 18 px, fuentes 10/13 y flechas del color del
+volumen y batería. Barra de 30 px con fondo `#262626`, fuentes 10/13 y flechas del color del
 bloque; temperatura conserva fondo en warning. Se cambia con
 `~/.config/polybar/polybar-variant referencia` o `... actual`.
 
@@ -114,7 +114,18 @@ La fase 1 termina en el escritorio. No implementar todavía:
     ve sobre fondo blanco. La notificación usa como icono
     `~/.cache/dunst/last-screenshot.png` (64 px) para mostrar el recorte.
 
-20. **No commitear sin permiso.** No ejecutar `git commit` ni `git add`
+20. **Paleta única.** Todos los colores de las configuraciones renderizadas
+    deben venir de `templates/colors/palette-<tema>.sh` mediante
+    `@COLOR_*@`. La paleta por defecto es `mono` (Mono Slate: superficie
+    `#262626`, bordes `#1A1A1A`, gris `#8C8C8C`, texto `#F2F2F2` y acento
+    azul `#569CD6`). El terminal usa `COLOR_TERM_BG` (`#1C1C1C`) y la
+    rampa `COLOR_TERM_0..15`. `warm` y `nord` siguen disponibles con
+    `--theme`. No introducir hex a mano en plantillas nuevas; las únicas
+    excepciones son `#FF00FF` (selector de scrot) y `#00000000`
+    (transparencia de la barra B). `lib/verify.sh` comprueba que no haya
+    colores fuera de la paleta activa.
+
+21. **No commitear sin permiso.** No ejecutar `git commit` ni `git add`
     definitivo sin autorización explícita del usuario.
 
 ## Estructura relevante
@@ -130,32 +141,35 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/polybar.sh` | config.ini, módulos, scripts y launch.sh |
 | `lib/dunst.sh` | dunstrc |
 | `lib/rofi.sh` | powermenu.rasi |
-| `lib/kitty.sh` | kitty.conf |
+| `lib/kitty.sh` | kitty.conf y paleta del terminal |
 | `lib/zsh.sh` | zsh, Oh My Zsh y lsd |
 | `lib/ranger.sh` | ranger, zathura, VLC y previews |
 | `lib/gpu.sh` | configuración Xorg/i915/NVIDIA por hardware |
-| `lib/gtk.sh` | tema GTK Windows-10-Dark e iconos |
+| `lib/gtk.sh` | tema GTK, CSS Mono Slate, Thunar e iconos |
+| `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
 | `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
 | `lib/verify.sh` | Verificación estática final |
-| `lib/theme.sh` | Paleta Warm Charcoal y render de plantillas |
+| `lib/theme.sh` | Paletas (Mono Slate, Warm Charcoal, Nord) y render de plantillas |
 | `lib/audio.sh` | Quirk ALC255 condicionado por DMI/códec |
 | `bin/desktop-safe` | Acciones de sesión (lock/suspend/logout/poweroff) |
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
-| `templates/bspwm/` | bspwmrc, autostart y scripts de sesión |
+| `templates/bspwm/` | bspwmrc, autostart y scripts de sesión (incl. thunar-defaults) |
 | `templates/sxhkd/` | sxhkdrc |
 | `templates/polybar/` | config.ini, modules/, scripts/ y variants/ |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
-| `templates/rofi/` | powermenu.rasi |
-| `templates/kitty/` | kitty.conf |
+| `templates/rofi/` | powermenu.rasi y config.rasi |
+| `templates/kitty/` | kitty.conf y colorshemes/ |
 | `templates/zsh/` | zshrc |
 | `templates/lsd/` | config.yml e icons.yaml |
 | `templates/ranger/` | rc.conf, rifle.conf y previews |
 | `templates/xorg/` | 20-modesetting.conf |
-| `templates/gtk/` | settings GTK2/3/4 |
+| `templates/gtk/` | settings GTK2/3/4 y CSS |
+| `templates/vlc/` | vlcrc con modo oscuro |
+| `templates/zathura/` | zathurarc con modo oscuro |
 | `templates/themes/` | Windows-10-Dark |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
-| `templates/colors/` | `palette-warm.sh`, `palette-nord.sh` y helpers |
-| `assets/wallpaper.jpg` | Wallpaper |
+| `templates/colors/` | `palette-mono.sh`, `palette-warm.sh`, `palette-nord.sh` y helpers |
+| `assets/wallpaper.png` | Wallpaper |
 
 Ya no existen `src/chadwm`, `src/eww`, `legacy/`, `lib/dwm.sh`,
 `lib/eww.sh`, `lib/ly.sh`, `templates/dwm/` ni la integración de dotfiles
@@ -194,7 +208,7 @@ desktop-doctor --camera
 - El código de fase 1b está implementado y los checks estáticos pasan.
 - La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 12 /
   B 14 módulos), dunst, lxpolkit, udiskie y xss-lock activos; `startx`
-  manual. Sin compositor; B usa pseudo-transparencia de polybar.
+  manual. Sin compositor; la barra B usa fondo sólido `#262626`.
 - Se corrigieron backups previos, ownership, `bspwmrc` 0755,
   `desktop-doctor`, batería baja y polkit.
 - Audio: watcher auriculares > HDMI > altavoces, sonido de dunst y quirk

@@ -4,7 +4,7 @@
 [global]
     width = 300
     height = (100, 100)
-    origin = top-center
+    origin = top-right
     offset = (10, 40)
     monitor = 0
     follow = mouse

@@ -14,12 +14,14 @@ install_ranger() {
 
   if dry_run; then
     log "[dry-run] instalar configs de ranger en $home/.config/ranger"
+    log "[dry-run] renderizar zathurarc en $home/.config/zathura"
     log "[dry-run] compilar zathura-pdf-mupdf ${RANGER_ZATHURA_PLUGIN_VERSION} si falta"
     log "[dry-run] verificar EPUB en zathura"
     return 0
   fi
 
   make_user_dir "$home/.config/ranger"
+  make_user_dir "$home/.config/zathura"
 
   render_theme_template "$PROJECT_ROOT/templates/ranger/rc.conf.in" \
     "$home/.config/ranger/rc.conf" 0644 "HOME=$TARGET_HOME"
@@ -27,6 +29,8 @@ install_ranger() {
     "$home/.config/ranger/rifle.conf" 0644 "HOME=$TARGET_HOME"
   render_theme_template "$PROJECT_ROOT/templates/ranger/scope.sh.in" \
     "$home/.config/ranger/scope.sh" 0755 "HOME=$TARGET_HOME"
+  render_theme_template "$PROJECT_ROOT/templates/zathura/zathurarc.in" \
+    "$home/.config/zathura/zathurarc" 0644
   render_theme_template "$PROJECT_ROOT/templates/ranger/epub-cover.sh.in" \
     "$home/.config/ranger/epub-cover.sh" 0755 "HOME=$TARGET_HOME"
 

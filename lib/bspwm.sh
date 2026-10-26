@@ -26,7 +26,7 @@ install_bspwm_scripts() {
   local home="$1"
   local battery
   battery=$(detect_battery)
-  local scripts=("bspwm_resize" "low_bat_notifier.sh" "keybindings_rofi.sh" "screenshot.sh" "screenshot_region.sh" "screenshot_full.sh" "audio-switch.sh" "audio-watch.sh")
+  local scripts=("bspwm_resize" "low_bat_notifier.sh" "keybindings_rofi.sh" "screenshot.sh" "screenshot_region.sh" "screenshot_full.sh" "audio-switch.sh" "audio-watch.sh" "thunar-defaults.sh" "dunst-position.sh")
 
   for script in "${scripts[@]}"; do
     render_theme_template "$PROJECT_ROOT/templates/bspwm/scripts/$script.in" \
@@ -102,8 +102,8 @@ render_bspwm_template() {
     "FONT=$DWM_FONT" \
     "FONT_SIZE=$DWM_FONT_SIZE" \
     "KEYMAP=$DWM_KEYMAP" \
-    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/rocky.jpg" \
-    "BAR_HEIGHT=26" \
+    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png" \
+    "BAR_HEIGHT=$BAR_HEIGHT" \
     "ETH_IFACE=$eth_iface" \
     "WLAN_IFACE=$wlan_iface" \
     "BATTERY=$battery"
@@ -124,8 +124,8 @@ render_bspwm_template_inline() {
     "FONT=$DWM_FONT" \
     "FONT_SIZE=$DWM_FONT_SIZE" \
     "KEYMAP=$DWM_KEYMAP" \
-    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/rocky.jpg" \
-    "BAR_HEIGHT=26" \
+    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png" \
+    "BAR_HEIGHT=$BAR_HEIGHT" \
     "ETH_IFACE=$eth_iface" \
     "WLAN_IFACE=$wlan_iface" \
     "BATTERY=$battery"

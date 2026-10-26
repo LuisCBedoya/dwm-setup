@@ -1,0 +1,38 @@
+# monochromatic.conf — grises de alto contraste (Mono Slate)
+# Fondo propio de la terminal, más oscuro que el resto del escritorio.
+
+background            @COLOR_TERM_BG@
+foreground            @COLOR_FG@
+cursor                @COLOR_ACCENT@
+cursor_text_color     @COLOR_TERM_BG@
+selection_background  @COLOR_BG_HOVER@
+selection_foreground  @COLOR_FG@
+url_color             @COLOR_TERM_4@
+
+# ANSI (rampa de grises)
+color0  @COLOR_TERM_0@
+color1  @COLOR_TERM_1@
+color2  @COLOR_TERM_2@
+color3  @COLOR_TERM_3@
+color4  @COLOR_TERM_4@
+color5  @COLOR_TERM_5@
+color6  @COLOR_TERM_6@
+color7  @COLOR_TERM_7@
+color8  @COLOR_TERM_8@
+color9  @COLOR_TERM_9@
+color10 @COLOR_TERM_10@
+color11 @COLOR_TERM_11@
+color12 @COLOR_TERM_12@
+color13 @COLOR_TERM_13@
+color14 @COLOR_TERM_14@
+color15 @COLOR_TERM_15@
+
+# UI de kitty
+active_tab_background   @COLOR_FG@
+active_tab_foreground   @COLOR_TERM_BG@
+inactive_tab_background @COLOR_BG_ALT@
+inactive_tab_foreground @COLOR_FG_MUTED@
+tab_bar_background      @COLOR_TERM_BG@
+active_border_color     @COLOR_ACCENT@
+inactive_border_color   @COLOR_BG_ALT@
+bell_border_color       @COLOR_TERM_3@

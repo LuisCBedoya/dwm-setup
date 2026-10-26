@@ -33,7 +33,7 @@ install_user_configs() {
 
   # Wallpaper
   run_root install -D -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" \
-    "$PROJECT_ROOT/assets/wallpaper.jpg" "$home/.local/share/wallpapers/rocky.jpg"
+    "$PROJECT_ROOT/assets/wallpaper.png" "$home/.local/share/wallpapers/wallpaper.png"
 
   # Binarios del sistema
   run_root install -D -m 0755 "$PROJECT_ROOT/bin/desktop-safe" "/usr/local/bin/desktop-safe"

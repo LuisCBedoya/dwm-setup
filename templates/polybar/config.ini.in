@@ -5,37 +5,38 @@
 include-directory = @HOME@/.config/polybar/modules
 
 [colors]
-background = #18181A
-background-alt = #202022
-foreground = #D8D3CC
-foreground-alt = #8E8A85
-primary = #B9A99A
-secondary = #8FA6B4
-alert = #C97A6D
-disabled = #5E5E62
+background = @COLOR_BG@
+background-alt = @COLOR_BG_ALT@
+foreground = @COLOR_FG@
+foreground-alt = @COLOR_FG_MUTED@
+primary = @COLOR_ACCENT@
+secondary = @COLOR_ACCENT_ALT@
+alert = @COLOR_RED@
+disabled = @COLOR_FG_DIM@
+selected = @COLOR_FG@
 
 ; Alias para módulos portados
-nord0 = #18181A
-nord1 = #202022
-nord2 = #2A2A2C
-nord3 = #35353A
-nord4 = #D8D3CC
-nord5 = #8E8A85
-nord6 = #E6E1DA
-nord7 = #8FA6B4
-nord8 = #A7BAC7
-nord9 = #B9A99A
-nord10 = #6E8494
-nord11 = #C97A6D
-nord12 = #C9B18C
-nord13 = #D6C1A0
-nord14 = #A8BFAE
-nord15 = #A99BB0
+nord0 = @COLOR_BG@
+nord1 = @COLOR_BG_ALT@
+nord2 = @COLOR_BG_ELEV@
+nord3 = @COLOR_BG_HOVER@
+nord4 = @COLOR_FG@
+nord5 = @COLOR_FG_MUTED@
+nord6 = @COLOR_ACCENT_ALT@
+nord7 = @COLOR_ACCENT@
+nord8 = @COLOR_CYAN@
+nord9 = @COLOR_ACCENT@
+nord10 = @COLOR_CYAN@
+nord11 = @COLOR_RED@
+nord12 = @COLOR_YELLOW@
+nord13 = @COLOR_ORANGE@
+nord14 = @COLOR_GREEN@
+nord15 = @COLOR_PURPLE@
 
 [bar/main]
 monitor = ${env:MONITOR:}
 width = 100%
-height = 20
+height = @BAR_HEIGHT@
 radius = 0
 bottom = ${env:POLYBAR_BOTTOM:false}
 fixed-center = true

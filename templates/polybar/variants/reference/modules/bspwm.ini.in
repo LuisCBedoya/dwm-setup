@@ -7,7 +7,7 @@ label-focused-foreground = ${colors.selected}
 label-focused-padding = 0
 
 label-occupied = "%{T4} %{O2}"
-label-occupied-foreground = #8E8A85
+label-occupied-foreground = ${colors.foreground-alt}
 label-occupied-padding = 0
 
 label-urgent = "%{T4} %{O2}"

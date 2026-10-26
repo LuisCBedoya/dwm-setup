@@ -3,12 +3,13 @@
 
 # Paletas disponibles (archivos en templates/colors/palette-<name>.sh)
 declare -A AVAILABLE_THEMES=(
-  ["warm"]="Warm Charcoal (paleta global del usuario)"
+  ["mono"]="Mono Slate (grises + azul tenue)"
+  ["warm"]="Warm Charcoal (carbón cálido + beige)"
   ["nord"]="Nord (vendorizado desde repo Bspwm)"
 )
 
 # Tema por defecto
-DEFAULT_THEME="warm"
+DEFAULT_THEME="mono"
 
 # Tema seleccionado (se establece con load_theme)
 THEME_NAME=""
@@ -110,6 +111,11 @@ render_theme_template() {
              COLOR_BORDER COLOR_ACCENT COLOR_ACCENT_ALT \
              COLOR_GREEN COLOR_YELLOW COLOR_ORANGE COLOR_RED COLOR_CYAN \
              COLOR_PURPLE COLOR_BLUE \
+             COLOR_TERM_BG COLOR_TERM_0 COLOR_TERM_1 COLOR_TERM_2 \
+             COLOR_TERM_3 COLOR_TERM_4 COLOR_TERM_5 COLOR_TERM_6 \
+             COLOR_TERM_7 COLOR_TERM_8 COLOR_TERM_9 COLOR_TERM_10 \
+             COLOR_TERM_11 COLOR_TERM_12 COLOR_TERM_13 COLOR_TERM_14 \
+             COLOR_TERM_15 \
              COLOR_BG_RGBA_92 COLOR_BG_ALT_RGBA_92 COLOR_BG_ELEV_RGBA_92 \
              COLOR_BG_ELEV_RGBA_85 COLOR_ACCENT_RGBA_30 COLOR_BORDER_RGBA_50; do
     local val

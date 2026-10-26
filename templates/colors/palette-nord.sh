@@ -44,3 +44,22 @@ export COLOR_BLUE="${NORD_FROST_9}"
 
 # Helpers RGBA (para transparencias en polybar/kitty/dunst)
 # Calculados en lib/theme.sh por export_rgba_helpers
+
+# Terminal (kitty)
+export COLOR_TERM_BG="#2e3440"
+export COLOR_TERM_0="#3b4252"
+export COLOR_TERM_8="#4c566a"
+export COLOR_TERM_1="#bf616a"
+export COLOR_TERM_9="#bf616a"
+export COLOR_TERM_2="#a3be8c"
+export COLOR_TERM_10="#a3be8c"
+export COLOR_TERM_3="#ebcb8b"
+export COLOR_TERM_11="#ebcb8b"
+export COLOR_TERM_4="#81a1c1"
+export COLOR_TERM_12="#81a1c1"
+export COLOR_TERM_5="#b48ead"
+export COLOR_TERM_13="#b48ead"
+export COLOR_TERM_6="#88c0d0"
+export COLOR_TERM_14="#88c0d0"
+export COLOR_TERM_7="#d8dee9"
+export COLOR_TERM_15="#eceff4"

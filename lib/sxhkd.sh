@@ -33,7 +33,7 @@ render_sxhkd_template() {
     "FONT=$DWM_FONT" \
     "FONT_SIZE=$DWM_FONT_SIZE" \
     "KEYMAP=$DWM_KEYMAP" \
-    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/rocky.jpg" \
+    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png" \
     "TERM=kitty" \
     "MENU=rofi -show drun" \
     "BROWSER=chromium" \

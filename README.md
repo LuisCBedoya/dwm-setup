@@ -27,7 +27,7 @@ Incluido:
   `font-0`.
 - **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**,
   **flameshot**. Shell **zsh** con Oh My Zsh/agnoster, autosuggestions y
-  **lsd**. Sin compositor; B usa pseudo-transparencia de polybar.
+  **lsd**. Sin compositor; la barra B usa fondo sólido `#262626`.
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo,
   **ueberzug** para previsualizar imágenes y carátulas. Texto, código y
   Markdown se abren con **Neovim**. Tema GTK **Windows-10-Dark** e iconos
@@ -39,9 +39,12 @@ Incluido:
 - Cámara UVC (`uvcvideo`, `v4l-utils`, `libcamera-tools` opcional).
 - Almacenamiento extraíble con `udisks2` + `udiskie`: montaje automático y
   **solo notificación**; nunca se abre una aplicación automáticamente.
-- Thunar como gestor de archivos puntual (`Super+Shift+F`).
-- Fuente JetBrainsMono Nerd Font, wallpaper y paleta **Warm Charcoal**
-  (`#18181A`, `#202022`, `#D8D3CC`, `#B9A99A`, `#8FA6B4`).
+- Thunar como gestor de archivos puntual (`Super+Shift+F`), con la paleta
+  global, sin menú, panel lateral ni barra de estado (Ctrl+M y F9 los
+  recuperan).
+- Fuente JetBrainsMono Nerd Font, wallpaper oscuro y paleta **Mono Slate**
+  (superficie `#262626`, terminal `#1C1C1C`, bordes `#1A1A1A`, texto
+  `#F2F2F2`, acento `#569CD6`).
 - Backups, logs, `--dry-run` y diagnóstico con `desktop-doctor`.
 - NVIDIA detectada e instalada de forma condicional.
 
@@ -97,6 +100,9 @@ pide `sudo -v` una vez y usa `sudo` para las operaciones de sistema.
 | `./install.sh` | Instalación guiada |
 | `./install.sh --dry-run` | Muestra el plan sin modificar nada |
 | `./install.sh --yes` | No pide confirmación; no modifica repositorios APT |
+| `./install.sh --theme mono` | Usa la paleta Mono Slate (por defecto) |
+| `./install.sh --theme warm` | Usa la paleta Warm Charcoal |
+| `./install.sh --theme nord` | Usa la paleta Nord |
 | `./install.sh --help` | Ayuda |
 | `./install.sh --version` | Versión |
 
@@ -121,7 +127,8 @@ y `--debug`.
 5. **Fuente**: descarga JetBrainsMono Nerd Font 3.5.1, verifica SHA-256 y
    ejecuta `fc-cache`. Si falla, usa JetBrains Mono o monospace y avisa.
 6. **Configuración**: renderiza bspwm, sxhkd, polybar, dunst, rofi y kitty
-   con paleta Warm Charcoal; instala `.xinitrc`, wallpaper,
+   con la paleta activa (Mono Slate por defecto), el CSS de GTK y los
+   defaults de Thunar; instala `.xinitrc`, wallpaper,
    `~/Pictures/Screenshots`, `desktop-safe` y `desktop-doctor`.
 7. **Limpieza**: retira restos de la barra anterior (`DesktopLogo`) con
    backup previo.
@@ -298,8 +305,8 @@ Hay dos barras instaladas:
   como círculos al centro; a la izquierda `date`, `day`, `updates`, pomodoro
   y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
   volumen, batería y brillo opcional.
-  Barra de 18 px con pseudo-transparencia, fuentes 10/13, iconos JBM y
-  círculos Font Awesome. Solo el centro queda transparente; los bloques
+  Barra de 30 px con fondo sólido `#262626`, fuentes 10/13, iconos JBM y
+  círculos Font Awesome. Todos los bloques comparten el mismo tono;
   laterales son oscuros y opacos.
 
 Cambiar de variante:
@@ -334,14 +341,15 @@ lib/sxhkd.sh               sxhkdrc
 lib/polybar.sh             polybar config/modules/scripts/launch
 lib/dunst.sh               dunstrc
 lib/rofi.sh                rofi powermenu
-lib/kitty.sh               kitty.conf
+lib/kitty.sh               kitty.conf y paleta del terminal
 lib/zsh.sh                 zsh, Oh My Zsh y lsd
 lib/ranger.sh              ranger, zathura y VLC
 lib/gpu.sh                 configuración Intel/NVIDIA
-lib/gtk.sh                 tema GTK Windows-10-Dark e iconos
+lib/gtk.sh                 tema GTK, CSS Mono Slate e iconos
+lib/vlc.sh                 VLC con paleta oscura
 lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/verify.sh              Verificación estática final
-lib/theme.sh               Paleta Warm Charcoal y render
+lib/theme.sh               Paletas (Mono Slate, Warm Charcoal, Nord) y render
 lib/audio.sh               Quirk ALC255 condicionado por hardware
 bin/desktop-safe           Acciones de sesión
 bin/desktop-doctor         Diagnóstico y cámara (POSIX sh)
@@ -349,18 +357,20 @@ templates/bspwm/           bspwmrc.in, autostart.in, scripts/
 templates/sxhkd/           sxhkdrc.in
 templates/polybar/         config.ini.in, modules/, scripts/ y variants/
 templates/dunst/           dunstrc.in, notification-sound.sh.in
-templates/rofi/            powermenu.rasi.in
-templates/kitty/           kitty.conf.in
+templates/rofi/            powermenu.rasi.in y config.rasi.in
+templates/kitty/           kitty.conf.in y colorshemes/
 templates/zsh/             zshrc.in
 templates/lsd/             config.yml e icons.yaml
 templates/ranger/          rc.conf, rifle.conf y previews
 templates/xorg/            configuración Xorg por hardware
-templates/gtk/             settings GTK2/3/4
+templates/gtk/             settings GTK2/3/4 y CSS
+templates/vlc/             vlcrc con modo oscuro
+templates/zathura/         zathurarc.in (modo oscuro)
 templates/themes/          Windows-10-Dark
 templates/modprobe/        i915.conf y nvidia.conf
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
-templates/colors/          palette-warm.sh y palette-nord.sh
-assets/wallpaper.jpg       Wallpaper
+templates/colors/          palette-mono.sh, palette-warm.sh y palette-nord.sh
+assets/wallpaper.png       Wallpaper
 docs/                      Hardware y testing
 ```
 

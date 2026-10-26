@@ -8,7 +8,7 @@ install_gtk_theme() {
 
   if dry_run; then
     log "[dry-run] copiar Windows-10-Dark a $home/.themes/Windows-10-Dark"
-    log "[dry-run] instalar settings GTK2/3/4 con Papirus"
+    log "[dry-run] instalar settings GTK2/3/4 con Papirus y CSS Mono Slate"
     return 0
   fi
 
@@ -26,6 +26,10 @@ install_gtk_theme() {
     "$home/.config/gtk-4.0/settings.ini" 0644
   render_theme_template "$PROJECT_ROOT/templates/gtk/gtkrc-2.0.in" \
     "$home/.gtkrc-2.0" 0644
+  render_theme_template "$PROJECT_ROOT/templates/gtk/gtk-3.0.css.in" \
+    "$home/.config/gtk-3.0/gtk.css" 0644
+  render_theme_template "$PROJECT_ROOT/templates/gtk/gtk-4.0.css.in" \
+    "$home/.config/gtk-4.0/gtk.css" 0644
 
   ok "Tema GTK y Papirus instalados"
 }

@@ -1,0 +1,122 @@
+/* Mono Slate — override para apps GTK4 */
+
+@define-color theme_bg_color                  @COLOR_BG_ALT@;
+@define-color theme_base_color                @COLOR_BG@;
+@define-color theme_fg_color                  @COLOR_FG@;
+@define-color theme_text_color                @COLOR_FG@;
+@define-color theme_selected_bg_color         @COLOR_ACCENT@;
+@define-color theme_selected_fg_color         @COLOR_BG@;
+@define-color theme_unfocused_bg_color        @COLOR_BG_ALT@;
+@define-color theme_unfocused_base_color      @COLOR_BG@;
+@define-color theme_unfocused_fg_color        @COLOR_FG@;
+@define-color theme_unfocused_text_color      @COLOR_FG@;
+@define-color insensitive_bg_color            @COLOR_BG_ALT@;
+@define-color insensitive_fg_color            @COLOR_FG_DIM@;
+@define-color borders                         @COLOR_BORDER@;
+@define-color content_view_bg                 @COLOR_BG@;
+@define-color text_view_bg                    @COLOR_BG@;
+@define-color popover_bg_color                @COLOR_BG_ALT@;
+@define-color popover_fg_color                @COLOR_FG@;
+@define-color tooltip_bg_color                @COLOR_BG_ELEV@;
+@define-color tooltip_fg_color                @COLOR_FG@;
+
+window,
+.background {
+	background-color: @COLOR_BG_ALT@;
+	color: @COLOR_FG@;
+}
+
+viewport,
+.viewport,
+scrolledwindow,
+scrolledwindow > viewport {
+	background-color: @COLOR_BG@;
+	border: none;
+	box-shadow: none;
+}
+
+.view,
+iconview.view,
+treeview.view {
+	background-color: @COLOR_BG@;
+	color: @COLOR_FG@;
+}
+
+.view:selected,
+iconview.view:selected,
+treeview.view:selected {
+	background-color: @COLOR_ACCENT@;
+	color: @COLOR_BG@;
+}
+
+headerbar,
+.titlebar {
+	background-color: @COLOR_BG_ALT@;
+	color: @COLOR_FG@;
+	border-bottom: 1px solid @COLOR_BORDER@;
+	box-shadow: none;
+}
+
+.sidebar {
+	background-color: @COLOR_BG_ALT@;
+	border-right: 1px solid @COLOR_BORDER@;
+}
+
+separator {
+	background-color: @COLOR_BORDER@;
+	min-width: 1px;
+	min-height: 1px;
+}
+
+entry {
+	background-color: @COLOR_BG@;
+	color: @COLOR_FG@;
+	border: 1px solid @COLOR_BORDER@;
+	box-shadow: none;
+}
+
+entry:focus {
+	border-color: @COLOR_ACCENT@;
+}
+
+button {
+	background-image: none;
+	background-color: @COLOR_BG_ALT@;
+	color: @COLOR_FG@;
+	border: 1px solid @COLOR_BORDER@;
+	box-shadow: none;
+}
+
+button:hover {
+	background-color: @COLOR_BG_HOVER@;
+}
+
+button:active,
+button:checked {
+	background-color: @COLOR_ACCENT@;
+	color: @COLOR_BG@;
+}
+
+popover,
+popover.menu {
+	background-color: @COLOR_BG_ALT@;
+	color: @COLOR_FG@;
+	border: 1px solid @COLOR_BORDER@;
+}
+
+scrollbar slider {
+	background-color: @COLOR_BG_HOVER@;
+	border: none;
+	min-width: 6px;
+	min-height: 6px;
+}
+
+scrollbar slider:hover {
+	background-color: @COLOR_FG_DIM@;
+}
+
+tooltip {
+	background-color: @COLOR_BG_ELEV@;
+	color: @COLOR_FG@;
+	border: 1px solid @COLOR_BORDER@;
+}

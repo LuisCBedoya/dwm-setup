@@ -13,10 +13,10 @@ notify() {
 
 menu() {
   prompt=$1
-  if command -v dmenu >/dev/null 2>&1; then
-    dmenu -i -p "$prompt"
-  elif command -v rofi >/dev/null 2>&1; then
+  if command -v rofi >/dev/null 2>&1; then
     rofi -dmenu -i -p "$prompt"
+  elif command -v dmenu >/dev/null 2>&1; then
+    dmenu -i -p "$prompt"
   else
     notify -u critical "Servicios" "Falta dmenu o rofi"
     return 1

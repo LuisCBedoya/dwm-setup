@@ -257,12 +257,15 @@ backup_existing_configs() {
   backup_user_path "$home/.zshrc"
   backup_user_path "$home/.config/lsd"
   backup_user_path "$home/.config/ranger"
+  backup_user_path "$home/.config/zathura"
   backup_user_path "$home/.themes/Windows-10-Dark"
+  backup_user_path "$home/.config/vlc"
   backup_user_path "$home/.config/gtk-3.0"
   backup_user_path "$home/.config/gtk-4.0"
   backup_user_path "$home/.gtkrc-2.0"
   backup_user_path "$home/.xinitrc"
   backup_user_path "$home/.local/share/wallpapers/rocky.jpg"
+  backup_user_path "$home/.local/share/wallpapers/wallpaper.png"
 }
 
 # Corrige homes que quedaron con ~/.config, ~/.local o ~/.config-backup
@@ -324,7 +327,9 @@ chown_managed_paths() {
     "$TARGET_HOME/.config/kitty" \
     "$TARGET_HOME/.config/lsd" \
     "$TARGET_HOME/.config/ranger" \
+    "$TARGET_HOME/.config/zathura" \
     "$TARGET_HOME/.themes/Windows-10-Dark" \
+    "$TARGET_HOME/.config/vlc" \
     "$TARGET_HOME/.config/gtk-3.0" \
     "$TARGET_HOME/.config/gtk-4.0" \
     "$TARGET_HOME/.gtkrc-2.0" \

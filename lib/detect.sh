@@ -302,6 +302,9 @@ print_detection() {
   log "Audio ALSA:    $([[ $HAS_AUDIO -eq 1 ]] && echo sí || echo no)"
   log "Raíz:          $ROOT_FSTYPE"
   log "Usuario:       $TARGET_USER ($TARGET_HOME)"
+  if [[ -n "${THEME_NAME:-}" ]]; then
+    log "Tema:          $THEME_NAME — ${AVAILABLE_THEMES[$THEME_NAME]:-}"
+  fi
 }
 
 detect_all() {

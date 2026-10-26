@@ -56,25 +56,41 @@ print_header "Archivos de configuración"
 check_file "$CONFIG/bspwm/bspwmrc"
 check_exec "$CONFIG/bspwm/bspwmrc"
 check_file "$CONFIG/bspwm/scripts/autostart"
+check_file "$CONFIG/bspwm/scripts/thunar-defaults.sh"
+check_file "$CONFIG/bspwm/scripts/dunst-position.sh"
 check_file "$CONFIG/sxhkd/sxhkdrc"
 check_file "$CONFIG/polybar/config.ini"
 check_file "$CONFIG/polybar/launch.sh"
 check_file "$CONFIG/dunst/dunstrc"
 check_file "$CONFIG/rofi/powermenu.rasi"
+check_file "$CONFIG/rofi/config.rasi"
 check_file "$CONFIG/kitty/kitty.conf"
+check_file "$CONFIG/kitty/colorshemes/monochromatic.conf"
 check_file "$HOME/.zshrc"
 check_file "$CONFIG/lsd/config.yml"
 check_file "$CONFIG/lsd/icons.yaml"
 check_file "$CONFIG/ranger/rc.conf"
 check_file "$CONFIG/ranger/rifle.conf"
 check_file "$CONFIG/ranger/scope.sh"
+check_file "$CONFIG/zathura/zathurarc"
 check_file "$HOME/.themes/Windows-10-Dark/index.theme"
 check_file "$CONFIG/gtk-3.0/settings.ini"
+check_file "$CONFIG/vlc/vlcrc"
+check_file "$CONFIG/gtk-3.0/gtk.css"
 check_file "$CONFIG/gtk-4.0/settings.ini"
+check_file "$CONFIG/gtk-4.0/gtk.css"
 check_file "$HOME/.gtkrc-2.0"
 check_file "$HOME/.xinitrc"
 check_file "$HOME/.local/share/wallpapers/rocky.jpg"
 check_dir "$HOME/Pictures/Screenshots"
+
+if [ -f "$CONFIG/vlc/vlcrc" ]; then
+  if grep -qx 'qt-dark-palette=1' "$CONFIG/vlc/vlcrc" 2>/dev/null; then
+    printf '  [OK] VLC: paleta oscura activa\n'
+  else
+    printf '  [MAL] VLC: paleta oscura desactivada (falta qt-dark-palette=1)\n'
+  fi
+fi
 
 # ─── Servicios ───
 print_header "Servicios systemd"

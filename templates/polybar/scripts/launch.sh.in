@@ -34,13 +34,17 @@ if command -v bspc >/dev/null 2>&1; then
   case "$position" in
     bottom)
       bspc config top_padding 0 || true
-      bspc config bottom_padding 26 || true
+      bspc config bottom_padding @BAR_HEIGHT@ || true
       ;;
     *)
-      bspc config top_padding 26 || true
+      bspc config top_padding @BAR_HEIGHT@ || true
       bspc config bottom_padding 0 || true
       ;;
   esac
+fi
+
+if [ -x "$HOME/.config/bspwm/scripts/dunst-position.sh" ]; then
+  "$HOME/.config/bspwm/scripts/dunst-position.sh" 2>/dev/null || true
 fi
 
 case "$variant" in

@@ -7,8 +7,11 @@ install_kitty() {
   section "Instalando kitty"
 
   make_user_dir "$home/.config/kitty"
-  log "Renderizando kitty.conf desde template"
+  make_user_dir "$home/.config/kitty/colorshemes"
+  log "Renderizando kitty.conf y su paleta desde templates"
   render_kitty_template "kitty/kitty.conf" "$home/.config/kitty/kitty.conf"
+  render_kitty_template "kitty/colorshemes/monochromatic.conf" \
+    "$home/.config/kitty/colorshemes/monochromatic.conf"
 
   ok "kitty instalado"
 }
@@ -33,5 +36,5 @@ render_kitty_template() {
     "FONT=$DWM_FONT" \
     "FONT_SIZE=$DWM_FONT_SIZE" \
     "KEYMAP=$DWM_KEYMAP" \
-    "THEME_NAME=warm"
+    "THEME_NAME=$THEME_NAME"
 }

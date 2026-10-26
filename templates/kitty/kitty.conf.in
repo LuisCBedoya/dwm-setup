@@ -1,5 +1,5 @@
 # kitty.conf — generado desde template
-# Paleta: Nord
+# Paleta: @THEME_NAME@
 
 font_family      @FONT@
 bold_font        auto
@@ -11,74 +11,18 @@ font_size        13
 window_padding_width    10
 window_margin_width     5
 window_border_width     1
-window_min_width        10
-window_min_height       10
 hide_window_decorations no
-decorations             full
 
 # Tabs
 tab_bar_style           powerline
 tab_bar_edge            bottom
 tab_bar_min_tabs        1
-tab_bar_margin          0
 tab_powerline_style     slanted
 tab_activity_symbol     ●
-tab_inactive_text_alpha 0.5
 
-# Colorscheme Nord
-# Polar Night
-background              #18181a
+# Colorscheme Mono Slate
 background_opacity      1.0
 dynamic_background_opacity no
-foreground              #d8d3cc
-selection_background    #2a2a2c
-selection_foreground    #d8d3cc
-
-# Cursor
-cursor                  #b9a99a
-cursor_text_color       #18181a
-
-# URL
-url_color               #8fa6b4
-
-# Tabs
-active_tab_background   #b9a99a
-active_tab_foreground   #18181a
-inactive_tab_background #202022
-inactive_tab_foreground #8e8a85
-tab_bar_background      #18181a
-
-# Border
-window_border_color     #3a3a3e
-active_border_color     #b9a99a
-inactive_border_color   #202022
-bell_border_color       #c9b18c
-
-# ANSI colors (Nord)
-# Black
-color0  #18181a
-color8  #8e8a85
-# Red
-color1  #c97a6d
-color9  #c97a6d
-# Green
-color2  #a8bfae
-color10 #a8bfae
-# Yellow
-color3  #c9b18c
-color11 #c9b18c
-# Blue
-color4  #8fa6b4
-color12 #8fa6b4
-# Magenta
-color5  #a99bb0
-color13 #a99bb0
-# Cyan
-color6  #8fa6b4
-color14 #8fa6b4
-# White
-color7  #d8d3cc
-color15 #d8d3cc
 
 # Scrollback
 scrollback_lines        10000
@@ -108,3 +52,6 @@ wayland_titlebar_color system
 repaint_delay         10
 input_delay           3
 sync_to_monitor       yes
+
+# Paleta del terminal (al final para que no la sobrescriba nada)
+include @HOME@/.config/kitty/colorshemes/monochromatic.conf

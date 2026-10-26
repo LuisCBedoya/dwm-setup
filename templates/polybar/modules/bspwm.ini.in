@@ -3,8 +3,8 @@
 type = internal/bspwm
 
 label-focused = %name%
-label-focused-background = #E6E1DA
-label-focused-foreground = #18181A
+label-focused-background = ${colors.selected}
+label-focused-foreground = ${colors.background}
 label-focused-padding = 1
 label-focused-font = 1
 

@@ -1,0 +1,28 @@
+#!/bin/sh
+# thunar-defaults — valores iniciales de Thunar (solo si no existen)
+# No pisa cambios posteriores del usuario.
+set -u
+
+command -v xfconf-query >/dev/null 2>&1 || exit 0
+
+set_default() {
+  channel="$1"
+  prop="$2"
+  type="$3"
+  value="$4"
+
+  if xfconf-query -c "$channel" -p "$prop" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  xfconf-query -c "$channel" -p "$prop" -n -t "$type" -s "$value" \
+    >/dev/null 2>&1 || true
+}
+
+# Menú: Ctrl+M · Panel lateral: F9 · Barra de estado: menú Ver
+set_default thunar /last-menubar-visible   bool false
+set_default thunar /last-statusbar-visible bool false
+set_default thunar /last-side-pane         string THUNAR_SIDEPANE_TYPE_HIDDEN_SHORTCUTS
+set_default thunar /last-show-hidden       bool false
+
+exit 0

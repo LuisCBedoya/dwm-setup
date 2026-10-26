@@ -75,6 +75,12 @@ servicios: `redshift`, `ssh`, `bluez`, `playerctl`, `acpi`,
 mantienen. Solo se sincronizaron formatos seguros de los scripts de red y
 volumen.
 
+## VLC oscuro (2026-10-25)
+
+Se activó `qt-dark-palette=1` en el `vlcrc` vivo y se añadió el módulo
+`lib/vlc.sh` con su plantilla `templates/vlc/vlcrc.in`. Probado en vivo:
+VLC arranca con la interfaz en negro.
+
 ## Tema GTK e iconos (2026-10-25)
 
 Se vendorizó Windows-10-Dark en el repo y se añadió la instalación de
@@ -249,11 +255,153 @@ Variante B compacta, ajustada manualmente por el usuario:
 - Polybar carga 14 módulos sin errores; captura `bar-variant-b.png`.
 - La variante A no se toca.
 
+## Borde 1, gap 0 y wallpaper Nothing (2026-10-25)
+
+- `border_width` 2 → 1 y `window_gap` 4 → 0 en
+  `templates/bspwm/bspwmrc.in`, a partir de los ajustes manuales del
+  usuario.
+- Nuevo wallpaper por defecto:
+  `Descargas/Nothing2/contents/images/2337x1080.png` → vendorizado como
+  `assets/wallpaper.png` (PNG original, 732 KB).
+- Instalado en `~/.local/share/wallpapers/wallpaper.png`; todas las
+  referencias actualizadas (`config.sh`, `common.sh`, `verify.sh`,
+  `polybar.sh`, `sxhkd.sh`, `bspwm.sh`, `install.sh`).
+- Eliminado `assets/wallpaper.jpg`.
+- Aplicado en vivo con `xwallpaper --zoom`; captura
+  `wall-nothing2.png`.
+
+## Dunst según la posición de polybar (2026-10-25)
+
+- Nuevo `templates/bspwm/scripts/dunst-position.sh.in`.
+- Barra arriba → `origin = top-right`; barra abajo → `bottom-right`.
+- Se ejecuta antes de `dunst &` en autostart y desde `launch.sh`, así
+  cambia solo al usar `Super+Alt+P`.
+- `dunstrc` pasa de `top-center` a `top-right` como valor base.
+- Probado en vivo: notificación abajo con barra inferior y arriba con
+  barra superior. Capturas `dunst-bottom-crop3.png` y `dunst-top.png`.
+
+## Kitty #1C1C1C (2026-10-25)
+
+- `COLOR_TERM_BG` pasa de `#212121` a `#1C1C1C`; solo afecta a kitty.
+- Comprobado en ventana real: fondo `(28,28,28)`.
+- Se eliminaron claves de kitty ignoradas (`window_min_width`,
+  `window_min_height`, `decorations`, `tab_bar_margin`,
+  `tab_inactive_text_alpha`) para dejar el log limpio.
+
+## Kitty y paleta de terminal (2026-10-25)
+
+- `COLOR_TERM_BG=#1C1C1C` solo para kitty; el escritorio sigue en
+  `#262626`.
+- Nueva paleta `templates/kitty/colorshemes/monochromatic.conf.in` con
+  rampa de grises de alto contraste (`#6e6e6e` … `#ffffff`).
+- `include` movido al final de `kitty.conf` para que no lo sobrescriban
+  las líneas de la plantilla.
+- `render_theme_template` sustituye también `COLOR_TERM_*`.
+- Añadidas `COLOR_TERM_*` a las paletas mono, warm y nord.
+- Captura `kitty-palette-win.png`: `ls` distingue directorios, archivos e
+  imágenes.
+
+## Superficie #262626 (2026-10-25)
+
+- `COLOR_BG` y `COLOR_BG_ALT` pasan de `#2A2A2A` a `#262626`.
+- Elevado/hover siguen en `#3A3A3A`; bordes en `#1A1A1A`.
+- Barra y Thunar comprobados en `(38,38,38)`.
+- Captura `surface-26.png`.
+
+## Superficie #2A2A2A (2026-10-25)
+
+- `COLOR_BG` y `COLOR_BG_ALT` pasan de `#2F2F2F` a `#2A2A2A`.
+- `COLOR_BG_ELEV`/`COLOR_BG_HOVER` siguen en `#3A3A3A`; bordes `#1A1A1A`.
+- Comprobado con captura de la ventana de Thunar: fondo `(42,42,42)`.
+- Barra, kitty, rofi, dunst y zathura renderizados con `#2A2A2A`.
+- Captura `surface-2a.png`.
+
+## Superficie #2F2F2F (2026-10-25)
+
+- `COLOR_BG` y `COLOR_BG_ALT` pasan de `#1A1A1A` a `#2F2F2F`.
+- `COLOR_BG_ELEV` y `COLOR_BG_HOVER` a `#3A3A3A`; `COLOR_BORDER` a `#1A1A1A`.
+- `normal_border_color` usa `@COLOR_BORDER@` para no desaparecer sobre la
+  nueva superficie; `active_border_color` usa `@COLOR_BG_ELEV@`.
+- Wallpaper sin cambios (negro).
+- Píxel comprobado en barra, Thunar y kitty: `(47,47,47)`.
+- Captura `surface-2f.png`.
+
+## Borde enfocado gris claro (2026-10-25)
+
+- `focused_border_color` pasa de azul `#569CD6` a `#D9D9D9`
+  (`COLOR_ACCENT_ALT`).
+- `normal_border_color` se queda en `#1A1A1A`; `active` en `#2A2A2A`.
+- Aplicado en vivo y en la plantilla `templates/bspwm/bspwmrc.in`.
+- El azul queda solo para cursor de kitty, borde de rofi y dunst.
+- Captura `border-gray.png`.
+
+## Gaps 4, barra 30 y rofi en menús (2026-10-25)
+
+- `window_gap` 10 → 4 en `templates/bspwm/bspwmrc.in` y en vivo.
+- `BAR_HEIGHT=30` como constante única en `install.sh`; se pasa a polybar
+  A/B (`height`), a `bspwmrc` (padding) y a `launch.sh` (padding).
+- La barra ya no vuelve a 20/18 al reinstalar ni al cambiar de variante.
+- `network-menu.sh` y `services.sh` prefieren rofi; dmenu solo si falta.
+- Probado: menú WiFi sale con rofi y la barra mide 30 px.
+- Capturas `gaps-bar30.png` y `net-rofi2.png`.
+
+## Superficie #1A1A1A y bordes corregidos (2026-10-25)
+
+- `COLOR_BG` y `COLOR_BG_ALT` pasan a `#1A1A1A`; `COLOR_BG_ELEV` y
+  `COLOR_BG_HOVER` a `#2A2A2A`. El wallpaper sigue negro.
+- La barra B deja de ser transparente (`#00000000`) y usa `#1A1A1A`.
+- Se aplicó `bspwmrc` en vivo: el borde enfocado estaba en `#b9a99a`
+  (Warm Charcoal) porque bspwm no recarga el archivo solo.
+  Ahora: foco `#569CD6`, normal `#1A1A1A`, activo `#2A2A2A`.
+- Capturas `surface-desktop.png`, `surface-bar-a.png` y
+  `surface-bar-b.png`.
+
+## Thunar minimalista y CSS GTK (2026-10-25)
+
+- `templates/gtk/gtk-3.0.css.in` y `gtk-4.0.css.in` con la paleta Mono
+  Slate: fondo negro, texto `#F2F2F2`, selección `#569CD6` y bordes
+  `#2A2A2A`.
+- Toolbar compacta, filas juntas, sin sombras ni degradados, esquinas
+  rectas.
+- `templates/bspwm/scripts/thunar-defaults.sh.in`: oculta menú, panel
+  lateral y barra de estado solo si las propiedades de xfconf no existen.
+- `last-side-pane=THUNAR_SIDEPANE_TYPE_HIDDEN_SHORTCUTS`; Ctrl+M recupera
+  el menú y F9 el panel lateral.
+- Aplicado en vivo con Thunar 4.20.2; captura `thunar-min3.png`.
+- `lib/verify.sh` incluye los CSS en el chequeo de colores y
+  `desktop-doctor` comprueba los ficheros.
+
+## Paleta global Mono Slate (2026-10-25)
+
+Se sustituyó la paleta por defecto por una monocromática con azul tenue:
+
+- `templates/colors/palette-mono.sh`; `DEFAULT_THEME="mono"`.
+  Valores exactos: `#000000` fondo, `#0E0E0E` superficie, `#1A1A1A` tile,
+  `#2A2A2A` línea, `#4A4A4A` mute, `#8C8C8C` gris, `#F2F2F2` texto y
+  acento azul `#569CD6` (sustituye al rojo `#D71921` de la referencia).
+- Polybar A y B, módulos `bspwm`/`fs`, kitty, rofi (`powermenu.rasi` y
+  `config.rasi`), dunst, bspwm, i3lock y zathura renderizados desde
+  `@COLOR_*@`.
+- `--theme mono|warm|nord` en `install.sh`; se eliminaron los
+  `THEME_NAME=warm` fijos de `lib/{polybar,dunst,kitty,rofi}.sh`.
+- `templates/rofi/config.rasi.in` incorpora el menú de aplicaciones al
+  repo (antes solo existía en el home).
+- `templates/zathura/zathurarc.in` con fondo oscuro y `recolor` para las
+  páginas.
+- `assets/wallpaper.jpg` regenerado: 2560x1440 grafito con halo azul tenue
+  y viñeta (JPEG q92, ~80 KB).
+- `lib/verify.sh` comprueba que ninguna config renderizada tenga colores
+  fuera de la paleta activa.
+- Aplicado en vivo con `install_bspwm`, `install_dunst`, `install_rofi`,
+  `install_kitty` e `install_polybar`; capturas `mono-*.png`.
+- La variante B se dejó en `referencia` arriba.
+
 ## Paleta global Warm Charcoal (2026-10-25)
 
 Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
 
-- `palette-warm.sh` como tema por defecto; `load_theme warm`.
+- `palette-warm.sh` fue el tema por defecto hasta la llegada de
+  `palette-mono.sh`; sigue disponible con `--theme warm`.
 - Polybar A y B con colores nuevos (A mantiene su layout).
 - Kitty, rofi, dunst, bspwm, i3lock y scripts de sesión renderizados con
   la nueva paleta.

@@ -20,6 +20,9 @@ mkdir -p "$HOME/Pictures/Screenshots" 2>/dev/null || true
 @HOME@/.config/polybar/launch.sh &
 
 # --- Notificaciones ---
+if [ -x "$HOME/.config/bspwm/scripts/dunst-position.sh" ]; then
+  "$HOME/.config/bspwm/scripts/dunst-position.sh" 2>/dev/null || true
+fi
 dunst &
 
 # --- Wallpaper ---
@@ -51,6 +54,11 @@ setxkbmap @KEYMAP@ 2>/dev/null || true
 if command -v gsettings >/dev/null 2>&1; then
   gsettings set org.gnome.desktop.interface gtk-theme 'Windows-10-Dark' 2>/dev/null || true
   gsettings set org.gnome.desktop.interface icon-theme 'Papirus' 2>/dev/null || true
+fi
+
+# --- Thunar: menú, panel lateral y barra de estado ocultos ---
+if [ -x "$HOME/.config/bspwm/scripts/thunar-defaults.sh" ]; then
+  "$HOME/.config/bspwm/scripts/thunar-defaults.sh" 2>/dev/null || true
 fi
 
 # --- Cursor ---

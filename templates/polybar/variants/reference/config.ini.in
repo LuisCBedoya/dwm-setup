@@ -4,21 +4,21 @@
 include-directory = @HOME@/.config/polybar/variants/reference/modules
 
 [colors]
-background = #00000000
-module-bg = #1F1F21
-foreground = #D8D3CC
-foreground-alt = #8E8A85
-primary = #B9A99A
-secondary = #8FA6B4
-alert = #C97A6D
-disabled = #5E5E62
-selected = #E6E1DA
-empty = #6B6B70
+background = @COLOR_BG@
+module-bg = @COLOR_BG_ALT@
+foreground = @COLOR_FG@
+foreground-alt = @COLOR_FG_MUTED@
+primary = @COLOR_ACCENT@
+secondary = @COLOR_ACCENT_ALT@
+alert = @COLOR_RED@
+disabled = @COLOR_FG_DIM@
+selected = @COLOR_FG@
+empty = @COLOR_FG_DIM@
 
 [bar/main]
 monitor = ${env:MONITOR:}
 width = 100%
-height = 18
+height = @BAR_HEIGHT@
 radius = 0
 bottom = ${env:POLYBAR_BOTTOM:false}
 fixed-center = true

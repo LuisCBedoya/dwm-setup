@@ -1,0 +1,26 @@
+# zathurarc — Mono Slate
+# Fondo oscuro y acento azul tenue, en línea con la paleta global.
+
+set default-bg                "@COLOR_BG@"
+set default-fg                "@COLOR_FG@"
+set statusbar-bg              "@COLOR_BG_ALT@"
+set statusbar-fg              "@COLOR_FG_MUTED@"
+set inputbar-bg               "@COLOR_BG_ELEV@"
+set inputbar-fg               "@COLOR_FG@"
+set highlight-color           "@COLOR_ACCENT@"
+set highlight-active-color    "@COLOR_RED@"
+set completion-bg             "@COLOR_BG_ALT@"
+set completion-fg             "@COLOR_FG@"
+set completion-highlight-bg   "@COLOR_ACCENT@"
+set completion-highlight-fg   "@COLOR_BG@"
+set notification-bg           "@COLOR_BG_ALT@"
+set notification-fg           "@COLOR_FG@"
+set notification-error-bg     "@COLOR_BG_ALT@"
+set notification-error-fg     "@COLOR_RED@"
+set notification-warning-bg   "@COLOR_BG_ALT@"
+set notification-warning-fg   "@COLOR_YELLOW@"
+
+# Invertir las páginas del documento para modo oscuro
+set recolor                  true
+set recolor-darkness         0.82
+set recolor-keystroke        0

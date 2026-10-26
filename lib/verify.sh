@@ -90,7 +90,9 @@ verify_install() {
     "$home/.config/polybar/variants/reference/modules/updates.ini" \
     "$home/.config/dunst/dunstrc" \
     "$home/.config/rofi/powermenu.rasi" \
+    "$home/.config/rofi/config.rasi" \
     "$home/.config/kitty/kitty.conf" \
+    "$home/.config/kitty/colorshemes/monochromatic.conf" \
     "$home/.zshrc" \
     "$home/.config/lsd/config.yml" \
     "$home/.config/lsd/icons.yaml" \
@@ -98,16 +100,21 @@ verify_install() {
     "$home/.config/ranger/rifle.conf" \
     "$home/.config/ranger/scope.sh" \
     "$home/.config/ranger/epub-cover.sh" \
+    "$home/.config/bspwm/scripts/dunst-position.sh" \
+    "$home/.config/zathura/zathurarc" \
     "$home/.themes/Windows-10-Dark/index.theme" \
     "$home/.config/gtk-3.0/settings.ini" \
+    "$home/.config/gtk-3.0/gtk.css" \
+    "$home/.config/gtk-4.0/gtk.css" \
     "$home/.config/gtk-4.0/settings.ini" \
     "$home/.gtkrc-2.0" \
+    "$home/.config/vlc/vlcrc" \
     "$home/.oh-my-zsh/oh-my-zsh.sh" \
     "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
     "$home/.config/dunst/scripts/notification-sound.sh" \
     "/usr/share/icons/Papirus/index.theme" \
     "$home/.xinitrc" \
-    "$home/.local/share/wallpapers/rocky.jpg" \
+    "$home/.local/share/wallpapers/wallpaper.png" \
     "$home/.local/share/xorg" \
     "$home/Pictures/Screenshots" \
     "/usr/local/bin/desktop-safe" \
@@ -118,6 +125,59 @@ verify_install() {
       error "Falta el archivo requerido: $path"
       failures=$((failures + 1))
     fi
+  done
+
+  # Todos los colores renderizados deben salir de la paleta activa.
+  local -a palette_hex=()
+  local color_var
+  for color_var in COLOR_BG COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
+                   COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM COLOR_BORDER \
+                   COLOR_ACCENT COLOR_ACCENT_ALT COLOR_GREEN COLOR_YELLOW \
+                   COLOR_ORANGE COLOR_RED COLOR_CYAN COLOR_PURPLE COLOR_BLUE \
+                   COLOR_TERM_BG COLOR_TERM_0 COLOR_TERM_1 COLOR_TERM_2 \
+                   COLOR_TERM_3 COLOR_TERM_4 COLOR_TERM_5 COLOR_TERM_6 \
+                   COLOR_TERM_7 COLOR_TERM_8 COLOR_TERM_9 COLOR_TERM_10 \
+                   COLOR_TERM_11 COLOR_TERM_12 COLOR_TERM_13 COLOR_TERM_14 \
+                   COLOR_TERM_15; do
+    palette_hex+=("$(theme_var "$color_var" | tr 'A-F' 'a-f')")
+  done
+
+  local -a themed_files=(
+    "$home/.config/polybar/config.ini"
+    "$home/.config/polybar/variants/reference/config.ini"
+    "$home/.config/kitty/kitty.conf"
+    "$home/.config/kitty/colorshemes/monochromatic.conf"
+    "$home/.config/dunst/dunstrc"
+    "$home/.config/rofi/config.rasi"
+    "$home/.config/rofi/powermenu.rasi"
+    "$home/.config/bspwm/bspwmrc"
+    "$home/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh" \
+    "$home/.config/gtk-3.0/gtk.css" \
+    "$home/.config/gtk-4.0/gtk.css"
+    "$home/.config/zathura/zathurarc"
+  )
+
+  local themed_file raw_hex hex known known_hex
+  for themed_file in "${themed_files[@]}"; do
+    [[ -f "$themed_file" ]] || continue
+    while IFS= read -r raw_hex; do
+      [[ -n "$raw_hex" ]] || continue
+      hex=$(printf '%s' "$raw_hex" | tr 'A-F' 'a-f')
+      case "$hex" in
+        '#ff00ff'|'#00000000') continue ;;
+      esac
+      known=0
+      for known_hex in "${palette_hex[@]}"; do
+        if [[ "$hex" == "$known_hex" ]]; then
+          known=1
+          break
+        fi
+      done
+      if (( known == 0 )); then
+        error "Color fuera de la paleta ($THEME_NAME) en $themed_file: $raw_hex"
+        failures=$((failures + 1))
+      fi
+    done < <(grep -oE '#[0-9A-Fa-f]{6,8}' "$themed_file" 2>/dev/null || true)
   done
 
   # bspwm solo ejecuta bspwmrc si es ejecutable.
@@ -166,6 +226,14 @@ verify_install() {
   if [[ -f "$home/.config/dunst/scripts/notification-sound.sh" && ! -x "$home/.config/dunst/scripts/notification-sound.sh" ]]; then
     error "Script no ejecutable: $home/.config/dunst/scripts/notification-sound.sh"
     failures=$((failures + 1))
+  fi
+
+  # VLC debe arrancar con la paleta oscura.
+  if [[ -f "$home/.config/vlc/vlcrc" ]]; then
+    if ! grep -qx 'qt-dark-palette=1' "$home/.config/vlc/vlcrc"; then
+      error "VLC no tiene activada la paleta oscura (qt-dark-palette=1)"
+      failures=$((failures + 1))
+    fi
   fi
 
   if [[ "${HEADSET_QUIRK_INSTALLED:-0}" -eq 1 ]]; then

@@ -46,8 +46,9 @@ render_polybar_templates() {
     "FONT=$DWM_FONT"
     "FONT_SIZE=$DWM_FONT_SIZE"
     "KEYMAP=$DWM_KEYMAP"
-    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/rocky.jpg"
-    "THEME_NAME=warm"
+    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png"
+    "THEME_NAME=$THEME_NAME"
+    "BAR_HEIGHT=$BAR_HEIGHT"
     "ETH_IFACE=$eth_iface"
     "WLAN_IFACE=$wlan_iface"
     "BATTERY=$battery"
@@ -150,6 +151,7 @@ render_launch_script() {
   content=$(cat "$template")
 
   content="${content//@HOME@/$TARGET_HOME}"
+  content="${content//@BAR_HEIGHT@/$BAR_HEIGHT}"
 
   run_root install -D -m 0755 -o "$TARGET_USER" -g "$TARGET_GROUP" \
     /dev/stdin "$launch" <<<"$content"

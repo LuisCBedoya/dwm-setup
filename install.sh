@@ -17,6 +17,10 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 PROJECT_ROOT="$SCRIPT_DIR"
 export PROJECT_ROOT
 
+# Altura de la barra polybar (px). Se usa también como padding de bspwm.
+BAR_HEIGHT="${BAR_HEIGHT:-30}"
+export BAR_HEIGHT
+
 # shellcheck source=lib/common.sh
 source "$PROJECT_ROOT/lib/common.sh"
 # shellcheck source=lib/detect.sh
@@ -41,6 +45,8 @@ source "$PROJECT_ROOT/lib/zsh.sh"
 source "$PROJECT_ROOT/lib/ranger.sh"
 # shellcheck source=lib/gtk.sh
 source "$PROJECT_ROOT/lib/gtk.sh"
+# shellcheck source=lib/vlc.sh
+source "$PROJECT_ROOT/lib/vlc.sh"
 # shellcheck source=lib/config.sh
 source "$PROJECT_ROOT/lib/config.sh"
 # shellcheck source=lib/verify.sh
@@ -72,8 +78,9 @@ Opciones avanzadas (automatización; normalmente no necesarias):
   --cuda, --no-cuda,
   --headset-quirk, --no-headset-quirk, --intel-glitch,
   --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
+  --theme mono|warm|nord
 
-Tema: Nord (vendorizado desde tu repo Bspwm)
+Tema por defecto: mono (Mono Slate, grises + azul tenue).
 
 Sesión: startx manual desde TTY (no se instala display manager).
 Fases futuras (IDE, navegadores, música) no se instalan desde aquí.
@@ -102,6 +109,11 @@ parse_args() {
       --headset-quirk) HEADSET_QUIRK_MODE="yes" ;;
       --no-headset-quirk) HEADSET_QUIRK_MODE="no" ;;
       --intel-glitch) INTEL_GLITCH=1 ;;
+      --theme)
+        [[ $# -ge 2 ]] || die "--theme requiere un valor (mono, warm, nord)"
+        THEME="$2"; shift
+        ;;
+      --theme=*) THEME="${1#*=}" ;;
       --keymap)
         [[ $# -ge 2 ]] || die "--keymap requiere un valor"
         DWM_KEYMAP="$2"; shift
@@ -144,6 +156,9 @@ validate_options() {
     [[ "$TARGET_HOME" == /* ]] || die "--home debe ser una ruta absoluta: $TARGET_HOME"
     [[ "$TARGET_HOME" != "/" ]] || die "--home no puede ser /"
   fi
+  if [[ -n "${THEME:-}" && -z "${AVAILABLE_THEMES[$THEME]:-}" ]]; then
+    die "Tema desconocido: $THEME (disponibles: ${!AVAILABLE_THEMES[*]})"
+  fi
 }
 
 check_project_layout() {
@@ -161,6 +176,8 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/zsh.sh"
     "$PROJECT_ROOT/lib/ranger.sh"
     "$PROJECT_ROOT/lib/gtk.sh"
+    "$PROJECT_ROOT/lib/vlc.sh"
+    "$PROJECT_ROOT/templates/colors/palette-mono.sh"
     "$PROJECT_ROOT/lib/config.sh"
     "$PROJECT_ROOT/lib/verify.sh"
     "$PROJECT_ROOT/lib/theme.sh"
@@ -181,6 +198,8 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/bspwm/scripts/screenshot_full.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/audio-switch.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/audio-watch.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/thunar-defaults.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/dunst-position.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
     "$PROJECT_ROOT/templates/sxhkd/sxhkdrc.in"
     "$PROJECT_ROOT/templates/polybar/config.ini.in"
@@ -234,7 +253,9 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/dunst/dunstrc.in"
     "$PROJECT_ROOT/templates/dunst/notification-sound.sh.in"
     "$PROJECT_ROOT/templates/rofi/powermenu.rasi.in"
+    "$PROJECT_ROOT/templates/rofi/config.rasi.in"
     "$PROJECT_ROOT/templates/kitty/kitty.conf.in"
+    "$PROJECT_ROOT/templates/kitty/colorshemes/monochromatic.conf.in"
     "$PROJECT_ROOT/templates/zsh/zshrc.in"
     "$PROJECT_ROOT/templates/lsd/config.yml"
     "$PROJECT_ROOT/templates/lsd/icons.yaml"
@@ -242,15 +263,19 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/ranger/rifle.conf.in"
     "$PROJECT_ROOT/templates/ranger/scope.sh.in"
     "$PROJECT_ROOT/templates/ranger/epub-cover.sh.in"
+    "$PROJECT_ROOT/templates/zathura/zathurarc.in"
     "$PROJECT_ROOT/templates/gtk/gtk-3.0.settings.ini.in"
     "$PROJECT_ROOT/templates/gtk/gtk-4.0.settings.ini.in"
     "$PROJECT_ROOT/templates/gtk/gtkrc-2.0.in"
+    "$PROJECT_ROOT/templates/gtk/gtk-3.0.css.in"
+    "$PROJECT_ROOT/templates/gtk/gtk-4.0.css.in"
     "$PROJECT_ROOT/templates/themes/Windows-10-Dark/index.theme"
+    "$PROJECT_ROOT/templates/vlc/vlcrc.in"
     "$PROJECT_ROOT/templates/modprobe/alsa-fx504.conf"
     "$PROJECT_ROOT/templates/xorg/20-modesetting.conf.in"
     "$PROJECT_ROOT/templates/modprobe/i915.conf"
     "$PROJECT_ROOT/templates/modprobe/nvidia.conf"
-    "$PROJECT_ROOT/assets/wallpaper.jpg"
+    "$PROJECT_ROOT/assets/wallpaper.png"
   )
   for path in "${required[@]}"; do
     [[ -e "$path" ]] || die "Falta un archivo del proyecto: $path"
@@ -342,11 +367,11 @@ main() {
     init_logging
   fi
 
+  # Cargar la paleta seleccionada (mono por defecto) antes de mostrar el plan.
+  load_theme "${THEME:-$DEFAULT_THEME}"
+
   show_banner
   print_detection
-
-  # Cargar paleta Nord
-  load_theme "warm"
 
   # Los backups deben existir ANTES de cualquier escritura de configuración.
   local backup_ts
@@ -381,6 +406,7 @@ main() {
   install_rofi
   install_kitty
   install_gtk_theme
+  install_vlc_config
   install_zsh
   install_ranger
   install_user_configs

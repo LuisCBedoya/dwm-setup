@@ -1,0 +1,30 @@
+#!/bin/sh
+# dunst-position.sh — coloca dunst según la posición de polybar.
+# Barra arriba: top-right · Barra abajo: bottom-right
+set -u
+
+DUNST_CONFIG="$HOME/.config/dunst/dunstrc"
+POSITION_FILE="$HOME/.config/polybar/position"
+
+[ -r "$DUNST_CONFIG" ] || exit 0
+
+position=top
+if [ -r "$POSITION_FILE" ]; then
+  position=$(cat "$POSITION_FILE" 2>/dev/null || printf 'top')
+fi
+
+case "$position" in
+  bottom) origin=bottom-right ;;
+  *) origin=top-right ;;
+esac
+
+current=$(sed -n 's/^[[:space:]]*origin[[:space:]]*=[[:space:]]*//p' "$DUNST_CONFIG" | head -1)
+[ "$current" = "$origin" ] && exit 0
+
+sed -i "s|^[[:space:]]*origin[[:space:]]*=.*|    origin = $origin|" "$DUNST_CONFIG"
+
+if command -v dunstctl >/dev/null 2>&1; then
+  dunstctl reload >/dev/null 2>&1 || true
+fi
+
+exit 0
