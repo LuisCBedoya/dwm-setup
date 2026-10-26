@@ -45,7 +45,7 @@ font-3 = "@FONT@:size=13;3"
 font-4 = "Font Awesome 6 Free:style=Solid:pixelsize=9;3"
 font-5 = "@FONT@:size=52;0"
 
-modules-center =  bspwm
+modules-center = bspwm monocle
 modules-left = date day updates polypomo der 
 modules-right = izq services temp memory cpu network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@
 

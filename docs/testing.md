@@ -150,6 +150,13 @@ Comprobado:
 - `services.sh` también prefiere rofi; dmenu queda como respaldo.
 - Capturas: `gaps-bar30.png`, `net-rofi2.png`.
 
+### Contador en monocle (2026-10-25)
+
+- En tiled: `monocle-count.sh --check` → rc=1 y el módulo no se ve.
+- En monocle con 1 ventana: `[1]`; con 2: `[2]`.
+- Se actualiza en 1 s al abrir/cerrar ventanas.
+- Visible en la barra A (izquierda) y B (centro).
+
 ### Wallpaper alternativo (2026-10-25)
 
 - `wallpaper.sh primary` aplica Nothing2 y guarda `primary`.

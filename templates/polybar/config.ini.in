@@ -63,7 +63,7 @@ font-3 = "@FONT@:size=13;3"
 font-4 = "@FONT@:size=11;5"
 font-5 = "Noto Color Emoji:scale=9:antialias=false;3"
 
-modules-left = logo bspwm
+modules-left = logo bspwm monocle
 modules-right = updates services polypomo temp memory cpu network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ date
 
 cursor-click = pointer

@@ -255,6 +255,16 @@ Variante B compacta, ajustada manualmente por el usuario:
 - Polybar carga 14 módulos sin errores; captura `bar-variant-b.png`.
 - La variante A no se toca.
 
+## Contador de ventanas en monocle (2026-10-25)
+
+- Nuevo `monocle-count.sh`: imprime `[N]` con las ventanas del escritorio
+  y `--check` devuelve 0 solo si el layout es monocle.
+- Módulo `custom/script` `monocle` con `exec-if`, `interval = 1`.
+- Añadido a la izquierda en la barra A y al centro en la B.
+- En tiled el módulo desaparece; en monocle muestra `[1]`, `[2]`, etc.
+- Probado en vivo con 1 y 2 ventanas; capturas `monocle-bar-crop.png`,
+  `monocle-bar2-crop.png` y `tiled-bar-crop.png`.
+
 ## Wallpaper alternativo Nothing1 (2026-10-25)
 
 - `Descargas/Nothing1/contents/images/5521x2487.png` optimizado a

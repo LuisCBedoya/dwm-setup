@@ -301,11 +301,13 @@ Hay dos barras instaladas:
 
 - **actual**: la barra compacta de 12 módulos (13 con backlight): logo,
   workspaces 1-5, updates, servicios, pomodoro, temperatura, RAM, CPU,
-  red, volumen, batería, fecha y brillo opcional.
+  red, volumen, batería, fecha y brillo opcional. En monocle añade un
+  contador `[N]` junto a los workspaces.
 - **referencia**: variante de 14 módulos (15 con backlight). Workspaces
   como círculos al centro; a la izquierda `date`, `day`, `updates`, pomodoro
   y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
-  volumen, batería y brillo opcional.
+  volumen, batería y brillo opcional. En monocle, `[N]` junto a los
+  círculos de workspaces.
   Barra de 30 px con fondo sólido `#262626`, fuentes 10/13, iconos JBM y
   círculos Font Awesome. Todos los bloques comparten el mismo tono;
   laterales son oscuros y opacos.

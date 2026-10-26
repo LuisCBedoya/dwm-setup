@@ -2000,3 +2000,22 @@ estilo, y quiere poder alternarlo sin editar archivos.
 - Se puede cambiar de wallpaper sin terminal ni editar rutas.
 - La elección sobrevive a reinicios de sesión.
 - Instalaciones limpias incluyen ambas imágenes.
+
+## ADR-086 — Contador de ventanas en monocle
+
+**Contexto:** en monocle todas las ventanas se apilan y no hay forma de
+saber cuántas hay en el escritorio. El usuario quiere un `[N]` en la
+barra solo mientras esté en monocle.
+
+**Decisión:**
+1. `monocle-count.sh` imprime `[N]` con `bspc query -N -d focused -n
+   .window.!hidden | wc -l`.
+2. `--check` devuelve 0 solo si `layout == monocle`, para usarlo como
+   `exec-if` del módulo.
+3. Módulo `custom/script` con `interval = 1`.
+4. Se coloca junto a los workspaces: izquierda en A, centro en B.
+
+**Consecuencias:**
+- El contador solo aparece en monocle.
+- Se actualiza en un segundo al abrir o cerrar ventanas.
+- No requiere `jq` ni dependencias extra.

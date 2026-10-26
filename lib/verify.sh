@@ -63,6 +63,9 @@ verify_install() {
     "$home/.config/polybar/scripts/network-menu.sh" \
     "$home/.config/polybar/scripts/services.sh" \
     "$home/.config/polybar/scripts/volume.sh" \
+    "$home/.config/polybar/scripts/monocle-count.sh" \
+    "$home/.config/polybar/modules/monocle.ini" \
+    "$home/.config/polybar/variants/reference/modules/monocle.ini" \
     "$home/.config/polybar/polybar-variant" \
     "$home/.config/polybar/variants/reference/config.ini" \
     "$home/.config/polybar/variants/reference/scripts/network-status.sh" \

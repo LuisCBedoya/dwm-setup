@@ -65,6 +65,7 @@ render_polybar_templates() {
   local modules=(
     "modules/logo.ini"
     "modules/bspwm.ini"
+    "modules/monocle.ini"
     "modules/updates.ini"
     "modules/polypomo.ini"
     "modules/temp.ini"
@@ -84,7 +85,7 @@ render_polybar_templates() {
       "$home/.config/polybar/$m" 0644 "${common_vars[@]}"
   done
 
-  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/network-menu.sh" "scripts/services.sh" "scripts/volume.sh")
+  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/network-menu.sh" "scripts/services.sh" "scripts/volume.sh" "scripts/monocle-count.sh")
   local s
   for s in "${scripts[@]}"; do
     render_theme_template "$PROJECT_ROOT/templates/polybar/$s.in" \
@@ -107,6 +108,7 @@ render_polybar_templates() {
     "modules/izq.ini"
     "modules/polypomo.ini"
     "modules/bspwm.ini"
+    "modules/monocle.ini"
     "modules/battery.ini"
     "modules/temp.ini"
     "modules/pipewire.ini"

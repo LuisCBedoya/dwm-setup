@@ -1,0 +1,19 @@
+#!/bin/sh
+# monocle-count.sh — número de ventanas del escritorio en modo monocle.
+# Uso:
+#   monocle-count.sh           imprime [N]
+#   monocle-count.sh --check   exit 0 solo si el layout es monocle
+set -u
+
+layout=$(bspc query -T -d focused 2>/dev/null \
+  | sed -n 's/.*"layout":"\([^"]*\)".*/\1/p' | head -1)
+
+if [ "${1:-}" = "--check" ]; then
+  [ "$layout" = "monocle" ]
+  exit $?
+fi
+
+[ "$layout" = "monocle" ] || exit 0
+
+count=$(bspc query -N -d focused -n .window.!hidden 2>/dev/null | wc -l)
+printf '[%s]' "$count"

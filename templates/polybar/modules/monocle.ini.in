@@ -1,0 +1,10 @@
+; monocle — [N] ventanas del escritorio cuando está en monocle
+[module/monocle]
+type = custom/script
+exec = @HOME@/.config/polybar/scripts/monocle-count.sh
+exec-if = @HOME@/.config/polybar/scripts/monocle-count.sh --check
+interval = 1
+label = %output%
+format = <label>
+format-foreground = ${colors.foreground-alt}
+format-padding = 0
