@@ -43,10 +43,12 @@ STORAGE_PKGS=(
 # bspwm + sxhkd + polybar + resto del escritorio
 DESKTOP_PKGS=(
   bspwm sxhkd polybar
-  dunst rofi dmenu feh kitty flameshot i3lock xss-lock
+  dunst rofi dmenu feh kitty flameshot neovim i3lock xss-lock
   brightnessctl xclip thunar
   xwallpaper playerctl
   zsh zsh-autosuggestions lsd
+  ranger zathura zathura-pdf-poppler zathura-cb zathura-djvu zathura-ps
+  vlc ueberzug poppler-utils libmupdf-dev zathura-dev meson ninja-build
   bluez redshift
   scrot imagemagick
   lm-sensors upower acpi
@@ -57,7 +59,7 @@ NETWORK_PKGS=(network-manager network-manager-gnome dbus-user-session dbus-x11)
 FONT_PKGS=(
   fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji
   fonts-noto-cjk
-  adwaita-icon-theme hicolor-icon-theme desktop-file-utils shared-mime-info
+  adwaita-icon-theme hicolor-icon-theme papirus-icon-theme librsvg2-common desktop-file-utils shared-mime-info
   xdg-utils xdg-user-dirs
 )
 
@@ -676,11 +678,12 @@ install_packages() {
   fi
   local required_pkgs=(
     bspwm sxhkd polybar kitty dunst rofi feh xwallpaper
-    udiskie brightnessctl xclip thunar playerctl flameshot i3lock xss-lock
-    zsh zsh-autosuggestions lsd
+    udiskie brightnessctl xclip thunar playerctl flameshot neovim i3lock xss-lock
+    zsh zsh-autosuggestions lsd ranger zathura zathura-pdf-poppler zathura-cb zathura-djvu zathura-ps
+    vlc ueberzug poppler-utils libmupdf-dev zathura-dev meson ninja-build
     libnotify-bin gir1.2-notify-0.7 lm-sensors upower acpi
     fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji fonts-noto-cjk
-    adwaita-icon-theme hicolor-icon-theme desktop-file-utils shared-mime-info
+    adwaita-icon-theme hicolor-icon-theme papirus-icon-theme librsvg2-common desktop-file-utils shared-mime-info
     xdg-utils xdg-user-dirs network-manager network-manager-gnome dbus-user-session dbus-x11
     pipewire pipewire-pulse wireplumber alsa-utils pavucontrol pulseaudio-utils pamixer
     sound-theme-freedesktop

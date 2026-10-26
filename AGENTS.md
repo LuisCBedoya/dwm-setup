@@ -8,6 +8,7 @@ proyecto. Leer primero `README.md`, `PROGRESS.md` y `DECISIONS.md`.
 Instalador reproducible de un escritorio mínimo para **Debian 13 (trixie)**
 con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 **polybar**, **dunst**, **rofi**, **kitty**, **flameshot**, **zsh/Oh My Zsh**, **lsd**,
+**ranger**, **zathura**, **VLC**,
 **i3lock/xss-lock**, PipeWire, cámara UVC y almacenamiento extraíble con
 notificación.
 
@@ -30,11 +31,12 @@ bloque; temperatura conserva fondo en warning. Se cambia con
 
 La fase 1 termina en el escritorio. No implementar todavía:
 
-- Neovim/IDE, VS Code, Node/nvm.
+- VS Code y Node/nvm. Neovim sí se usa para editar archivos.
 - Firefox, Brave/Chromium u otros navegadores.
 - Correo, Teams.
-- Reproductores de música, mpv, cava o widgets de música.
-- Bluetooth, zathura, htop, lsd, ripgrep, nvitop/nvtop.
+- Reproductores de música, mpv, cava o widgets de música. VLC sí se usa
+  para abrir vídeos.
+- Bluetooth, htop, ripgrep, nvitop/nvtop.
 - XFCE, LightDM, Thunar como entorno completo (Thunar sí se instala como
   gestor de archivos puntual).
 
@@ -130,6 +132,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/rofi.sh` | powermenu.rasi |
 | `lib/kitty.sh` | kitty.conf |
 | `lib/zsh.sh` | zsh, Oh My Zsh y lsd |
+| `lib/ranger.sh` | ranger, zathura, VLC y previews |
+| `lib/gpu.sh` | configuración Xorg/i915/NVIDIA por hardware |
+| `lib/gtk.sh` | tema GTK Windows-10-Dark e iconos |
 | `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paleta Warm Charcoal y render de plantillas |
@@ -144,7 +149,11 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/kitty/` | kitty.conf |
 | `templates/zsh/` | zshrc |
 | `templates/lsd/` | config.yml e icons.yaml |
-| `templates/modprobe/` | alsa-fx504.conf (quirk ALC255) |
+| `templates/ranger/` | rc.conf, rifle.conf y previews |
+| `templates/xorg/` | 20-modesetting.conf |
+| `templates/gtk/` | settings GTK2/3/4 |
+| `templates/themes/` | Windows-10-Dark |
+| `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
 | `templates/colors/` | `palette-warm.sh`, `palette-nord.sh` y helpers |
 | `assets/wallpaper.jpg` | Wallpaper |
 

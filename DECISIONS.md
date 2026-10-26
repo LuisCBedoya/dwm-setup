@@ -1594,3 +1594,109 @@ sus iconos personalizados.
 - Una instalación limpia reproduce el entorno zsh/lsd actual.
 - Oh My Zsh requiere red la primera vez.
 - No se sobrescribe `~/.oh-my-zsh` si ya existe.
+
+## ADR-065 — Ranger, zathura, VLC y EPUB nativo
+
+**Contexto:** El usuario quiere usar ranger desde la terminal para abrir
+documentos, EPUB, vídeos e imágenes, con zathura para EPUB.
+
+**Decisión:**
+1. Instalar `ranger`, `zathura`, plugins PDF/DjVu/PS/CB, `vlc`, `ueberzug` y
+   `poppler-utils`.
+2. Compilar `zathura-pdf-mupdf` 0.4.6 contra `libmupdf-dev` 1.25.1 de Debian.
+3. No instalar `apvlv`; EPUB se resuelve con zathura + mupdf.
+4. Configurar rifle para zathura, VLC y feh.
+5. Añadir previews de PDF/vídeo/EPUB e imágenes con ueberzug, `pdftoppm`,
+   `ffmpegthumbnailer` y extracción de portada EPUB.
+6. No cambiar el atajo de Thunar; ranger se abre escribiendo `ranger`.
+
+**Consecuencias:**
+- Una instalación limpia necesita compilar el plugin de zathura.
+- Si la compilación falla, el instalador se detiene y no instala un visor
+  alternativo.
+
+## ADR-066 — Abrir texto y código con Neovim desde ranger
+
+**Contexto:** El usuario quiere editar desde ranger los archivos de texto,
+código y Markdown con Neovim.
+
+**Decisión:**
+1. Añadir `neovim` a los paquetes del instalador.
+2. Añadir reglas prioritarias en `rifle.conf`:
+   - `mime ^text` → `nvim`.
+   - Extensiones de código/Markdown → `nvim`.
+3. Mantener ranger abierto desde la terminal, sin cambiar el atajo de Thunar.
+
+**Consecuencias:**
+- Los archivos de texto y código se abren editables.
+- El resto de formatos sigue usando zathura, VLC o feh.
+
+## ADR-067 — Perfil gráfico Intel/NVIDIA por hardware
+
+**Contexto:** El usuario quiere que el instalador elija la configuración
+Intel adecuada y, opcionalmente, pruebe parámetros de `i915` para glitches.
+
+**Decisión:**
+1. Detectar Intel/NVIDIA y las salidas conectadas con `lib/detect.sh` y
+   `/sys/class/drm`.
+2. Con Intel, escribir `/etc/X11/xorg.conf.d/20-modesetting.conf`:
+   modesetting, glamor, DRI3 y PageFlip.
+3. No usar el driver antiguo `intel` ni `20-nvidia.conf` como GPU primaria
+   en un híbrido.
+4. Con NVIDIA, escribir solo `nvidia_drm.modeset=1` para PRIME/offload.
+5. Añadir `--intel-glitch` para escribir `i915 enable_fbc=0` y, si hay eDP,
+   `enable_psr=0`; después ejecutar `update-initramfs -u`.
+6. Backup de las configuraciones del sistema antes de escribir.
+
+**Consecuencias:**
+- La configuración por defecto es conservadora.
+- La prueba de FBC/PSR es explícita y requiere reinicio.
+- No se copian los archivos de Artix ni se hardcodea el BusID.
+
+## ADR-068 — Papirus como tema de iconos
+
+**Contexto:** Papirus estaba copiado en `/usr/share/icons`, pero GSettings y
+rofi/dunst seguían usando Adwaita o un tema inexistente.
+
+**Decisión:**
+1. Añadir `papirus-icon-theme` a las fuentes/iconos del instalador.
+2. Usar `Papirus` en GSettings, GTK3, GTK4, GTK2, rofi y dunst.
+3. Corregir el `icon_path` de dunst para que no apunte a Adwaita.
+4. Mantener `icon_theme` coherente en rofi y dunst.
+
+**Consecuencias:**
+- Los iconos se ven iguales en GTK, rofi y dunst.
+- Las apps abiertas antes del cambio deben reiniciarse.
+
+## ADR-069 — Cargador SVG para Papirus
+
+**Contexto:** Papirus estaba seleccionado, pero GTK caía a Adwaita/iconos
+internos porque los iconos de Papirus son SVG y faltaba el cargador
+`librsvg2-common`.
+
+**Decisión:**
+1. Añadir `librsvg2-common` a los paquetes de fuentes/iconos.
+2. Mantener `Papirus` como tema de iconos en GTK, rofi y dunst.
+3. Regenerar la caché de iconos si es necesario.
+
+**Consecuencias:**
+- GTK puede renderizar los SVG de Papirus.
+- No se necesita convertir los iconos a PNG.
+
+## ADR-070 — Tema GTK e iconos en la instalación
+
+**Contexto:** El usuario quiere que una instalación limpia tenga el tema
+`Windows-10-Dark` y los iconos `Papirus`, sin depender de su home actual.
+
+**Decisión:**
+1. Vendorizar `Windows-10-Dark` en `templates/themes/`.
+2. Instalarlo en `~/.themes/Windows-10-Dark`.
+3. Instalar settings GTK2/3/4 con tema Windows-10-Dark e iconos Papirus.
+4. Aplicar también `gsettings` desde el autostart de la sesión.
+5. Instalar `papirus-icon-theme` y `librsvg2-common` desde APT.
+6. Mantener las plantillas de rofi y dunst con Papirus.
+
+**Consecuencias:**
+- El repo crece unos 3 MB por el tema.
+- Los iconos Papirus no se vendorizan; vienen de Debian.
+- Las apps que usan GSettings y las que leen settings.ini quedan alineadas.

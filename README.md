@@ -28,6 +28,10 @@ Incluido:
 - **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**,
   **flameshot**. Shell **zsh** con Oh My Zsh/agnoster, autosuggestions y
   **lsd**. Sin compositor; B usa pseudo-transparencia de polybar.
+- **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo,
+  **ueberzug** para previsualizar imágenes y carátulas. Texto, código y
+  Markdown se abren con **Neovim**. Tema GTK **Windows-10-Dark** e iconos
+  **Papirus**.
 - Bloqueo con **i3lock** + **xss-lock**.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
 - PipeWire + WirePlumber + ALSA + pavucontrol.
@@ -44,7 +48,7 @@ Incluido:
 No incluido todavía:
 
 - Neovim/IDE, VS Code, Firefox/Brave/Chromium, correo, Teams, música.
-- Bluetooth, zathura, htop, lsd, ripgrep, nvitop/nvtop, Node/nvm.
+- Bluetooth, htop, ripgrep, nvitop/nvtop, Node/nvm.
 - XFCE, LightDM o un entorno de escritorio completo.
 - Repositorio de dotfiles externo: las plantillas de este repo son la
   fuente de verdad.
@@ -332,6 +336,9 @@ lib/dunst.sh               dunstrc
 lib/rofi.sh                rofi powermenu
 lib/kitty.sh               kitty.conf
 lib/zsh.sh                 zsh, Oh My Zsh y lsd
+lib/ranger.sh              ranger, zathura y VLC
+lib/gpu.sh                 configuración Intel/NVIDIA
+lib/gtk.sh                 tema GTK Windows-10-Dark e iconos
 lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/verify.sh              Verificación estática final
 lib/theme.sh               Paleta Warm Charcoal y render
@@ -346,6 +353,11 @@ templates/rofi/            powermenu.rasi.in
 templates/kitty/           kitty.conf.in
 templates/zsh/             zshrc.in
 templates/lsd/             config.yml e icons.yaml
+templates/ranger/          rc.conf, rifle.conf y previews
+templates/xorg/            configuración Xorg por hardware
+templates/gtk/             settings GTK2/3/4
+templates/themes/          Windows-10-Dark
+templates/modprobe/        i915.conf y nvidia.conf
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
 templates/colors/          palette-warm.sh y palette-nord.sh
 assets/wallpaper.jpg       Wallpaper

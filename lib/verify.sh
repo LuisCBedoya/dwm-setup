@@ -8,8 +8,8 @@ verify_install() {
   local path module line
 
   for cmd in bspwm sxhkd polybar dunst rofi feh kitty flameshot i3lock xss-lock \
-    brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl \
-    zsh lsd; do
+    brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl nvim \
+    zsh lsd ranger zathura vlc ueberzug; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
@@ -94,9 +94,18 @@ verify_install() {
     "$home/.zshrc" \
     "$home/.config/lsd/config.yml" \
     "$home/.config/lsd/icons.yaml" \
+    "$home/.config/ranger/rc.conf" \
+    "$home/.config/ranger/rifle.conf" \
+    "$home/.config/ranger/scope.sh" \
+    "$home/.config/ranger/epub-cover.sh" \
+    "$home/.themes/Windows-10-Dark/index.theme" \
+    "$home/.config/gtk-3.0/settings.ini" \
+    "$home/.config/gtk-4.0/settings.ini" \
+    "$home/.gtkrc-2.0" \
     "$home/.oh-my-zsh/oh-my-zsh.sh" \
     "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
     "$home/.config/dunst/scripts/notification-sound.sh" \
+    "/usr/share/icons/Papirus/index.theme" \
     "$home/.xinitrc" \
     "$home/.local/share/wallpapers/rocky.jpg" \
     "$home/.local/share/xorg" \

@@ -37,6 +37,10 @@ source "$PROJECT_ROOT/lib/rofi.sh"
 source "$PROJECT_ROOT/lib/kitty.sh"
 # shellcheck source=lib/zsh.sh
 source "$PROJECT_ROOT/lib/zsh.sh"
+# shellcheck source=lib/ranger.sh
+source "$PROJECT_ROOT/lib/ranger.sh"
+# shellcheck source=lib/gtk.sh
+source "$PROJECT_ROOT/lib/gtk.sh"
 # shellcheck source=lib/config.sh
 source "$PROJECT_ROOT/lib/config.sh"
 # shellcheck source=lib/verify.sh
@@ -45,6 +49,8 @@ source "$PROJECT_ROOT/lib/verify.sh"
 source "$PROJECT_ROOT/lib/theme.sh"
 # shellcheck source=lib/audio.sh
 source "$PROJECT_ROOT/lib/audio.sh"
+# shellcheck source=lib/gpu.sh
+source "$PROJECT_ROOT/lib/gpu.sh"
 
 usage() {
   cat <<'EOF'
@@ -64,7 +70,7 @@ hacer si faltan componentes APT.
 Opciones avanzadas (automatización; normalmente no necesarias):
   --user USUARIO, --home RUTA, --nvidia, --no-nvidia,
   --cuda, --no-cuda,
-  --headset-quirk, --no-headset-quirk,
+  --headset-quirk, --no-headset-quirk, --intel-glitch,
   --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
 
 Tema: Nord (vendorizado desde tu repo Bspwm)
@@ -95,6 +101,7 @@ parse_args() {
       --no-cuda) INSTALL_CUDA="no" ;;
       --headset-quirk) HEADSET_QUIRK_MODE="yes" ;;
       --no-headset-quirk) HEADSET_QUIRK_MODE="no" ;;
+      --intel-glitch) INTEL_GLITCH=1 ;;
       --keymap)
         [[ $# -ge 2 ]] || die "--keymap requiere un valor"
         DWM_KEYMAP="$2"; shift
@@ -152,10 +159,13 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/rofi.sh"
     "$PROJECT_ROOT/lib/kitty.sh"
     "$PROJECT_ROOT/lib/zsh.sh"
+    "$PROJECT_ROOT/lib/ranger.sh"
+    "$PROJECT_ROOT/lib/gtk.sh"
     "$PROJECT_ROOT/lib/config.sh"
     "$PROJECT_ROOT/lib/verify.sh"
     "$PROJECT_ROOT/lib/theme.sh"
     "$PROJECT_ROOT/lib/audio.sh"
+    "$PROJECT_ROOT/lib/gpu.sh"
     "$PROJECT_ROOT/bin/desktop-safe"
     "$PROJECT_ROOT/bin/desktop-doctor"
     "$PROJECT_ROOT/templates/colors/base.sh"
@@ -228,7 +238,18 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/zsh/zshrc.in"
     "$PROJECT_ROOT/templates/lsd/config.yml"
     "$PROJECT_ROOT/templates/lsd/icons.yaml"
+    "$PROJECT_ROOT/templates/ranger/rc.conf.in"
+    "$PROJECT_ROOT/templates/ranger/rifle.conf.in"
+    "$PROJECT_ROOT/templates/ranger/scope.sh.in"
+    "$PROJECT_ROOT/templates/ranger/epub-cover.sh.in"
+    "$PROJECT_ROOT/templates/gtk/gtk-3.0.settings.ini.in"
+    "$PROJECT_ROOT/templates/gtk/gtk-4.0.settings.ini.in"
+    "$PROJECT_ROOT/templates/gtk/gtkrc-2.0.in"
+    "$PROJECT_ROOT/templates/themes/Windows-10-Dark/index.theme"
     "$PROJECT_ROOT/templates/modprobe/alsa-fx504.conf"
+    "$PROJECT_ROOT/templates/xorg/20-modesetting.conf.in"
+    "$PROJECT_ROOT/templates/modprobe/i915.conf"
+    "$PROJECT_ROOT/templates/modprobe/nvidia.conf"
     "$PROJECT_ROOT/assets/wallpaper.jpg"
   )
   for path in "${required[@]}"; do
@@ -351,6 +372,7 @@ main() {
   fi
 
   install_packages
+  install_gpu_configs
   install_headset_quirk
   install_bspwm
   install_sxhkd
@@ -358,7 +380,9 @@ main() {
   install_dunst
   install_rofi
   install_kitty
+  install_gtk_theme
   install_zsh
+  install_ranger
   install_user_configs
 
   if ! dry_run; then

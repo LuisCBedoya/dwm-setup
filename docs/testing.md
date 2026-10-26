@@ -69,7 +69,7 @@ grep -n 'icon-theme\|icon_theme' ~/.config/rofi/powermenu.rasi ~/.config/dunst/d
 ```
 
 Resultado esperado: sin placeholders, sin ficheros de root, 12 módulos en A
-y 14 en B, sin picom, iconos Adwaita.
+y 14 en B, sin picom, iconos Papirus.
 
 ## 4. Validación en vivo (2026-10-24)
 
@@ -121,6 +121,45 @@ Comprobado:
   `rofi -show drun`.
 - `polybar-variant cycle` probado: A arriba → A abajo → B arriba →
   B abajo; sxhkd recargado con el binding `Super+Alt+p`.
+
+### Neovim desde ranger (2026-10-25)
+
+- `mime ^text` y las extensiones de código/Markdown se abren con `nvim`.
+- `rifle -l archivo.md` muestra `nvim -- "$@"`.
+- El resto de formatos sigue con zathura, VLC o feh.
+
+### Tema GTK e iconos (2026-10-25)
+
+- `Windows-10-Dark` se instala en `~/.themes`.
+- GTK2/3/4 usan Windows-10-Dark y Papirus.
+- `gsettings` aplica el tema y los iconos al iniciar sesión.
+- `papirus-icon-theme` y `librsvg2-common` vienen de APT.
+- Si falta `librsvg2-common`, GTK no renderiza los SVG de Papirus.
+
+### Perfil gráfico Intel/NVIDIA (2026-10-25)
+
+- Con Intel se escribe `20-modesetting.conf` con glamor, DRI3 y PageFlip.
+- Con NVIDIA se escribe solo `nvidia_drm.modeset=1` para PRIME.
+- `--intel-glitch` añade `i915 enable_fbc=0` (y PSR en eDP).
+- `--dry-run --intel-glitch` no escribe archivos.
+- En este host se detecta Intel UHD 630 + NVIDIA GTX 1050 Ti y HDMI.
+
+### Ranger, zathura, VLC y EPUB (2026-10-25)
+
+- `ranger` abre documentos y usa `rifle` para lanzar zathura/VLC/feh.
+- `zathura` incluye PDF, DjVu, PS y CB; el plugin `zathura-pdf-mupdf` 0.4.6
+  añade EPUB/MOBI/FB2.
+- El plugin se compila contra `libmupdf-dev` 1.25.1 de Debian 13; si falla,
+  la instalación se detiene y no se instala apvlv.
+- `scope.sh` genera portadas de PDF y vídeo, extrae portadas EPUB y usa
+  `ueberzug` para imágenes.
+- Los vídeos se abren con VLC.
+- No se modifica el atajo de Thunar; ranger se ejecuta desde la terminal.
+
+### Iconos Papirus
+
+- `papirus-icon-theme` y `librsvg2-common` deben estar instalados.
+- GTK necesita el loader SVG para mostrar los iconos de Papirus.
 
 ### Zsh, Oh My Zsh y lsd (2026-10-25)
 

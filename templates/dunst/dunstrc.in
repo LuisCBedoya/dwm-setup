@@ -30,10 +30,10 @@
     dmenu = /usr/bin/rofi -dmenu -p dunst:
     browser = /usr/bin/xdg-open
     icon_position = left
-    icon_theme = "Adwaita"
+    icon_theme = "Papirus"
     min_icon_size = 16
     max_icon_size = 64
-    icon_path = /usr/share/icons/Adwaita/16x16/status/:/usr/share/icons/Adwaita/16x16/devices/
+    icon_path = /usr/share/icons/Papirus/16x16/status/:/usr/share/icons/Papirus/16x16/devices/
     line_height = 0
     close = ctrl+space
     close_all = ctrl+shift+space

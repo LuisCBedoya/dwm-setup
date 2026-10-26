@@ -14,6 +14,7 @@ else
 fi
 
 DRY_RUN="${DRY_RUN:-0}"
+INTEL_GLITCH="${INTEL_GLITCH:-0}"
 ASSUME_YES="${ASSUME_YES:-0}"
 PROJECT_ROOT="${PROJECT_ROOT:-$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)}"
 TARGET_USER="${TARGET_USER:-}"
@@ -244,6 +245,9 @@ backup_existing_configs() {
   backup_root "/usr/local/bin/desktop-doctor"
   backup_root "/usr/local/share/fonts/dwm-setup/desktop-logo.ttf"
   backup_root "/etc/modprobe.d/alsa-fx504.conf"
+  backup_root "/etc/X11/xorg.conf.d/20-modesetting.conf"
+  backup_root "/etc/modprobe.d/dwm-setup-i915.conf"
+  backup_root "/etc/modprobe.d/dwm-setup-nvidia.conf"
   backup_user_path "$home/.config/bspwm"
   backup_user_path "$home/.config/sxhkd"
   backup_user_path "$home/.config/polybar"
@@ -252,6 +256,11 @@ backup_existing_configs() {
   backup_user_path "$home/.config/kitty"
   backup_user_path "$home/.zshrc"
   backup_user_path "$home/.config/lsd"
+  backup_user_path "$home/.config/ranger"
+  backup_user_path "$home/.themes/Windows-10-Dark"
+  backup_user_path "$home/.config/gtk-3.0"
+  backup_user_path "$home/.config/gtk-4.0"
+  backup_user_path "$home/.gtkrc-2.0"
   backup_user_path "$home/.xinitrc"
   backup_user_path "$home/.local/share/wallpapers/rocky.jpg"
 }
@@ -314,6 +323,11 @@ chown_managed_paths() {
     "$TARGET_HOME/.config/rofi" \
     "$TARGET_HOME/.config/kitty" \
     "$TARGET_HOME/.config/lsd" \
+    "$TARGET_HOME/.config/ranger" \
+    "$TARGET_HOME/.themes/Windows-10-Dark" \
+    "$TARGET_HOME/.config/gtk-3.0" \
+    "$TARGET_HOME/.config/gtk-4.0" \
+    "$TARGET_HOME/.gtkrc-2.0" \
     "$TARGET_HOME/.zshrc" \
     "$TARGET_HOME/.local/share/wallpapers" \
     "$TARGET_HOME/.local/share/xorg" \

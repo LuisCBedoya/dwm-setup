@@ -75,6 +75,32 @@ servicios: `redshift`, `ssh`, `bluez`, `playerctl`, `acpi`,
 mantienen. Solo se sincronizaron formatos seguros de los scripts de red y
 volumen.
 
+## Tema GTK e iconos (2026-10-25)
+
+Se vendorizó Windows-10-Dark en el repo y se añadió la instalación de
+settings GTK2/3/4, GSettings en autostart, Papirus y `librsvg2-common`.
+El tema ocupa unos 3 MB dentro del repo.
+
+## Perfil gráfico Intel/NVIDIA (2026-10-25)
+
+Se añadió detección de Intel/NVIDIA y generación de
+`/etc/X11/xorg.conf.d/20-modesetting.conf` con modesetting/glamor/DRI3.
+NVIDIA queda como PRIME/offload. `--intel-glitch` permite probar
+`enable_fbc=0` (y PSR en eDP) sin aplicarlo por defecto.
+
+## Neovim desde ranger (2026-10-25)
+
+Se añadió Neovim a los paquetes y reglas prioritarias en `rifle.conf` para
+abrir texto, código y Markdown con `nvim`. La edición se hace en la misma
+terminal de ranger.
+
+## Ranger, zathura y VLC (2026-10-25)
+
+Se añadió ranger como gestor desde terminal, zathura para documentos,
+VLC para vídeo y previews con ueberzug/poppler/ffmpegthumbnailer. EPUB se
+resuelve con `zathura-pdf-mupdf` 0.4.6 compilado contra `libmupdf-dev` de
+Debian 13, sin apvlv. No se modifica el atajo de Thunar.
+
 ## Shell zsh y lsd (2026-10-25)
 
 Se añadió al instalador `zsh`, `zsh-autosuggestions`, `lsd`, Oh My Zsh con
@@ -277,8 +303,8 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
 - [x] bspwm instalado desde apt + bspwmrc 0755 + autostart + scripts.
 - [x] sxhkd instalado desde apt + sxhkdrc renderizado.
 - [x] polybar instalado desde apt + config.ini, modules/, scripts/, launch.sh.
-- [x] dunst instalado desde apt + dunstrc (Adwaita).
-- [x] rofi instalado desde apt + powermenu.rasi (Adwaita).
+- [x] dunst instalado desde apt + dunstrc (Papirus).
+- [x] rofi instalado desde apt + powermenu.rasi (Papirus).
 - [x] kitty instalado desde apt + kitty.conf.
 - [x] Sesión: `~/.xinitrc` → `bspwm`; autostart interno.
 - [x] `desktop-safe` para lock/suspend/logout/poweroff/reboot.

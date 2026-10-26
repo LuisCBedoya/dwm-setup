@@ -10,7 +10,7 @@
 
 configuration {
     show-icons: true;
-    icon-theme: "Adwaita";
+    icon-theme: "Papirus";
     font: "@FONT@ @FONT_SIZE@";
     dpi: 96;
 }

@@ -47,6 +47,12 @@ fi
 # --- Teclado ---
 setxkbmap @KEYMAP@ 2>/dev/null || true
 
+# --- Tema GTK e iconos ---
+if command -v gsettings >/dev/null 2>&1; then
+  gsettings set org.gnome.desktop.interface gtk-theme 'Windows-10-Dark' 2>/dev/null || true
+  gsettings set org.gnome.desktop.interface icon-theme 'Papirus' 2>/dev/null || true
+fi
+
 # --- Cursor ---
 xsetroot -cursor_name left_ptr &
 

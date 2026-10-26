@@ -1,0 +1,15 @@
+#!/bin/sh
+# epub-cover.sh — extrae la primera imagen de portada de un EPUB.
+# Uso: epub-cover.sh archivo.epub salida.jpg
+
+FILE=$1
+OUT=$2
+
+[ -n "$FILE" ] && [ -n "$OUT" ] || exit 1
+command -v unzip >/dev/null 2>&1 || exit 1
+
+entry=$(unzip -Z1 "$FILE" 2>/dev/null |
+  awk 'tolower($0) ~ /\.(jpe?g|png|webp)$/ {print; exit}')
+[ -n "$entry" ] || exit 1
+unzip -p "$FILE" "$entry" > "$OUT" 2>/dev/null || exit 1
+[ -s "$OUT" ]
