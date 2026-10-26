@@ -62,6 +62,8 @@ generate_xinitrc() {
 export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_SESSION_TYPE=x11
+export GDK_BACKEND=x11
 
 # Configurar teclado
 setxkbmap @KEYMAP@ 2>/dev/null || true

@@ -255,6 +255,17 @@ Variante B compacta, ajustada manualmente por el usuario:
 - Polybar carga 14 módulos sin errores; captura `bar-variant-b.png`.
 - La variante A no se toca.
 
+## i915, xinitrc y single-instance (2026-10-26)
+
+- i915: `enable_fbc=0` por defecto en equipos Intel (y `enable_psr=0` si
+  hay eDP); el instalador ejecuta `update-initramfs -u` y pide reiniciar.
+- `.xinitrc`: añade `XDG_SESSION_TYPE=x11` y `GDK_BACKEND=x11`.
+- Kitty: el atajo `Super+Return` usa `kitty --single-instance`; la
+  segunda ventana abre en ~54 ms.
+- Picom queda fuera del repo y del entorno.
+- El resumen del instalador indica que se usa sudo para paquetes, portal,
+  opt-2 e i915.
+
 ## Congelación de bspwm por script huérfano (2026-10-25)
 
 - Polybar murió durante un reinicio mientras `updates-apt.sh`

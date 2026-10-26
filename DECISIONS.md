@@ -2151,3 +2151,39 @@ quedaba colgado. bspwm estaba bloqueado en `sock_alloc_send_pskb` con
 - Un reinicio de barra ya no puede bloquear bspwm.
 - Si polybar cae, sus scripts `tail=true` terminan solos.
 - `launch.sh` también sirve para recuperar una sesión ya bloqueada.
+
+## ADR-094 — i915 con FBC desactivado por defecto
+
+**Contexto:** el usuario quiere descartar parpadeos de Intel y pidió que
+el instalador aplique la mitigación i915 por defecto, pidiendo sudo.
+
+**Decisión:**
+1. En equipos con GPU Intel, escribir siempre
+   `/etc/modprobe.d/dwm-setup-i915.conf` con `enable_fbc=0`.
+2. Si hay una salida eDP/LVDS conectada, añadir `enable_psr=0`.
+3. Ejecutar `update-initramfs -u` y avisar de reiniciar.
+4. Mantener `--intel-glitch` por compatibilidad, aunque ya no sea
+   necesario.
+
+**Consecuencias:**
+- La mitigación se aplica en instalaciones limpias.
+- Requiere reinicio para surtir efecto.
+- El salto medido al abrir kitty es de bspwm al tilear; FBC es una
+  precaución adicional, no la causa demostrada.
+
+## ADR-095 — XDG en xinitrc y kitty single-instance
+
+**Contexto:** la sesión no declaraba `XDG_SESSION_TYPE` ni forzaba el
+backend GTK X11. Además, cada kitty arrancaba un proceso nuevo (~250 ms).
+
+**Decisión:**
+1. `.xinitrc` exporta `XDG_SESSION_TYPE=x11` y `GDK_BACKEND=x11`.
+2. `Super+Return` ejecuta `kitty --single-instance`; la primera ventana
+   crea el proceso maestro y las siguientes abren en él.
+3. No usar `single_instance` en `kitty.conf`: en kitty 0.41 es una opción
+   de línea de comandos, no una clave de configuración.
+
+**Consecuencias:**
+- GTK y portales ven una sesión X11 explícita.
+- Las aperturas siguientes de kitty tardan ~54 ms.
+- Si el proceso maestro muere, se cierran todas sus ventanas.

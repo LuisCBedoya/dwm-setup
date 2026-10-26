@@ -41,8 +41,9 @@ install_gpu_configs() {
 
   if dry_run; then
     log "[dry-run] escribir /etc/X11/xorg.conf.d/20-modesetting.conf"
-    if [[ "$INTEL_GLITCH" -eq 1 ]]; then
-      log "[dry-run] escribir /etc/modprobe.d/dwm-setup-i915.conf ($i915_opts)"
+    log "[dry-run] escribir /etc/modprobe.d/dwm-setup-i915.conf ($i915_opts)"
+    if [[ "$edp" -eq 1 ]]; then
+      log "[dry-run] añadir enable_psr=0 (eDP detectado)"
     fi
     if [[ "$HAS_NVIDIA" -eq 1 ]]; then
       log "[dry-run] escribir /etc/modprobe.d/dwm-setup-nvidia.conf"
@@ -55,19 +56,17 @@ install_gpu_configs() {
     /etc/X11/xorg.conf.d/20-modesetting.conf
   ok "Xorg Intel: /etc/X11/xorg.conf.d/20-modesetting.conf"
 
-  if [[ "$INTEL_GLITCH" -eq 1 ]]; then
-    if [[ "$edp" -eq 1 ]]; then
-      i915_opts="$i915_opts enable_psr=0"
-      printf '# Mitiga parpadeos/corrupción de Intel en X11.\noptions i915 %s\n' "$i915_opts" |
-        run_root install -D -m 0644 /dev/stdin /etc/modprobe.d/dwm-setup-i915.conf
-    else
-      run_root install -D -m 0644 \
-        "$PROJECT_ROOT/templates/modprobe/i915.conf" \
-        /etc/modprobe.d/dwm-setup-i915.conf
-    fi
-    changed_modprobe=1
-    ok "i915: $i915_opts"
+  if [[ "$edp" -eq 1 ]]; then
+    i915_opts="$i915_opts enable_psr=0"
+    printf '# Mitiga parpadeos/corrupción de Intel en X11.\noptions i915 %s\n' "$i915_opts" |
+      run_root install -D -m 0644 /dev/stdin /etc/modprobe.d/dwm-setup-i915.conf
+  else
+    run_root install -D -m 0644 \
+      "$PROJECT_ROOT/templates/modprobe/i915.conf" \
+      /etc/modprobe.d/dwm-setup-i915.conf
   fi
+  changed_modprobe=1
+  ok "i915: $i915_opts"
 
   if [[ "$HAS_NVIDIA" -eq 1 ]]; then
     run_root install -D -m 0644 \

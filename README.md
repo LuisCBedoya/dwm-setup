@@ -25,7 +25,8 @@ Incluido:
   batería, fecha
   y actualizaciones (calavera + número). `font-1` 10 y `font-3` 13; logo en
   `font-0`.
-- **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**,
+- **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**
+  (`--single-instance`),
   **flameshot**. Shell **zsh** con Oh My Zsh/cypher, autosuggestions y
   **lsd**. Sin compositor; la barra B usa fondo sólido `#262626`.
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo,

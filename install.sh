@@ -307,6 +307,8 @@ Fase 1b instalada para: $TARGET_USER
 Home:                   $TARGET_HOME
 Log:                    $LOG_FILE
 Variantes polybar:      ~/.config/polybar/polybar-variant actual|referencia
+Gráficos:               i915 FBC desactivado (requiere reinicio)
+Permisos:               sudo al inicio para paquetes, portal, opt-2 e i915
 
 Próximo paso:
   1. Reinicia el equipo: sudo reboot

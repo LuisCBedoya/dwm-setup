@@ -150,6 +150,15 @@ Comprobado:
 - `services.sh` también prefiere rofi; dmenu queda como respaldo.
 - Capturas: `gaps-bar30.png`, `net-rofi2.png`.
 
+### i915, xinitrc y kitty single-instance (2026-10-26)
+
+- `install.sh --dry-run` muestra
+  `/etc/modprobe.d/dwm-setup-i915.conf (enable_fbc=0)`.
+- `.xinitrc` exporta `XDG_SESSION_TYPE=x11` y `GDK_BACKEND=x11`.
+- `Super+Return` ejecuta `kitty --single-instance`.
+- Segunda ventana de kitty: ~54 ms (antes ~250-300 ms).
+- `kitty.conf` ya no contiene `single_instance` (clave inválida en 0.41).
+
 ### Congelación de bspwm (2026-10-25)
 
 - Síntoma: `bspc` se queda colgado; Xorg sigue respondiendo.
