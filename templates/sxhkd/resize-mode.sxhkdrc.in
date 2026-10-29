@@ -1,0 +1,12 @@
+# resize-mode.sxhkdrc — solo activo durante el modo resize de Super+r.
+# Lo lanza resize-mode.sh; no se carga desde el sxhkd principal.
+h
+    @HOME@/.config/bspwm/scripts/bspwm_resize h
+j
+    @HOME@/.config/bspwm/scripts/bspwm_resize j
+k
+    @HOME@/.config/bspwm/scripts/bspwm_resize k
+l
+    @HOME@/.config/bspwm/scripts/bspwm_resize l
+Escape
+    @HOME@/.config/bspwm/scripts/resize-mode.sh stop

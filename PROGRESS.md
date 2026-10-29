@@ -143,8 +143,8 @@ y movieron `updates` al inicio de la derecha:
   exacto en bspwm; no se mapean en esta iteración.
 
 Validado en vivo: `sxhkd` recarga el nuevo `sxhkdrc` sin errores; el
-`bspwm_resize h/l` cambia el ancho en un layout lado a lado y la cadena
-`Super+r` se queda activa hasta `Escape`. `Alt+Tab`/`Alt+Shift+Tab` ciclan
+`bspwm_resize h/l` cambia el ancho en un layout lado a lado y el modo
+`Super+r` se cierra con `Escape` o a los 6 s. `Alt+Tab`/`Alt+Shift+Tab` ciclan
 ventanas. `Super+Shift+s` probado con XTest: región 400x300 copiada como
 `image/png`, sin temporales y con notificación de dunst. `Super+Shift+d`
 abre `rofi -show run`; `Super+d` sigue abriendo `rofi -show drun`.
@@ -254,6 +254,28 @@ Variante B compacta, ajustada manualmente por el usuario:
 - `polybar-variant referencia|actual` cambia y guarda la elección.
 - Polybar carga 14 módulos sin errores; captura `bar-variant-b.png`.
 - La variante A no se toca.
+
+## Modo resize con sxhkd hijo (2026-10-28)
+
+- `Super+r` crea el estado y muestra `RESIZE` al instante.
+- `resize-mode.sh` arranca un sxhkd hijo con `resize-mode.sxhkdrc` que
+  captura solo `h/j/k/l` y `Escape`; el resto del teclado sigue normal.
+- Cada `h/j/k/l` llama a `bspwm_resize` y refresca el TTL de 6 s.
+- `Escape` o 6 s sin teclas matan al hijo y quitan `RESIZE`.
+- El sxhkd principal ya no usa la cadena `super + r : h/j/k/l`, así que
+  no roba `h/j/k/l` después de redimensionar.
+- `h` redimensiona hacia la derecha y `l` hacia la izquierda; paso 20 px.
+- Con una sola ventana tileada no hay cambio de tamaño (semántica de i3).
+- `install_sxhkd` renderiza también `resize-mode.sxhkdrc` y recarga el
+  sxhkd principal con `SIGUSR1`.
+- Probado con XTEST: `Super+r` → `RESIZE` y un solo `sxhkd` hijo;
+  `h`/`l` sobre una ventana flotante 958→978→958; `Escape` y 7 s de
+  espera dejan el estado vacío y matan al hijo; una `h` posterior no
+  redimensiona.
+- Probado en tileado (escritorio 2): `Super+r` + `h` cambia el
+  `splitRatio` y `Escape` limpia; `Super+2`/`Super+1` siguen funcionando.
+- Una sola ventana tileada no cambia de tamaño (semántica de i3).
+- Capturas `bar-clean2-mode-crop.png` y `mode-before-h-bar.png`.
 
 ## i915, xinitrc y single-instance (2026-10-26)
 
@@ -621,3 +643,22 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
 4. Preparar VM Debian 13 minimal con snapshot y repetir.
 5. Validar cámara, USB, audio y NVIDIA/PRIME en hardware.
 6. Subir el repositorio y validar un clon limpio.
+
+## Firefox ESR y Teams (2026-10-28)
+
+- `Super+Shift+b` abre Firefox ESR; antes renderizaba Chromium.
+- `firefox-esr` se añade al instalador con el grupo `BROWSER_PKGS`.
+- `/etc/firefox-esr/zz-dwm-setup.js` activa OpenH264 y H.264 en WebRTC;
+  se carga después de `firefox-esr.js` y corrige la pantalla compartida de
+  Teams en Firefox.
+- `Ctrl+Shift+B` no se captura: es el atajo de la barra de marcadores del
+  navegador.
+- Chromium sigue instalado como plan B para Teams.
+- `/etc/firefox-esr/zz-dwm-setup.js` instalado; `verify_install` y
+  `desktop-doctor` (75 OK) lo validan.
+- `/etc/firefox/policies/policies.json` instala uBlock Origin con
+  `force_installed`; se fusiona con políticas existentes y se puede
+  desactivar por sitio, pero no desinstalar.
+- `about:policies` muestra `ExtensionSettings` activo y el perfil tiene
+  `extensions/uBlock0@raymondhill.net.xpi`; `desktop-doctor` sube a 77 OK.
+- Pendiente: prueba real de Teams con pantalla compartida.

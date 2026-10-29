@@ -55,6 +55,9 @@ DESKTOP_PKGS=(
   xdg-desktop-portal xdg-desktop-portal-gtk
 )
 
+# Navegador del escritorio. Firefox ESR es el que abre Super+Shift+b.
+BROWSER_PKGS=(firefox-esr)
+
 NETWORK_PKGS=(network-manager network-manager-gnome dbus-user-session dbus-x11)
 
 FONT_PKGS=(
@@ -524,6 +527,7 @@ install_base_packages() {
 install_desktop_packages() {
   section "Escritorio, audio, cámara y almacenamiento"
   install_group "escritorio (bspwm+sxhkd+polybar+apps)" required "${DESKTOP_PKGS[@]}"
+  install_group "navegador" required "${BROWSER_PKGS[@]}"
   install_group "audio y códecs" required "${AUDIO_PKGS[@]}"
   install_group "cámara" optional "${CAMERA_PKGS[@]}"
   install_group "almacenamiento extraíble" required "${STORAGE_PKGS[@]}"

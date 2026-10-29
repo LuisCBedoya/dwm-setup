@@ -105,6 +105,10 @@ verify_install() {
     "$home/.config/ranger/epub-cover.sh" \
     "$home/.config/bspwm/scripts/dunst-position.sh" \
     "$home/.config/bspwm/scripts/wallpaper.sh" \
+    "$home/.config/bspwm/scripts/resize-mode.sh" \
+    "$home/.config/sxhkd/resize-mode.sxhkdrc" \
+    "$home/.config/polybar/modules/resize.ini" \
+    "$home/.config/polybar/variants/reference/modules/resize.ini" \
     "$home/.config/zathura/zathurarc" \
     "$home/.themes/Windows-10-Dark/index.theme" \
     "$home/.config/gtk-3.0/settings.ini" \
@@ -123,7 +127,9 @@ verify_install() {
     "$home/.local/share/xorg" \
     "$home/Pictures/Screenshots" \
     "/usr/local/bin/desktop-safe" \
-    "/usr/local/bin/desktop-doctor"; do
+    "/usr/local/bin/desktop-doctor" \
+    "/etc/firefox-esr/zz-dwm-setup.js" \
+    "/etc/firefox/policies/policies.json"; do
     if [[ -e "$path" ]]; then
       debug "ok: $path"
     else
@@ -231,6 +237,35 @@ verify_install() {
   if [[ -f "$home/.config/dunst/scripts/notification-sound.sh" && ! -x "$home/.config/dunst/scripts/notification-sound.sh" ]]; then
     error "Script no ejecutable: $home/.config/dunst/scripts/notification-sound.sh"
     failures=$((failures + 1))
+  fi
+
+  # El sxhkd hijo del modo resize debe cerrar con Escape.
+  if [[ -f "$home/.config/sxhkd/resize-mode.sxhkdrc" ]] &&
+     ! grep -q 'resize-mode.sh stop' "$home/.config/sxhkd/resize-mode.sxhkdrc"; then
+    error "resize-mode.sxhkdrc no cierra el modo con Escape"
+    failures=$((failures + 1))
+  fi
+
+  # Firefox ESR: OpenH264 activo para WebRTC/Teams.
+  if ! command -v firefox >/dev/null 2>&1; then
+    error "Firefox no está instalado"
+    failures=$((failures + 1))
+  fi
+  if [[ -f /etc/firefox-esr/zz-dwm-setup.js ]]; then
+    if ! grep -q 'media.gmp-gmpopenh264.enabled", true' /etc/firefox-esr/zz-dwm-setup.js ||
+       ! grep -q 'media.peerconnection.video.h264_enabled", true' /etc/firefox-esr/zz-dwm-setup.js; then
+      error "Firefox no tiene OpenH264 habilitado en /etc/firefox-esr/zz-dwm-setup.js"
+      failures=$((failures + 1))
+    fi
+  fi
+
+  # uBlock Origin debe venir forzado desde la política de Firefox.
+  if [[ -f /etc/firefox/policies/policies.json ]]; then
+    if ! grep -q '"uBlock0@raymondhill.net"' /etc/firefox/policies/policies.json ||
+       ! grep -q '"force_installed"' /etc/firefox/policies/policies.json; then
+      error "Firefox no tiene uBlock Origin force-installed en /etc/firefox/policies/policies.json"
+      failures=$((failures + 1))
+    fi
   fi
 
   # VLC debe arrancar con la paleta oscura.

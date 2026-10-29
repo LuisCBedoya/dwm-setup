@@ -250,7 +250,7 @@ Si algo falla:
 | `Super+Shift+d` | rofi -show run |
 | `Super+Shift+s` | scrot: seleccionar región y copiar al portapapeles |
 | `Super+Shift+p` | pcmanfm (pendiente de instalar) |
-| `Super+Shift+b` | chromium (pendiente de instalar) |
+| `Super+Shift+b` | firefox |
 | `Super+Shift+v` | codium (pendiente; no está en Debian) |
 | `Super+Shift+i` | ristretto (pendiente) |
 | `Super+Shift+a` | lxappearance (pendiente) |
@@ -272,7 +272,7 @@ Si algo falla:
 | `Super+Shift+{h,j,k,l}` | mover/intercambiar ventanas |
 | `Super+{1-7}` | ir a escritorio |
 | `Super+Shift+{1-7}` | mover ventana a escritorio |
-| `Super+r`, luego `h/j/k/l` | redimensionar (Escape sale) |
+| `Super+r`, luego `h/j/k/l` | modo resize (Escape o 6 s sale) |
 | `Super+m` | monocle/tiled |
 | `Print` | pantalla completa al portapapeles |
 | `Super+Print` | menú de capturas |
@@ -390,9 +390,16 @@ docs/                      Hardware y testing
 - `libcamera-tools`, firmware y drivers propietarios son opcionales.
 - El instalador no modifica repositorios por defecto. Solo la opción 1 del
   menú añade componentes a entradas oficiales de Debian 13, tras un backup.
-- No se instala ningún navegador, IDE, cliente de correo ni música.
-- Los atajos `Super+Shift+p/b/v/i/a` existen en `sxhkdrc` pero las apps
-  (`pcmanfm`, `chromium`, `codium`, `ristretto`, `lxappearance`) no se
+- Se instala Firefox ESR como navegador del escritorio; no se instalan IDE,
+  cliente de correo ni música.
+- `/etc/firefox-esr/zz-dwm-setup.js` habilita OpenH264 para que Teams pueda
+  mostrar H.264 (pantalla compartida). Sin ese ajuste, el vídeo de Teams
+  queda en negro en Firefox ESR.
+- `/etc/firefox/policies/policies.json` instala uBlock Origin con
+  `force_installed`: no se puede desinstalar, pero se puede desactivar por
+  sitio desde su popup.
+- Los atajos `Super+Shift+p/v/i/a` existen en `sxhkdrc` pero las apps
+  (`pcmanfm`, `codium`, `ristretto`, `lxappearance`) no se
   instalan en esta fase. `codium` requiere el repositorio de VSCodium.
   `Super+Shift+e` es logout; el editor se movió a `Super+Shift+v`.
 - `Super+Shift+s` usa `scrot`: selecciona región y copia al portapapeles, sin

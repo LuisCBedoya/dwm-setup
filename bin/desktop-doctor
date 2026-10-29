@@ -47,7 +47,8 @@ check_exec() {
 print_header "Binarios esenciales"
 for c in bspwm sxhkd polybar dunst rofi kitty feh flameshot i3lock xss-lock \
          brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pamixer wpctl \
-         xwallpaper playerctl nvim lxpolkit zsh lsd ranger zathura vlc ueberzug; do
+         xwallpaper playerctl nvim lxpolkit zsh lsd ranger zathura vlc ueberzug \
+         firefox; do
   check_cmd "$c"
 done
 
@@ -62,6 +63,27 @@ check_file "$CONFIG/bspwm/scripts/autostart"
 check_file "$CONFIG/bspwm/scripts/thunar-defaults.sh"
 check_file "$CONFIG/bspwm/scripts/dunst-position.sh"
 check_file "$CONFIG/bspwm/scripts/wallpaper.sh"
+check_file "$CONFIG/bspwm/scripts/resize-mode.sh"
+check_file "$CONFIG/sxhkd/resize-mode.sxhkdrc"
+check_file "/etc/firefox-esr/zz-dwm-setup.js"
+if [ -f /etc/firefox-esr/zz-dwm-setup.js ]; then
+  if grep -q 'media.gmp-gmpopenh264.enabled", true' /etc/firefox-esr/zz-dwm-setup.js; then
+    printf '  [OK] OpenH264 habilitado para WebRTC/Teams\n'
+  else
+    printf '  [MAL] OpenH264 deshabilitado; Teams no verá H.264\n'
+  fi
+fi
+check_file "/etc/firefox/policies/policies.json"
+if [ -f /etc/firefox/policies/policies.json ]; then
+  if grep -q '"uBlock0@raymondhill.net"' /etc/firefox/policies/policies.json &&
+     grep -q '"force_installed"' /etc/firefox/policies/policies.json; then
+    printf '  [OK] uBlock Origin force-installed\n'
+  else
+    printf '  [MAL] uBlock Origin no está forzado en la política\n'
+  fi
+fi
+check_file "$CONFIG/polybar/modules/resize.ini"
+check_file "$CONFIG/polybar/variants/reference/modules/resize.ini"
 check_file "$CONFIG/sxhkd/sxhkdrc"
 check_file "$CONFIG/polybar/config.ini"
 check_file "$CONFIG/polybar/launch.sh"

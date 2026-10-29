@@ -1,0 +1,10 @@
+; resize — indicador del modo resize
+[module/resize]
+type = custom/script
+exec = @HOME@/.config/bspwm/scripts/resize-mode.sh status
+exec-if = @HOME@/.config/bspwm/scripts/resize-mode.sh active
+interval = 0.5
+label = %output%
+format = <label>
+format-foreground = ${colors.primary}
+format-padding = 0

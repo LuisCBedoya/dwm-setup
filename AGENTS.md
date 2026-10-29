@@ -8,7 +8,7 @@ proyecto. Leer primero `README.md`, `PROGRESS.md` y `DECISIONS.md`.
 Instalador reproducible de un escritorio mínimo para **Debian 13 (trixie)**
 con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 **polybar**, **dunst**, **rofi**, **kitty**, **flameshot**, **zsh/Oh My Zsh**, **lsd**,
-**ranger**, **zathura**, **VLC**,
+**ranger**, **zathura**, **VLC**, **Firefox ESR**,
 **i3lock/xss-lock**, PipeWire, cámara UVC y almacenamiento extraíble con
 notificación.
 
@@ -32,7 +32,8 @@ bloque; temperatura conserva fondo en warning. Se cambia con
 La fase 1 termina en el escritorio. No implementar todavía:
 
 - VS Code y Node/nvm. Neovim sí se usa para editar archivos.
-- Firefox, Brave/Chromium u otros navegadores.
+- Brave/Chromium u otros navegadores (Firefox ESR sí forma parte del
+  escritorio).
 - Correo, Teams.
 - Reproductores de música, mpv, cava o widgets de música. VLC sí se usa
   para abrir vídeos.
@@ -94,7 +95,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
     (`Super+Return`, `Super+Shift+s` scrot región+portapapeles,
     `Super+Shift+d` rofi run, `Super+Shift+p/b/v/i/a`, `Alt+Tab`, etc.). Las
     apps que no están en fase 1 se dejan como bindings no-op. `Super+r`
-    seguido de `h/j/k/l` redimensiona mediante cadena de sxhkd; `Escape` sale.
+    abre el modo resize: `resize-mode.sh` arranca un sxhkd hijo que captura
+    solo `h/j/k/l` y `Escape`; `Escape` o 6 s sin teclas lo cierran.
     `Print` captura pantalla completa al portapapeles; `Super+Print` abre el
     menú de capturas. `Super+Alt+p` cicla A arriba → A abajo → B arriba → B abajo.
     `Super+Ctrl+Tab` y `Super+Ctrl+Shift+Tab` cambian de escritorio. No
@@ -128,6 +130,15 @@ La fase 1 termina en el escritorio. No implementar todavía:
 21. **No commitear sin permiso.** No ejecutar `git commit` ni `git add`
     definitivo sin autorización explícita del usuario.
 
+22. **Firefox ESR y Teams.** `firefox-esr` es el navegador del escritorio y
+    `Super+Shift+b` lo abre. `/etc/firefox-esr/zz-dwm-setup.js` habilita
+    OpenH264 (`media.gmp-gmpopenh264.enabled`) para H.264 en WebRTC; sin
+    eso Teams no muestra la pantalla compartida. No capturar `Ctrl+Shift+B`
+    en sxhkd: es el atajo de la barra de marcadores del navegador.
+    `/etc/firefox/policies/policies.json` fuerza uBlock Origin
+    (`uBlock0@raymondhill.net`) con `force_installed`; se puede desactivar
+    por sitio desde el popup, pero no desinstalar.
+
 ## Estructura relevante
 
 | Archivo | Responsabilidad |
@@ -148,6 +159,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/gtk.sh` | tema GTK, CSS Mono Slate, Thunar e iconos |
 | `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
 | `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
+| `lib/firefox.sh` | Firefox ESR y OpenH264 para WebRTC/Teams |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paletas (Mono Slate, Warm Charcoal, Nord) y render de plantillas |
 | `lib/audio.sh` | Quirk ALC255 condicionado por DMI/códec |
@@ -164,6 +176,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/ranger/` | rc.conf, rifle.conf y previews |
 | `templates/xorg/` | 20-modesetting.conf |
 | `templates/gtk/` | settings GTK2/3/4 y CSS |
+| `templates/firefox/` | `zz-dwm-setup.js` (OpenH264) y `policies.json` (uBlock) |
 | `templates/vlc/` | vlcrc con modo oscuro |
 | `templates/zathura/` | zathurarc con modo oscuro |
 | `templates/themes/` | Windows-10-Dark |

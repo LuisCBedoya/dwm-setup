@@ -2187,3 +2187,62 @@ backend GTK X11. Además, cada kitty arrancaba un proceso nuevo (~250 ms).
 - GTK y portales ven una sesión X11 explícita.
 - Las aperturas siguientes de kitty tardan ~54 ms.
 - Si el proceso maestro muere, se cierran todas sus ventanas.
+
+## ADR-096 — Modo resize con sxhkd hijo
+
+**Contexto:** con la cadena `super + r : h/j/k/l` el indicador no podía
+aparecer al pulsar `Super+r`, y la cadena no caducaba: tras redimensionar,
+`h/j/k/l` seguían capturadas hasta `Escape` o hasta pulsar otra tecla.
+Además, sxhkd no permite que un chord ejecute un comando y sea prefijo de
+cadena: el comando anula la cadena. Un binding de liberación en el mismo
+chord tampoco convive con la cadena.
+
+**Decisión:**
+1. `Super+r` ejecuta `resize-mode.sh start`; ya no es una cadena.
+2. `start` crea `~/.config/bspwm/resize-mode` (la barra muestra `RESIZE`
+   al instante) y lanza un sxhkd hijo con `resize-mode.sxhkdrc`.
+3. El hijo captura solo `h/j/k/l` y `Escape`; el resto del teclado pasa
+   normal.
+4. `h/j/k/l` llaman a `bspwm_resize` y refrescan el mtime del estado.
+5. Un vigilante mata al hijo y borra el estado tras 6 s sin teclas;
+   `Escape` hace lo mismo al instante.
+6. `h` hacia la derecha, `l` hacia la izquierda; paso 20 px.
+7. `install_sxhkd` renderiza `resize-mode.sxhkdrc` y recarga el principal
+   con `SIGUSR1`.
+
+**Consecuencias:**
+- `RESIZE` sale desde `Super+r`, no tras la primera tecla.
+- `h/j/k/l` no quedan robadas indefinidamente.
+- Durante el modo (máx. 6 s) las apps no reciben `h/j/k/l`; el resto sí.
+- Con una sola ventana tileada no hay cambio de tamaño (i3).
+- Si el hijo muere, el vigilante limpia el estado en menos de 0,3 s.
+
+## ADR-097 — Firefox ESR como navegador del escritorio
+
+**Contexto:** el atajo `Super+Shift+b` apuntaba a `chromium`, pero Chromium
+no se instala en fase 1 y el resumen del instalador ya anunciaba Firefox.
+Además, Debian desactiva OpenH264 en `firefox-esr`, lo que rompe la
+pantalla compartida de Teams (H.264 en WebRTC).
+
+**Decisión:**
+1. `firefox-esr` se instala con el grupo `BROWSER_PKGS`.
+2. `Super+Shift+b` renderiza `BROWSER=firefox`.
+3. `/etc/firefox-esr/zz-dwm-setup.js` activa
+   `media.gmp-gmpopenh264.enabled` y
+   `media.peerconnection.video.h264_enabled`. El prefijo `zz-` hace que se
+   cargue después de `firefox-esr.js`.
+4. No se captura `Ctrl+Shift+B` en sxhkd: es el atajo de la barra de
+   marcadores del navegador.
+5. Chromium no se desinstala; queda como plan B para Teams.
+6. `/etc/firefox/policies/policies.json` fuerza uBlock Origin
+   (`uBlock0@raymondhill.net`) con `force_installed` y se fusiona con las
+   políticas existentes en cada instalación.
+7. uBlock se puede desactivar por sitio desde su popup, pero no
+   desinstalar mientras la política siga activa.
+
+**Consecuencias:**
+- Una instalación limpia abre Firefox con el atajo.
+- Teams puede decodificar H.264 sin tocar la preferencia de Debian.
+- uBlock Origin aparece instalado en el primer arranque y no se puede
+  quitar por accidente.
+- Si Teams sigue fallando, se puede usar Chromium/Brave como alternativa.

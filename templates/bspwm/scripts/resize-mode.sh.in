@@ -1,0 +1,89 @@
+#!/bin/sh
+# resize-mode.sh — modo resize: Super+r, luego h/j/k/l; Escape o 6 s sale.
+#
+# El modo se implementa con una instancia hija de sxhkd que solo captura
+# h/j/k/l/Escape. Así Super+r puede mostrar RESIZE al instante sin que el
+# sxhkd principal tenga que encadenar los atajos.
+set -u
+
+CONFIG="${XDG_CONFIG_HOME:-$HOME/.config}"
+STATE="$CONFIG/bspwm/resize-mode"
+PIDFILE="$STATE.pid"
+WATCHFILE="$STATE.watch"
+CHILD_CONFIG="$CONFIG/sxhkd/resize-mode.sxhkdrc"
+TTL="${RESIZE_TTL:-6}"
+
+read_pid() {
+  [ -r "$1" ] && cat "$1" 2>/dev/null || true
+}
+
+kill_child() {
+  pid=$(read_pid "$PIDFILE")
+  [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+  pid=$(read_pid "$WATCHFILE")
+  [ -n "$pid" ] && kill "$pid" 2>/dev/null || true
+  rm -f "$PIDFILE" "$WATCHFILE"
+}
+
+start_watchdog() {
+  child="$1"
+  (
+    while kill -0 "$child" 2>/dev/null; do
+      [ -f "$STATE" ] || break
+      now=$(date +%s)
+      mtime=$(stat -c %Y "$STATE" 2>/dev/null || echo 0)
+      if [ "$mtime" -eq 0 ]; then
+        break
+      fi
+      if [ $((now - mtime)) -ge "$TTL" ]; then
+        break
+      fi
+      sleep 0.3
+    done
+    kill "$child" 2>/dev/null || true
+    # Si otro `start` ya reemplazó al hijo, no borres su estado.
+    if [ "$(read_pid "$PIDFILE")" = "$child" ]; then
+      rm -f "$STATE" "$PIDFILE" "$WATCHFILE"
+    fi
+  ) &
+  printf '%s\n' "$!" > "$WATCHFILE"
+}
+
+case "${1:-}" in
+  start)
+    kill_child
+    rm -f "$STATE"
+    mkdir -p "$(dirname "$STATE")"
+
+    if [ ! -r "$CHILD_CONFIG" ]; then
+      printf 'resize-mode: falta %s\n' "$CHILD_CONFIG" >&2
+      exit 1
+    fi
+
+    : > "$STATE"
+    sxhkd -c "$CHILD_CONFIG" >/dev/null 2>&1 &
+    child=$!
+    printf '%s\n' "$child" > "$PIDFILE"
+    start_watchdog "$child"
+    ;;
+  touch)
+    if [ -f "$STATE" ]; then
+      : > "$STATE"
+    fi
+    ;;
+  stop)
+    # Quita el estado primero: si este proceso muere al matar a sxhkd,
+    # el vigilante verá el estado ausente y terminará igualmente.
+    child=$(read_pid "$PIDFILE")
+    watch=$(read_pid "$WATCHFILE")
+    rm -f "$STATE" "$PIDFILE" "$WATCHFILE"
+    [ -n "$child" ] && kill "$child" 2>/dev/null || true
+    [ -n "$watch" ] && kill "$watch" 2>/dev/null || true
+    ;;
+  active) [ -f "$STATE" ] ;;
+  status) [ -f "$STATE" ] && printf 'RESIZE' ;;
+  *)
+    printf 'Uso: %s start|touch|stop|active|status\n' "$0" >&2
+    exit 1
+    ;;
+esac

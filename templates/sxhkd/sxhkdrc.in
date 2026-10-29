@@ -125,16 +125,10 @@ super + bracket{left,right}
 super + {_,shift + }{1-7}
     bspc {desktop -f,node -d} '^{1-7}'
 
-# ─── Redimensionar: Super+r y luego h/j/k/l ───
-# Con ':' la cadena sigue activa tras la cola; Escape sale.
-super + r : h
-    @HOME@/.config/bspwm/scripts/bspwm_resize h
-super + r : j
-    @HOME@/.config/bspwm/scripts/bspwm_resize j
-super + r : k
-    @HOME@/.config/bspwm/scripts/bspwm_resize k
-super + r : l
-    @HOME@/.config/bspwm/scripts/bspwm_resize l
+# ─── Modo resize: Super+r, luego h/j/k/l; Escape o 6 s sale ───
+# resize-mode.sh arranca un sxhkd hijo que solo captura h/j/k/l/Escape.
+super + r
+    @HOME@/.config/bspwm/scripts/resize-mode.sh start
 
 # Mover ventana flotante
 super + {Left,Down,Up,Right}

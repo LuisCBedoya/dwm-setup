@@ -49,6 +49,8 @@ source "$PROJECT_ROOT/lib/gtk.sh"
 source "$PROJECT_ROOT/lib/vlc.sh"
 # shellcheck source=lib/config.sh
 source "$PROJECT_ROOT/lib/config.sh"
+# shellcheck source=lib/firefox.sh
+source "$PROJECT_ROOT/lib/firefox.sh"
 # shellcheck source=lib/verify.sh
 source "$PROJECT_ROOT/lib/verify.sh"
 # shellcheck source=lib/theme.sh
@@ -201,12 +203,17 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/bspwm/scripts/thunar-defaults.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/dunst-position.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/wallpaper.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/resize-mode.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
     "$PROJECT_ROOT/templates/sxhkd/sxhkdrc.in"
+    "$PROJECT_ROOT/templates/sxhkd/resize-mode.sxhkdrc.in"
+    "$PROJECT_ROOT/templates/firefox/zz-dwm-setup.js"
+    "$PROJECT_ROOT/templates/firefox/policies.json"
     "$PROJECT_ROOT/templates/polybar/config.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/logo.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/bspwm.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/monocle.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/resize.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/updates.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/polypomo.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/temp.ini.in"
@@ -242,6 +249,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/polypomo.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/bspwm.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/monocle.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/resize.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/battery.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/temp.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/pipewire.ini.in"
@@ -320,7 +328,7 @@ Próximo paso:
 Atajos principales:
   Super+Return      kitty
   Super+d           rofi (drun)
-  Super+Shift+b     firefox (no instalado en fase 1)
+  Super+Shift+b     firefox
   Super+Shift+e     VS Code (no instalado en fase 1)
   Super+Shift+f     thunar
   Super+Shift+l     bloquear
@@ -404,6 +412,7 @@ main() {
   fi
 
   install_packages
+  install_firefox
   install_gpu_configs
   install_headset_quirk
   install_bspwm

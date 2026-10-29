@@ -150,6 +150,24 @@ Comprobado:
 - `services.sh` también prefiere rofi; dmenu queda como respaldo.
 - Capturas: `gaps-bar30.png`, `net-rofi2.png`.
 
+### Modo resize con sxhkd hijo (2026-10-28)
+
+- `Super+r` crea el estado y la barra muestra `RESIZE` antes de pulsar
+  `h/j/k/l`.
+- `resize-mode.sh` arranca `sxhkd -c ~/.config/sxhkd/resize-mode.sxhkdrc`,
+  que solo captura `h/j/k/l` y `Escape`.
+- `h`/`l` redimensionan y refrescan el TTL; `Escape` mata al hijo y quita
+  `RESIZE`.
+- Tras 6 s sin teclas el hijo muere solo; `h/j/k/l` vuelven a las apps.
+- Medido con XTEST: ventana flotante 958→978→958 px con `h`/`l`;
+  `splitRatio` 0.510417→0.5 en un tileado de dos ventanas.
+- Tras `Escape` o 7 s de espera: `status` vacío y `pgrep` del hijo a 0.
+- Una `h` sola después de salir no redimensiona.
+- `Super+2`/`Super+1` siguen cambiando de escritorio con el modo cerrado.
+- Con una sola ventana tileada no cambia el tamaño (semántica de i3).
+- `install_sxhkd` renderiza `resize-mode.sxhkdrc` y envía `SIGUSR1` al
+  sxhkd principal.
+
 ### i915, xinitrc y kitty single-instance (2026-10-26)
 
 - `install.sh --dry-run` muestra
@@ -467,7 +485,7 @@ Criterios de aceptación:
 | `Super+{h,j,k,l}` | foco | Cambia ventana |
 | `Super+Shift+{h,j,k,l}` | mover | Intercambia ventana |
 | `Super+{1-7}` | escritorios | Cambia escritorio |
-| `Super+r`, luego `h/j/k/l` | resize | Redimensiona; Escape sale |
+| `Super+r`, luego `h/j/k/l` | resize | Modo resize; Escape o 6 s sale |
 | `Print` | captura completa | Copia al portapapeles y muestra miniatura |
 | `Super+Print` | menú de capturas | Abre el menú y permite guardar en `~/Pictures/Screenshots` |
 | `XF86Audio*` | volumen | pamixer |
@@ -581,3 +599,18 @@ less ~/.local/state/dwm-setup/install-*.log
 ```
 
 Si algo falla, entrar por `Ctrl+Alt+F3` y ejecutar `startx` manualmente.
+
+### Firefox ESR y Teams (2026-10-28)
+
+- `Super+Shift+b` por XTEST abre una ventana de Firefox.
+- `/etc/firefox-esr/zz-dwm-setup.js` contiene
+  `media.gmp-gmpopenh264.enabled` y
+  `media.peerconnection.video.h264_enabled` en `true`.
+- `about:plugins` muestra OpenH264 habilitado.
+- `desktop-doctor` muestra `[OK] OpenH264 habilitado para WebRTC/Teams`;
+  `verify_install` live, mono y warm pasan.
+- `/etc/firefox/policies/policies.json` contiene
+  `uBlock0@raymondhill.net` con `force_installed`.
+- `about:policies` muestra `ExtensionSettings` activo y el perfil tiene
+  `extensions/uBlock0@raymondhill.net.xpi`; `desktop-doctor` sube a 77 OK.
+- Pendiente: que otra persona comparta pantalla en Teams y se vea el vídeo.

@@ -10,6 +10,13 @@ install_sxhkd() {
   log "Renderizando sxhkdrc desde template"
   render_sxhkd_template "sxhkd/sxhkdrc" "$home/.config/sxhkd/sxhkdrc"
 
+  log "Renderizando resize-mode.sxhkdrc desde template"
+  render_sxhkd_template "sxhkd/resize-mode.sxhkdrc" \
+    "$home/.config/sxhkd/resize-mode.sxhkdrc"
+
+  # Recarga la instancia viva para que los atajos nuevos estén activos.
+  run_user pkill -USR1 -x sxhkd 2>/dev/null || true
+
   ok "sxhkd instalado"
 }
 
@@ -36,7 +43,7 @@ render_sxhkd_template() {
     "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png" \
     "TERM=kitty --single-instance" \
     "MENU=rofi -show drun" \
-    "BROWSER=chromium" \
+    "BROWSER=firefox" \
     "EDITOR=codium" \
     "FILEMGR=thunar" \
     "LOCK=/usr/local/bin/desktop-safe lock" \
