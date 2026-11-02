@@ -720,3 +720,12 @@ Preview y validación estática; **no** se ha ejecutado la instalación real.
   no se disparó. Conclusión: no hay cambio en caliente.
 - Se revirtió a 0/1 y 1/0. Pendiente: reiniciar Firefox y comprobar Google;
   YouTube con "Usar tema del dispositivo".
+
+### fastfetch (2026-11-02)
+
+- `fastfetch -c templates/fastfetch/config.jsonc` (renderizado a /tmp)
+  imprime los módulos sin errores de parseo.
+- En kitty, con `type: kitty`, el logo `Neofet.png` se renderiza a 28x15
+  respetando la proporción (956x1062).
+- Fuera de kitty cae al logo builtin; no es un fallo del config.
+- Pendiente: `sudo ./install.sh` y comprobar `~/.config/fastfetch/`.

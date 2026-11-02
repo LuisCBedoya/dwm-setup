@@ -49,6 +49,8 @@ source "$PROJECT_ROOT/lib/gtk.sh"
 source "$PROJECT_ROOT/lib/vlc.sh"
 # shellcheck source=lib/config.sh
 source "$PROJECT_ROOT/lib/config.sh"
+# shellcheck source=lib/fastfetch.sh
+source "$PROJECT_ROOT/lib/fastfetch.sh"
 # shellcheck source=lib/firefox.sh
 source "$PROJECT_ROOT/lib/firefox.sh"
 # shellcheck source=lib/verify.sh
@@ -181,6 +183,7 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/gtk.sh"
     "$PROJECT_ROOT/lib/vlc.sh"
     "$PROJECT_ROOT/lib/config.sh"
+    "$PROJECT_ROOT/lib/fastfetch.sh"
     "$PROJECT_ROOT/lib/verify.sh"
     "$PROJECT_ROOT/lib/theme.sh"
     "$PROJECT_ROOT/lib/audio.sh"
@@ -287,6 +290,8 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/ranger/scope.sh.in"
     "$PROJECT_ROOT/templates/ranger/epub-cover.sh.in"
     "$PROJECT_ROOT/templates/zathura/zathurarc.in"
+    "$PROJECT_ROOT/templates/fastfetch/config.jsonc.in"
+    "$PROJECT_ROOT/assets/fastfetch/Neofet.png"
     "$PROJECT_ROOT/templates/gtk/gtk-3.0.settings.ini.in"
     "$PROJECT_ROOT/templates/gtk/gtk-4.0.settings.ini.in"
     "$PROJECT_ROOT/templates/gtk/gtkrc-2.0.in"
@@ -437,6 +442,7 @@ main() {
   install_vlc_config
   install_zsh
   install_ranger
+  install_fastfetch
   install_user_configs
 
   if ! dry_run; then

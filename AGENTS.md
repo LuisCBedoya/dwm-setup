@@ -187,6 +187,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/gtk.sh` | temas GTK Catppuccin, tema derivado e iconos |
 | `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
 | `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
+| `lib/fastfetch.sh` | fastfetch: config y logo `Neofet.png` |
 | `lib/firefox.sh` | Firefox ESR y OpenH264 para WebRTC/Teams |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paletas (Mocha Black, Latte), par de modos y render |
@@ -208,6 +209,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/vlc/` | vlcrc (oscuro o claro según el modo) |
 | `templates/zathura/` | zathurarc |
 | `templates/themes/` | `catppuccin-mocha-blue` y `catppuccin-latte-blue` |
+| `templates/fastfetch/` | `config.jsonc.in` (logo PNG y módulos) |
+| `assets/fastfetch/` | `Neofet.png` |
 | `templates/icons/` | `papirus-folders` y carpetas `cat-mocha-blue`/`cat-latte-blue` |
 | `bin/theme-mode` | Cambio de modo dark/light en caliente |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |

@@ -764,3 +764,16 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
   determinista. `THEME_COLOR_SCHEME` se mantiene para apps GTK.
 - Google Search respeta `prefers-color-scheme`; YouTube necesita "Usar tema
   del dispositivo".
+
+## fastfetch con logo propio (2026-11-02)
+
+- `templates/fastfetch/config.jsonc.in`: la config del usuario con el bloque
+  `logo` activado (`type: kitty`, `source: @HOME@/.config/fastfetch/Neofet.png`,
+  28x15). El resto de módulos y colores ANSI se mantienen.
+- `assets/fastfetch/Neofet.png` vendorizado (956x1062).
+- `lib/fastfetch.sh` instala config y logo en `~/.config/fastfetch/`.
+- `fastfetch` añadido a `DESKTOP_PKGS` y a `required_pkgs`.
+- `verify_install` comprueba el binario, el config y el PNG; el logo debe
+  apuntar a `Neofet.png`.
+- Probado en kitty: `fastfetch -c config` renderiza el PNG a 28x15 sin
+  deformarlo.

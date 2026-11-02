@@ -42,6 +42,8 @@ Incluido:
 - Thunar como gestor de archivos puntual (`Super+Shift+F`), con la paleta
   global, sin menú, panel lateral ni barra de estado (Ctrl+M y F9 los
   recuperan).
+- **fastfetch** con logo propio (`Neofet.png`) y módulos de hardware,
+  software y tema.
 - Fuente JetBrainsMono Nerd Font, wallpaper oscuro y paleta **Catppuccin**:
   `mocha-black` (oscuro) y `latte` (claro).
   (superficie `#262626`, terminal `#1C1C1C`, bordes `#1A1A1A`, texto
@@ -441,6 +443,8 @@ templates/gtk/             settings GTK2/3/4 y CSS
 templates/vlc/             vlcrc (oscuro o claro según el modo)
 templates/zathura/         zathurarc.in
 templates/themes/          catppuccin-mocha-blue y catppuccin-latte-blue
+templates/fastfetch/       config.jsonc.in
+assets/fastfetch/          Neofet.png (logo de fastfetch)
 templates/icons/           papirus-folders y carpetas cat-*
 templates/modprobe/        i915.conf y nvidia.conf
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)

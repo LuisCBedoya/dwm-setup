@@ -9,7 +9,7 @@ verify_install() {
 
   for cmd in bspwm sxhkd polybar dunst rofi feh kitty flameshot i3lock xss-lock \
     brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl nvim \
-    zsh lsd ranger zathura vlc ueberzug; do
+    zsh lsd ranger zathura vlc ueberzug fastfetch; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
@@ -121,6 +121,8 @@ verify_install() {
     "$home/.local/share/dwm-setup/render.env" \
     "$home/.config/dwm-setup/mode" \
     "$home/.config/dwm-setup/surfingkeys.js" \
+    "$home/.config/fastfetch/config.jsonc" \
+    "$home/.config/fastfetch/Neofet.png" \
     "$home/.config/gtk-3.0/settings.ini" \
     "$home/.config/gtk-3.0/gtk.css" \
     "$home/.config/gtk-4.0/gtk.css" \
@@ -290,6 +292,13 @@ verify_install() {
       error "kitty.conf no fija listen_on unix:kitty-{kitty_pid}"
       failures=$((failures + 1))
     fi
+  fi
+
+  # fastfetch debe usar el logo PNG, no el builtin.
+  if [[ -f "$home/.config/fastfetch/config.jsonc" ]] &&
+     ! grep -q 'Neofet.png' "$home/.config/fastfetch/config.jsonc"; then
+    error "fastfetch no apunta al logo Neofet.png"
+    failures=$((failures + 1))
   fi
 
   # zathura no debe invertir las páginas: rompe cómics e imágenes.

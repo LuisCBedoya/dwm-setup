@@ -52,6 +52,7 @@ DESKTOP_PKGS=(
   bluez redshift
   scrot imagemagick
   lm-sensors upower acpi
+  fastfetch
   xdg-desktop-portal xdg-desktop-portal-gtk
 )
 
@@ -686,7 +687,7 @@ install_packages() {
     udiskie brightnessctl xclip thunar playerctl flameshot neovim i3lock xss-lock
     zsh zsh-autosuggestions lsd ranger zathura zathura-pdf-poppler zathura-cb zathura-djvu zathura-ps
     vlc ueberzug poppler-utils libmupdf-dev zathura-dev meson ninja-build
-    libnotify-bin gir1.2-notify-0.7 lm-sensors upower acpi
+    libnotify-bin gir1.2-notify-0.7 lm-sensors upower acpi fastfetch
     fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji fonts-noto-cjk
     adwaita-icon-theme hicolor-icon-theme papirus-icon-theme librsvg2-common desktop-file-utils shared-mime-info
     xdg-utils xdg-user-dirs network-manager network-manager-gnome dbus-user-session dbus-x11

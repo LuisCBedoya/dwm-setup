@@ -272,6 +272,7 @@ backup_existing_configs() {
   backup_user_path "$home/.local/share/wallpapers/rocky.jpg"
   backup_user_path "$home/.local/share/wallpapers/wallpaper.png"
   backup_user_path "$home/.config/dwm-setup"
+  backup_user_path "$home/.config/fastfetch"
 
   # Perfil de Firefox: userChrome.css y user.js se reemplazan al instalar.
   local ff_profile=""
@@ -345,6 +346,7 @@ chown_managed_paths() {
     "$TARGET_HOME/.config/ranger" \
     "$TARGET_HOME/.config/zathura" \
     "$TARGET_HOME/.config/dwm-setup" \
+    "$TARGET_HOME/.config/fastfetch" \
     "$TARGET_HOME/.local/share/dwm-setup" \
     "$TARGET_HOME/.config/vlc" \
     "$TARGET_HOME/.config/gtk-3.0" \
