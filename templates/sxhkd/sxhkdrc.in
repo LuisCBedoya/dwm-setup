@@ -55,6 +55,9 @@ super + alt + p
 # Alternar wallpaper principal / alternativo
 super + alt + w
     @HOME@/.config/bspwm/scripts/wallpaper.sh toggle
+# Alternar tema claro/oscuro (Catppuccin Mocha Black / Latte)
+super + alt + t
+    /usr/local/bin/theme-mode toggle
 super + shift + c
     pkill -USR1 -x sxhkd; bspc wm -r
 super + shift + r

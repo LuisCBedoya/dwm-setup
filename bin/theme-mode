@@ -1,0 +1,326 @@
+#!/usr/bin/env bash
+# theme-mode — alterna el escritorio entre Catppuccin Mocha Black y Latte.
+#
+# Uso:
+#   theme-mode dark       Mocha Black (oscuro)
+#   theme-mode light      Latte (claro)
+#   theme-mode toggle     cambia al modo contrario
+#   theme-mode status     muestra el modo actual
+#   theme-mode --no-reload dark   solo re-renderiza, sin recargar servicios
+#
+# Re-renderiza las configuraciones desde las plantillas instaladas en
+# ~/.local/share/dwm-setup y recarga lo que se puede en caliente.
+# No necesita sudo: los temas GTK e iconos ya están en /usr/share.
+set -Eeuo pipefail
+
+PROG="theme-mode"
+
+STORE="${DWM_THEME_STORE:-${XDG_DATA_HOME:-$HOME/.local/share}/dwm-setup}"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup"
+MODE_FILE="$CONFIG_DIR/mode"
+GTK_ENV="$CONFIG_DIR/gtk.env"
+RENDER_ENV="$STORE/render.env"
+HOME_DIR="${HOME}"
+
+die() { printf '%s: error: %s\n' "$PROG" "$*" >&2; exit 1; }
+info() { printf '  %s\n' "$*"; }
+
+usage() {
+  cat <<'EOF'
+Uso: theme-mode [--no-reload] <dark|light|toggle|status>
+
+  dark      Catppuccin Mocha Black (oscuro)
+  light     Catppuccin Latte (claro)
+  toggle    cambia al modo contrario
+  status    muestra el modo actual
+
+  --no-reload   re-renderiza sin reiniciar polybar ni dunst
+  -h, --help    esta ayuda
+
+No requiere sudo. Firefox y VLC necesitan reiniciarse para aplicar el cambio.
+EOF
+}
+
+theme_for_mode() {
+  case "$1" in
+    dark) printf 'mocha-black\n' ;;
+    light) printf 'latte\n' ;;
+    *) return 1 ;;
+  esac
+}
+
+current_mode() {
+  local mode=""
+  [[ -f "$MODE_FILE" ]] && mode=$(<"$MODE_FILE")
+  case "$mode" in
+    dark|light) printf '%s\n' "$mode" ;;
+    *) printf 'dark\n' ;;
+  esac
+}
+
+# Lee un valor de render.env sin sourcearlo (los valores llevan espacios).
+env_get() {
+  local key="$1"
+  sed -n "s/^${key}=//p" "$RENDER_ENV" 2>/dev/null | head -1
+}
+
+require_store() {
+  [[ -f "$RENDER_ENV" ]] ||
+    die "no existe $RENDER_ENV; ejecuta el instalador (./install.sh) primero"
+  [[ -d "$STORE/colors" ]] || die "faltan las paletas en $STORE/colors"
+  [[ -d "$STORE/templates" ]] || die "faltan las plantillas en $STORE/templates"
+}
+
+load_theme() {
+  local theme="$1"
+  local file="$STORE/colors/palette-$theme.sh"
+  [[ -f "$file" ]] || die "paleta no encontrada: $file"
+
+  # shellcheck source=/dev/null
+  source "$STORE/colors/base.sh"
+  # shellcheck source=/dev/null
+  source "$file"
+  THEME_NAME="$theme"
+}
+
+# render_one <ruta relativa en templates> <destino> <permisos>
+render_one() {
+  local rel="$1" dst="$2" perms="$3"
+  local src="$STORE/templates/$rel"
+  local content key val var
+
+  if [[ ! -f "$src" ]]; then
+    printf '%s: warn: falta la plantilla %s\n' "$PROG" "$src" >&2
+    return 0
+  fi
+
+  content=$(<"$src")
+
+  while IFS='=' read -r key val; do
+    [[ -n "$key" ]] || continue
+    content=${content//@$key@/$val}
+  done <"$RENDER_ENV"
+
+  content=${content//@THEME_NAME@/$THEME_NAME}
+
+  for var in $(compgen -v); do
+    case "$var" in
+      COLOR_*|THEME_*)
+        content=${content//@$var@/${!var}}
+        ;;
+    esac
+  done
+
+  mkdir -p -- "$(dirname -- "$dst")"
+  printf '%s\n' "$content" >"$dst"
+  chmod "$perms" -- "$dst"
+}
+
+render_mode() {
+  local h="$HOME_DIR"
+  local profile="${FIREFOX_PROFILE:-}"
+
+  render_one "polybar/config.ini.in" "$h/.config/polybar/config.ini" 0644
+  render_one "polybar/variants/reference/config.ini.in" \
+    "$h/.config/polybar/variants/reference/config.ini" 0644
+  render_one "kitty/kitty.conf.in" "$h/.config/kitty/kitty.conf" 0644
+  render_one "kitty/colorshemes/monochromatic.conf.in" \
+    "$h/.config/kitty/colorshemes/monochromatic.conf" 0644
+  render_one "dunst/dunstrc.in" "$h/.config/dunst/dunstrc" 0644
+  render_one "rofi/config.rasi.in" "$h/.config/rofi/config.rasi" 0644
+  render_one "rofi/powermenu.rasi.in" "$h/.config/rofi/powermenu.rasi" 0644
+  render_one "zathura/zathurarc.in" "$h/.config/zathura/zathurarc" 0644
+  render_one "bspwm/bspwmrc.in" "$h/.config/bspwm/bspwmrc" 0755
+  render_one "bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in" \
+    "$h/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh" 0755
+  render_one "gtk/gtk-3.0.settings.ini.in" "$h/.config/gtk-3.0/settings.ini" 0644
+  render_one "gtk/gtk-3.0.css.in" "$h/.config/gtk-3.0/gtk.css" 0644
+  render_one "gtk/gtk-4.0.settings.ini.in" "$h/.config/gtk-4.0/settings.ini" 0644
+  render_one "gtk/gtk-4.0.css.in" "$h/.config/gtk-4.0/gtk.css" 0644
+  render_one "gtk/gtkrc-2.0.in" "$h/.gtkrc-2.0" 0644
+  render_one "vlc/vlcrc.in" "$h/.config/vlc/vlcrc" 0600
+
+  if [[ -n "$profile" && -d "$profile" ]]; then
+    render_one "firefox/userChrome.css.in" "$profile/chrome/userChrome.css" 0644
+    render_one "firefox/user.js.in" "$profile/user.js" 0644
+  fi
+}
+
+write_state() {
+  local mode="$1"
+  mkdir -p -- "$CONFIG_DIR"
+  printf '%s\n' "$mode" >"$MODE_FILE"
+
+  {
+    printf 'GTK_THEME=%s\n' "$THEME_GTK"
+    printf 'ICON_THEME=%s\n' "$THEME_ICONS"
+    printf 'MODE=%s\n' "$mode"
+    printf 'THEME=%s\n' "$THEME_NAME"
+  } >"$GTK_ENV"
+}
+
+apply_bspwm_colors() {
+  local file="$HOME_DIR/.config/bspwm/bspwmrc"
+  local line
+
+  command -v bspc >/dev/null 2>&1 || return 0
+  bspc query -N >/dev/null 2>&1 || return 0
+  [[ -f "$file" ]] || return 0
+
+  while IFS= read -r line; do
+    [[ "$line" == bspc\ config\ *_color* ]] || continue
+    eval "$line" >/dev/null 2>&1 || true
+  done <"$file"
+}
+
+reload_polybar() {
+  pgrep -x polybar >/dev/null 2>&1 || return 1
+  if command -v polybar-msg >/dev/null 2>&1 &&
+     polybar-msg cmd restart >/dev/null 2>&1; then
+    return 0
+  fi
+  pkill -x polybar 2>/dev/null || true
+  sleep 0.3
+  if [[ -x "$HOME_DIR/.config/polybar/launch.sh" ]]; then
+    setsid "$HOME_DIR/.config/polybar/launch.sh" >/dev/null 2>&1 &
+  fi
+  return 0
+}
+
+reload_kitty() {
+  command -v kitty >/dev/null 2>&1 || return 1
+
+  local colors="$HOME_DIR/.config/kitty/colorshemes/monochromatic.conf"
+  [[ -f "$colors" ]] || return 1
+
+  local pid any=1
+  for pid in $(pgrep -x kitty 2>/dev/null); do
+    # listen_on unix:kitty-{kitty_pid} -> /tmp/kitty-<pid>
+    if timeout 2 kitty @ --to "unix:/tmp/kitty-$pid" \
+         set-colors --all --configured "$colors" >/dev/null 2>&1; then
+      any=0
+    fi
+  done
+  return "$any"
+}
+
+reload_dunst() {
+  pgrep -x dunst >/dev/null 2>&1 || return 1
+  pkill -x dunst 2>/dev/null || true
+  sleep 0.3
+  setsid dunst >/dev/null 2>&1 &
+  return 0
+}
+
+apply_gtk() {
+  command -v gsettings >/dev/null 2>&1 || return 0
+  gsettings set org.gnome.desktop.interface gtk-theme "$THEME_GTK" 2>/dev/null || true
+  gsettings set org.gnome.desktop.interface icon-theme "$THEME_ICONS" 2>/dev/null || true
+  gsettings set org.gnome.desktop.interface color-scheme "${THEME_COLOR_SCHEME:-default}" 2>/dev/null || true
+}
+
+notify_mode() {
+  local mode="$1" theme="$2" title label
+
+  command -v notify-send >/dev/null 2>&1 || return 0
+  [[ "${DWM_THEME_NO_NOTIFY:-0}" == "1" ]] && return 0
+
+  case "$mode" in
+    dark) title="Modo oscuro" ;;
+    light) title="Modo claro" ;;
+    *) return 0 ;;
+  esac
+
+  case "$theme" in
+    mocha-black) label="Catppuccin Mocha Black" ;;
+    latte) label="Catppuccin Latte" ;;
+    *) label="$theme" ;;
+  esac
+
+  notify-send -a "Tema" -i preferences-desktop-theme -t 2500 \
+    "$title" "$label" 2>/dev/null || true
+}
+
+apply_live() {
+  local -a done_parts=()
+
+  apply_bspwm_colors
+  done_parts+=("bspwm")
+  reload_polybar && done_parts+=("polybar")
+  reload_dunst && done_parts+=("dunst")
+  reload_kitty && done_parts+=("kitty")
+  apply_gtk
+  done_parts+=("GTK")
+
+  printf '  recargado: %s\n' "$(IFS=', '; printf '%s' "${done_parts[*]}")"
+  if [[ " ${done_parts[*]} " != *" kitty "* ]]; then
+    info "kitty: sin socket de control remoto; reinícialo para ver la paleta"
+  fi
+  info "Firefox y VLC: reinicia las apps para aplicar el cambio"
+}
+
+cmd_status() {
+  local mode theme
+  mode=$(current_mode)
+  theme=$(theme_for_mode "$mode")
+
+  local firefox_profile=""
+  if [[ -f "$RENDER_ENV" ]]; then
+    firefox_profile=$(env_get FIREFOX_PROFILE)
+  fi
+
+  printf '%s: %s (%s)\n' "$PROG" "$mode" "$theme"
+  if [[ -f "$GTK_ENV" ]]; then
+    # shellcheck source=/dev/null
+    source "$GTK_ENV"
+    printf '  GTK: %s · iconos: %s\n' "${GTK_THEME:-?}" "${ICON_THEME:-?}"
+  fi
+  if [[ -n "$firefox_profile" && -d "$firefox_profile" ]]; then
+    printf '  Firefox: %s\n' "$firefox_profile"
+  fi
+}
+
+main() {
+  local mode="" reload=1
+
+  while (($# > 0)); do
+    case "$1" in
+      --no-reload) reload=0 ;;
+      -h|--help) usage; exit 0 ;;
+      dark|light|toggle|status) mode="$1" ;;
+      *) die "opción desconocida: $1 (usa --help)" ;;
+    esac
+    shift
+  done
+
+  [[ -n "$mode" ]] || { usage; exit 2; }
+
+  if [[ "$mode" == "status" ]]; then
+    cmd_status
+    exit 0
+  fi
+
+  require_store
+  FIREFOX_PROFILE=$(env_get FIREFOX_PROFILE)
+
+  if [[ "$mode" == "toggle" ]]; then
+    if [[ "$(current_mode)" == "dark" ]]; then mode="light"; else mode="dark"; fi
+  fi
+
+  local theme
+  theme=$(theme_for_mode "$mode") || die "modo inválido: $mode"
+
+  load_theme "$theme"
+  render_mode
+  write_state "$mode"
+
+  printf '%s: %s (%s)\n' "$PROG" "$mode" "$theme"
+  if ((reload)); then
+    apply_live
+  else
+    info "sin recargar servicios (--no-reload)"
+  fi
+  notify_mode "$mode" "$theme"
+}
+
+main "$@"

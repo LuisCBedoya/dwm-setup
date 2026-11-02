@@ -1,0 +1,17 @@
+Iconos: carpetas Catppuccin para Papirus
+========================================
+
+SVG de carpetas:
+  Origen:   https://github.com/catppuccin/papirus-folders
+  Licencia: MIT — ver LICENSE (Copyright (c) 2021 Catppuccin)
+  Contenido: solo los SVG de `cat-mocha-blue` y `cat-latte-blue`
+             (22x22, 24x24, 32x32, 48x48, 64x64), en folders/.
+
+Script `papirus-folders`:
+  Autor:    Sergei Eremenko (https://github.com/SmartFinn)
+  Origen:   https://github.com/PapirusDevelopmentTeam/papirus-folders
+  Licencia: MIT
+
+El instalador copia los SVG a un tema propio (`Catppuccin-Mocha` o
+`Catppuccin-Latte`) que hereda de `Papirus-Dark`/`Papirus-Light`, y usa el
+script para crear los symlinks `folder*.svg -> folder-<color>*.svg`.

@@ -84,6 +84,14 @@ if [ -f /etc/firefox/policies/policies.json ]; then
 fi
 check_file "$CONFIG/polybar/modules/resize.ini"
 check_file "$CONFIG/polybar/variants/reference/modules/resize.ini"
+check_file "$CONFIG/polybar/modules/tray.ini"
+check_file "$CONFIG/polybar/variants/reference/modules/tray.ini"
+if grep -qE '^modules-right = .*\btray\b' "$CONFIG/polybar/config.ini" 2>/dev/null &&
+   grep -qE '^modules-right = .*\btray\b' "$CONFIG/polybar/variants/reference/config.ini" 2>/dev/null; then
+  printf '  [OK] bandeja del sistema en A y B\n'
+else
+  printf '  [MAL] falta tray en modules-right de A o B\n'
+fi
 check_file "$CONFIG/sxhkd/sxhkdrc"
 check_file "$CONFIG/polybar/config.ini"
 check_file "$CONFIG/polybar/launch.sh"

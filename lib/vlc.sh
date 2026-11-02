@@ -1,19 +1,28 @@
 #!/usr/bin/env bash
-# lib/vlc.sh — VLC con paleta oscura (qt-dark-palette)
+# lib/vlc.sh — VLC con paleta Qt oscura o clara según el modo activo.
 
 install_vlc_config() {
   local home="$TARGET_HOME"
   local vlcrc="$home/.config/vlc/vlcrc"
+  local dark="${THEME_VLC_DARK:-1}"
 
   section "Configurando VLC"
 
   if dry_run; then
-    log "[dry-run] activar qt-dark-palette=1 en $vlcrc"
+    log "[dry-run] dejar qt-dark-palette=$dark en $vlcrc"
     return 0
   fi
 
-  if ! vlc -H --advanced 2>/dev/null | grep -q -- '--qt-dark-palette'; then
-    warn "Esta versión de VLC no admite qt-dark-palette; se omite el modo oscuro"
+  # VLC se niega a arrancar como root ("not supposed to be run as root"), así
+  # que la sonda se ejecuta como el usuario destino. Si no hay salida, se
+  # continúa: VLC ignora las claves desconocidas de vlcrc.
+  local vlc_help=""
+  if cmd_exists vlc; then
+    vlc_help=$(run_user vlc -H --advanced 2>/dev/null || true)
+  fi
+
+  if [[ -n "$vlc_help" ]] && ! grep -q -- '--qt-dark-palette' <<<"$vlc_help"; then
+    warn "Esta versión de VLC no admite qt-dark-palette; se omite el modo de color"
     return 0
   fi
 
@@ -21,9 +30,9 @@ install_vlc_config() {
 
   if [[ -f "$vlcrc" ]]; then
     if grep -qE '^#?qt-dark-palette=' "$vlcrc"; then
-      run_user sed -i 's/^#\{0,1\}qt-dark-palette=.*/qt-dark-palette=1/' "$vlcrc"
+      run_user sed -i "s/^#\\{0,1\\}qt-dark-palette=.*/qt-dark-palette=$dark/" "$vlcrc"
     else
-      printf '\nqt-dark-palette=1\n' >>"$vlcrc"
+      printf '\nqt-dark-palette=%s\n' "$dark" >>"$vlcrc"
     fi
   else
     render_theme_template "$PROJECT_ROOT/templates/vlc/vlcrc.in" "$vlcrc" 0600
@@ -35,9 +44,9 @@ install_vlc_config() {
   fi
   chmod 0600 -- "$vlcrc"
 
-  if grep -qx 'qt-dark-palette=1' "$vlcrc"; then
-    ok "VLC: paleta oscura activada"
+  if grep -qx "qt-dark-palette=$dark" "$vlcrc"; then
+    ok "VLC: paleta Qt $([[ "$dark" == "1" ]] && echo oscura || echo clara)"
   else
-    error "No se pudo activar la paleta oscura de VLC: $vlcrc"
+    error "No se pudo ajustar la paleta de VLC: $vlcrc"
   fi
 }

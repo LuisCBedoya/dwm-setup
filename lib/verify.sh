@@ -57,6 +57,7 @@ verify_install() {
     "$home/.config/polybar/modules/battery.ini" \
     "$home/.config/polybar/modules/pipewire.ini" \
     "$home/.config/polybar/modules/date.ini" \
+    "$home/.config/polybar/modules/tray.ini" \
     "$home/.config/polybar/scripts/updates-apt.sh" \
     "$home/.config/polybar/scripts/polypomo" \
     "$home/.config/polybar/scripts/network-status.sh" \
@@ -91,6 +92,7 @@ verify_install() {
     "$home/.config/polybar/variants/reference/modules/fs.ini" \
     "$home/.config/polybar/variants/reference/modules/date.ini" \
     "$home/.config/polybar/variants/reference/modules/updates.ini" \
+    "$home/.config/polybar/variants/reference/modules/tray.ini" \
     "$home/.config/dunst/dunstrc" \
     "$home/.config/rofi/powermenu.rasi" \
     "$home/.config/rofi/config.rasi" \
@@ -110,7 +112,15 @@ verify_install() {
     "$home/.config/polybar/modules/resize.ini" \
     "$home/.config/polybar/variants/reference/modules/resize.ini" \
     "$home/.config/zathura/zathurarc" \
-    "$home/.themes/Windows-10-Dark/index.theme" \
+    "/usr/share/themes/catppuccin-mocha-blue/index.theme" \
+    "/usr/share/themes/catppuccin-latte-blue/index.theme" \
+    "/usr/share/themes/catppuccin-mocha-black/index.theme" \
+    "/usr/share/icons/Catppuccin-Mocha/index.theme" \
+    "/usr/share/icons/Catppuccin-Latte/index.theme" \
+    "/usr/local/bin/theme-mode" \
+    "$home/.local/share/dwm-setup/render.env" \
+    "$home/.config/dwm-setup/mode" \
+    "$home/.config/dwm-setup/surfingkeys.js" \
     "$home/.config/gtk-3.0/settings.ini" \
     "$home/.config/gtk-3.0/gtk.css" \
     "$home/.config/gtk-4.0/gtk.css" \
@@ -141,8 +151,8 @@ verify_install() {
   # Todos los colores renderizados deben salir de la paleta activa.
   local -a palette_hex=()
   local color_var
-  for color_var in COLOR_BG COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
-                   COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM COLOR_BORDER \
+  for color_var in COLOR_BG COLOR_BG_DEEP COLOR_BG_DEEPEST COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
+                   COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM COLOR_BORDER COLOR_BORDER_ALT \
                    COLOR_ACCENT COLOR_ACCENT_ALT COLOR_GREEN COLOR_YELLOW \
                    COLOR_ORANGE COLOR_RED COLOR_CYAN COLOR_PURPLE COLOR_BLUE \
                    COLOR_TERM_BG COLOR_TERM_0 COLOR_TERM_1 COLOR_TERM_2 \
@@ -259,6 +269,43 @@ verify_install() {
     fi
   fi
 
+  # SurfingKeys debe venir forzada desde la misma política.
+  if [[ -f /etc/firefox/policies/policies.json ]]; then
+    if ! grep -q '{a8332c60-5b6d-41ee-bfc8-e9bb331d34ad}' /etc/firefox/policies/policies.json ||
+       ! grep -q 'surfingkeys_ff' /etc/firefox/policies/policies.json; then
+      error "Firefox no tiene SurfingKeys en /etc/firefox/policies/policies.json"
+      failures=$((failures + 1))
+    fi
+  fi
+
+  # kitty debe aceptar control remoto para que theme-mode lo recoloree.
+  if [[ -f "$home/.config/kitty/kitty.conf" ]]; then
+    if ! grep -qE '^allow_remote_control[[:space:]]+(socket-only|socket|yes)' \
+         "$home/.config/kitty/kitty.conf"; then
+      error "kitty.conf no permite control remoto; theme-mode no podrá recolorear kitty"
+      failures=$((failures + 1))
+    fi
+    if ! grep -qE '^listen_on[[:space:]]+unix:kitty-\{kitty_pid\}' \
+         "$home/.config/kitty/kitty.conf"; then
+      error "kitty.conf no fija listen_on unix:kitty-{kitty_pid}"
+      failures=$((failures + 1))
+    fi
+  fi
+
+  # zathura no debe invertir las páginas: rompe cómics e imágenes.
+  if [[ -f "$home/.config/zathura/zathurarc" ]] &&
+     grep -qE '^set[[:space:]]+recolor[[:space:]]+true' "$home/.config/zathura/zathurarc"; then
+    error "zathurarc tiene recolor activo; los cómics se verán invertidos"
+    failures=$((failures + 1))
+  fi
+
+  # El atajo de cambio de modo debe existir.
+  if [[ -f "$home/.config/sxhkd/sxhkdrc" ]] &&
+     ! grep -q 'theme-mode toggle' "$home/.config/sxhkd/sxhkdrc"; then
+    error "sxhkdrc no tiene el atajo Super+Alt+t para theme-mode"
+    failures=$((failures + 1))
+  fi
+
   # uBlock Origin debe venir forzado desde la política de Firefox.
   if [[ -f /etc/firefox/policies/policies.json ]]; then
     if ! grep -q '"uBlock0@raymondhill.net"' /etc/firefox/policies/policies.json ||
@@ -268,10 +315,34 @@ verify_install() {
     fi
   fi
 
-  # VLC debe arrancar con la paleta oscura.
+  # VLC debe seguir el modo activo (1 en oscuro, 0 en claro).
+  local expected_vlc="${THEME_VLC_DARK:-1}"
   if [[ -f "$home/.config/vlc/vlcrc" ]]; then
-    if ! grep -qx 'qt-dark-palette=1' "$home/.config/vlc/vlcrc"; then
-      error "VLC no tiene activada la paleta oscura (qt-dark-palette=1)"
+    if ! grep -qx "qt-dark-palette=$expected_vlc" "$home/.config/vlc/vlcrc"; then
+      error "VLC no sigue el modo activo (se espera qt-dark-palette=$expected_vlc)"
+      failures=$((failures + 1))
+    fi
+  fi
+
+  # Tema GTK e iconos del modo activo.
+  if [[ -f "$home/.config/gtk-3.0/settings.ini" ]]; then
+    if ! grep -qx "gtk-theme-name=$THEME_GTK" "$home/.config/gtk-3.0/settings.ini"; then
+      error "GTK3 no usa el tema del modo activo ($THEME_GTK)"
+      failures=$((failures + 1))
+    fi
+    if ! grep -qx "gtk-icon-theme-name=$THEME_ICONS" "$home/.config/gtk-3.0/settings.ini"; then
+      error "GTK3 no usa los iconos del modo activo ($THEME_ICONS)"
+      failures=$((failures + 1))
+    fi
+  fi
+
+  # theme-mode debe ser ejecutable y coherente con el modo guardado.
+  if [[ -f "$home/.config/dwm-setup/mode" ]]; then
+    local saved_mode
+    saved_mode=$(<"$home/.config/dwm-setup/mode")
+    if [[ "$saved_mode" == "dark" && "$THEME_NAME" != "mocha-black" ]] ||
+       [[ "$saved_mode" == "light" && "$THEME_NAME" != "latte" ]]; then
+      error "El modo guardado ($saved_mode) no coincide con la paleta activa ($THEME_NAME)"
       failures=$((failures + 1))
     fi
   fi
@@ -301,6 +372,10 @@ verify_install() {
       error "Falta include-directory en polybar/config.ini"
       failures=$((failures + 1))
     fi
+    if ! grep -qE '^modules-right = .*\btray\b' "$home/.config/polybar/config.ini"; then
+      error "La barra A no incluye el módulo tray"
+      failures=$((failures + 1))
+    fi
   fi
 
   # Módulos de la variante referencia
@@ -318,6 +393,10 @@ verify_install() {
     done < <(awk -F'=' '/^modules-(left|right|center)/ {print $0}' "$variant_config")
     if ! grep -q '^include-directory' "$variant_config"; then
       error "Falta include-directory en la variante referencia"
+      failures=$((failures + 1))
+    fi
+    if ! grep -qE '^modules-right = .*\btray\b' "$variant_config"; then
+      error "La barra B no incluye el módulo tray"
       failures=$((failures + 1))
     fi
   fi

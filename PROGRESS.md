@@ -662,3 +662,105 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
 - `about:policies` muestra `ExtensionSettings` activo y el perfil tiene
   `extensions/uBlock0@raymondhill.net.xpi`; `desktop-doctor` sube a 77 OK.
 - Pendiente: prueba real de Teams con pantalla compartida.
+
+## Bandeja del sistema (2026-11-01)
+
+- Módulo `internal/tray` añadido a las variantes A y B, al final de
+  `modules-right`.
+- `tray-size = 70%`, `tray-spacing = 6px`, `tray-padding = 2px`.
+- `verify_install` y `desktop-doctor` comprueban los módulos y que `tray`
+  esté en `modules-right` de ambas barras.
+- Probado con un `GtkStatusIcon` de prueba: icono de 21x21 embebido en la
+  barra A y B, a la derecha (`+1893+1054`).
+- Polybar solo soporta XEmbed; Telegram/Discord modernos pueden necesitar
+  `snixembed` (no está en Debian 13 stable).
+
+## Catppuccin: Mocha Black + Latte (2026-11-02)
+
+- Solo dos paletas: `palette-mocha-black.sh` (oscuro, por defecto) y
+  `palette-latte.sh` (claro). Se eliminan `mono`, `warm` y `nord`.
+- `mocha-black` lleva la rampa de Mocha a casi negro (`base #0d0d14`,
+  `mantle #08080d`, `crust #050509`, surfaces `#1a1a24`/`#26262f`/`#35353f`)
+  y mantiene el acento azul `#89b4fa`.
+- `latte` mantiene Latte con acento `#1e66f5`.
+- `bin/theme-mode dark|light|toggle|status`: re-renderiza desde
+  `~/.local/share/dwm-setup` y recarga polybar, dunst y bspwm sin sudo.
+- Temas GTK vendorizados (`catppuccin-mocha-blue`, `catppuccin-latte-blue`)
+  instalados en `/usr/share/themes`; `catppuccin-mocha-black` se genera al
+  instalar sustituyendo la rampa de Mocha.
+- Iconos overlay `Catppuccin-Mocha`/`Catppuccin-Latte` en
+  `/usr/share/icons`, con carpetas `cat-mocha-blue`/`cat-latte-blue`.
+  Necesario porque Papirus-Dark y Papirus-Light comparten `places/`.
+- Firefox: `userChrome.css` y `user.js` por modo en el perfil detectado.
+- VLC: `qt-dark-palette` según el modo. Polybar: `selected` pasa a
+  `@COLOR_ACCENT@`.
+- Sustituido `Windows-10-Dark` por los temas Catppuccin en `lib/gtk.sh`,
+  `lib/firefox.sh`, `lib/vlc.sh`, `lib/config.sh`, `lib/verify.sh` e
+  `install.sh`.
+- Preview aprobado por el usuario (contact sheets y escritorios en
+  `/tmp/opencode/mocha-variants`).
+- Validado en estático: `bash -n`, `--dry-run` con ambas paletas y
+  `theme-mode` en un HOME simulado (render dark/light, sin placeholders,
+  permisos 0755/0644/0600).
+- Pendiente: ejecutar `sudo ./install.sh` y probar `theme-mode` en la
+  sesión viva; validar Thunar/Firefox/VLC con el tema derivado.
+
+## Firefox: tema, botones, SurfingKeys y atajo de modo (2026-11-02)
+
+- `userChrome.css` fusionado: mantiene el diseño compacto del usuario
+  (`--tab-min-height: 16px`, urlbar compacta, 10 px) y añade los colores de
+  la paleta. Vuelven a verse atrás, adelante, recargar, parar, descargas y
+  el menú hamburguesa; siguen ocultos home, library, cuenta, puzzle,
+  candado y estrella.
+- `Super+Alt+t` → `/usr/local/bin/theme-mode toggle`, con notificación de
+  dunst (`Modo oscuro` / `Modo claro`).
+- SurfingKeys `{a8332c60-5b6d-41ee-bfc8-e9bb331d34ad}` añadida a
+  `policies.json` con `force_installed`.
+- Config de SurfingKeys generada en `~/.config/dwm-setup/surfingkeys.js`
+  si no existe: keymaps del usuario, `@FONT@`, sin alias de reddit,
+  `#sk_status` a 11pt y tema con `prefers-color-scheme` para dark/light en
+  un solo archivo.
+- `verify_install` comprueba la política de SurfingKeys, el archivo de
+  config y el atajo.
+- Pendiente: instalar y comprobar en vivo que `prefers-color-scheme`
+  funciona dentro del CSS inyectado por SurfingKeys; si no, habrá que
+  renderizar un archivo por modo.
+
+## kitty en caliente con theme-mode (2026-11-02)
+
+- `kitty.conf` añade `allow_remote_control socket-only` y
+  `listen_on unix:kitty-{kitty_pid}` (socket en `/tmp/kitty-<pid>`).
+- `bin/theme-mode` recolorea cada instancia con
+  `kitty @ --to unix:/tmp/kitty-<pid> set-colors --all --configured
+  ~/.config/kitty/colorshemes/monochromatic.conf`.
+- `load-config` no servía: no revierte colores fijados con `set-colors`;
+  `set-colors --configured <archivo>` sí.
+- Verificado en un kitty de prueba: fondo `#eff1f5` → `#0d0d14` → `#eff1f5`
+  y cursor `#1e66f5` / `#89b4fa`, con el modo final en `light`.
+- Pendiente: reiniciar el kitty vivo (pid 1416) una vez para que cree el
+  socket.
+
+## Fix: VLC no soporta qt-dark-palette (2026-11-02)
+
+- `install_vlc_config` sondeaba `vlc -H --advanced` como root. VLC aborta
+  con "VLC is not supposed to be run as root. Sorry." y sin salida, así que
+  el paso se saltaba y `vlcrc` se quedaba con el valor anterior.
+- Reproducido con `unshare -r vlc -H --advanced` (rc=1, 0 líneas).
+- Ahora la sonda se ejecuta con `run_user` (usuario destino) y se captura
+  la salida; si está vacía se continúa y se escribe el valor.
+- `verify_install` vuelve a pasar: `qt-dark-palette=1` con el modo `dark`.
+
+## Zathura sin recolor y límite del tema web (2026-11-02)
+
+- Zathura invertía las páginas (`set recolor true`), incluidos cómics e
+  imágenes. Ahora `set recolor false` y `Ctrl+R` queda disponible para
+  invertir PDFs de texto en la sesión.
+- Se probó que el contenido web de Firefox siguiera al modo en caliente:
+  `content-override=2` + `ui.systemUsesDarkTheme=-1` + `gsettings
+  color-scheme`. Una instancia de prueba en `about:...`/`prefers-color-scheme`
+  siguió en `DARK` tras cambiar gsettings a claro y volver a oscuro; el
+  evento `change` no disparó. El contenido solo sigue al reiniciar Firefox.
+- Se revirtió a `content-override` 0/1 y `ui.systemUsesDarkTheme` 1/0, que es
+  determinista. `THEME_COLOR_SCHEME` se mantiene para apps GTK.
+- Google Search respeta `prefers-color-scheme`; YouTube necesita "Usar tema
+  del dispositivo".

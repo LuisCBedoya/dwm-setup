@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
-# lib/theme.sh — Carga y gestión de paletas de colores (fase 1b: Warm Charcoal)
+# lib/theme.sh — Carga y gestión de paletas de colores (Catppuccin)
 
 # Paletas disponibles (archivos en templates/colors/palette-<name>.sh)
 declare -A AVAILABLE_THEMES=(
-  ["mono"]="Mono Slate (grises + azul tenue)"
-  ["warm"]="Warm Charcoal (carbón cálido + beige)"
-  ["nord"]="Nord (vendorizado desde repo Bspwm)"
+  ["mocha-black"]="Catppuccin Mocha Black (oscuro, casi negro)"
+  ["latte"]="Catppuccin Latte (claro, acento azul)"
 )
 
 # Tema por defecto
-DEFAULT_THEME="mono"
+DEFAULT_THEME="mocha-black"
+
+# Pareja de modos: cada tema tiene su contrario para theme-mode
+declare -A THEME_PAIR=(
+  ["mocha-black"]="latte"
+  ["latte"]="mocha-black"
+)
 
 # Tema seleccionado (se establece con load_theme)
 THEME_NAME=""
@@ -106,9 +111,9 @@ render_theme_template() {
 
   # Reemplazar todos los @COLOR_*@
   local var
-  for var in COLOR_BG COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
+  for var in COLOR_BG COLOR_BG_DEEP COLOR_BG_DEEPEST COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
              COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM \
-             COLOR_BORDER COLOR_ACCENT COLOR_ACCENT_ALT \
+             COLOR_BORDER COLOR_BORDER_ALT COLOR_ACCENT COLOR_ACCENT_ALT \
              COLOR_GREEN COLOR_YELLOW COLOR_ORANGE COLOR_RED COLOR_CYAN \
              COLOR_PURPLE COLOR_BLUE \
              COLOR_TERM_BG COLOR_TERM_0 COLOR_TERM_1 COLOR_TERM_2 \
@@ -125,6 +130,14 @@ render_theme_template() {
 
   # También reemplazar @THEME_NAME@
   content="${content//@THEME_NAME@/$THEME_NAME}"
+
+  # Ajustes de modo que no son color (tema GTK, iconos, VLC, Firefox)
+  local theme_var_name
+  for theme_var_name in THEME_GTK THEME_ICONS THEME_FOLDER_COLOR THEME_VLC_DARK \
+                        THEME_FIREFOX_DARK THEME_PREFERS_DARK \
+                        THEME_CONTENT_OVERRIDE THEME_COLOR_SCHEME THEME_CURSOR; do
+    content="${content//@${theme_var_name}@/${!theme_var_name}}"
+  done
 
   # Reemplazar variables de entorno/plantilla extra
   local extra_var extra_val

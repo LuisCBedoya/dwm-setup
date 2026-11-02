@@ -614,3 +614,109 @@ Si algo falla, entrar por `Ctrl+Alt+F3` y ejecutar `startx` manualmente.
 - `about:policies` muestra `ExtensionSettings` activo y el perfil tiene
   `extensions/uBlock0@raymondhill.net.xpi`; `desktop-doctor` sube a 77 OK.
 - Pendiente: que otra persona comparta pantalla en Teams y se vea el vídeo.
+
+### Bandeja del sistema (2026-11-01)
+
+- `~/.config/polybar/modules/tray.ini` y la variante de referencia existen.
+- `modules-right` de A y B termina en `tray`.
+- `verify_install` y `desktop-doctor` lo comprueban.
+- Probado con `GtkStatusIcon`: icono de 21x21 embebido en A y B a la
+  derecha (`xwininfo` → `+1893+1054`).
+- Pendiente: probar con Telegram; si no aparece, evaluar `snixembed`.
+
+### Catppuccin Mocha Black y Latte (2026-11-02)
+
+Preview y validación estática; **no** se ha ejecutado la instalación real.
+
+**Preview (sin tocar el sistema):**
+
+- Contact sheets y escritorios en `/tmp/opencode/mocha-variants` para
+  `black`, `mauve`, `blackmauve` y `latte`.
+- Barras A/B reales (clonadas de `~/.config/polybar` y solo con el bloque
+  `[colors]` sustituido), Thunar con tema GTK real, kitty, ranger, zathura,
+  Firefox con `userChrome.css`, VLC, rofi y dunst.
+- El usuario elige `mocha-black` (dark) y `latte` (light).
+
+**Estático:**
+
+- `bash -n` de `install.sh`, `lib/*.sh`, `bin/theme-mode`,
+  `templates/bspwm/{autostart,bspwmrc}.in`: OK.
+- `./install.sh --dry-run` y `--dry-run --theme latte`: OK; el resumen
+  muestra el tema cargado y el `qt-dark-palette` correcto.
+- Render de ambos modos en un HOME simulado con `theme-mode --no-reload`:
+  sin `@TOKEN@` pendientes, permisos 0755 (`bspwmrc`), 0644 y 0600
+  (`vlcrc`), y colores de polybar/GTK/bspwm acordes a la paleta.
+- Derivación de `catppuccin-mocha-black` probada en `/tmp`: no quedan
+  hex de la rampa Mocha (`#1e1e2e`, `#181825`, `#11111b`, `#313244`,
+  `#45475a`, `#585b70`) en `*.css`/`*.svg` y el acento `#89b4fa` se
+  mantiene.
+- Overlay de iconos probado en `/tmp` con `XDG_DATA_HOME` temporal:
+  `Catppuccin-Mocha` hereda de `Papirus-Dark`, `papirus-folders` crea los
+  symlinks `folder*.svg` y Thunar pinta las carpetas con el azul de
+  Catppuccin.
+
+**Pendiente (requiere `sudo ./install.sh`):**
+
+- Instalar temas en `/usr/share/themes` y comprobar que
+  `catppuccin-mocha-black` abre Thunar con la superficie `#0d0d14`.
+- Comprobar que `Catppuccin-Mocha` y `Catppuccin-Latte` coexisten con
+  colores de carpeta distintos.
+- `theme-mode dark` / `light` en la sesión viva: polybar recarga, dunst se
+  reinicia, bordes de bspwm cambian y `desktop-doctor` no falla.
+- Firefox: `userChrome.css` y `ui.systemUsesDarkTheme` tras reiniciar.
+- VLC: `qt-dark-palette` 1/0.
+
+### Firefox: botones, SurfingKeys y atajo (2026-11-02)
+
+**Estático:**
+
+- `bash -n` de `lib/firefox.sh`, `bin/theme-mode` e `install.sh`: OK.
+- `render de surfingkeys.js.in` en `/tmp`: sin `@TOKEN@`, 2 backticks,
+  paréntesis y llaves balanceados, sin alias de reddit, `#sk_status` a 11pt.
+- `build_surfingkeys_theme` emite los dos bloques con los hex de
+  `mocha-black` y `latte`.
+- `policies.json` valida como JSON y contiene uBlock y SurfingKeys.
+
+**Pendiente (requiere `sudo ./install.sh` y reiniciar Firefox):**
+
+- `about:policies` muestra los dos `ExtensionSettings`.
+- El chrome usa `#0d0d14` y se ven atrás/adelante/recargar/descargas/menú.
+- Pegar `~/.config/dwm-setup/surfingkeys.js` y comprobar que el tema cambia
+  con `Super+Alt+t` sin volver a pegarlo (prueba de `prefers-color-scheme`).
+- `theme-mode toggle` muestra la notificación de dunst.
+
+### kitty en caliente (2026-11-02)
+
+- `kitty.conf` contiene `allow_remote_control socket-only` y
+  `listen_on unix:kitty-{kitty_pid}`.
+- Prueba en una instancia aparte: el socket aparece en `/tmp/kitty-<pid>`,
+  `get-colors` responde y
+  `set-colors --all --configured ~/.config/kitty/colorshemes/monochromatic.conf`
+  cambia el fondo a `#0d0d14`/`#eff1f5` y el cursor a `#89b4fa`/`#1e66f5`.
+- `load-config` no revierte los colores fijados previamente: se descartó.
+- Pendiente: reiniciar el kitty vivo y comprobar `Super+Alt+t` en la sesión
+  real; el binario instalado debe actualizarse con `sudo ./install.sh`.
+
+### Fix de la sonda de VLC (2026-11-02)
+
+- Causa: `vlc -H --advanced` como root devuelve rc=1 sin salida
+  ("VLC is not supposed to be run as root"), así que el instalador creía que
+  la opción no existía y se saltaba el paso.
+- Reproducido con `unshare -r vlc -H --advanced`: rc=1, 0 líneas.
+- Con `run_user vlc -H --advanced` salen 300 KB de ayuda y aparece
+  `--qt-dark-palette`.
+- Tras `theme-mode --no-reload dark`, `~/.config/vlc/vlcrc` tiene
+  `qt-dark-palette=1` y `verify_install` no marca el fallo.
+
+### Zathura y contenido de Firefox (2026-11-02)
+
+- Zathura 0.5.11: `^r` es "Recolor (grayscale and invert colors)". Con
+  `set recolor true` los cómics se ven en negativo; con `false` se ven
+  normales y `Ctrl+R` invierte solo el documento.
+- Prueba de contenido en caliente: instancia aparte con
+  `content-override=2`, `ui.systemUsesDarkTheme=-1` y una página con
+  `@media (prefers-color-scheme: dark)`. Permaneció en `DARK` (13,13,20) tras
+  poner `color-scheme=default` y volver a `prefer-dark`; el evento `change`
+  no se disparó. Conclusión: no hay cambio en caliente.
+- Se revirtió a 0/1 y 1/0. Pendiente: reiniciar Firefox y comprobar Google;
+  YouTube con "Usar tema del dispositivo".

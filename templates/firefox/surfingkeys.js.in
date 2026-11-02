@@ -1,0 +1,188 @@
+// SurfingKeys — configuración del escritorio (Catppuccin).
+// Archivo: ~/.config/dwm-setup/surfingkeys.js
+// Una vez por perfil: copiar todo y pegarlo en
+// SurfingKeys → Ajustes → Advanced mode → editor → Save.
+// Es tuyo: el instalador no lo pisa si ya existe.
+// El tema usa prefers-color-scheme, así que sigue a dark/light sin reimportar.
+
+const {
+    Clipboard,
+    Front,
+    Hints,
+    Normal,
+    RUNTIME,
+    Visual,
+    aceVimMap,
+    addSearchAlias,
+    cmap,
+    getClickableElements,
+    imap,
+    imapkey,
+    iunmap,
+    map,
+    mapkey,
+    readText,
+    removeSearchAlias,
+    tabOpenLink,
+    unmap,
+    unmapAllExcept,
+    vmapkey,
+    vunmap
+} = api;
+
+settings.smoothScroll = false;
+settings.hintAlign = "left";
+//settings.omnibarPosition = 'top';
+settings.tabsThreshold = 0;
+settings.modeAfterYank = 'Normal';
+Hints.setCharacters('asdfgyuiopqwertnmzxcvb');
+
+map('o', 'go');
+map('b', 'T');
+map('O', 't');
+map('H', 'S');
+map('L', 'D');
+
+// Scroll Page Down/Up
+mapkey("<Ctrl-d>", "Scroll down", () => { Normal.scroll("pageDown"); });
+mapkey("<Ctrl-u>", "Scroll up", () => { Normal.scroll("pageUp"); });
+mapkey('<Alt-h>', 'Open history in omnibar', () => Front.openOmnibar({ type: 'History' }));
+
+// --- Tabs ---
+map('<Alt-q>', 'x');
+map('<Alt-o>', 'R');
+map('>', '>>');
+map('<', '<<');
+
+// Yank URL with one press (disables other yx binds)
+map('y', 'yy');
+
+// Change focused frame
+map('gf', 'w');
+imap('<Alt-,>', '<Esc>');
+
+// ---- Unmap -----
+// Proxy Stuff
+unmap('spa');
+unmap('spb');
+unmap('spc');
+unmap('spd');
+unmap('sps');
+unmap('cp');
+unmap(';cp');
+unmap(';ap');
+
+// Emoji
+iunmap(":");
+
+// Misc
+unmap(';t');
+unmap('si');
+unmap('ga');
+unmap('gc');
+unmap('gn');
+unmap('gr');
+unmap('ob');
+unmap('og');
+unmap('od');
+unmap('oy');
+
+// ---- Search Engines -----
+removeSearchAlias('b', 's');
+removeSearchAlias('d', 's');
+removeSearchAlias('g', 's');
+removeSearchAlias('h', 's');
+removeSearchAlias('w', 's');
+removeSearchAlias('y', 's');
+removeSearchAlias('s', 's');
+
+addSearchAlias('aur', 'aur', 'https://aur.archlinux.org/packages/?O=0&SeB=nd&K=', 's');
+addSearchAlias('aw', 'arch wiki', 'https://wiki.archlinux.org/index.php?title=Special:Search&search=', 's');
+addSearchAlias('dh', 'docker', 'https://hub.docker.com/search?type=image&q=', 's');
+addSearchAlias('gh', 'github', 'https://github.com/search?q=', 's');
+addSearchAlias('yt', 'youtube', 'https://www.youtube.com/results?search_query=', 's');
+addSearchAlias('go', 'google', 'https://www.google.com/search?q=', 's');
+
+settings.theme = `
+@SK_THEME@
+
+.sk_theme {
+    font-family: '@FONT@', monospace;
+    font-size: 11pt;
+    background: var(--sk-bg);
+    color: var(--sk-fg);
+}
+
+.sk_theme *:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.sk_theme input {
+    color: var(--sk-fg) !important;
+    background: var(--sk-bg) !important;
+    border: 1px solid var(--sk-border) !important;
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+
+.sk_theme .omnibar {
+    background-color: var(--sk-bg) !important;
+    color: var(--sk-fg) !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* Resultados de búsqueda */
+.sk_theme #sk_omnibarSearchResult ul li {
+    background: var(--sk-bg) !important;
+    color: var(--sk-fg) !important;
+    padding: 5px;
+    border: none !important;
+}
+
+/* Resultado enfocado */
+.sk_theme #sk_omnibarSearchResult ul li.focused {
+    background: var(--sk-surface) !important;
+    border-left: 3px solid var(--sk-accent);
+    color: var(--sk-fg) !important;
+}
+
+/* Resultados alternos */
+.sk_theme #sk_omnibarSearchResult ul li:nth-child(odd) {
+    background: var(--sk-surface);
+}
+
+/* Otros detalles visuales */
+.sk_theme .url {
+    color: var(--sk-blue) !important;
+}
+
+.sk_theme .annotation {
+    color: var(--sk-teal);
+}
+
+.sk_theme .omnibar_highlight {
+    color: var(--sk-red);
+    font-weight: bold;
+}
+
+.sk_theme .omnibar_timestamp {
+    color: var(--sk-peach);
+}
+
+.sk_theme .omnibar_visitcount {
+    color: var(--sk-green);
+}
+
+/* Status bar y búsqueda */
+#sk_status, #sk_find {
+    font-size: 11pt;
+    background: var(--sk-bg);
+    color: var(--sk-fg);
+    border-radius: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--sk-border);
+}
+`;

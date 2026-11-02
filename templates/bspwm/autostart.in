@@ -58,10 +58,17 @@ fi
 # --- Teclado ---
 setxkbmap @KEYMAP@ 2>/dev/null || true
 
-# --- Tema GTK e iconos ---
+# --- Tema GTK e iconos (según el modo activo en ~/.config/dwm-setup/gtk.env) ---
 if command -v gsettings >/dev/null 2>&1; then
-  gsettings set org.gnome.desktop.interface gtk-theme 'Windows-10-Dark' 2>/dev/null || true
-  gsettings set org.gnome.desktop.interface icon-theme 'Papirus' 2>/dev/null || true
+  gtk_theme="catppuccin-mocha-black"
+  icon_theme="Catppuccin-Mocha"
+  gtk_env_file="$HOME/.config/dwm-setup/gtk.env"
+  if [ -f "$gtk_env_file" ]; then
+    gtk_theme=$(sed -n 's/^GTK_THEME=//p' "$gtk_env_file" | head -1)
+    icon_theme=$(sed -n 's/^ICON_THEME=//p' "$gtk_env_file" | head -1)
+  fi
+  gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" 2>/dev/null || true
+  gsettings set org.gnome.desktop.interface icon-theme "$icon_theme" 2>/dev/null || true
 fi
 
 # --- Thunar: menú, panel lateral y barra de estado ocultos ---

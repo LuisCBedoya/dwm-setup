@@ -1,5 +1,5 @@
-/* Mono Slate — override para apps GTK3 (Thunar incluido)
- * Se carga después del tema Windows-10-Dark. */
+/* Catppuccin — override para apps GTK3 (Thunar incluido)
+ * Se carga después del tema Catppuccin del modo activo. */
 
 @define-color theme_bg_color                  @COLOR_BG_ALT@;
 @define-color theme_base_color                @COLOR_BG@;

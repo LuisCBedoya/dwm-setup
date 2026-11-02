@@ -1,0 +1,10 @@
+; tray — bandeja del sistema (XEmbed)
+[module/tray]
+type = internal/tray
+format-margin = 4px
+format-background = ${colors.module-bg}
+tray-spacing = 6px
+tray-padding = 2px
+tray-size = 70%
+tray-background = ${colors.module-bg}
+tray-foreground = ${colors.foreground}

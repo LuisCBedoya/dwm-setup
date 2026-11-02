@@ -2246,3 +2246,146 @@ pantalla compartida de Teams (H.264 en WebRTC).
 - uBlock Origin aparece instalado en el primer arranque y no se puede
   quitar por accidente.
 - Si Teams sigue fallando, se puede usar Chromium/Brave como alternativa.
+
+## ADR-098 — Bandeja del sistema en polybar
+
+**Contexto:** se quiere una zona de iconos de aplicaciones en segundo plano
+como la bandeja de Windows. Polybar 3.7 incorpora el módulo `internal/tray`,
+pero no estaba configurado.
+
+**Decisión:**
+1. Añadir `tray.ini` a las variantes A y B con `type = internal/tray`.
+2. Colocarlo al final de `modules-right` en ambas barras.
+3. Usar `tray-size = 70%`, espaciado de 6 px y padding de 2 px, con los
+   colores de la paleta.
+4. Documentar que el protocolo es XEmbed: las apps que solo hablan
+   StatusNotifierItem (Telegram moderno, Discord/Electron) pueden requerir
+   `snixembed`, que no está en Debian 13 stable.
+
+**Consecuencias:**
+- La bandeja aparece abajo a la derecha con la barra en `bottom`.
+- Solo puede existir una instancia de tray por sesión; no se debe arrancar
+  `stalonetray` u otro host a la vez.
+- Sin aplicaciones con icono de bandeja, el área queda vacía.
+
+## ADR-099 — Catppuccin como único tema, con dark y light
+
+**Contexto:** tras probar varias paletas, el usuario elige Catppuccin Latte
+para el modo claro y pide un oscuro "más negro" que Mocha: Mocha Black.
+Mono Slate, Warm Charcoal y Nord dejan de usarse. También quiere poder
+cambiar de modo sin reinstalar.
+
+**Decisión:**
+1. Solo dos paletas: `templates/colors/palette-mocha-black.sh` y
+   `palette-latte.sh`. `mocha-black` es la paleta por defecto.
+2. `mocha-black` toma Mocha y sustituye la rampa de superficies:
+   `base #1e1e2e → #0d0d14`, `mantle #181825 → #08080d`,
+   `crust #11111b → #050509`, `surface0 #313244 → #1a1a24`,
+   `surface1 #45475a → #26262f`, `surface2 #585b70 → #35353f`. El resto
+   (texto, acentos, estados, ANSI) es Mocha estándar.
+3. `latte` usa Latte con acento `#1e66f5` para mantener contraste.
+4. La paleta define también los ajustes de modo: `THEME_GTK`, `THEME_ICONS`,
+   `THEME_FOLDER_COLOR`, `THEME_VLC_DARK`, `THEME_FIREFOX_DARK`,
+   `THEME_PREFERS_DARK`, `THEME_CONTENT_OVERRIDE`.
+5. `bin/theme-mode dark|light|toggle|status` re-renderiza desde
+   `~/.local/share/dwm-setup` (plantillas y paletas) y recarga polybar,
+   dunst y bspwm. No usa sudo.
+6. Los temas GTK se vendorizan en `templates/themes/` y se instalan en
+   `/usr/share/themes`. `catppuccin-mocha-black` se **genera** al instalar
+   sustituyendo los hex de `catppuccin-mocha-blue`, para que no se
+   desincronice de la paleta.
+7. Los iconos se resuelven con dos temas overlay en `/usr/share/icons`
+   (`Catppuccin-Mocha` y `Catppuccin-Latte`) que heredan de Papirus-Dark y
+   Papirus-Light y solo sobreescriben `places/`. Papirus-Dark y Papirus-Light
+   comparten `places/` por symlinks a `Papirus`, así que no se pueden tener
+   dos colores de carpeta a la vez sin un tema propio.
+8. El activo `selected` de polybar pasa a `@COLOR_ACCENT@` (pill del
+   workspace enfocado), en línea con los previews aprobados.
+
+**Consecuencias:**
+- `--theme` solo acepta `mocha-black` y `latte`; `--theme` sin valor usa
+  `mocha-black`.
+- Cambiar de modo no requiere sudo ni reiniciar la sesión; Firefox y VLC
+  necesitan reiniciarse.
+- El repo crece ~7 MB (temas GTK + SVG de carpetas) y se eliminan 3 MB de
+  Windows-10-Dark.
+- Los temas vivos hasta ahora (`mono`, `warm`, `nord`) quedan fuera del
+  instalador; un `--theme mono` falla con "Tema desconocido".
+
+## ADR-100 — Firefox por defecto: userChrome compacto, SurfingKeys y atajo de tema
+
+**Contexto:** el usuario tenía un `userChrome.css` propio que ocultaba
+botones (atrás, adelante, descargas, menú) y no definía colores. Además usa
+SurfingKeys con keymaps y tema propios, y quiere alternar dark/light sin
+reinstalar.
+
+**Decisión:**
+1. Un único `templates/firefox/userChrome.css.in` que fusiona el diseño
+   compacto del usuario con los colores de la paleta. Se restauran atrás,
+   adelante, recargar, parar, descargas y `#PanelUI-button`; siguen ocultos
+   home, library, cuenta, extensiones, candado, estrella y tracking.
+2. `Super+Alt+t` ejecuta `theme-mode toggle`; `theme-mode` notifica el modo
+   nuevo con `notify-send` (silencioso si no hay dunst).
+3. SurfingKeys se instala con `force_installed` desde
+   `policies.json`, junto a uBlock.
+4. La configuración de SurfingKeys se genera en
+   `~/.config/dwm-setup/surfingkeys.js` **solo si no existe**: el archivo es
+   del usuario y el instalador no lo pisa.
+5. El tema de SurfingKeys se emite con variables CSS y
+   `@media (prefers-color-scheme: light)`, generadas desde las dos paletas,
+   para que un solo archivo siga al modo sin reimportar.
+6. Se elimina el alias `r` de reddit (Libreddit está descontinuado).
+
+**Consecuencias:**
+- No hay import automático: SurfingKeys 1.17 no tiene botón Import y
+  Firefox no permite leer archivos locales sin native host. Se pega una vez
+  por perfil.
+- Si `prefers-color-scheme` no se evalúa en el CSS inyectado, el fallback es
+  renderizar un archivo por modo.
+- `force_installed` impide desinstalar SurfingKeys desde la UI.
+
+## ADR-101 — kitty se recolorea en caliente con control remoto
+
+**Contexto:** `theme-mode` reescribía `kitty.conf`, pero kitty solo lee la
+configuración al arrancar, así que era la única app que no cambiaba con
+`Super+Alt+t`.
+
+**Decisión:**
+1. `allow_remote_control socket-only` y
+   `listen_on unix:kitty-{kitty_pid}` en `kitty.conf`. El socket queda en
+   `/tmp/kitty-<pid>`, deducible desde `pgrep -x kitty`.
+2. `theme-mode` recorre las instancias y ejecuta
+   `kitty @ --to unix:/tmp/kitty-<pid> set-colors --all --configured
+   ~/.config/kitty/colorshemes/monochromatic.conf`.
+3. Se descarta `load-config`: no revierte colores fijados con `set-colors`;
+   `set-colors --configured` con el archivo de colores sí.
+4. Si no hay socket (kitty arrancado antes del cambio), se avisa y se sigue.
+
+**Consecuencias:**
+- Cualquier proceso del mismo usuario puede hablar con kitty por el socket
+  (enviar texto, abrir ventanas). `socket-only` rechaza las órdenes por TTY.
+- Las terminales abiertas antes de este cambio necesitan reiniciarse una vez.
+- `verify_install` comprueba las dos directivas.
+
+## ADR-102 — Zathura sin recolor por defecto y el contenido de Firefox
+
+**Contexto:** los cómics en PDF se veían en negativo porque `recolor` invierte
+todos los colores, imágenes incluidas. Además se pidió que el contenido web
+de Firefox siguiera al modo claro/oscuro como el chrome.
+
+**Decisión:**
+1. `set recolor false` por defecto en `zathurarc`; se elimina
+   `recolor-keystroke 0` para recuperar `Ctrl+R`, que invierte solo el
+   documento actual.
+2. El contenido de Firefox sigue al modo **solo al reiniciar**: se probó
+   `content-override=2` + `ui.systemUsesDarkTheme=-1` + `gsettings
+   color-scheme` y la página no reaccionó al cambio en caliente.
+3. Se mantiene `content-override` 0/1 y `ui.systemUsesDarkTheme` 1/0 por ser
+   deterministas, y se añade `THEME_COLOR_SCHEME` para las apps GTK.
+4. `theme-mode` sigue avisando de que Firefox y VLC necesitan reinicio.
+
+**Consecuencias:**
+- Los PDFs con imágenes se ven con sus colores originales.
+- Para leer texto en oscuro hay que pulsar `Ctrl+R` en zathura.
+- YouTube requiere "Usar tema del dispositivo" una vez; Google Search sigue
+  `prefers-color-scheme` tras reiniciar Firefox.

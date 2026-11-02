@@ -1,4 +1,4 @@
-# monochromatic.conf — grises de alto contraste (Mono Slate)
+# monochromatic.conf — paleta del terminal según el modo activo
 # Fondo propio de la terminal, más oscuro que el resto del escritorio.
 
 background            @COLOR_TERM_BG@

@@ -18,7 +18,12 @@ tab_bar_style           hidden
 tab_powerline_style     slanted
 tab_activity_symbol     ●
 
-# Colorscheme Mono Slate
+# Control remoto (para que theme-mode recargue la paleta en caliente)
+# socket-only: acepta órdenes por socket y rechaza las del TTY.
+allow_remote_control    socket-only
+listen_on              unix:kitty-{kitty_pid}
+
+# Colorscheme: paleta Catppuccin del modo activo
 background_opacity      1.0
 dynamic_background_opacity no
 

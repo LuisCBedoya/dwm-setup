@@ -1,2 +1,2 @@
-gtk-theme-name="Windows-10-Dark"
-gtk-icon-theme-name="Papirus"
+gtk-theme-name="@THEME_GTK@"
+gtk-icon-theme-name="@THEME_ICONS@"

@@ -25,7 +25,7 @@ volumen y batería juntos.
 Hay una **variante B "referencia"** instalada aparte: 14 módulos (15 con
 backlight), 5 workspaces como círculos al centro; a la izquierda `date`, `day`, `updates`,
 pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
-volumen y batería. Barra de 30 px con fondo `#262626`, fuentes 10/13 y flechas del color del
+volumen y batería. Barra de 30 px con fondo del modo activo, fuentes 10/13 y flechas del color del
 bloque; temperatura conserva fondo en warning. Se cambia con
 `~/.config/polybar/polybar-variant referencia` o `... actual`.
 
@@ -99,6 +99,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     solo `h/j/k/l` y `Escape`; `Escape` o 6 s sin teclas lo cierran.
     `Print` captura pantalla completa al portapapeles; `Super+Print` abre el
     menú de capturas. `Super+Alt+p` cicla A arriba → A abajo → B arriba → B abajo.
+    `Super+Alt+t` alterna Catppuccin Mocha Black / Latte (`theme-mode toggle`).
     `Super+Ctrl+Tab` y `Super+Ctrl+Shift+Tab` cambian de escritorio. No
     cambiar este mapa sin una decisión nueva.
 19. **Audio portable.** El watcher elige auriculares > HDMI > altavoces
@@ -118,14 +119,28 @@ La fase 1 termina en el escritorio. No implementar todavía:
 
 20. **Paleta única.** Todos los colores de las configuraciones renderizadas
     deben venir de `templates/colors/palette-<tema>.sh` mediante
-    `@COLOR_*@`. La paleta por defecto es `mono` (Mono Slate: superficie
-    `#262626`, bordes `#1A1A1A`, gris `#8C8C8C`, texto `#F2F2F2` y acento
-    azul `#569CD6`). El terminal usa `COLOR_TERM_BG` (`#1C1C1C`) y la
-    rampa `COLOR_TERM_0..15`. `warm` y `nord` siguen disponibles con
-    `--theme`. No introducir hex a mano en plantillas nuevas; las únicas
-    excepciones son `#FF00FF` (selector de scrot) y `#00000000`
-    (transparencia de la barra B). `lib/verify.sh` comprueba que no haya
-    colores fuera de la paleta activa.
+    `@COLOR_*@`. Solo hay dos paletas: `mocha-black` (oscuro, por defecto) y
+    `latte` (claro). `mocha-black` es Catppuccin Mocha con la rampa de
+    superficies a casi negro (`#0d0d14`, `#08080d`, `#050509`, `#1a1a24`,
+    `#26262f`, `#35353f`) y acento azul `#89b4fa`; `latte` usa
+    `#eff1f5`/`#4c4f69` con acento `#1e66f5`. El terminal usa
+    `COLOR_TERM_BG` y la rampa `COLOR_TERM_0..15` de cada paleta. Los ajustes
+    que no son color pero dependen del modo (`THEME_GTK`, `THEME_ICONS`,
+    `THEME_VLC_DARK`, `THEME_FIREFOX_DARK`, `THEME_PREFERS_DARK`,
+    `THEME_CONTENT_OVERRIDE`) también salen de la paleta. No introducir hex a
+    mano en plantillas nuevas; las únicas excepciones son `#FF00FF` (selector
+    de scrot) y `#00000000` (transparencia de la barra B). `lib/verify.sh`
+    comprueba que no haya colores fuera de la paleta activa.
+
+20b. **Modo de color en caliente.** `theme-mode dark|light|toggle|status`
+    cambia entre las dos paletas re-renderizando desde
+    `~/.local/share/dwm-setup` (plantillas y paletas instaladas) y recargando
+    polybar, dunst, bspwm y kitty. No debe pedir sudo. Si se añade una
+    plantilla con color, hay que incluirla en el store de `lib/config.sh` y en
+    `bin/theme-mode`. kitty se recolorea con
+    `kitty @ set-colors --all --configured <colorsheme>`, que exige
+    `allow_remote_control socket-only` y `listen_on unix:kitty-{kitty_pid}`
+    en `kitty.conf`; sin ese socket, kitty solo cambia al reiniciarse.
 
 21. **No commitear sin permiso.** No ejecutar `git commit` ni `git add`
     definitivo sin autorización explícita del usuario.
@@ -136,8 +151,21 @@ La fase 1 termina en el escritorio. No implementar todavía:
     eso Teams no muestra la pantalla compartida. No capturar `Ctrl+Shift+B`
     en sxhkd: es el atajo de la barra de marcadores del navegador.
     `/etc/firefox/policies/policies.json` fuerza uBlock Origin
-    (`uBlock0@raymondhill.net`) con `force_installed`; se puede desactivar
-    por sitio desde el popup, pero no desinstalar.
+    (`uBlock0@raymondhill.net`) y SurfingKeys
+    (`{a8332c60-5b6d-41ee-bfc8-e9bb331d34ad}`) con `force_installed`; uBlock
+    se puede desactivar por sitio desde el popup, pero no desinstalar.
+    El color del **contenido** (`prefers-color-scheme`) solo se aplica al
+    reiniciar Firefox: es una preferencia, no CSS. YouTube requiere además
+    "Usar tema del dispositivo" en su configuración de apariencia.
+    La config de SurfingKeys se genera en
+    `~/.config/dwm-setup/surfingkeys.js` y se pega una vez a mano: la
+    extensión no lee archivos locales sin native host.
+
+23. **Bandeja del sistema.** Polybar usa `internal/tray` en A y B, al final
+    de `modules-right`. Solo soporta XEmbed; las apps que usan
+    StatusNotifierItem (Telegram moderno, Discord/Electron) pueden no
+    aparecer y necesitarían `snixembed`, que no está en Debian 13 stable.
+    No ejecutar otro tray (stalonetray, nm-applet como host) a la vez.
 
 ## Estructura relevante
 
@@ -156,12 +184,12 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/zsh.sh` | zsh, Oh My Zsh y lsd |
 | `lib/ranger.sh` | ranger, zathura, VLC y previews |
 | `lib/gpu.sh` | configuración Xorg/i915/NVIDIA por hardware |
-| `lib/gtk.sh` | tema GTK, CSS Mono Slate, Thunar e iconos |
+| `lib/gtk.sh` | temas GTK Catppuccin, tema derivado e iconos |
 | `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
 | `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
 | `lib/firefox.sh` | Firefox ESR y OpenH264 para WebRTC/Teams |
 | `lib/verify.sh` | Verificación estática final |
-| `lib/theme.sh` | Paletas (Mono Slate, Warm Charcoal, Nord) y render de plantillas |
+| `lib/theme.sh` | Paletas (Mocha Black, Latte), par de modos y render |
 | `lib/audio.sh` | Quirk ALC255 condicionado por DMI/códec |
 | `bin/desktop-safe` | Acciones de sesión (lock/suspend/logout/poweroff) |
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
@@ -176,12 +204,14 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/ranger/` | rc.conf, rifle.conf y previews |
 | `templates/xorg/` | 20-modesetting.conf |
 | `templates/gtk/` | settings GTK2/3/4 y CSS |
-| `templates/firefox/` | `zz-dwm-setup.js` (OpenH264) y `policies.json` (uBlock) |
-| `templates/vlc/` | vlcrc con modo oscuro |
-| `templates/zathura/` | zathurarc con modo oscuro |
-| `templates/themes/` | Windows-10-Dark |
+| `templates/firefox/` | `zz-dwm-setup.js` (OpenH264), `policies.json` (uBlock + SurfingKeys), `userChrome.css.in`, `user.js.in` y `surfingkeys.js.in` |
+| `templates/vlc/` | vlcrc (oscuro o claro según el modo) |
+| `templates/zathura/` | zathurarc |
+| `templates/themes/` | `catppuccin-mocha-blue` y `catppuccin-latte-blue` |
+| `templates/icons/` | `papirus-folders` y carpetas `cat-mocha-blue`/`cat-latte-blue` |
+| `bin/theme-mode` | Cambio de modo dark/light en caliente |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
-| `templates/colors/` | `palette-mono.sh`, `palette-warm.sh`, `palette-nord.sh` y helpers |
+| `templates/colors/` | `palette-mocha-black.sh`, `palette-latte.sh` y helpers |
 | `assets/wallpaper.png` | Wallpaper principal |
 | `assets/wallpaper-alt.png` | Wallpaper alternativo |
 
@@ -197,6 +227,7 @@ cd ~/dwm-setup
 # Sintaxis
 for f in install.sh lib/*.sh; do bash -n "$f" || exit 1; done
 for f in bin/desktop-safe bin/desktop-doctor; do sh -n "$f" || exit 1; done
+bash -n bin/theme-mode
 bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
 
 # Plan sin cambios
@@ -210,7 +241,11 @@ grep -nE 'modules-(left|right)' ~/.config/polybar/config.ini
 stat -c '%A %n' ~/.config/bspwm/bspwmrc ~/.xinitrc
 
 # ShellCheck (si está instalado)
-shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor
+shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor bin/theme-mode
+
+# Modo de color (no pide sudo)
+theme-mode status
+theme-mode --no-reload light && theme-mode --no-reload dark
 
 # Diagnóstico en una sesión instalada
 desktop-doctor
@@ -220,9 +255,14 @@ desktop-doctor --camera
 ## Estado esperado al retomar
 
 - El código de fase 1b está implementado y los checks estáticos pasan.
+- Catppuccin (Mocha Black + Latte) implementado el 2026-11-02: dos paletas,
+  `theme-mode`, temas GTK vendorizados y temas de iconos overlay. Pasan
+  `bash -n`, `--dry-run` con ambas paletas y `theme-mode --no-reload` en un
+  HOME simulado. Falta `sudo ./install.sh` y probar el cambio de modo en la
+  sesión viva.
 - La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 12 /
   B 14 módulos), dunst, lxpolkit, udiskie y xss-lock activos; `startx`
-  manual. Sin compositor; la barra B usa fondo sólido `#262626`.
+  manual. Sin compositor; la barra B usa fondo sólido del modo activo.
 - Se corrigieron backups previos, ownership, `bspwmrc` 0755,
   `desktop-doctor`, batería baja y polkit.
 - Audio: watcher auriculares > HDMI > altavoces, sonido de dunst y quirk

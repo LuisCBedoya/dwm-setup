@@ -1,4 +1,4 @@
-# zathurarc — Mono Slate
+# zathurarc — Catppuccin (modo activo)
 # Fondo oscuro y acento azul tenue, en línea con la paleta global.
 
 set default-bg                "@COLOR_BG@"
@@ -20,7 +20,7 @@ set notification-error-fg     "@COLOR_RED@"
 set notification-warning-bg   "@COLOR_BG_ALT@"
 set notification-warning-fg   "@COLOR_YELLOW@"
 
-# Invertir las páginas del documento para modo oscuro
-set recolor                  true
+# Sin inversión por defecto: recolor invierte también las imágenes y rompe
+# cómics. Ctrl+R alterna recolor para PDFs de texto.
+set recolor                  false
 set recolor-darkness         0.82
-set recolor-keystroke        0

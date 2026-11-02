@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Base loader para paletas de colores.
 # Se sourcea desde install.sh y lib/theme.sh.
-# Uso: source /path/to/templates/colors/palette-warm.sh
+# Uso: source /path/to/templates/colors/palette-latte.sh
 
 # Paleta activa (exportada por el archivo de paleta concreto)
 # Variables requeridas (todas en formato HEX #rrggbb):
-#   COLOR_BG         - Fondo raíz (wallpaper, root window)
+#   COLOR_BG         - Fondo raíz (wallpaper, ventanas)
+#   COLOR_BG_DEEP    - Fondo profundo (mantle)
+#   COLOR_BORDER_ALT - Borde suave (surface2)
 #   COLOR_BG_ALT     - Fondo barra, paneles base
 #   COLOR_BG_ELEV    - Fondo widgets, tarjetas elevadas
 #   COLOR_BG_HOVER   - Hover/selected en UI interactiva

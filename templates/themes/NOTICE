@@ -1,0 +1,15 @@
+Temas GTK vendorizados
+======================
+
+Origen: https://github.com/catppuccin/gtk (release v1.0.3)
+Variantes: "blue-standard+default"
+Licencia: MIT — ver LICENSE (Copyright (c) 2021 Catppuccin)
+
+Contenido:
+
+  catppuccin-mocha-blue/   copia de catppuccin-mocha-blue-standard+default
+  catppuccin-latte-blue/   copia de catppuccin-latte-blue-standard+default
+
+`catppuccin-mocha-black` no se vendoriza: el instalador lo genera a partir de
+`catppuccin-mocha-blue` sustituyendo la rampa de superficies por los valores de
+`templates/colors/palette-mocha-black.sh`.

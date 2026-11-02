@@ -19,13 +19,10 @@ install_polybar() {
   ok "polybar instalado"
 }
 
-render_polybar_templates() {
-  local home="$1"
-
-  local eth_iface
-  local wlan_iface
-  local battery
-  local ac_adapter
+# Emite las variables de render de polybar como líneas KEY=VALUE.
+# Lo usan el instalador y el archivo render.env que consume theme-mode.
+polybar_common_vars() {
+  local eth_iface wlan_iface battery ac_adapter
   eth_iface=$(polybar_detect_eth_iface)
   wlan_iface=$(polybar_detect_wlan_iface)
   battery=$(polybar_detect_battery)
@@ -41,23 +38,32 @@ render_polybar_templates() {
     brightness_module="brightness"
   fi
 
-  local common_vars=(
-    "HOME=$TARGET_HOME"
-    "FONT=$DWM_FONT"
-    "FONT_SIZE=$DWM_FONT_SIZE"
-    "KEYMAP=$DWM_KEYMAP"
-    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png"
-    "THEME_NAME=$THEME_NAME"
-    "BAR_HEIGHT=$BAR_HEIGHT"
-    "ETH_IFACE=$eth_iface"
-    "WLAN_IFACE=$wlan_iface"
-    "BATTERY=$battery"
-    "AC_ADAPTER=$ac_adapter"
-    "BATTERY_MODULE=$battery_module"
-    "BACKLIGHT=${BACKLIGHT:-}"
-    "BRIGHTNESS=${BACKLIGHT:-}"
+  printf '%s\n' \
+    "HOME=$TARGET_HOME" \
+    "FONT=$DWM_FONT" \
+    "FONT_SIZE=$DWM_FONT_SIZE" \
+    "KEYMAP=$DWM_KEYMAP" \
+    "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png" \
+    "BAR_HEIGHT=$BAR_HEIGHT" \
+    "ETH_IFACE=$eth_iface" \
+    "WLAN_IFACE=$wlan_iface" \
+    "BATTERY=$battery" \
+    "AC_ADAPTER=$ac_adapter" \
+    "BATTERY_MODULE=$battery_module" \
+    "BACKLIGHT=${BACKLIGHT:-}" \
+    "BRIGHTNESS=${BACKLIGHT:-}" \
     "BRIGHTNESS_MODULE=$brightness_module"
-  )
+}
+
+render_polybar_templates() {
+  local home="$1"
+
+  local -a common_vars=()
+  local line
+  while IFS= read -r line; do
+    common_vars+=("$line")
+  done < <(polybar_common_vars)
+  common_vars+=("THEME_NAME=$THEME_NAME")
 
   render_theme_template "$PROJECT_ROOT/templates/polybar/config.ini.in" \
     "$home/.config/polybar/config.ini" 0644 "${common_vars[@]}"
@@ -78,6 +84,7 @@ render_polybar_templates() {
     "modules/battery.ini"
     "modules/pipewire.ini"
     "modules/date.ini"
+    "modules/tray.ini"
   )
 
   local m
@@ -123,6 +130,7 @@ render_polybar_templates() {
     "modules/fs.ini"
     "modules/date.ini"
     "modules/updates.ini"
+    "modules/tray.ini"
   )
 
   local vm

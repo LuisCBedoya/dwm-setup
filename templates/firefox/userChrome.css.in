@@ -1,0 +1,182 @@
+/* Firefox — userChrome Catppuccin.
+ * Compacto + colores del modo activo. Generado desde la paleta.
+ * No editar a mano: usa `theme-mode dark|light`. */
+
+:root {
+  --ctp-base: @COLOR_BG@;
+  --ctp-mantle: @COLOR_BG_DEEP@;
+  --ctp-surface0: @COLOR_BG_ELEV@;
+  --ctp-surface1: @COLOR_BG_HOVER@;
+  --ctp-border: @COLOR_BORDER@;
+  --ctp-text: @COLOR_FG@;
+  --ctp-muted: @COLOR_FG_MUTED@;
+  --ctp-dim: @COLOR_FG_DIM@;
+  --ctp-accent: @COLOR_ACCENT@;
+}
+
+/* ── Colores ─────────────────────────────────────────────── */
+#navigator-toolbox {
+  background: var(--ctp-mantle) !important;
+  color: var(--ctp-text) !important;
+  border-bottom: 1px solid var(--ctp-border) !important;
+}
+
+#TabsToolbar,
+#nav-bar,
+#PersonalToolbar {
+  background: var(--ctp-mantle) !important;
+  color: var(--ctp-text) !important;
+  border-width: 0 !important;
+}
+
+#nav-bar {
+  background: var(--ctp-base) !important;
+}
+
+.tab-background {
+  background: transparent !important;
+}
+
+.tabbrowser-tab[selected] .tab-background {
+  background: var(--ctp-surface0) !important;
+}
+
+.tab-label {
+  color: var(--ctp-muted) !important;
+}
+
+.tabbrowser-tab[selected] .tab-label {
+  color: var(--ctp-text) !important;
+}
+
+.tab-close-button {
+  fill: var(--ctp-muted) !important;
+}
+
+#urlbar-background {
+  background: var(--ctp-surface0) !important;
+  border-width: 0 !important;
+  border-radius: 0 !important;
+}
+
+#urlbar-input,
+#urlbar {
+  color: var(--ctp-text) !important;
+}
+
+#urlbar-input::placeholder {
+  color: var(--ctp-muted) !important;
+}
+
+toolbar .toolbarbutton-1 > .toolbarbutton-icon,
+toolbar .toolbarbutton-1 > .toolbarbutton-badge-stack {
+  fill: var(--ctp-text) !important;
+}
+
+toolbar .toolbarbutton-1:hover > .toolbarbutton-icon {
+  background: var(--ctp-surface1) !important;
+  border-radius: 4px !important;
+}
+
+#PanelUI-menu-button {
+  fill: var(--ctp-text) !important;
+}
+
+#sidebar-box {
+  background: var(--ctp-base) !important;
+}
+
+/* ── Compacto ────────────────────────────────────────────── */
+.tab-background {
+  border-radius: 0px !important;
+  margin-block: 1px 0 !important;
+}
+
+#titlebar {
+  --tab-min-height: 16px !important;
+}
+
+#statuspanel {
+  display: none !important;
+}
+
+#nav-bar,
+#navigator-toolbox {
+  border-width: 0 !important;
+  --toolbar-field-focus-border-color: var(--ctp-surface1);
+}
+
+#urlbar-container {
+  --urlbar-container-height: var(--tab-min-height) !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 10px;
+}
+
+#urlbar {
+  --urlbar-height: var(--tab-min-height) !important;
+  --urlbar-toolbar-height: var(--tab-min-height) !important;
+  min-height: var(--tab-min-height) !important;
+  border-color: var(--ctp-surface1) !important;
+  --autocomplete-popup-highlight-background: transparent !important;
+}
+
+#urlbar-input-container {
+  border-width: 0 !important;
+  margin-left: 1em !important;
+}
+
+#urlbar-input {
+  margin-left: 0.4em !important;
+  margin-right: 0.4em !important;
+}
+
+.urlbarView-row {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  line-height: var(--urlbar-height) !important;
+}
+
+.urlbarView-row-inner {
+  padding-top: 0.3em !important;
+  padding-bottom: 0.3em !important;
+  height: var(--urlbar-height) !important;
+}
+
+.urlbarView-favicon {
+  height: 1em !important;
+  width: 1em !important;
+  margin-bottom: 0.2em !important;
+}
+
+tab {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  border: none !important;
+  font-size: 10px;
+}
+
+/* ── Ocultos a propósito ─────────────────────────────────── */
+#unified-extensions-button,
+#home-button,
+#library-button,
+#fxa-toolbar-menu-button,
+#nav-bar-overflow-button,
+#private-browsing-indicator-with-label,
+#customizableui-special-spring1,
+#customizableui-special-spring2,
+#identity-box,
+#pageActionButton,
+#pocket-button,
+#urlbar-zoom-button,
+#tracking-protection-icon-container,
+#reader-mode-button,
+#star-button,
+#star-button-box,
+#urlbar-go-button,
+#userContext-label,
+#userContext-indicator {
+  display: none !important;
+}

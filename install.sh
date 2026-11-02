@@ -80,9 +80,10 @@ Opciones avanzadas (automatización; normalmente no necesarias):
   --cuda, --no-cuda,
   --headset-quirk, --no-headset-quirk, --intel-glitch,
   --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
-  --theme mono|warm|nord
+  --theme mocha-black|latte
 
-Tema por defecto: mono (Mono Slate, grises + azul tenue).
+Tema por defecto: mocha-black (Catppuccin Mocha Black, oscuro).
+El modo se cambia en caliente con: theme-mode dark|light|toggle|status.
 
 Sesión: startx manual desde TTY (no se instala display manager).
 Fases futuras (IDE, navegadores, música) no se instalan desde aquí.
@@ -112,7 +113,7 @@ parse_args() {
       --no-headset-quirk) HEADSET_QUIRK_MODE="no" ;;
       --intel-glitch) INTEL_GLITCH=1 ;;
       --theme)
-        [[ $# -ge 2 ]] || die "--theme requiere un valor (mono, warm, nord)"
+        [[ $# -ge 2 ]] || die "--theme requiere un valor (mocha-black, latte)"
         THEME="$2"; shift
         ;;
       --theme=*) THEME="${1#*=}" ;;
@@ -138,7 +139,7 @@ parse_args() {
       --resolution=*) DWM_RESOLUTION="${1#*=}" ;;
       --debug) DWM_DEBUG=1 ;;
       -h|--help) usage; exit 0 ;;
-      --version) printf 'dwm-setup 0.3.0 (fase 1b: bspwm+polybar)\n'; exit 0 ;;
+      --version) printf 'dwm-setup 0.4.0 (fase 1b: bspwm+polybar+catppuccin)\n'; exit 0 ;;
       *) die "Opción desconocida: $1 (usa --help)" ;;
     esac
     shift
@@ -179,7 +180,6 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/ranger.sh"
     "$PROJECT_ROOT/lib/gtk.sh"
     "$PROJECT_ROOT/lib/vlc.sh"
-    "$PROJECT_ROOT/templates/colors/palette-mono.sh"
     "$PROJECT_ROOT/lib/config.sh"
     "$PROJECT_ROOT/lib/verify.sh"
     "$PROJECT_ROOT/lib/theme.sh"
@@ -188,8 +188,8 @@ check_project_layout() {
     "$PROJECT_ROOT/bin/desktop-safe"
     "$PROJECT_ROOT/bin/desktop-doctor"
     "$PROJECT_ROOT/templates/colors/base.sh"
-    "$PROJECT_ROOT/templates/colors/palette-warm.sh"
-    "$PROJECT_ROOT/templates/colors/palette-nord.sh"
+    "$PROJECT_ROOT/templates/colors/palette-mocha-black.sh"
+    "$PROJECT_ROOT/templates/colors/palette-latte.sh"
     "$PROJECT_ROOT/templates/bspwm/bspwmrc.in"
     "$PROJECT_ROOT/templates/bspwm/autostart.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/bspwm_resize.in"
@@ -207,6 +207,15 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
     "$PROJECT_ROOT/templates/sxhkd/sxhkdrc.in"
     "$PROJECT_ROOT/templates/sxhkd/resize-mode.sxhkdrc.in"
+    "$PROJECT_ROOT/templates/themes/catppuccin-mocha-blue/index.theme"
+    "$PROJECT_ROOT/templates/themes/catppuccin-latte-blue/index.theme"
+    "$PROJECT_ROOT/templates/icons/papirus-folders"
+    "$PROJECT_ROOT/templates/icons/folders/cat-mocha-blue"
+    "$PROJECT_ROOT/templates/icons/folders/cat-latte-blue"
+    "$PROJECT_ROOT/bin/theme-mode"
+    "$PROJECT_ROOT/templates/firefox/userChrome.css.in"
+    "$PROJECT_ROOT/templates/firefox/user.js.in"
+    "$PROJECT_ROOT/templates/firefox/surfingkeys.js.in"
     "$PROJECT_ROOT/templates/firefox/zz-dwm-setup.js"
     "$PROJECT_ROOT/templates/firefox/policies.json"
     "$PROJECT_ROOT/templates/polybar/config.ini.in"
@@ -226,6 +235,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/modules/battery.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/pipewire.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/date.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/tray.ini.in"
     "$PROJECT_ROOT/templates/polybar/scripts/updates-apt.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/polypomo.in"
     "$PROJECT_ROOT/templates/polybar/scripts/network-status.sh.in"
@@ -262,6 +272,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/fs.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/date.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/updates.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/tray.ini.in"
     "$PROJECT_ROOT/templates/dunst/dunstrc.in"
     "$PROJECT_ROOT/templates/dunst/notification-sound.sh.in"
     "$PROJECT_ROOT/templates/rofi/powermenu.rasi.in"
@@ -281,7 +292,6 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/gtk/gtkrc-2.0.in"
     "$PROJECT_ROOT/templates/gtk/gtk-3.0.css.in"
     "$PROJECT_ROOT/templates/gtk/gtk-4.0.css.in"
-    "$PROJECT_ROOT/templates/themes/Windows-10-Dark/index.theme"
     "$PROJECT_ROOT/templates/vlc/vlcrc.in"
     "$PROJECT_ROOT/templates/modprobe/alsa-fx504.conf"
     "$PROJECT_ROOT/templates/xorg/20-modesetting.conf.in"
@@ -315,6 +325,7 @@ Fase 1b instalada para: $TARGET_USER
 Home:                   $TARGET_HOME
 Log:                    $LOG_FILE
 Variantes polybar:      ~/.config/polybar/polybar-variant actual|referencia
+Modo de color:          theme-mode dark|light|toggle|status
 Gráficos:               i915 FBC desactivado (requiere reinicio)
 Permisos:               sudo al inicio para paquetes, portal, opt-2 e i915
 
@@ -339,6 +350,7 @@ Atajos principales:
   Super+{1-7}       ir a escritorio
   Super+Shift+{1-7} mover ventana a escritorio
   Super+Alt+{h,j,k,l} redimensionar
+  Super+Alt+t       tema oscuro / claro
   Super+m           monocle/tiled
   Super+f           fullscreen
   XF86AudioRaise/Lower/Mute   volumen
@@ -382,7 +394,7 @@ main() {
     init_logging
   fi
 
-  # Cargar la paleta seleccionada (mono por defecto) antes de mostrar el plan.
+  # Cargar la paleta seleccionada (mocha-black por defecto) antes de mostrar el plan.
   load_theme "${THEME:-$DEFAULT_THEME}"
 
   show_banner

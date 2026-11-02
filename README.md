@@ -19,20 +19,19 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
-- **polybar** con **12 módulos**: logo StumbleUpon, workspaces 1-7,
+- **polybar** con **13 módulos**: logo StumbleUpon, workspaces 1-7,
   pomodoro, temperatura, RAM, CPU, red unificada
   (`󰖩/󰈀 connected`, `󰖩 NoC` sin conexión), servicios systemd, volumen,
-  batería, fecha
-  y actualizaciones (calavera + número). `font-1` 10 y `font-3` 13; logo en
-  `font-0`.
+  batería, fecha, actualizaciones (calavera + número) y bandeja del sistema
+  (XEmbed). `font-1` 10 y `font-3` 13; logo en `font-0`.
 - **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**
   (`--single-instance`),
   **flameshot**. Shell **zsh** con Oh My Zsh/cypher, autosuggestions y
   **lsd**. Sin compositor; la barra B usa fondo sólido `#262626`.
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo,
   **ueberzug** para previsualizar imágenes y carátulas. Texto, código y
-  Markdown se abren con **Neovim**. Tema GTK **Windows-10-Dark** e iconos
-  **Papirus**.
+  Markdown se abren con **Neovim**. Tema GTK **Catppuccin** (Mocha Black o
+  Latte) e iconos **Papirus** con carpetas Catppuccin.
 - Bloqueo con **i3lock** + **xss-lock**.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
 - PipeWire + WirePlumber + ALSA + pavucontrol.
@@ -43,7 +42,8 @@ Incluido:
 - Thunar como gestor de archivos puntual (`Super+Shift+F`), con la paleta
   global, sin menú, panel lateral ni barra de estado (Ctrl+M y F9 los
   recuperan).
-- Fuente JetBrainsMono Nerd Font, wallpaper oscuro y paleta **Mono Slate**
+- Fuente JetBrainsMono Nerd Font, wallpaper oscuro y paleta **Catppuccin**:
+  `mocha-black` (oscuro) y `latte` (claro).
   (superficie `#262626`, terminal `#1C1C1C`, bordes `#1A1A1A`, texto
   `#F2F2F2`, acento `#569CD6`).
 - Backups, logs, `--dry-run` y diagnóstico con `desktop-doctor`.
@@ -101,9 +101,8 @@ pide `sudo -v` una vez y usa `sudo` para las operaciones de sistema.
 | `./install.sh` | Instalación guiada |
 | `./install.sh --dry-run` | Muestra el plan sin modificar nada |
 | `./install.sh --yes` | No pide confirmación; no modifica repositorios APT |
-| `./install.sh --theme mono` | Usa la paleta Mono Slate (por defecto) |
-| `./install.sh --theme warm` | Usa la paleta Warm Charcoal |
-| `./install.sh --theme nord` | Usa la paleta Nord |
+| `./install.sh --theme mocha-black` | Catppuccin Mocha Black (por defecto) |
+| `./install.sh --theme latte` | Catppuccin Latte (claro) |
 | `./install.sh --help` | Ayuda |
 | `./install.sh --version` | Versión |
 
@@ -261,6 +260,7 @@ Si algo falla:
 | `Super+Shift+r` | reiniciar bspwm |
 | `Super+Alt+P` | ciclo A arriba → A abajo → B arriba → B abajo |
 | `Super+Alt+W` | alterna wallpaper principal / alternativo |
+| `Super+Alt+T` | alterna tema oscuro / claro |
 | `Super+Shift+space` | alternar floating |
 | `Super+Shift+q` | cerrar ventana |
 | `Super+a` | enfocar contenedor padre |
@@ -283,9 +283,10 @@ Si algo falla:
 `Super+Ctrl+Shift+Tab` cambian de escritorio; `Super+Left/Right` y
 `Super+1..5` siguen disponibles.
 
-`Super` es la tecla Windows. La barra muestra 12 módulos (13 si hay
+`Super` es la tecla Windows. La barra muestra 13 módulos (14 si hay
 backlight): logo StumbleUpon, workspaces 1-7, pomodoro, temperatura, RAM,
-CPU, red, servicios, volumen, batería, fecha y actualizaciones. La red muestra un solo `󰖩 connected` o
+CPU, red, servicios, volumen, batería, fecha, actualizaciones y bandeja del
+sistema. La red muestra un solo `󰖩 connected` o
 `󰈀 connected`; Ethernet tiene prioridad si el cable está conectado. Si no
 hay conexión, muestra `󰖩 NoC` y sigue siendo clicable. Al hacer clic en el módulo se abre un menú
 WiFi para elegir y conectar una red. Las actualizaciones muestran calavera +
@@ -300,16 +301,18 @@ aparece solo si el equipo tiene backlight y también cambia de 10 en 10.
 
 Hay dos barras instaladas:
 
-- **actual**: la barra compacta de 12 módulos (13 con backlight): logo,
+- **actual**: la barra compacta de 13 módulos (14 con backlight): logo,
   workspaces 1-7, updates, servicios, pomodoro, temperatura, RAM, CPU,
-  red, volumen, batería, fecha y brillo opcional. En monocle añade un
-  contador `[N]` junto a los workspaces.
-- **referencia**: variante de 14 módulos (15 con backlight). Workspaces
+  red, volumen, batería, fecha, bandeja del sistema y brillo opcional. En
+  monocle añade un contador `[N]` junto a los workspaces.
+- **referencia**: variante de 15 módulos (16 con backlight). Workspaces
   como círculos al centro; a la izquierda `date`, `day`, `updates`, pomodoro
   y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
-  volumen, batería y brillo opcional. En monocle, `[N]` junto a los
-  círculos de workspaces.
-  Barra de 30 px con fondo sólido `#262626`, fuentes 10/13, iconos JBM y
+  volumen, batería, bandeja del sistema y brillo opcional. En monocle, `[N]`
+  junto a los círculos de workspaces.
+  La bandeja usa XEmbed; Telegram/Discord modernos pueden no aparecer hasta
+  añadir `snixembed`.
+  Barra de 30 px con fondo sólido del modo activo, fuentes 10/13, iconos JBM y
   círculos Font Awesome. Todos los bloques comparten el mismo tono;
   laterales son oscuros y opacos.
 
@@ -333,6 +336,73 @@ cambiar la memoria muscular; no hacen nada hasta instalar la app. `codium`
 requiere el repositorio de VSCodium. `Super+s/w/e` de i3 (stacking/tabbed)
 no tienen equivalente exacto en bspwm y no se mapean.
 
+## Tema y modo de color
+
+El escritorio usa **Catppuccin** en dos modos:
+
+| Modo | Paleta | Fondo | Acento |
+|---|---|---|---|
+| `dark` | `mocha-black` | `#0d0d14` | `#89b4fa` |
+| `light` | `latte` | `#eff1f5` | `#1e66f5` |
+
+`mocha-black` es Catppuccin Mocha con la rampa de superficies llevada a casi
+negro; el resto de la paleta (texto, acentos, estados) se mantiene.
+
+```sh
+theme-mode dark        # Mocha Black
+theme-mode light       # Latte
+theme-mode toggle
+theme-mode status
+```
+
+`theme-mode` re-renderiza polybar A/B, kitty, dunst, rofi, zathura, bspwm,
+GTK, Firefox y VLC desde `~/.local/share/dwm-setup/`, y recarga en caliente
+polybar, dunst, los bordes de bspwm y kitty. **No pide sudo**: los temas ya
+están instalados. Firefox y VLC necesitan reiniciarse para aplicar el cambio.
+
+kitty se recolorea en caliente con `kitty @ set-colors`, gracias a
+`allow_remote_control socket-only` y
+`listen_on unix:kitty-{kitty_pid}` en `kitty.conf` (socket en
+`/tmp/kitty-<pid>`). Las terminales abiertas antes de activar esto necesitan
+un reinicio de kitty.
+
+El atajo es `Super+Alt+t` y muestra una notificación con el modo nuevo.
+
+### Firefox y SurfingKeys
+
+`userChrome.css` aplica Catppuccin al chrome, mantiene la barra compacta y
+deja visibles atrás, adelante, recargar, parar, descargas y el menú
+hamburguesa. Se instala en el perfil y se regenera con `theme-mode`.
+
+El **contenido web** (Google, YouTube) no cambia en caliente: el esquema de
+color del contenido es una preferencia que Firefox lee al arrancar. Tras
+`Super+Alt+t`, cierra y abre Firefox. Google Search respeta
+`prefers-color-scheme`; YouTube solo si pones *Ajustes → Apariencia → Usar
+tema del dispositivo* una vez.
+
+SurfingKeys viene `force_installed` desde `policies.json`. Su configuración
+vive en `~/.config/dwm-setup/surfingkeys.js`; se pega **una vez** en
+SurfingKeys → Ajustes → Advanced mode → editor → Save. No hay botón de
+importar y Firefox no permite que la extensión lea archivos locales sin un
+native host. El tema usa `prefers-color-scheme`, así que sigue al modo sin
+volver a pegarlo.
+
+Temas GTK instalados:
+
+```text
+/usr/share/themes/catppuccin-mocha-blue      vendored
+/usr/share/themes/catppuccin-latte-blue      vendored
+/usr/share/themes/catppuccin-mocha-black     generado al instalar
+/usr/share/icons/Catppuccin-Mocha            overlay sobre Papirus-Dark
+/usr/share/icons/Catppuccin-Latte            overlay sobre Papirus-Light
+```
+
+`catppuccin-mocha-black` se deriva de `catppuccin-mocha-blue` sustituyendo la
+rampa `base/mantle/crust/surface0..2` por los valores de
+`palette-mocha-black.sh`, así que no se desincroniza. Los temas de iconos son
+overlays: Papirus-Dark y Papirus-Light comparten `places/` mediante symlinks,
+y solo un tema propio permite colores de carpeta distintos por modo.
+
 ## Estructura del repositorio
 
 ```text
@@ -349,7 +419,7 @@ lib/kitty.sh               kitty.conf y paleta del terminal
 lib/zsh.sh                 zsh, Oh My Zsh y lsd
 lib/ranger.sh              ranger, zathura y VLC
 lib/gpu.sh                 configuración Intel/NVIDIA
-lib/gtk.sh                 tema GTK, CSS Mono Slate e iconos
+lib/gtk.sh                 temas GTK Catppuccin, tema derivado e iconos
 lib/vlc.sh                 VLC con paleta oscura
 lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/verify.sh              Verificación estática final
@@ -368,12 +438,13 @@ templates/lsd/             config.yml e icons.yaml
 templates/ranger/          rc.conf, rifle.conf y previews
 templates/xorg/            configuración Xorg por hardware
 templates/gtk/             settings GTK2/3/4 y CSS
-templates/vlc/             vlcrc con modo oscuro
-templates/zathura/         zathurarc.in (modo oscuro)
-templates/themes/          Windows-10-Dark
+templates/vlc/             vlcrc (oscuro o claro según el modo)
+templates/zathura/         zathurarc.in
+templates/themes/          catppuccin-mocha-blue y catppuccin-latte-blue
+templates/icons/           papirus-folders y carpetas cat-*
 templates/modprobe/        i915.conf y nvidia.conf
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
-templates/colors/          palette-mono.sh, palette-warm.sh y palette-nord.sh
+templates/colors/          palette-mocha-black.sh y palette-latte.sh
 assets/wallpaper.png       Wallpaper principal
 assets/wallpaper-alt.png   Wallpaper alternativo
 docs/                      Hardware y testing

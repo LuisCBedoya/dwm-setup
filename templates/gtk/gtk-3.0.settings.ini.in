@@ -1,6 +1,6 @@
 [Settings]
-gtk-theme-name=Windows-10-Dark
-gtk-icon-theme-name=Papirus
+gtk-theme-name=@THEME_GTK@
+gtk-icon-theme-name=@THEME_ICONS@
 gtk-font-name=Sans 10
-gtk-cursor-theme-name=Adwaita
+gtk-cursor-theme-name=@THEME_CURSOR@
 gtk-cursor-theme-size=0

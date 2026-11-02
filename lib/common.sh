@@ -243,6 +243,12 @@ backup_existing_configs() {
   local home="$TARGET_HOME"
   backup_root "/usr/local/bin/desktop-safe"
   backup_root "/usr/local/bin/desktop-doctor"
+  backup_root "/usr/local/bin/theme-mode"
+  backup_root "/usr/share/themes/catppuccin-mocha-blue"
+  backup_root "/usr/share/themes/catppuccin-latte-blue"
+  backup_root "/usr/share/themes/catppuccin-mocha-black"
+  backup_root "/usr/share/icons/Catppuccin-Mocha"
+  backup_root "/usr/share/icons/Catppuccin-Latte"
   backup_root "/usr/local/share/fonts/dwm-setup/desktop-logo.ttf"
   backup_root "/etc/modprobe.d/alsa-fx504.conf"
   backup_root "/etc/X11/xorg.conf.d/20-modesetting.conf"
@@ -258,7 +264,6 @@ backup_existing_configs() {
   backup_user_path "$home/.config/lsd"
   backup_user_path "$home/.config/ranger"
   backup_user_path "$home/.config/zathura"
-  backup_user_path "$home/.themes/Windows-10-Dark"
   backup_user_path "$home/.config/vlc"
   backup_user_path "$home/.config/gtk-3.0"
   backup_user_path "$home/.config/gtk-4.0"
@@ -266,6 +271,17 @@ backup_existing_configs() {
   backup_user_path "$home/.xinitrc"
   backup_user_path "$home/.local/share/wallpapers/rocky.jpg"
   backup_user_path "$home/.local/share/wallpapers/wallpaper.png"
+  backup_user_path "$home/.config/dwm-setup"
+
+  # Perfil de Firefox: userChrome.css y user.js se reemplazan al instalar.
+  local ff_profile=""
+  if declare -F detect_firefox_profile >/dev/null 2>&1; then
+    ff_profile=$(detect_firefox_profile "$home" 2>/dev/null || true)
+  fi
+  if [[ -n "$ff_profile" ]]; then
+    backup_user_path "$ff_profile/chrome/userChrome.css"
+    backup_user_path "$ff_profile/user.js"
+  fi
 }
 
 # Corrige homes que quedaron con ~/.config, ~/.local o ~/.config-backup
@@ -328,7 +344,8 @@ chown_managed_paths() {
     "$TARGET_HOME/.config/lsd" \
     "$TARGET_HOME/.config/ranger" \
     "$TARGET_HOME/.config/zathura" \
-    "$TARGET_HOME/.themes/Windows-10-Dark" \
+    "$TARGET_HOME/.config/dwm-setup" \
+    "$TARGET_HOME/.local/share/dwm-setup" \
     "$TARGET_HOME/.config/vlc" \
     "$TARGET_HOME/.config/gtk-3.0" \
     "$TARGET_HOME/.config/gtk-4.0" \

@@ -13,7 +13,7 @@ primary = @COLOR_ACCENT@
 secondary = @COLOR_ACCENT_ALT@
 alert = @COLOR_RED@
 disabled = @COLOR_FG_DIM@
-selected = @COLOR_FG@
+selected = @COLOR_ACCENT@
 
 ; Alias para módulos portados
 nord0 = @COLOR_BG@
@@ -64,7 +64,7 @@ font-4 = "@FONT@:size=11;5"
 font-5 = "Noto Color Emoji:scale=9:antialias=false;3"
 
 modules-left = logo bspwm monocle resize
-modules-right = updates services polypomo temp memory cpu network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ date
+modules-right = updates services polypomo temp memory cpu network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ date tray
 
 cursor-click = pointer
 cursor-scroll = ns-resize
