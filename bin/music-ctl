@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# music-ctl — teclas multimedia para el reproductor activo.
+# Hoy: mpv (vía MPRIS/playerctl). Preparado para cmus cuando se añada.
+set -Eeuo pipefail
+
+action="${1:-play-pause}"
+
+usage() {
+  cat <<'EOF'
+Uso: music-ctl <play-pause|next|prev|stop>
+
+Controla el reproductor que esté sonando. Sin reproductor, no hace nada.
+EOF
+}
+
+case "$action" in
+  -h|--help) usage; exit 0 ;;
+  play-pause|next|prev|stop) ;;
+  *) usage >&2; exit 2 ;;
+esac
+
+if command -v playerctl >/dev/null 2>&1 && playerctl status >/dev/null 2>&1; then
+  case "$action" in
+    play-pause) playerctl play-pause ;;
+    next)       playerctl next ;;
+    prev)       playerctl previous ;;
+    stop)       playerctl stop ;;
+  esac
+  exit 0
+fi
+
+# cmus todavía no está instalado; si algún día lo está, aquí iría:
+# if command -v cmus-remote >/dev/null 2>&1 && cmus-remote -Q >/dev/null 2>&1; then
+#   case "$action" in
+#     play-pause) cmus-remote -u ;;
+#     next)       cmus-remote -n ;;
+#     prev)       cmus-remote -r ;;
+#     stop)       cmus-remote -s ;;
+#   esac
+# fi
+
+exit 0

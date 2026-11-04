@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+# yt-play — reproduce audio o vídeo de YouTube: URL directa o búsqueda con fzf.
+set -Eeuo pipefail
+
+PROG="yt-play"
+MPV="${MPV:-mpv}"
+
+# Preferir siempre el binario oficial de ~/.local/bin: el de Debian se queda
+# viejo y YouTube deja de funcionar con él.
+if [[ -z "${YTDLP:-}" ]]; then
+  if [[ -x "$HOME/.local/bin/yt-dlp" ]]; then
+    YTDLP="$HOME/.local/bin/yt-dlp"
+  else
+    YTDLP="yt-dlp"
+  fi
+fi
+CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/yt-play"
+
+# Resultados por búsqueda. 20 es una página de YouTube y no cuesta más que 10.
+RESULTS="${YT_PLAY_RESULTS:-20}"
+[[ "$RESULTS" =~ ^[0-9]+$ ]] && (( RESULTS > 0 )) || RESULTS=20
+
+die() { printf '%s: %s\n' "$PROG" "$*" >&2; exit 1; }
+info() { printf '%s\n' "$*"; }
+
+notify() {
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send -a "$PROG" "$@" 2>/dev/null || true
+}
+
+usage() {
+  cat <<'EOF'
+Uso: yt-play [--audio|--video] <url | búsqueda...>
+
+  yt-play --audio https://music.youtube.com/watch?v=XXXX
+  yt-play --video https://www.youtube.com/watch?v=XXXX
+  yt-play lofi hip hop          busca y elige con fzf
+
+Opciones:
+  --audio       solo audio (por defecto)
+  --video       vídeo en una ventana de mpv
+  -h, --help    esta ayuda
+
+En una búsqueda:
+  Enter reproduce el modo por defecto (audio; --video lo cambia)
+  Ctrl+V reproduce el otro modo
+
+Variable:
+  YT_PLAY_RESULTS   resultados de la búsqueda (por defecto 20)
+
+No actualiza yt-dlp: si YouTube falla, avisa y sugiere `ytdlp-update`.
+EOF
+}
+
+# Comprueba si hay versión nueva una vez al día, sin bloquear.
+daily_check() {
+  command -v ytdlp-check >/dev/null 2>&1 || return 0
+  mkdir -p "$CACHE"
+
+  local today stamp
+  today=$(date +%Y-%m-%d)
+  stamp="$CACHE/last-check"
+  if [[ -f "$stamp" && "$(<"$stamp")" == "$today" ]]; then
+    return 0
+  fi
+
+  printf '%s\n' "$today" >"$stamp"
+  ( ytdlp-check --quiet >/dev/null 2>&1 & ) || true
+}
+
+search_pick() {
+  local default_mode="$1"
+  shift
+  local query="$*"
+  local results picked key choice id mode other_mode header
+  local meta_dir title channel duration vid
+
+  if [[ "$default_mode" == "video" ]]; then
+    other_mode="audio"
+    header="Enter vídeo · Ctrl+V audio · Esc cancela"
+  else
+    other_mode="video"
+    header="Enter audio · Ctrl+V vídeo · Esc cancela"
+  fi
+
+  command -v fzf >/dev/null 2>&1 || die "falta fzf (sudo apt install fzf)"
+  command -v "$YTDLP" >/dev/null 2>&1 || die "falta yt-dlp; ejecuta ytdlp-update"
+
+  info "Buscando \"$query\" ($RESULTS resultados)…"
+  results=$("$YTDLP" "ytsearch${RESULTS}:$query" --flat-playlist --no-warnings \
+    --print '%(title)s	%(channel)s	%(duration_string)s	%(id)s' 2>/dev/null) ||
+    die "la búsqueda falló; prueba: ytdlp-update"
+
+  [[ -n "$results" ]] || die "sin resultados para \"$query\""
+
+  # Un sidecar por vídeo para que yt-preview muestre los metadatos sin
+  # volver a consultar YouTube. El listado de fzf queda solo con el título.
+  meta_dir="$CACHE/meta"
+  mkdir -p "$meta_dir"
+  while IFS=$'\t' read -r title channel duration vid; do
+    [[ "$vid" =~ ^[A-Za-z0-9_-]+$ ]] || continue
+    if [[ -z "$duration" || "$duration" == "NA" ]]; then
+      duration="en vivo"
+    fi
+    printf '%s\n%s\n%s\n' "$title" "$channel" "$duration" >"$meta_dir/$vid"
+  done <<<"$results"
+
+  # --expect devuelve la tecla en la primera línea (vacía para Enter) y la
+  # selección en la segunda.
+  picked=$(printf '%s\n' "$results" |
+    awk -F'\t' '{ printf "%s\t%s\n", $1, $4 }' |
+    fzf --height=75% --reverse --delimiter='\t' --with-nth=1 \
+      --preview 'yt-preview {2}' --preview-window='right,50%,border-left' \
+      --expect=ctrl-v \
+      --prompt="YouTube: " \
+      --header="$header") || exit 0
+
+  key=$(printf '%s\n' "$picked" | sed -n '1p')
+  choice=$(printf '%s\n' "$picked" | sed -n '2p')
+  [[ -n "$choice" ]] || exit 0
+
+  id="${choice##*$'\t'}"
+  [[ -n "$id" ]] || die "no se pudo leer el id del vídeo"
+
+  if [[ "$key" == "ctrl-v" ]]; then
+    mode="$other_mode"
+  else
+    mode="$default_mode"
+  fi
+
+  play "https://www.youtube.com/watch?v=$id" "$mode"
+}
+
+play() {
+  local url="$1"
+  local mode="${2:-audio}"
+  local log rc
+  local -a mpv_env=() media=()
+
+  command -v "$MPV" >/dev/null 2>&1 || die "falta mpv (sudo apt install mpv)"
+
+  # mpv llama a yt-dlp por PATH: si el binario oficial está en ~/.local/bin,
+  # se lo ponemos delante para que no use el de Debian.
+  if [[ "$YTDLP" == */* ]]; then
+    mpv_env=(env "PATH=$(dirname -- "$YTDLP"):$PATH")
+  fi
+
+  if [[ "$mode" == "video" ]]; then
+    media=(--autofit=80%x80%)
+  else
+    media=(--no-video --ytdl-format=bestaudio)
+  fi
+
+  log=$(mktemp "${TMPDIR:-/tmp}/yt-play.XXXXXX")
+  set +e
+  "${mpv_env[@]}" "$MPV" "${media[@]}" "$url" 2> >(tee "$log" >&2)
+  rc=$?
+  set -e
+  sleep 0.2
+
+  if ((rc != 0)); then
+    if grep -qiE 'unable to extract|sign in to confirm|http error 403|requested format is not available|unsupported url|extractor|page needs to be reloaded|youtube-dl failed|unexpected error' "$log"; then
+      printf '\n%s: YouTube ha cambiado; yt-dlp no pudo extraer el contenido.\n' "$PROG" >&2
+      printf '  yt-dlp en uso: %s\n' "$("$YTDLP" --version 2>/dev/null || echo 'desconocido')" >&2
+      printf '  Ejecuta: ytdlp-update\n' >&2
+      notify "YouTube ha cambiado" "yt-dlp no pudo extraer el contenido. Ejecuta: ytdlp-update"
+    else
+      printf '\n%s: mpv terminó con error (%d).\n' "$PROG" "$rc" >&2
+      tail -3 "$log" >&2
+    fi
+    rm -f "$log"
+    exit 1
+  fi
+
+  rm -f "$log"
+}
+
+main() {
+  local mode="audio"
+
+  while (($# > 0)); do
+    case "$1" in
+      --audio) mode="audio"; shift ;;
+      --video) mode="video"; shift ;;
+      -h|--help) usage; exit 0 ;;
+      --) shift; break ;;
+      -*) die "opción desconocida: $1 (usa --help)" ;;
+      *) break ;;
+    esac
+  done
+
+  if (($# == 0)); then
+    usage
+    exit 0
+  fi
+
+  daily_check
+
+  case "$1" in
+    http://*|https://*) play "$1" "$mode" ;;
+    *) search_pick "$mode" "$@" ;;
+  esac
+}
+
+main "$@"

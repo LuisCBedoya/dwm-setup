@@ -65,6 +65,9 @@ export XDG_DATA_HOME="$HOME/.local/share"
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
 
+# Binarios de usuario (yt-dlp oficial, etc.)
+export PATH="$HOME/.local/bin:$PATH"
+
 # Configurar teclado
 setxkbmap @KEYMAP@ 2>/dev/null || true
 

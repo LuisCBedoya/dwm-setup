@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# yt-preview — dibuja metadatos y miniatura de un vídeo para el preview de fzf.
+# Uso: yt-preview <video-id>
+set -Eeuo pipefail
+
+id="${1:-}"
+[[ -n "$id" ]] || exit 0
+[[ "$id" =~ ^[A-Za-z0-9_-]+$ ]] || exit 0
+
+cache="${XDG_CACHE_HOME:-$HOME/.cache}/yt-play/preview"
+meta_dir="${XDG_CACHE_HOME:-$HOME/.cache}/yt-play/meta"
+img="$cache/$id.jpg"
+meta="$meta_dir/$id"
+
+mkdir -p "$cache"
+
+# Quita controles del título/canal para que un vídeo no inyecte secuencias
+# de terminal en el panel.
+clean_text() {
+  local text="$1"
+  text="${text//$'\t'/ }"
+  text="${text//$'\r'/ }"
+  printf '%s' "$text" | LC_ALL=C tr -d '\000-\010\013-\037\177'
+}
+
+# Ajusta texto al ancho del panel sin partir caracteres UTF-8. `fold` cuenta
+# bytes y rompe los acentos, así que el ajuste se hace por palabras en bash.
+wrap_text() {
+  local text="$1" width="$2"
+  local -a words=()
+  local word line=""
+
+  read -r -a words <<<"$text"
+  for word in "${words[@]}"; do
+    while (( ${#word} > width )); do
+      if [[ -n "$line" ]]; then
+        printf '%s\n' "$line"
+        line=""
+      fi
+      printf '%s\n' "${word:0:width}"
+      word="${word:width}"
+    done
+    [[ -n "$word" ]] || continue
+    if [[ -z "$line" ]]; then
+      line="$word"
+    elif (( ${#line} + 1 + ${#word} <= width )); then
+      line+=" $word"
+    else
+      printf '%s\n' "$line"
+      line="$word"
+    fi
+  done
+  [[ -n "$line" ]] && printf '%s\n' "$line"
+}
+
+# fzf exporta el tamaño del panel de preview.
+cols="${FZF_PREVIEW_COLUMNS:-40}"
+rows="${FZF_PREVIEW_LINES:-12}"
+[[ "$cols" =~ ^[0-9]+$ ]] && (( cols > 4 )) || cols=40
+[[ "$rows" =~ ^[0-9]+$ ]] && (( rows > 3 )) || rows=12
+
+title=""
+channel=""
+duration=""
+if [[ -r "$meta" ]]; then
+  { IFS= read -r title; IFS= read -r channel; IFS= read -r duration; } <"$meta" || true
+fi
+title=$(clean_text "$title")
+channel=$(clean_text "$channel")
+duration=$(clean_text "$duration")
+
+# Título en negrita, ajustado al ancho y como máximo en dos líneas.
+title_lines=()
+if [[ -n "$title" ]]; then
+  while IFS= read -r line; do
+    title_lines+=("$line")
+  done < <(wrap_text "$title" "$cols")
+fi
+if (( ${#title_lines[@]} > 2 )); then
+  title_lines=("${title_lines[@]:0:2}")
+  if (( ${#title_lines[1]} >= cols )); then
+    title_lines[1]="${title_lines[1]:0:cols-1}"
+  fi
+  title_lines[1]+="…"
+fi
+for line in "${title_lines[@]}"; do
+  printf '\033[1m%s\033[0m\n' "$line"
+done
+
+info_line="$channel"
+if [[ -n "$duration" ]]; then
+  [[ -n "$info_line" ]] && info_line+=" · "
+  info_line+="$duration"
+fi
+[[ -n "$info_line" ]] && printf '%s\n' "$info_line"
+printf '\n'
+
+meta_rows=$((${#title_lines[@]} + 1))
+[[ -n "$info_line" ]] && meta_rows=$((meta_rows + 1))
+img_rows=$((rows - meta_rows - 1))
+
+if (( img_rows > 3 )); then
+  # maxresdefault no existe para todos los vídeos: se intenta primero y se
+  # cae a mqdefault, que siempre está disponible.
+  if [[ ! -s "$img" ]]; then
+    tmp="$img.part.$$"
+    for quality in maxresdefault mqdefault; do
+      if curl -fsSL --max-time 6 -o "$tmp" \
+        "https://i.ytimg.com/vi/$id/$quality.jpg" 2>/dev/null && [[ -s "$tmp" ]]; then
+        mv -f -- "$tmp" "$img"
+        break
+      fi
+      rm -f -- "$tmp"
+    done
+  fi
+
+  if command -v chafa >/dev/null 2>&1; then
+    # symbols: arte de caracteres. Con kitty/sixel el gráfico queda pegado en
+    # pantalla al cerrar fzf y se solapa con el siguiente preview.
+    [[ -s "$img" ]] &&
+      chafa --format=symbols --size="${cols}x${img_rows}" --animate=off "$img" 2>/dev/null || true
+  else
+    printf 'sin miniatura (falta chafa)\n'
+  fi
+fi

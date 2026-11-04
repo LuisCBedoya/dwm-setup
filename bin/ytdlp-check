@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# ytdlp-check — compara la versión instalada de yt-dlp con la última de GitHub.
+# Solo lee y avisa: no modifica nada.
+set -Eeuo pipefail
+
+PROG="ytdlp-check"
+quiet=0
+
+case "${1:-}" in
+  -q|--quiet) quiet=1 ;;
+  -h|--help)
+    cat <<'EOF'
+Uso: ytdlp-check [--quiet]
+
+  Compara yt-dlp --version con la última release de GitHub.
+  Si hay una más nueva, imprime un aviso y lanza una notificación.
+  No actualiza: eso lo hace `ytdlp-update` cuando tú lo pides.
+EOF
+    exit 0
+    ;;
+esac
+
+# Mismo criterio que yt-play: primero el binario oficial.
+YTDLP="yt-dlp"
+if [[ -x "$HOME/.local/bin/yt-dlp" ]]; then
+  YTDLP="$HOME/.local/bin/yt-dlp"
+fi
+
+command -v "$YTDLP" >/dev/null 2>&1 || {
+  ((quiet)) || printf '%s: yt-dlp no está instalado\n' "$PROG"
+  exit 0
+}
+
+current=$("$YTDLP" --version 2>/dev/null | head -1) || exit 0
+[[ -n "$current" ]] || exit 0
+
+latest=""
+if command -v curl >/dev/null 2>&1; then
+  latest=$(curl -fsSL --max-time 6 \
+    https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest 2>/dev/null |
+    sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+fi
+
+# Reserva: seguir la redirección de /releases/latest sin la API.
+if [[ -z "$latest" ]] && command -v curl >/dev/null 2>&1; then
+  latest=$(curl -fsSI --max-time 6 -o /dev/null -w '%{url_effective}\n' \
+    https://github.com/yt-dlp/yt-dlp/releases/latest 2>/dev/null |
+    sed -n 's#.*/tag/##p' | head -1)
+fi
+
+[[ -n "$latest" ]] || exit 0
+
+if [[ "$current" == "$latest" ]]; then
+  ((quiet)) || printf 'yt-dlp al día: %s\n' "$current"
+  exit 0
+fi
+
+if ((quiet)); then
+  printf 'yt-dlp: %s -> %s\n' "$current" "$latest"
+else
+  printf 'yt-dlp: hay versión nueva (%s)\n' "$latest"
+  printf '  Tienes %s · actualiza con: ytdlp-update\n' "$current"
+fi
+
+if command -v notify-send >/dev/null 2>&1; then
+  notify-send -a yt-dlp -i software-update-available \
+    "yt-dlp: nueva versión $latest" \
+    "Tienes $current · actualiza con: ytdlp-update" 2>/dev/null || true
+fi

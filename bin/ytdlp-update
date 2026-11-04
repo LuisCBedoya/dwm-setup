@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+# ytdlp-update — actualiza el binario oficial de yt-dlp en ~/.local/bin.
+# Guarda la versión anterior como yt-dlp.bak y restaura si la nueva falla.
+set -Eeuo pipefail
+
+PROG="ytdlp-update"
+BIN="${YTDLP_BIN:-$HOME/.local/bin/yt-dlp}"
+URL="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp"
+
+die() { printf '%s: %s\n' "$PROG" "$*" >&2; exit 1; }
+
+notify() {
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send -a yt-dlp "$@" 2>/dev/null || true
+}
+
+command -v curl >/dev/null 2>&1 || die "falta curl"
+mkdir -p "$(dirname -- "$BIN")"
+
+current="ninguna"
+if [[ -x "$BIN" ]]; then
+  current=$("$BIN" --version 2>/dev/null || echo "desconocida")
+  cp -f -- "$BIN" "$BIN.bak"
+  printf '  versión actual: %s\n' "$current"
+  printf '  copia de seguridad: %s.bak\n' "$BIN"
+else
+  printf '  yt-dlp no estaba instalado\n'
+fi
+
+tmp=$(mktemp "${TMPDIR:-/tmp}/ytdlp.XXXXXX")
+trap 'rm -f -- "$tmp"' EXIT
+
+printf '  descargando la última versión…\n'
+curl -fsSL --max-time 180 -o "$tmp" "$URL" || {
+  notify "yt-dlp: no se pudo descargar" "Revisa la conexión; se mantiene la versión actual"
+  die "no se pudo descargar $URL"
+}
+
+chmod 0755 -- "$tmp"
+
+if ! "$tmp" --version >/dev/null 2>&1; then
+  notify "yt-dlp: descarga inválida" "El binario nuevo no arranca; no se instaló nada"
+  die "el binario descargado no arranca; se mantiene la versión actual"
+fi
+
+install -m 0755 -- "$tmp" "$BIN"
+installed=$("$BIN" --version 2>/dev/null || echo "desconocida")
+printf '  instalada: %s\n' "$installed"
+
+if ! "$BIN" --version >/dev/null 2>&1; then
+  if [[ -f "$BIN.bak" ]]; then
+    install -m 0755 -- "$BIN.bak" "$BIN"
+    notify "yt-dlp: restaurada la versión anterior" "$current"
+    die "la nueva versión no arranca; se restauró $current"
+  fi
+  die "la nueva versión no arranca y no hay copia de seguridad"
+fi
+
+printf '  prueba de arranque: OK\n'
+notify "yt-dlp actualizado" "$current -> $installed"

@@ -1,5 +1,5 @@
 # sxhkdrc — generado desde template, no editar directamente
-# Paleta: @THEME_NAME@ (Warm Charcoal)
+# Paleta: @THEME_NAME@
 # Mapa basado en los atajos de i3 del usuario.
 
 # ─── Aplicaciones (mapa de i3) ───
@@ -80,18 +80,21 @@ super + shift + t
     bspc node -t pseudo_tiled
 super + s
     bspc node -t floating
+# Alternar flotante/tiled. Los ~ van entre comillas: sxhkd usa zsh.
 super + shift + space
-    bspc node -t ~floating
+    bspc node -t '~floating'
+ctrl + space
+    bspc node -t '~floating'
 super + f
-    bspc node -t ~fullscreen
+    bspc node -t '~fullscreen'
 super + a
     bspc node -f @parent
 
 # Split horizontal / vertical (preselección para la próxima ventana)
 super + b
-    bspc node -p ~east
+    bspc node -p '~east'
 super + v
-    bspc node -p ~south
+    bspc node -p '~south'
 
 # Flags de ventana
 super + ctrl + m
@@ -144,6 +147,14 @@ XF86AudioLowerVolume
     @HOME@/.config/polybar/scripts/volume.sh down
 XF86AudioMute
     @HOME@/.config/polybar/scripts/volume.sh mute
+XF86AudioPlay
+    /usr/local/bin/music-ctl play-pause
+XF86AudioNext
+    /usr/local/bin/music-ctl next
+XF86AudioPrev
+    /usr/local/bin/music-ctl prev
+XF86AudioStop
+    /usr/local/bin/music-ctl stop
 
 XF86MonBrightnessUp
     brightnessctl set +10%
