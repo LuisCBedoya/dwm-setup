@@ -2612,13 +2612,12 @@ permanecen intactos. yt-dlp al día pasa a ser doblemente necesario.
   terminal). El backend `kitty` de v0.1.0 no pinta en kitty+X11
   (2026-11-04); `chafa` queda como fallback documentado. Confirmado en
   vivo por el usuario.
-- Audio: se deja el comportamiento **por defecto** del proyecto
-  (decisión del usuario, 2026-11-04, tras probar el override): ytwatch
-  lanza mpv con `--force-window=immediate --no-video`, así que en modo
-  audio abre su ventana normal. El control es por `music-ctl`
-  (`XF86AudioPlay`/`Stop` sobre todas las instancias y
-  `Forward`/`Rewind` ±10 s). La tecla `a` conmuta audio↔vídeo y el
-  footer lo refleja (`720p · ♪ audio`).
+- Audio/vídeo: **vídeo por defecto** (`audio_only = false`, decisión
+  del usuario 2026-11-04): `Enter` abre mpv con imagen y `a` conmuta
+  a audio (footer `720p · ♪ audio`), donde el proyecto mantiene su
+  ventana sin imagen (`--force-window=immediate`). El control es por
+  `music-ctl` (`XF86AudioPlay`/`Stop` sobre todas las instancias y
+  `Forward`/`Rewind` ±10 s).
 - El `.deb` de Debian 13 instala un shim `/usr/bin/ueberzug` que choca
   con el paquete legado `ueberzug` (Python, presente en la máquina):
   el instalador y `ytwatch-update` lo retiran antes (`apt-get -y

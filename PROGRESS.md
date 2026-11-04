@@ -1120,3 +1120,8 @@ shim de ueberzugpp (`trying to overwrite /usr/bin/ueberzug`).
 - Validado con `--dry-run` (grupo escritorio: 48 paquetes, sin
   ueberzug) y `--dry-run --no-ytwatch` (pide el legado). Pendiente:
   re-ejecutar `sudo ./install.sh`.
+- Modo por defecto cambiado a **vídeo** (`audio_only = false`):
+  `Enter` abre mpv con imagen; `a` conmuta a audio (ventana sin imagen
+  por `--force-window=immediate` del proyecto). Decisión del usuario
+  2026-11-04 tras ver que "audio por defecto" implicaba ventana negra
+  o el override `--force-window=no`.

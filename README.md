@@ -413,12 +413,12 @@ ytwatch            # abre con la búsqueda activa
 ytwatch lofi jazz  # abre con una búsqueda precargada
 ```
 
-**Enter** reproduce en audio (config del repo: `audio_only = true`).
-ytwatch se deja **como viene de fábrica**: en mpv usa
-`--force-window=immediate`, así que en modo audio abre su ventana normal
-(no se añade override). La tecla `a` conmuta audio↔vídeo (el footer
-`720p · ♪ audio` lo indica): pulsa `a` y luego `Enter` para ese vídeo.
-`d`/`a`/`Q` descargan (calidad/audio), `V` arma cola, `f` filtra,
+**Enter** reproduce en **vídeo** con la ventana normal de mpv (config del
+repo: `audio_only = false`). La tecla `a` conmuta a audio y el footer
+`720p · ♪ audio` lo indica; en ese modo el proyecto mantiene su ventana
+sin imagen (`--force-window=immediate` de ytwatch), que es su
+comportamiento, no un fallo. `d`/`a`/`Q` descargan (calidad/audio), `V`
+arma cola, `f` filtra,
 `?` muestra la ayuda completa. Las miniaturas van con el backend `x11`
 de `ueberzugpp` (ventana-hija sobre la terminal; en Debian 13 llega por
 `.deb` del proyecto, sin añadir repositorios) y el fallback `chafa`

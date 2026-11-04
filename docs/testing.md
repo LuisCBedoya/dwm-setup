@@ -949,3 +949,7 @@ ytsearch50  → 4533 ms
   quitado para ueberzugpp) y falló a la inversa. Fix: sin `ueberzug`
   en el grupo; se instala solo con `--no-ytwatch`. Validado con
   dry-run en ambos ramales.
+- 2026-11-04 (cierre): `audio_only = false` (vídeo por defecto) por
+  decisión del usuario; el modo audio mantiene la ventana del proyecto
+  (sin imagen). Revertir sería `audio_only = true` +
+  `--force-window=no` si se quiere audio puro sin ventana.

@@ -6,7 +6,7 @@
 
 [general]
 browser = "firefox-esr"      # o y chat en vivo (el default xdg apuntaba a chromium)
-audio_only = true
+audio_only = false           # Enter = vídeo; `a` conmuta a audio en el TUI
 quality = "720p"             # cuando toca vídeo o descarga
 
 [mpv]
