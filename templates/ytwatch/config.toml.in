@@ -11,7 +11,7 @@ quality = "720p"             # cuando toca vídeo o descarga
 
 [mpv]
 workspace = ""               # bspwm coloca la ventana; sin wmctrl
-args = ["--force-window=no"] # audio sin ventana negra (ytwatch fuerza window)
+args = []                    # extra mpv, por ejemplo ["--volume=60"]
 cookies_from_browser = ""    # p.ej. "firefox" si YouTube pide captcha
 
 [download]

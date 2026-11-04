@@ -1101,3 +1101,7 @@ legado `ueberzug` (18.3.1-2+b1, Python) posee `/usr/bin/ueberzug` y el
 - Pendiente: `sudo ./install.sh` (instala el music-ctl nuevo en
   /usr/local/bin y re-renderiza) y probar `a`+`Enter` (vídeo), stop
   de varias instancias y seek.
+- Revertido el override `--force-window=no`: el usuario prefiere ytwatch
+  como viene de fábrica (mpv abre su ventana normal también en audio).
+  La plantilla vuelve a `[mpv] args = []`. Se queda `preview.output =
+  "x11"`, que es lo que da miniaturas. Control de audio por music-ctl.

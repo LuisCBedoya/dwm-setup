@@ -940,3 +940,7 @@ ytsearch50  → 4533 ms
   (play-pause/stop con `playerctl -a`) y ganó forward/backward (±10 s)
   con bindings XF86AudioForward/Rewind. picom con fade-step 0.05
   (~100 ms). Pendiente de probar en sesión tras `sudo ./install.sh`.
+- 2026-11-04 (noche, cierre): el override `--force-window=no` se
+  revierte por decisión del usuario; ytwatch queda con el
+  comportamiento del proyecto (ventana de mpv visible en audio). Se
+  mantiene `preview.output = "x11"`.

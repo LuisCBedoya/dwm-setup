@@ -413,10 +413,10 @@ ytwatch            # abre con la búsqueda activa
 ytwatch lofi jazz  # abre con una búsqueda precargada
 ```
 
-**Enter** reproduce en audio (config del repo: `audio_only = true`) y sin
-ventana de mpv: ytwatch fuerza `--force-window=immediate`, y la config
-añade `--force-window=no` en `[mpv] args` (gana el último flag) para que
-el audio sea puro. La tecla `a` conmuta audio↔vídeo (el footer
+**Enter** reproduce en audio (config del repo: `audio_only = true`).
+ytwatch se deja **como viene de fábrica**: en mpv usa
+`--force-window=immediate`, así que en modo audio abre su ventana normal
+(no se añade override). La tecla `a` conmuta audio↔vídeo (el footer
 `720p · ♪ audio` lo indica): pulsa `a` y luego `Enter` para ese vídeo.
 `d`/`a`/`Q` descargan (calidad/audio), `V` arma cola, `f` filtra,
 `?` muestra la ayuda completa. Las miniaturas van con el backend `x11`
