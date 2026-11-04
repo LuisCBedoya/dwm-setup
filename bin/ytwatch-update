@@ -151,6 +151,13 @@ update_ueberzugpp() {
   got=$(sha256sum "$tmp_deb" | awk '{print $1}')
   printf '  sha256: %s\n' "$got"
 
+  # El paquete legado `ueberzug` (Python) choca con el shim /usr/bin/ueberzug
+  # de ueberzugpp; retirarlo no afecta a ranger (usa el shim).
+  if dpkg-query -W -f='${Status}' ueberzug 2>/dev/null | grep -q 'install ok installed'; then
+    printf '  retirando ueberzug legado (ueberzugpp trae el shim)…\n'
+    sudo env DEBIAN_FRONTEND=noninteractive apt-get -y remove ueberzug || true
+  fi
+
   if ! sudo dpkg -i -- "$tmp_deb"; then
     printf '  dpkg pidió dependencias; apt-get -f las resuelve…\n'
     sudo env DEBIAN_FRONTEND=noninteractive apt-get -y -f install || rc=1

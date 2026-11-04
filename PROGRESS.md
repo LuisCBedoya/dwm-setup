@@ -1059,3 +1059,20 @@ Pendiente de la sesión viva: `sudo ./install.sh` para instalar el .deb
 y renderizar la config; comprobar miniaturas en kitty y la tecla de
 vídeo de `?`. Backlog del usuario: comando tipo doctor global con
 avisos dunst de todo el sistema (aparte de ytwatch-check).
+
+### Fix: ueberzugpp chocaba con el paquete legado ueberzug (2026-11-04)
+
+El `sudo ./install.sh` de las 15:38 abortó en verify con
+`Falta /usr/bin/ueberzugpp`: dpkg rechazó el .deb porque el paquete
+legado `ueberzug` (18.3.1-2+b1, Python) posee `/usr/bin/ueberzug` y el
+.deb trae el shim drop-in con ese mismo path. `apt-get -f` no aplica
+(no era un problema de dependencias).
+
+- `lib/ytwatch.sh` e `ytwatch-update --ueberzugpp` retiran ahora el
+  legado con `apt-get -y remove ueberzug` antes de `dpkg -i` (en
+  Debian 13 no arrastra dependientes) y el warn sugiere
+  `--force-overwrite` solo como último recurso manual.
+- ranger conserva `preview_images_method ueberzug`: el shim de
+  ueberzugpp da el mismo comando.
+- Pendiente: re-ejecutar `sudo ./install.sh` (idempotente; solo
+  reintenta ueberzugpp y la verificación).

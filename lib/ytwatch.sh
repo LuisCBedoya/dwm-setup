@@ -183,6 +183,16 @@ install_ueberzugpp() {
     return 0
   fi
 
+  # El paquete legado `ueberzug` (Python) es dueño de /usr/bin/ueberzug y
+  # choca con el shim que trae ueberzugpp (drop-in). Se retira antes:
+  # el shim mantiene el comando para ranger (preview_images_method
+  # ueberzug) y en Debian 13 no arrastra dependientes.
+  if dpkg-query -W -f='${Status}' ueberzug 2>/dev/null | grep -q 'install ok installed'; then
+    info "Retirando ueberzug legado (ueberzugpp instala el shim /usr/bin/ueberzug)"
+    run_root env DEBIAN_FRONTEND=noninteractive apt-get -y remove ueberzug ||
+      warn "No se pudo retirar ueberzug; dpkg puede fallar por el binario en conflicto"
+  fi
+
   if ! run_root dpkg -i "$tmp"; then
     info "dpkg pidió dependencias; apt-get -f las resuelve"
     run_root env DEBIAN_FRONTEND=noninteractive apt-get -y -f install || rc=1

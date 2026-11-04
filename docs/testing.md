@@ -925,3 +925,8 @@ ytsearch50  → 4533 ms
 - Pendiente: `sudo ./install.sh` en la sesión (instala .deb + config),
   miniaturas en kitty, tecla de vídeo de `?` y prueba de
   `ytwatch-update --ueberzugpp` cuando salga versión nueva.
+- Incidente 2026-11-04 15:38: dpkg rechazó ueberzugpp_2.9.10 porque el
+  paquete legado `ueberzug` (18.3.1-2+b1) posee /usr/bin/ueberzug; el
+  .deb trae el shim. Fix: retirar el legado antes del dpkg (instalador
+  y `ytwatch-update --ueberzugpp`); sin dependientes en Debian 13 y
+  ranger sigue con el shim. Re-ejecutar `sudo ./install.sh`.

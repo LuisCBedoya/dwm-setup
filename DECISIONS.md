@@ -2612,6 +2612,12 @@ permanecen intactos. yt-dlp al día pasa a ser doblemente necesario.
   protocolo del terminal; en kitty va por protocolo nativo. `? help`
   del propio binario documenta teclas; el switch audio↔vídeo por
   resultado quedó en revisión del usuario.
+- El `.deb` de Debian 13 instala un shim `/usr/bin/ueberzug` que choca
+  con el paquete legado `ueberzug` (Python, presente en la máquina):
+  el instalador y `ytwatch-update` lo retiran antes (`apt-get -y
+  remove`; sin dependientes en Debian 13) y ranger sigue funcionando
+  con su `preview_images_method ueberzug` vía shim. No se usa
+  `--force-overwrite`.
 - El pin del repo decide versiones en instalación limpia; para actualizar
   en una máquina ya instalada están los dos binarios nuevos.
 - El doctor global con avisos dunst de todo el sistema (idea del
