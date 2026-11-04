@@ -1,5 +1,5 @@
 ; polybar config.ini — generado desde template, no editar directamente
-; Paleta exacta del screenshot (Warm Charcoal)
+; Paleta activa (Catppuccin)
 ; Barra TOP, full-width, sin subrayados, sin bloques de fondo
 
 include-directory = @HOME@/.config/polybar/modules
@@ -64,7 +64,7 @@ font-4 = "@FONT@:size=11;5"
 font-5 = "Noto Color Emoji:scale=9:antialias=false;3"
 
 modules-left = logo bspwm monocle resize
-modules-right = updates services polypomo temp memory cpu network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ date tray
+modules-right = updates services polypomo temp memory cpu governor network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ date tray
 
 cursor-click = pointer
 cursor-scroll = ns-resize
