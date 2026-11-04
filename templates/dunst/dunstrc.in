@@ -1,5 +1,5 @@
 # dunstrc — generado desde template
-# Paleta: @THEME_NAME@ (Warm Charcoal)
+# Paleta: @THEME_NAME@
 
 [global]
     width = 300

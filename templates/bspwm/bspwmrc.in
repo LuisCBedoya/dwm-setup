@@ -1,6 +1,6 @@
 #! /bin/sh
 # bspwmrc — generado desde template, no editar directamente
-# Paleta: @THEME_NAME@ (Warm Charcoal)
+# Paleta: @THEME_NAME@
 
 pgrep -x sxhkd > /dev/null || sxhkd -c @HOME@/.config/sxhkd/sxhkdrc &
 
@@ -29,7 +29,7 @@ bspc config split_ratio          0.50
 bspc config borderless_monocle   true
 bspc config gapless_monocle      true
 
-# Colores (desde paleta Warm Charcoal)
+# Colores (desde la paleta activa)
 bspc config normal_border_color  "@COLOR_BORDER@"
 bspc config focused_border_color "@COLOR_ACCENT_ALT@"
 bspc config active_border_color  "@COLOR_BG_ELEV@"

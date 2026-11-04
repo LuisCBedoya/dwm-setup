@@ -68,23 +68,23 @@ theme_var() {
   if [[ -z "$val" ]]; then
     warn "Color $var no definido en tema '$THEME_NAME', usando fallback"
     case "$var" in
-      COLOR_BG) val="#18181a" ;;
-      COLOR_BG_ALT) val="#202022" ;;
-      COLOR_BG_ELEV) val="#2a2a2c" ;;
-      COLOR_BG_HOVER) val="#35353a" ;;
-      COLOR_FG) val="#d8d3cc" ;;
-      COLOR_FG_MUTED) val="#8e8a85" ;;
-      COLOR_FG_DIM) val="#5e5e62" ;;
-      COLOR_BORDER) val="#3a3a3e" ;;
-      COLOR_ACCENT) val="#b9a99a" ;;
-      COLOR_ACCENT_ALT) val="#8fa6b4" ;;
-      COLOR_GREEN) val="#a8bfae" ;;
-      COLOR_YELLOW) val="#c9b18c" ;;
-      COLOR_ORANGE) val="#c99a7a" ;;
-      COLOR_RED) val="#c97a6d" ;;
-      COLOR_CYAN) val="#8fa6b4" ;;
-      COLOR_PURPLE) val="#a99bb0" ;;
-      COLOR_BLUE) val="#8fa6b4" ;;
+      COLOR_BG) val="#0d0d14" ;;
+      COLOR_BG_ALT) val="#0d0d14" ;;
+      COLOR_BG_ELEV) val="#1a1a24" ;;
+      COLOR_BG_HOVER) val="#26262f" ;;
+      COLOR_FG) val="#cdd6f4" ;;
+      COLOR_FG_MUTED) val="#a6adc8" ;;
+      COLOR_FG_DIM) val="#6c7086" ;;
+      COLOR_BORDER) val="#26262f" ;;
+      COLOR_ACCENT) val="#89b4fa" ;;
+      COLOR_ACCENT_ALT) val="#b4befe" ;;
+      COLOR_GREEN) val="#a6e3a1" ;;
+      COLOR_YELLOW) val="#f9e2af" ;;
+      COLOR_ORANGE) val="#fab387" ;;
+      COLOR_RED) val="#f38ba8" ;;
+      COLOR_CYAN) val="#94e2d5" ;;
+      COLOR_PURPLE) val="#cba6f7" ;;
+      COLOR_BLUE) val="#89b4fa" ;;
       *) val="#ff00ff" ;;
     esac
   fi

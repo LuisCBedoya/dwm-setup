@@ -8,8 +8,23 @@ action="${1:-lock}"
 
 case "$action" in
   lock)
-    # Bloquear pantalla con i3lock (color de fondo Nord)
-    i3lock -c "2e3440" -n -e -f
+    # Color de fondo desde la paleta activa; si el store no existe, Mocha Black.
+    bg="#0d0d14"
+    store="${XDG_DATA_HOME:-$HOME/.local/share}/dwm-setup"
+    mode_file="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup/mode"
+    mode=dark
+    if [ -r "$mode_file" ]; then
+      mode=$(cat "$mode_file" 2>/dev/null || printf 'dark')
+    fi
+    case "$mode" in
+      light) palette="$store/colors/palette-latte.sh" ;;
+      *)     palette="$store/colors/palette-mocha-black.sh" ;;
+    esac
+    if [ -r "$palette" ]; then
+      bg=$(sed -n 's/^export COLOR_BG="\([^"]*\)".*/\1/p' "$palette" | head -1)
+    fi
+    [ -n "$bg" ] || bg="#0d0d14"
+    i3lock -c "${bg#\#}" -n -e -f
     ;;
   suspend)
     systemctl suspend
