@@ -9,23 +9,29 @@ Instalador reproducible de un escritorio mínimo para **Debian 13 (trixie)**
 con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 **polybar**, **dunst**, **rofi**, **kitty**, **flameshot**, **zsh/Oh My Zsh**, **lsd**,
 **ranger**, **zathura**, **VLC**, **Firefox ESR**,
-**i3lock/xss-lock**, PipeWire, cámara UVC y almacenamiento extraíble con
-notificación.
+**i3lock/xss-lock**, **picom** (compositor, ADR-107), PipeWire, cámara UVC
+y almacenamiento extraíble con notificación. La CPU arranca en
+`performance` y se alterna desde la barra (módulo `governor`, ADR-108).
 
-La barra final es la de la config viva: **12 módulos** (**13 con backlight**),
+La barra final es la de la config viva: **13 módulos** (**14 con backlight**),
 logo StumbleUpon
 (`U+F1A4`), workspaces 1-7, actualizaciones al inicio de la derecha, fecha al final,
-red unificada (`󰖩/󰈀 connected`, Ethernet prioritario, `󰖩 NoC` sin conexión), servicios systemd, volumen,
+red unificada (`󰖩/󰈀 connected`, Ethernet prioritario, `󰖩 NoC` sin conexión), servicios systemd, gobernador
+de CPU (`󱃋 performance` con acento, `󰾆 powersave`; clic alterna + toast), volumen,
 batería y fecha; sin `dots`. Sin `xkeyboard`, `wlan`/`eth` separados ni
 fuente `DesktopLogo`.
 Fuentes: `font-1` 10 y `font-3` 13; logo en `font-0`. Separación compacta:
 `module-margin-left/right = 0`; `updates`/`polypomo` con padding 1/1;
-volumen y batería juntos.
+volumen y batería juntos. Espaciados por módulo afinados a mano (no
+nuevo marginal): `cpu` cierra en `%{O2}`, `governor` añade `%{O5}` y
+`pipewire` lleva `format-padding 2` en ambas variantes (en la B,
+`memory` padding 1).
 
-Hay una **variante B "referencia"** instalada aparte: 14 módulos (15 con
-backlight), 5 workspaces como círculos al centro; a la izquierda `date`, `day`, `updates`,
-pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
-volumen y batería. Barra de 30 px con fondo del modo activo, fuentes 10/13 y flechas del color del
+Hay una **variante B "referencia"** instalada aparte: 15 módulos (16 con
+backlight), 5 workspaces como círculos al centro; a la izquierda `date`, `day`,
+gobernador, `updates`,
+pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU,
+red, volumen y batería. Barra de 30 px con fondo del modo activo, fuentes 10/13 y flechas del color del
 bloque; temperatura conserva fondo en warning. Se cambia con
 `~/.config/polybar/polybar-variant referencia` o `... actual`.
 
@@ -35,8 +41,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 - Brave/Chromium u otros navegadores (Firefox ESR sí forma parte del
   escritorio).
 - Correo, Teams.
-- Reproductores de música, mpv, cava o widgets de música. VLC sí se usa
-  para abrir vídeos.
+- Reproductores de música locales (cmus/mpd) y widgets de música. `mpv` y
+  `yt-dlp` sí se usan para streaming de YouTube; VLC para vídeo local.
 - Bluetooth, htop, ripgrep, nvitop/nvtop.
 - XFCE, LightDM, Thunar como entorno completo (Thunar sí se instala como
   gestor de archivos puntual).
@@ -100,6 +106,12 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `Print` captura pantalla completa al portapapeles; `Super+Print` abre el
     menú de capturas. `Super+Alt+p` cicla A arriba → A abajo → B arriba → B abajo.
     `Super+Alt+t` alterna Catppuccin Mocha Black / Latte (`theme-mode toggle`).
+    `Ctrl+Space` alterna flotante/tiled (además de `Super+Shift+Space`).
+    Los argumentos `~...` de bspwm en `sxhkdrc` van entre comillas
+    (`'~floating'`, `'~fullscreen'`, `'~east'`, `'~south'`): sxhkd ejecuta
+    con `$SHELL` (zsh) y sin comillas `~floating` se expande a un usuario
+    inexistente.
+    `XF86AudioPlay/Next/Prev/Stop` llaman a `music-ctl` (mpv vía MPRIS).
     `Super+Ctrl+Tab` y `Super+Ctrl+Shift+Tab` cambian de escritorio. No
     cambiar este mapa sin una decisión nueva.
 19. **Audio portable.** El watcher elige auriculares > HDMI > altavoces
@@ -167,6 +179,39 @@ La fase 1 termina en el escritorio. No implementar todavía:
     aparecer y necesitarían `snixembed`, que no está en Debian 13 stable.
     No ejecutar otro tray (stalonetray, nm-applet como host) a la vez.
 
+24. **Pantalla siempre encendida.** `autostart` ejecuta `xset s off` y
+    `xset -dpms`; no hay bloqueo por inactividad. No reintroducir blanking,
+    DPMS ni `xset dpms force off` en scripts de sesión. El bloqueo manual
+    (`Super+Shift+L`) y el de suspensión siguen activos.
+
+25. **Compositor picom (ADR-107).** picom 12.5 inicializa la sesión desde
+    `autostart` (antes de polybar, con guard `pgrep -x picom`) usando
+    `~/.config/picom/picom.conf` generado desde `templates/picom/`:
+    `backend glx`, `vsync true`, `use-damage`, fade sutil (delta 5,
+    pasos 0.03) que excluye dock/notificaciones/desktop, `shadow false`
+    y todas las opacidades a 1. **No añadir sombras, blur ni
+    transparencias de picom** (los quitarían de la decisión tomada en
+    vivo); la translucidez de la barra B es el fondo `#00000000` de
+    polybar, no un alpha de picom. `unredir-if-possible` deja pasar el
+    vídeo a pantalla completa. picom usa libconfig: comentarios `#`, no
+    `;`. Si se añade color a alguna plantilla nueva de picom, entra al
+    store (regla 20b); hoy no tiene.
+
+26. **Gobernador de CPU (ADR-108).** El módulo `governor` va en la A
+    justo tras `cpu` en `modules-right` y en la B en `modules-left`
+    tras `day`; cicla la lista leída de `scaling_available_governors`
+    (nada hardcodeado): clic → helper
+    `/usr/local/bin/dwm-setup-cpu-governor` vía `sudo -n` + toast dunst.
+    Esa escritura de raíz solo está admitida con el fragmento
+    `/etc/sudoers.d/dwm-setup-cpu-governor` (`NOPASSWD` para ese binario
+    exacto, validado con `visudo -cf` antes de instalar); no ampliar el
+    sudoers. La unidad `dwm-setup-cpu-governor.service` aplica
+    `performance` al boot. Iconos del módulo: `U+F10CB`
+    performance, `U+F0F86` powersave (font-3); el acento performance
+    sale de `@COLOR_ACCENT@` en `scripts/cpu-governor.sh` (re-render de
+    `theme-mode`, regla 20b). EPP/balanceado queda fuera hasta decisión
+    nueva.
+
 ## Estructura relevante
 
 | Archivo | Responsabilidad |
@@ -174,10 +219,12 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `install.sh` | Flujo, opciones, confirmación, backups y resumen |
 | `lib/common.sh` | Logs, sudo, ownership, backups, render, helpers |
 | `lib/detect.sh` | Detección de sistema/hardware y usuario |
-| `lib/packages.sh` | Preflight APT, paquetes y Nerd Font |
+| `lib/packages.sh` | Preflight APT, paquetes, cadena de compilación y autoremove |
 | `lib/bspwm.sh` | bspwm, bspwmrc, autostart, scripts y `.xinitrc` |
 | `lib/sxhkd.sh` | sxhkdrc |
 | `lib/polybar.sh` | config.ini, módulos, scripts y launch.sh |
+| `lib/cpu.sh` | Gobernador de CPU: helper root, sudoers y unidad systemd |
+| `lib/picom.sh` | picom: config del compositor (glx + vsync + fade) |
 | `lib/dunst.sh` | dunstrc |
 | `lib/rofi.sh` | powermenu.rasi |
 | `lib/kitty.sh` | kitty.conf y paleta del terminal |
@@ -186,17 +233,19 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/gpu.sh` | configuración Xorg/i915/NVIDIA por hardware |
 | `lib/gtk.sh` | temas GTK Catppuccin, tema derivado e iconos |
 | `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
-| `lib/config.sh` | Configs de usuario, wallpaper, binarios y limpieza |
+| `lib/config.sh` | Configs de usuario, wallpaper y binarios de sesión |
 | `lib/fastfetch.sh` | fastfetch: config y logo `Neofet.png` |
+| `lib/music.sh` | yt-dlp oficial, scripts de streaming y teclas |
 | `lib/firefox.sh` | Firefox ESR y OpenH264 para WebRTC/Teams |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paletas (Mocha Black, Latte), par de modos y render |
 | `lib/audio.sh` | Quirk ALC255 condicionado por DMI/códec |
 | `bin/desktop-safe` | Acciones de sesión (lock/suspend/logout/poweroff) |
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
-| `templates/bspwm/` | bspwmrc, autostart y scripts de sesión (incl. thunar-defaults) |
+| `bin/dwm-setup-cpu-governor` | Helper root del módulo governor: valida y escribe `scaling_governor` |
+| `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults) |
 | `templates/sxhkd/` | sxhkdrc |
-| `templates/polybar/` | config.ini, modules/, scripts/ y variants/ |
+| `templates/polybar/` | config.ini, modules/ (incl. governor), scripts/ (cpu-governor.sh) y variants/ |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
 | `templates/rofi/` | powermenu.rasi y config.rasi |
 | `templates/kitty/` | kitty.conf y colorshemes/ |
@@ -204,6 +253,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/lsd/` | config.yml e icons.yaml |
 | `templates/ranger/` | rc.conf, rifle.conf y previews |
 | `templates/xorg/` | 20-modesetting.conf |
+| `templates/picom/` | picom.conf.in (libconfig: comentarios `#`) |
+| `templates/sudoers/` | Fragmento de sudoers del gobernador (`@USER@`) |
+| `templates/systemd/` | `dwm-setup-cpu-governor.service` (performance al boot) |
 | `templates/gtk/` | settings GTK2/3/4 y CSS |
 | `templates/firefox/` | `zz-dwm-setup.js` (OpenH264), `policies.json` (uBlock + SurfingKeys), `userChrome.css.in`, `user.js.in` y `surfingkeys.js.in` |
 | `templates/vlc/` | vlcrc (oscuro o claro según el modo) |
@@ -213,6 +265,12 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `assets/fastfetch/` | `Neofet.png` |
 | `templates/icons/` | `papirus-folders` y carpetas `cat-mocha-blue`/`cat-latte-blue` |
 | `bin/theme-mode` | Cambio de modo dark/light en caliente |
+| `bin/yt-play` | Reproduce audio o vídeo de YouTube (URL o búsqueda con fzf) |
+| `bin/yt-preview` | Miniatura del vídeo para el preview de fzf |
+| `bin/ytdlp-check` | Avisa si hay versión nueva de yt-dlp |
+| `bin/ytdlp-update` | Actualiza yt-dlp con copia y rollback |
+| `bin/ytdlp-rollback` | Restaura la copia anterior de yt-dlp |
+| `bin/music-ctl` | Teclas multimedia del reproductor activo |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
 | `templates/colors/` | `palette-mocha-black.sh`, `palette-latte.sh` y helpers |
 | `assets/wallpaper.png` | Wallpaper principal |
@@ -229,11 +287,21 @@ cd ~/dwm-setup
 
 # Sintaxis
 for f in install.sh lib/*.sh; do bash -n "$f" || exit 1; done
-for f in bin/desktop-safe bin/desktop-doctor; do sh -n "$f" || exit 1; done
+for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor; do sh -n "$f" || exit 1; done
+sh -n templates/polybar/scripts/cpu-governor.sh.in
 bash -n bin/theme-mode
+bash -n bin/yt-play bin/yt-preview bin/ytdlp-check bin/ytdlp-update \
+  bin/ytdlp-rollback bin/music-ctl
 bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
 
-# Plan sin cambios
+# Gobernador: lista oficial y sudoers renderizado (sin tocar el sistema)
+sh -n bin/dwm-setup-cpu-governor
+sed "s/@USER@/$(id -un)/g" templates/sudoers/dwm-setup-cpu-governor.in > /tmp/opencode/sudoers-render
+visudo -cf /tmp/opencode/sudoers-render
+systemd-analyze verify templates/systemd/dwm-setup-cpu-governor.service
+# (el aviso "Command ... is not executable" es normal: falta hasta sudo ./install.sh)
+
+# Plan sin cambios (incluye apt-mark manual + autoremove simulados)
 ./install.sh --dry-run
 
 # Comprobar restos y coherencia de la barra
@@ -244,7 +312,13 @@ grep -nE 'modules-(left|right)' ~/.config/polybar/config.ini
 stat -c '%A %n' ~/.config/bspwm/bspwmrc ~/.xinitrc
 
 # ShellCheck (si está instalado)
-shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor bin/theme-mode
+shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor \
+  bin/dwm-setup-cpu-governor bin/theme-mode bin/yt-play bin/yt-preview \
+  bin/ytdlp-check bin/ytdlp-update bin/ytdlp-rollback bin/music-ctl
+
+# Streaming y limpieza
+ytdlp-check
+./install.sh --dry-run 2>&1 | grep -A2 'Limpiando dependencias'
 
 # Modo de color (no pide sudo)
 theme-mode status
@@ -261,11 +335,40 @@ desktop-doctor --camera
 - Catppuccin (Mocha Black + Latte) implementado el 2026-11-02: dos paletas,
   `theme-mode`, temas GTK vendorizados y temas de iconos overlay. Pasan
   `bash -n`, `--dry-run` con ambas paletas y `theme-mode --no-reload` en un
-  HOME simulado. Falta `sudo ./install.sh` y probar el cambio de modo en la
-  sesión viva.
-- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 12 /
-  B 14 módulos), dunst, lxpolkit, udiskie y xss-lock activos; `startx`
-  manual. Sin compositor; la barra B usa fondo sólido del modo activo.
+  HOME simulado. Pendiente probar el cambio de modo en la sesión viva
+  (la instalación ya está aplicada).
+- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 13 /
+  B 15 módulos), dunst, lxpolkit, udiskie, xss-lock y picom activos;
+  `startx` manual. picom es el compositor de la sesión (ADR-107) y la
+  barra B usa su fondo transparente frente al compositor.
+- Pantalla siempre encendida (2026-11-02): `autostart` aplica `xset s off`
+  y `xset -dpms`; `i3lock-fancy` ya no fuerza DPMS off. Aplicado en vivo y
+  sincronizado en `~/.config/bspwm` con backup; falta `sudo ./install.sh`
+  para el resto del bloque y prueba de inactividad >10 min.
+- Streaming (2026-11-02): `yt-play` (20 resultados, lista de títulos y
+  preview al 50% con metadatos + chafa), `yt-preview`,
+  `ytdlp-{check,update,rollback}` y `music-ctl` implementados. `yt-play`
+  acepta `--audio` (por defecto) y `--video` (ventana de mpv al 80%); en
+  fzf, Enter usa el modo por defecto y Ctrl+V el otro. `Ctrl+Space` alterna
+  flotante/tiled; los `~...` de bspwm van entre comillas en sxhkdrc porque
+  sxhkd usa zsh. `--dry-run` y la simulación pasan. La instalación se
+  aplicó el 2026-11-04 13:13; pendiente probar audio, vídeo y
+  Ctrl+Space en la sesión viva.
+- picom + módulo `governor` (2026-11-04): picom 12.5 integrado
+  (ADR-107) tras prueba del usuario en vivo; `templates/picom/`,
+  `lib/picom.sh`, bloque en `autostart` y checks en `verify.sh`. El
+  módulo `governor` (ADR-108) está en ambas variantes con helper root,
+  sudoers acotado (validado con `visudo -cf`) y unidad systemd
+  (`performance` al boot). Barra y picom aplicados en viva y
+  reiniciados (picom pid activo, polybar con el módulo). El bloque
+  root quedó instalado con el `sudo ./install.sh` de las 13:13
+  (unidad habilitada). Tras el install, el usuario afinó a mano la
+  barra: el port de esos tweaks a las plantillas quedó validado con
+  render idéntico (9/9) y el store de theme-mode sincronizado.
+  Pendiente: prueba visual del fade y del alternado por clic con
+  reinicio de polybar si hace falta.
+- Autoremove (2026-11-02): la cadena de compilación queda marcada como
+  manual y `apt-get -y autoremove` corre al final, después de verificar.
 - Se corrigieron backups previos, ownership, `bspwmrc` 0755,
   `desktop-doctor`, batería baja y polkit.
 - Audio: watcher auriculares > HDMI > altavoces, sonido de dunst y quirk

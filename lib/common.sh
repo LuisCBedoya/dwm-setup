@@ -244,6 +244,15 @@ backup_existing_configs() {
   backup_root "/usr/local/bin/desktop-safe"
   backup_root "/usr/local/bin/desktop-doctor"
   backup_root "/usr/local/bin/theme-mode"
+  backup_root "/usr/local/bin/yt-play"
+  backup_root "/usr/local/bin/yt-preview"
+  backup_root "/usr/local/bin/ytdlp-check"
+  backup_root "/usr/local/bin/ytdlp-update"
+  backup_root "/usr/local/bin/ytdlp-rollback"
+  backup_root "/usr/local/bin/music-ctl"
+  backup_root "/usr/local/bin/dwm-setup-cpu-governor"
+  backup_root "/etc/sudoers.d/dwm-setup-cpu-governor"
+  backup_root "/etc/systemd/system/dwm-setup-cpu-governor.service"
   backup_root "/usr/share/themes/catppuccin-mocha-blue"
   backup_root "/usr/share/themes/catppuccin-latte-blue"
   backup_root "/usr/share/themes/catppuccin-mocha-black"
@@ -260,6 +269,7 @@ backup_existing_configs() {
   backup_user_path "$home/.config/dunst"
   backup_user_path "$home/.config/rofi"
   backup_user_path "$home/.config/kitty"
+  backup_user_path "$home/.config/picom"
   backup_user_path "$home/.zshrc"
   backup_user_path "$home/.config/lsd"
   backup_user_path "$home/.config/ranger"
@@ -273,6 +283,7 @@ backup_existing_configs() {
   backup_user_path "$home/.local/share/wallpapers/wallpaper.png"
   backup_user_path "$home/.config/dwm-setup"
   backup_user_path "$home/.config/fastfetch"
+  backup_user_path "$home/.local/bin/yt-dlp"
 
   # Perfil de Firefox: userChrome.css y user.js se reemplazan al instalar.
   local ff_profile=""
@@ -347,6 +358,7 @@ chown_managed_paths() {
     "$TARGET_HOME/.config/zathura" \
     "$TARGET_HOME/.config/dwm-setup" \
     "$TARGET_HOME/.config/fastfetch" \
+    "$TARGET_HOME/.local/bin" \
     "$TARGET_HOME/.local/share/dwm-setup" \
     "$TARGET_HOME/.config/vlc" \
     "$TARGET_HOME/.config/gtk-3.0" \

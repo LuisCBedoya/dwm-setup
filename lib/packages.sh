@@ -13,8 +13,11 @@ XORG_PKGS=(
   mesa-va-drivers mesa-vdpau-drivers vulkan-tools vainfo vdpauinfo
 )
 
-# Paquetes de compilación mínimos (solo para lo que se compila, ya no chadwm/eww/Ly)
+# Paquetes de compilación (cadena completa; se protegen del autoremove).
 BUILD_PKGS=(
+  build-essential make gcc g++ patch cmake
+  autoconf automake libtool libtool-bin
+  meson ninja-build pkg-config git
   libx11-dev libxft-dev libxinerama-dev libxrender-dev libfontconfig1-dev
   libx11-xcb-dev libxcb1-dev libxcb-randr0-dev libxcb-shape0-dev
   libxcb-xfixes0-dev libxcb-util-dev libxcb-xinerama0-dev libxcb-xkb-dev
@@ -42,7 +45,7 @@ STORAGE_PKGS=(
 
 # bspwm + sxhkd + polybar + resto del escritorio
 DESKTOP_PKGS=(
-  bspwm sxhkd polybar
+  bspwm sxhkd polybar picom
   dunst rofi dmenu feh kitty flameshot neovim i3lock xss-lock
   brightnessctl xclip thunar
   xwallpaper playerctl
@@ -53,6 +56,7 @@ DESKTOP_PKGS=(
   scrot imagemagick
   lm-sensors upower acpi
   fastfetch
+  mpv mpv-mpris fzf chafa yt-dlp
   xdg-desktop-portal xdg-desktop-portal-gtk
 )
 
@@ -683,11 +687,12 @@ install_packages() {
     return 0
   fi
   local required_pkgs=(
-    bspwm sxhkd polybar kitty dunst rofi feh xwallpaper
+    bspwm sxhkd polybar picom kitty dunst rofi feh xwallpaper
     udiskie brightnessctl xclip thunar playerctl flameshot neovim i3lock xss-lock
     zsh zsh-autosuggestions lsd ranger zathura zathura-pdf-poppler zathura-cb zathura-djvu zathura-ps
-    vlc ueberzug poppler-utils libmupdf-dev zathura-dev meson ninja-build
-    libnotify-bin gir1.2-notify-0.7 lm-sensors upower acpi fastfetch
+    vlc ueberzug poppler-utils libmupdf-dev zathura-dev
+    build-essential make gcc g++ patch cmake autoconf automake libtool libtool-bin pkg-config git
+    libnotify-bin gir1.2-notify-0.7 lm-sensors upower acpi fastfetch mpv mpv-mpris fzf chafa yt-dlp
     fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji fonts-noto-cjk
     adwaita-icon-theme hicolor-icon-theme papirus-icon-theme librsvg2-common desktop-file-utils shared-mime-info
     xdg-utils xdg-user-dirs network-manager network-manager-gnome dbus-user-session dbus-x11
@@ -711,4 +716,73 @@ install_packages() {
 
   enable_base_services
   add_user_groups
+}
+
+# Marca la cadena de compilación como manual para que `apt-get autoremove`
+# no pueda retirarla, aunque algo la haya instalado como dependencia.
+protect_build_toolchain() {
+  local pkg
+  local -a installed=()
+  for pkg in build-essential make gcc g++ patch cmake \
+             autoconf automake libtool libtool-bin meson ninja-build pkg-config git; do
+    if dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null |
+         grep -q 'install ok installed'; then
+      installed+=("$pkg")
+    fi
+  done
+
+  (( ${#installed[@]} > 0 )) || return 0
+
+  if [[ "$EUID" -eq 0 ]]; then
+    apt-mark manual "${installed[@]}" >/dev/null 2>&1 ||
+      warn "No se pudo marcar la cadena de compilación como manual"
+  elif sudo -n true 2>/dev/null; then
+    sudo apt-mark manual "${installed[@]}" >/dev/null 2>&1 ||
+      warn "No se pudo marcar la cadena de compilación como manual"
+  else
+    warn "Sin sudo para proteger la cadena de compilación; se omite apt-mark"
+  fi
+}
+
+# Limpia dependencias que ya no necesita nadie. La cadena de compilación se
+# protege antes; nunca se usa --purge y un fallo no tumba la instalación.
+cleanup_packages() {
+  section "Limpiando dependencias innecesarias"
+
+  if dry_run; then
+    log "[dry-run] apt-mark manual (cadena de compilación)"
+    print_cmd env DEBIAN_FRONTEND=noninteractive apt-get -y autoremove
+    return 0
+  fi
+
+  protect_build_toolchain
+
+  local out rc
+  if [[ "$EUID" -eq 0 ]]; then
+    if out=$(DEBIAN_FRONTEND=noninteractive apt-get -y autoremove 2>&1); then
+      rc=0
+    else
+      rc=$?
+    fi
+  else
+    if ! sudo -n true 2>/dev/null; then
+      warn "Sin sudo para autoremove; se omite la limpieza"
+      return 0
+    fi
+    if out=$(sudo env DEBIAN_FRONTEND=noninteractive apt-get -y autoremove 2>&1); then
+      rc=0
+    else
+      rc=$?
+    fi
+  fi
+
+  if (( rc != 0 )); then
+    warn "apt-get autoremove falló (rc=$rc); revisa el log"
+    printf '%s\n' "$out" | tail -5 >&2
+    return 0
+  fi
+
+  printf '%s\n' "$out" | grep -E '^(Se eliminarán|Los siguientes paquetes|Removing|The following packages will be REMOVED)' -A20 |
+    head -20 || true
+  ok "dependencias innecesarias eliminadas"
 }

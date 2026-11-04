@@ -2389,3 +2389,181 @@ de Firefox siguiera al modo claro/oscuro como el chrome.
 - Para leer texto en oscuro hay que pulsar `Ctrl+R` en zathura.
 - YouTube requiere "Usar tema del dispositivo" una vez; Google Search sigue
   `prefers-color-scheme` tras reiniciar Firefox.
+
+## ADR-103 — Streaming de YouTube en la terminal
+
+**Contexto:** se quiere escuchar música desde la terminal, principalmente de
+YouTube/YouTube Music. No hay cliente TUI empaquetado en Debian
+(`mps-youtube`, `yewtube` y `pipe-viewer` no existen en trixie).
+
+**Decisión:**
+1. `mpv` + `yt-dlp` para streaming; VLC sigue siendo el reproductor de vídeo
+   local y la música local (cmus/mpd) queda para más adelante.
+2. `yt-dlp` se instala como binario oficial en `~/.local/bin` (autoactualizable
+   sin sudo) con el paquete de Debian como respaldo.
+3. `yt-play` busca 20 resultados (una página de YouTube) y los muestra en
+   **fzf** con el título en la lista y, en un panel lateral al 50%, los
+   metadatos (título, canal, duración) y la miniatura dibujada con chafa en
+   modo texto (`maxresdefault` con respaldo a `mqdefault`); con URL reproduce
+   directo. Sin fzf no se usa rofi.
+4. `ytdlp-check` solo compara y notifica; nunca actualiza. `ytdlp-update` es
+   explícito, guarda `.bak` y restaura si el binario nuevo no arranca.
+5. `yt-play` comprueba la versión una vez al día en segundo plano y detecta
+   los errores típicos de YouTube para sugerir `ytdlp-update`.
+6. `music-ctl` centraliza las teclas multimedia vía `playerctl`/MPRIS, con
+   hueco para cmus cuando se añada.
+
+**Consecuencias:**
+- Dependencia de un binario externo que hay que actualizar cuando YouTube
+  cambie; el aviso y el rollback están integrados.
+- `~/.local/bin` pasa a estar en el PATH de la sesión.
+- Sin fzf, `yt-play` con búsqueda falla con un mensaje claro; con URL sigue
+  funcionando.
+
+## ADR-104 — Pantalla siempre encendida, sin bloqueo por inactividad
+
+**Contexto:** el servidor X aplica por defecto un timeout de salvapantallas de
+600 s y DPMS a 600 s. Al activarse el salvapantallas, `xss-lock` bloquea la
+sesión y el monitor se apaga. El usuario quiere la pantalla siempre encendida
+aunque no haya actividad.
+
+**Decisión:**
+1. `autostart` ejecuta `xset s off` y `xset -dpms` al iniciar la sesión. Con
+   el timeout a 0, `xss-lock` no recibe activación por inactividad.
+2. El bloqueo manual (`Super+Shift+L` / `desktop-safe lock`) y el bloqueo
+   antes de suspender siguen activos. `xss-lock` no se elimina.
+3. `i3lock-fancy` ya no apaga el monitor tras 5 s; el bloqueo se queda
+   visible y la pantalla encendida.
+4. No se tocan Xorg ni logind: el cambio es por sesión y se puede revertir
+   con `xset s default` y `xset +dpms`.
+
+**Consecuencias:**
+- La sesión queda visible si el usuario se ausenta; no hay bloqueo de
+  seguridad automático. El bloqueo manual sigue disponible.
+- Suspender sigue apagando la pantalla mientras el equipo duerme; al volver,
+  `xss-lock` deja el bloqueo puesto.
+- Si un monitor tiene ahorro de energía propio, hay que desactivarlo en su
+  OSD.
+
+## ADR-105 — yt-play: audio o vídeo
+
+**Contexto:** `yt-play` reproducía solo audio. Se quiere poder elegir entre
+solo audio o ver el vídeo, sin salir de la búsqueda de YouTube.
+
+**Decisión:**
+1. `yt-play` acepta `--audio` y `--video`; el modo por defecto es audio.
+2. Audio: `mpv --no-video --ytdl-format=bestaudio`, con stderr a `tee` para
+   conservar el diagnóstico.
+3. Vídeo: `mpv --autofit=80%x80%` sin `--no-video`; mpv elige la mejor
+   calidad y abre una ventana al 80% de la pantalla. Se puede dejar
+   flotante con `Ctrl+Space`.
+4. En una búsqueda, `fzf --expect=ctrl-v`: Enter reproduce el modo por
+   defecto y Ctrl+V el otro. Con `--video`, Enter abre el vídeo y Ctrl+V
+   reproduce solo audio.
+5. No se añaden cava, ncmpcpp ni mpd; el audio sigue siendo streaming y el
+   vídeo es una ventana de mpv.
+
+**Consecuencias:**
+- El audio se reproduce en la terminal como antes, con los mensajes de mpv y
+  las teclas multimedia.
+- El vídeo ocupa una ventana aparte; mpv trae su OSC y sus atajos.
+- `yt-play` conserva el `yt-dlp` oficial en el PATH de mpv y la detección de
+  errores de extracción.
+
+## ADR-106 — Ctrl+Space alterna flotante/tiled
+
+**Contexto:** el mapa actual usa `Super+s` para poner flotante y
+`Super+Shift+Space` para alternar. El usuario quiere un atajo más cómodo,
+`Ctrl+Space`.
+
+**Decisión:** añadir a sxhkd `ctrl + space` → `bspc node -t '~floating'`, que
+alterna flotante/tiled. Los argumentos `~...` de bspwm van entre comillas
+porque sxhkd ejecuta con `$SHELL` (zsh) y `~floating` sin comillas se
+expande a un usuario inexistente. Se mantienen `Super+s` y
+`Super+Shift+Space` para no romper la memoria muscular.
+
+**Consecuencias:**
+- `Ctrl+Space` queda capturado globalmente por sxhkd; las apps que lo usen
+  (por ejemplo, algún editor o navegador) no lo recibirán.
+- La ventana de vídeo de `yt-play --video` se puede flotar con el mismo
+  atajo.
+- También quedan arreglados `Super+Shift+Space`, `Super+f`
+  (`~fullscreen`) y los splits `Super+b/v` (`~east`/`~south`), que usaban
+  la misma forma.
+
+## ADR-107 — Compositor picom (vsync + fade sutil, sin transparencias)
+
+**Contexto:** la sesión arrastraba y hacía scroll con rasgado. El
+diagnóstico (glxgears 61 FPS con vsync, Xorg modesetting+glamor sin
+errores) descartó hardware: es lo esperado en X sin compositor, y
+modesetting no tiene TearFree. Una prueba en vivo con picom 12.5 y config
+mínima confirmó el usuario: más fluido, menos rasgado y quiere un fade
+sutil. No quiere transparencias ni sombras de picom.
+
+**Decisión:**
+1. picom 12.5 entra a la sesión formalmente: `backend glx`, `vsync true`,
+   `use-damage true`.
+2. `fading true` sutil (`fade-delta 5`, pasos 0.03), excluyendo dock,
+   notificaciones y desktop: la barra y dunst no hacen fade.
+3. NO sombras, NO blur, NO alpha de picom: todas las opacidades a 1. La
+   barra B translúcida se mantiene: es el fondo `#00000000` de polybar
+   frente al compositor, no una opacidad de picom.
+4. `unredir-if-possible true`: el vídeo a pantalla completa (mpv) pasa sin
+   composite.
+5. Config en `templates/picom/picom.conf.in` (libconfig: comentarios `#`);
+   `lib/picom.sh` la instala en `~/.config/picom`; `autostart` la lanza
+   antes que polybar con guard `pgrep -x picom`. `verify.sh` exige
+   `vsync = true;` y `shadow = false;`.
+
+**Consecuencias:**
+- Revertir el compositor: `pkill picom` y quitar el bloque de `autostart`.
+- picom re-renderiza la escena: blur/sombras/transparencias costarían FPS
+  y contradicen la decisión; no introducirlos sin un ADR nuevo.
+- Clientes con ventanas reales OpenGL a pantalla completa pasan a
+  unredirect: su recorte visual no lo gestiona picom.
+
+## ADR-108 — Módulo polybar `governor` (helper root + sudoers acotado)
+
+**Contexto:** el usuario quiere alternar performance/powersave desde la
+barra en caliente y mantener performance por defecto al arrancar. En la
+máquina (intel_pstate HWP) solo existen esos dos gobernadores; el
+"balanceado" vive en EPP y queda fuera de alcance (v1). Escribir
+`/sys` requiere root, y `pkexec` no está instalado.
+
+**Decisión:**
+1. Módulo `governor` (custom/script) en ambas variantes (A: 13 módulos,
+   14 con backlight; B: 15, 16 con backlight). Colocación final tras el
+   ajuste visual del usuario (2026-11-04): en la A a la **derecha**
+   junto al `cpu`; en la B a la **izquierda** en `modules-left` tras
+   `day`, conservando su bloque `module-bg`. El clic alterna en
+   caliente y notifica con dunst.
+2. La lista de gobernadores se lee de
+   `cpu0/cpufreq/scaling_available_governors`; nada hardcodeado.
+3. Helper root `/usr/local/bin/dwm-setup-cpu-governor` (POSIX sh):
+   valida el valor contra esa lista y escribe `scaling_governor` en
+   todas las CPUs; rc 64 si el valor no está disponible.
+4. `/etc/sudoers.d/dwm-setup-cpu-governor` concede `NOPASSWD` solo para
+   ese binario exacto. Se valida con `visudo -cf` en un archivo
+   provisional y se instala con backup previo. Un fragmento roto no
+   bloquea sudo (sudoers.d lo ignora con aviso).
+5. Unidad `dwm-setup-cpu-governor.service` (oneshot) aplica
+   `performance` al arrancar: decisión del usuario. En sesión, el modo
+   lo cambia el módulo.
+6. Iconos verificados en JetBrainsMono Nerd Font: performance `U+F10CB`
+   (nf-md-lightning_bolt), powersave `U+F0F86`
+   (nf-md-speedometer_slow), fallback `U+E266`; el texto lleva acento
+   via `@COLOR_ACCENT@` en `cpu-governor.sh` (única plantilla nueva con
+   color: entra en el store de `lib/config.sh` y el re-render de
+   `bin/theme-mode`, regla 20b). El hueco tras el icono va dentro del
+   bloque font-3 (`ICON_*="\U+F10xx "`) y el label del módulo termina
+   en `%output%%{O5}`: proporciones afinadas a mano por el usuario.
+
+**Consecuencias:**
+- En batería, dejarse performance supone más consumo y calor; el módulo
+  permite bajar a powersave en un clic.
+- El kernel no retiene el modo; la unidad lo fija en cada boot y el
+  usuario lo cambia en caliente.
+- Faltar el helper (sin `sudo ./install.sh`) no rompe nada: el módulo
+  avisa con dunst.
+- EPP/balanceado puede añadirse después como ADR nuevo (requiere
+  escribir `energy_performance_preference` por CPU).

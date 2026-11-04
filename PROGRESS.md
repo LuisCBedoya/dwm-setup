@@ -1,6 +1,6 @@
 # Progreso — fase 1b (bspwm + polybar)
 
-Última actualización: 2026-10-25
+Última actualización: 2026-11-02
 
 ## Resumen
 
@@ -777,3 +777,252 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
   apuntar a `Neofet.png`.
 - Probado en kitty: `fastfetch -c config` renderiza el PNG a 28x15 sin
   deformarlo.
+
+## Streaming de YouTube (2026-11-02)
+
+- `bin/yt-play`: URL directa o búsqueda de 20 resultados con fzf (título,
+  canal, duración); mpv reproduce solo audio (`--ytdl-format=bestaudio`).
+- `bin/ytdlp-check`: compara con la última release de GitHub (API y
+  redirección como respaldo) y notifica; no actualiza.
+- `bin/ytdlp-update`: descarga el binario oficial en `~/.local/bin`, guarda
+  `.bak`, comprueba que arranca y restaura si falla.
+- `bin/ytdlp-rollback`: restaura la copia anterior.
+- `bin/music-ctl`: teclas `XF86Audio*` vía `playerctl` (mpv + mpv-mpris).
+- Chequeo diario silencioso desde `yt-play` (`~/.cache/yt-play/last-check`).
+- Detecta `Unable to extract`/`Sign in`/`403` y avisa con `ytdlp-update`.
+- `mpv`, `mpv-mpris`, `fzf` y `yt-dlp` (respaldo APT) en `DESKTOP_PKGS`.
+- `~/.local/bin` añadido al PATH de `.zshrc` y `.xinitrc`.
+- Probado: descarga real de yt-dlp 2026.10.26, `--version`, check "al día",
+  rollback, errores de `yt-play` sin fzf/mpv y búsqueda real con yt-dlp.
+- Pendiente: `sudo ./install.sh` y probar reproducción real con audio.
+
+### Fix: yt-play usaba el yt-dlp viejo de Debian (2026-11-02)
+
+- Síntoma: `[youtube] The page needs to be reloaded` al reproducir.
+- Causa: `mpv` resuelve `yt-dlp` por PATH y la shell no tenía
+  `~/.local/bin`, así que usaba `/usr/bin/yt-dlp` (2025.04.30) en vez del
+  oficial (2026.10.26). Comprobado: el oficial resuelve el id, el de Debian
+  falla.
+- `yt-play` y `ytdlp-check` prefieren `~/.local/bin/yt-dlp` de forma
+  explícita, y `yt-play` le pasa a mpv un PATH con esa carpeta delante.
+- Ampliado el patrón de error: `page needs to be reloaded`,
+  `youtube-dl failed`, `unexpected error`. El aviso muestra la versión de
+  yt-dlp en uso.
+- Probado con un mpv falso: PATH correcto y mensaje correcto.
+
+### Simulación del instalador para streaming (2026-11-02)
+
+- `install_music` ejecutado con `TARGET_HOME` y `MUSIC_BIN_ROOT` en /tmp
+  (run_root/run_user sin sudo): descarga yt-dlp 2026.10.26, instala los 6
+  scripts con 0755 y `ytdlp-check` responde "al día".
+- `yt-play` instalado por el instalador inyecta `~/.local/bin` en el PATH de
+  mpv; con un mpv falso se comprobó que recibe esa carpeta primero.
+- `MUSIC_BIN_ROOT` permite probar el módulo sin tocar `/usr/local/bin`.
+
+### Preview de miniaturas en yt-play (2026-11-02)
+
+- `bin/yt-preview <id>` descarga `i.ytimg.com/vi/<id>/mqdefault.jpg` a
+  `~/.cache/yt-play/thumbs` y la dibuja con `chafa --format=symbols`,
+  ajustada a `FZF_PREVIEW_COLUMNS` / `FZF_PREVIEW_LINES`.
+- `yt-play` usa `fzf --height=80% --preview 'yt-preview {2}'
+  --preview-window=right,55%`; la lista sigue mostrando título, canal y
+  duración.
+- `chafa` añadido a paquetes; `yt-preview` a scripts y a `verify_install`.
+- Probado: descarga y caché de la miniatura (10 KB), salida de respaldo sin
+  chafa y salida de texto sin secuencias gráficas (13 líneas para un panel
+  de 14).
+- Sustituido por el preview equilibrado (opción A) de más abajo: lista de
+  títulos, panel al 50%, metadatos y `maxresdefault`.
+
+### yt-play: 20 resultados por defecto (2026-11-02)
+
+- Medido con el binario oficial: 10→2527 ms, 20→2556 ms, 30→3644 ms,
+  50→4533 ms. YouTube devuelve ~20 por página, así que 20 no cuesta más
+  que 10; 30+ pagina.
+- `YT_PLAY_RESULTS` (por defecto 20) con validación: valores no numéricos,
+  0 o negativos caen a 20.
+
+### Fix: la miniatura de yt-play dejaba restos (2026-11-02)
+
+- chafa 1.14.5 autodetecta kitty y usaba el protocolo gráfico (`--format`
+  auto). fzf solo borra texto, así que la imagen quedaba en pantalla al
+  pulsar Esc y se solapaba al cambiar de resultado.
+- `yt-preview` fuerza `--format=symbols` y usa `FZF_PREVIEW_COLUMNS` /
+  `FZF_PREVIEW_LINES` para encajar en el panel.
+- Comprobado: la salida ya no contiene `\033_G` (kitty) ni `\033P` (sixel),
+  y restaura el cursor (`?25h`).
+
+### Preview equilibrado de yt-play (opción A) (2026-11-02)
+
+- La lista de fzf queda solo con el título; el panel derecho (50%) muestra
+  título en negrita ajustado a dos líneas, canal, duración y miniatura.
+- El ajuste de línea es por caracteres UTF-8 en bash (`fold` partía los
+  acentos) y se limpian los controles del título/canal antes de imprimirlos.
+- `yt-play` escribe un sidecar por vídeo en `~/.cache/yt-play/meta/<id>`
+  antes de abrir fzf; `yt-preview` lo lee sin consultar YouTube otra vez.
+- `yt-preview` descarga `maxresdefault.jpg` y cae a `mqdefault.jpg` si no
+  existe (vídeos antiguos). Caché nueva en `~/.cache/yt-play/preview`.
+- fzf pasa a `--height=75%` y `--preview-window=right,50%,border-left`; se
+  mantiene `--format=symbols` para no dejar restos de kitty/sixel.
+- Probado con un `yt-dlp` y un `fzf` falsos: se generan los sidecars con
+  duración `NA` convertida a "en vivo" y la lista recibe solo `título<TAB>id`.
+- Probado con red real: `dQw4w9WgXcQ` cachea 1280x720; `jNQXAC9IVRw`
+  (sin `maxresdefault`, HTTP 404) cae a `mqdefault` 320x180.
+- Panel simulado de 60x30: 21 líneas (2 de título, 1 de canal/duración, 1 en
+  blanco y 17 de imagen), sin `\033_G` ni `\033P`, cursor restaurado.
+- Pendiente: probar el panel completo en fzf tras `sudo ./install.sh`.
+
+### Flujo de instalación endurecido (2026-11-02)
+
+- `lib/dunst.sh`: `restart_dunst_session` reinicia dunst tras renderizar
+  `dunstrc`. Lee `DISPLAY` y `DBUS_SESSION_BUS_ADDRESS` de `sxhkd`, `bspwm`
+  o `polybar`; sin sesión gráfica no mata nada y avisa. Elimina restos de
+  dunst de root.
+- `lib/common.sh`: `~/.local/bin` entra en `chown_managed_paths` y en los
+  backups; se respaldan los seis scripts de streaming y `yt-dlp`.
+- `lib/music.sh`: si `~/.local/bin/yt-dlp` ya funciona no se vuelve a
+  descargar; antes de reemplazarlo guarda `yt-dlp.bak`.
+- `lib/verify.sh`: si falta el yt-dlp oficial avisa (no falla) de que
+  `yt-play` usará el de Debian y sugiere `ytdlp-update`.
+- `lib/packages.sh`: `BUILD_PKGS` incluye la cadena completa
+  (`build-essential make gcc g++ patch cmake autoconf automake libtool
+  libtool-bin meson ninja-build pkg-config git`). `cleanup_packages` marca esos
+  paquetes como manuales y ejecuta `apt-get -y autoremove` al final; un
+  fallo solo avisa.
+- `install.sh`: `cleanup_packages` va después de `verify_install`; el
+  resumen y `--help` documentan `yt-play` y las teclas multimedia.
+- `--dry-run` muestra `apt-mark manual` y `apt-get -y autoremove` sin
+  ejecutarlos.
+
+- `bin/desktop-safe lock` lee el modo activo y `COLOR_BG` de la paleta
+  instalada, así el fondo de i3lock sigue a Mocha Black o Latte sin
+  recompilar nada.
+
+## Pantalla siempre encendida (2026-11-02)
+
+- Diagnóstico inicial: `xset q` mostraba `timeout: 600`, `cycle: 600` y DPMS
+  `Standby/Suspend/Off: 600`; a los 10 min se activaba el salvapantallas,
+  `xss-lock` bloqueaba y DPMS apagaba el monitor.
+- `templates/bspwm/autostart.in` ejecuta `xset s off` y `xset -dpms` tras
+  esperar a X. Con timeout 0 no hay bloqueo por inactividad; `xss-lock`
+  sigue para el bloqueo manual y el de suspensión.
+- `templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in` ya no ejecuta
+  `xset dpms force off` tras 5 s.
+- Aplicado en vivo el 2026-11-02: `xset q` muestra `timeout: 0` y
+  `DPMS is Disabled`.
+- `autostart` e `i3lock-fancy` instalados se sincronizaron a mano desde las
+  plantillas (backup en `~/.config-backup/dwm-setup/20261102-193117`), así
+  el cambio sobrevive a `startx`.
+- Pendiente: `sudo ./install.sh` para el resto del bloque pendiente
+  (`yt-play`/`yt-preview`) y comprobar >10 min de inactividad, el bloqueo
+  manual y la suspensión.
+
+## yt-play audio/vídeo y Ctrl+Space (2026-11-02)
+
+- `yt-play [--audio|--video]`: audio por defecto; `--video` abre una ventana
+  de mpv al 80% (`--autofit=80%x80%`). En la búsqueda, `fzf --expect=ctrl-v`:
+  Enter usa el modo por defecto y Ctrl+V el otro.
+- `Ctrl+Space` se añadió a sxhkd como `bspc node -t '~floating'` (alterna
+  flotante/tiled); se mantienen `Super+s` y `Super+Shift+Space`.
+- Fix sxhkd: `SHELL=/usr/bin/zsh` expandía `~floating` a un usuario
+  inexistente y el comando fallaba. Se citaron `'~floating'`, `'~fullscreen'`,
+  `'~east'` y `'~south'` en la plantilla y en `~/.config/sxhkd/sxhkdrc`.
+  Esto arregla Ctrl+Space, Super+Shift+Space, Super+f y los splits.
+- Tests: zsh sin comillas falla; con comillas bspwm cambia tiled→floating;
+  sxhkd rearrancado sin errores de grab; `--autofit=80%x80%` aceptado por
+  mpv; `yt-play --video` con mpv falso recibe `--autofit`.
+- Pendiente: `sudo ./install.sh` para instalar el `yt-play` nuevo (el
+  instalado aún es la versión anterior); probar Ctrl+Space, Super+Shift+Space,
+  Super+f y splits en la sesión viva.
+
+## Diagnóstico de tearing y prueba de picom (2026-11-04)
+
+- Diagnóstico de la sesión: Xorg con `modesetting + glamor + DRI3`,
+  sin errores en el log; `glxgears` marca 61 FPS con vsync (correcto) y
+  1252 FPS sin vsync (márgen enorme de GPU). Intel UHD 630 con
+  `enable_fbc=0` aplicado; monitor KTC 2400 (2012) en HDMI-1 1080p60
+  preferred. Sin compositor y sin opción TearFree (modesetting no la
+  tiene y `xserver-xorg-video-intel` no está instalado): el rasgado al
+  arrastrar ventanas es lo esperado en X sin compositor.
+- El arrastre torpe que el usuario notó corresponde a mpv abierto a
+  tamaño nativo 4K (3840x2160): el `yt-play` instalado aún no tenía
+  `--autofit=80%x80%`; cerrado con el `sudo ./install.sh`
+  (2026-11-04 ~13:13).
+- Gobernador de CPU en `powersave` (intel_pstate active). Prueba de
+  `performance` queda en manos del usuario (requiere sudo).
+- Picom: se preparó una config mínima de prueba
+  (`~/.config/picom/picom.conf`, glx + vsync + use-damage, sin
+  sombras/fading/blur, `unredir-if-possible`) tras respaldar la config
+  vieja de la era nord en
+  `~/.config-backup/dwm-setup/20261104-104836/.config/picom/`. picom no
+  está instalado; pendiente `sudo apt install picom` y arrancarlo para
+  la prueba visual (`pkill picom` revierte).
+- Si picom se queda, se integra con ADR nuevo: `templates/picom/`,
+  `lib/picom.sh`, entrada en `autostart`, docs y `verify.sh`.
+
+## picom formal y módulo governor (2026-11-04)
+
+- El usuario validó picom en vivo: "más fluido, menos rasgado al
+  scrollear" y pidió fade sutil; NO quiere transparencias de picom (la
+  barra B translúcida se mantiene tal cual: es su fondo `#00000000`
+  frente al compositor). Decisión adoptada como ADR-107.
+- El módulo `governor` (ADR-108) queda junto a `cpu` en `modules-right`
+  de ambas variantes; los counts pasan a A 13 (14 con backlight) y
+  B 15 (16 con backlight). Sin tocar espaciados ni resto de módulos.
+- Implementación: `templates/picom/picom.conf.in` (libconfig,
+  comentarios `#`: con `;` picom 12.5 abortaba con "syntax error" línea
+  1), `lib/picom.sh`, bloque picom con guard en `autostart.in`,
+  `lib/cpu.sh`, `bin/dwm-setup-cpu-governor` (POSIX, valida contra
+  `scaling_available_governors`, escribe todas las CPUs), sudoers
+  `dwm-setup-cpu-governor` (`@USER@`, NOPASSWD solo para el helper,
+  validado con `visudo -cf` en archivo provisional antes de moverlo) y
+  unidad `dwm-setup-cpu-governor.service` (oneshot, performance al
+  boot). `lib/packages.sh` añade `picom`; `lib/polybar.sh` renderiza
+  módulo/script en ambas variantes; `lib/common.sh` añade backups del
+  helper/sudoers/unidad y `~/.config/picom`; `lib/config.sh` mete
+  `cpu-governor.sh.in` en el store y `bin/theme-mode` lo re-renderiza
+  (regla 20b); `lib/verify.sh` exige helper/sudoers 0440/unidad
+  habilitada, `governor` tras `cpu` en ambas barras y picom con
+  `vsync true` + `shadow false`.
+- Validación: `bash -n`, `sh -n` (helper, script de barra, autostart),
+  `systemd-analyze verify` (aviso del ejecutable ausente solo hasta
+  instalar), `visudo -cf` del sudoers renderizado ("parsed OK"),
+  `--dry-run` rc=0 con el plan completo, y pruebas del helper con
+  sysfs falsa en `/tmp/opencode` (aplicar/rechazado rc 64/sin
+  escribibles rc 65/parcial con aviso) y del script de barra con
+  `sudo` de stub + sysfs falsa (ciclo completo performance →
+  powersave → performance con toasts dunst e iconos `U+F10CB`/`U+F0F86`
+  verificados por bytes).
+- Aplicado en vivo sin sudo: backups previos en
+  `~/.config-backup/dwm-setup/20261104-130202/` (configs de polybar,
+  scripts y picom), ` governor` insertado en los modules-right
+  instalados, módulos y `cpu-governor.sh` escritos con el acento del
+  modo activo (light: `#1e66f5`), picom.conf final, picom reiniciado
+  (pid activo) y polybar recargado con `launch.sh` (variante
+  referencia).
+- `sudo ./install.sh` ejecutado (2026-11-04 ~13:13): helper, sudoers,
+  unidad y render completo aplicados; `systemd-analyze verify` ya no
+  da el aviso del ejecutable. Pendiente: probar el clic del módulo
+  (alterna + toast) y el fade en la sesión viva.
+
+## Port de los ajustes manuales de polybar al repo (2026-11-04)
+
+Tras el `sudo ./install.sh` el usuario afinó a mano la barra viva; el
+análisis por diff (render completo del repo vs mtime post-instalación)
+aisló los cambios reales y se portaron a las plantillas:
+
+- Variante B: `governor` pasa de `modules-right` a `modules-left`,
+  tras `day` (conserva su bloque `module-bg`); `modules-right` vuelve al
+  layout original. ADR-108, regla 26 y README/AGENTS actualizados.
+- Espaciados por módulo: `governor` cierra con `%output%%{O5}` (A y B);
+  `cpu` (A) de `%{O8}` a `%{O2}`; `pipewire` con `format-padding 2` en
+  ambas variantes; `memory` (B) `format-padding 1`.
+- `cpu-governor.sh`: el hueco tras el icono va dentro del bloque font-3
+  (`ICON_PERF`/`ICON_SAVE` con espacio; `%{T-}$gov` sin espacio extra en
+  performance y powersave; el fallback del alien conserva el suyo).
+- `lib/verify.sh`: la B exige `governor` en `modules-left` (antes se
+  comprobaba en ambas `modules-right`).
+- Store de theme-mode: refrescados sin sudo (los tres ficheros user-
+  owned: config.ini A/B y cpu-governor.sh.in) para que un
+  `theme-mode toggle` no borre los tweaks antes del próximo
+  `sudo ./install.sh`.

@@ -19,20 +19,25 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
-- **polybar** con **13 módulos**: logo StumbleUpon, workspaces 1-7,
-  pomodoro, temperatura, RAM, CPU, red unificada
-  (`󰖩/󰈀 connected`, `󰖩 NoC` sin conexión), servicios systemd, volumen,
-  batería, fecha, actualizaciones (calavera + número) y bandeja del sistema
-  (XEmbed). `font-1` 10 y `font-3` 13; logo en `font-0`.
+- **polybar** con **13 módulos** (14 con backlight), más la bandeja del
+  sistema (XEmbed): logo StumbleUpon, workspaces 1-7, pomodoro, temperatura,
+  RAM, CPU, **gobernador de CPU** (clic alterna performance/powersave + notificación),
+  red unificada (`󰖩/󰈀 connected`, `󰖩 NoC` sin conexión), servicios
+  systemd, volumen, batería, fecha y actualizaciones (calavera + número).
+  `font-1` 10 y `font-3` 13; logo en `font-0`.
 - **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**
   (`--single-instance`),
   **flameshot**. Shell **zsh** con Oh My Zsh/cypher, autosuggestions y
-  **lsd**. Sin compositor; la barra B usa fondo sólido `#262626`.
+  **lsd**. Compositor **picom** (vsync + fade sutil, sin sombras/blur/
+  transparencias; ADR-107): mata el rasgado al arrastrar y hacer scroll y
+  la barra B se ve translúcida con su fondo transparente.
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo,
   **ueberzug** para previsualizar imágenes y carátulas. Texto, código y
   Markdown se abren con **Neovim**. Tema GTK **Catppuccin** (Mocha Black o
   Latte) e iconos **Papirus** con carpetas Catppuccin.
 - Bloqueo con **i3lock** + **xss-lock**.
+- Pantalla siempre encendida: sin salvapantallas ni DPMS por inactividad.
+  El bloqueo manual (`Super+Shift+L`) y el de suspensión siguen activos.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
 - PipeWire + WirePlumber + ALSA + pavucontrol.
 - FFmpeg, `libavcodec-extra`, GStreamer y VA-API/VDPAU.
@@ -45,15 +50,18 @@ Incluido:
 - **fastfetch** con logo propio (`Neofet.png`) y módulos de hardware,
   software y tema.
 - Fuente JetBrainsMono Nerd Font, wallpaper oscuro y paleta **Catppuccin**:
-  `mocha-black` (oscuro) y `latte` (claro).
-  (superficie `#262626`, terminal `#1C1C1C`, bordes `#1A1A1A`, texto
-  `#F2F2F2`, acento `#569CD6`).
+  `mocha-black` (oscuro) y `latte` (claro): base `#0d0d14` / `#eff1f5`,
+  texto `#cdd6f4` / `#4c4f69`, acento `#89b4fa` / `#1e66f5`.
+- **Firefox ESR** con uBlock Origin, SurfingKeys y OpenH264 para WebRTC.
+- **yt-play** para audio o vídeo de YouTube/YouTube Music con búsqueda en
+  fzf y miniatura; `mpv` + `yt-dlp` oficial en `~/.local/bin`.
 - Backups, logs, `--dry-run` y diagnóstico con `desktop-doctor`.
 - NVIDIA detectada e instalada de forma condicional.
 
 No incluido todavía:
 
-- Neovim/IDE, VS Code, Firefox/Brave/Chromium, correo, Teams, música.
+- IDE (VS Code), Brave/Chromium, correo, Teams y reproductores de música
+  locales (cmus/mpd). Firefox ESR y el streaming con `yt-play` sí están.
 - Bluetooth, htop, ripgrep, nvitop/nvtop, Node/nvm.
 - XFCE, LightDM o un entorno de escritorio completo.
 - Repositorio de dotfiles externo: las plantillas de este repo son la
@@ -124,19 +132,23 @@ y `--debug`.
    `non-free-firmware`. Si falta `main`, aborta. Si faltan opcionales, ofrece
    añadirlos con backup, continuar sin ellos o cancelar. `--dry-run` y
    `--yes` no modifican repositorios.
-4. **Paquetes**: base, Xorg, compilación mínima, escritorio, audio/códecs,
-   cámara, almacenamiento, red, fuentes, firmware, microcódigo y GPU.
+4. **Paquetes**: base, Xorg, cadena de compilación (make, gcc, g++, cmake,
+   meson, ninja, autotools), escritorio, audio/códecs, cámara,
+   almacenamiento, red, fuentes, firmware, microcódigo y GPU.
 5. **Fuente**: descarga JetBrainsMono Nerd Font 3.5.1, verifica SHA-256 y
    ejecuta `fc-cache`. Si falla, usa JetBrains Mono o monospace y avisa.
 6. **Configuración**: renderiza bspwm, sxhkd, polybar, dunst, rofi y kitty
-   con la paleta activa (Mono Slate por defecto), el CSS de GTK y los
+   con la paleta activa (Mocha Black por defecto), el CSS de GTK y los
    defaults de Thunar; instala `.xinitrc`, wallpaper,
    `~/Pictures/Screenshots`, `desktop-safe` y `desktop-doctor`.
-7. **Limpieza**: retira restos de la barra anterior (`DesktopLogo`) con
-   backup previo.
+7. **Limpieza de restos**: retira restos de la barra anterior (`DesktopLogo`)
+   con backup previo.
 8. **Verificación**: comprueba binarios, ficheros, módulos de polybar,
    placeholders, permisos, propiedad del home, servicios, versiones y
    sintaxis POSIX de los binarios instalados.
+9. **Autoremove**: después de verificar, marca la cadena de compilación como
+   manual y ejecuta `apt-get -y autoremove` (sin `--purge`). Si falla, avisa
+   y continúa; nunca deja el sistema a medias.
 
 ### Backups y logs
 
@@ -153,8 +165,11 @@ versión anterior está en `~/.config-backup/`.
 
 No se instala ningún display manager. `~/.xinitrc` configura el teclado y
 hace `exec bspwm`; `bspwmrc` lanza sxhkd y el `autostart` interno, que
-levanta polybar, dunst, xwallpaper, udiskie, xss-lock, lxpolkit y el
-notificador de batería baja. No se arranca ningún compositor.
+levanta picom (vsync), polybar, dunst, xwallpaper, udiskie, xss-lock,
+lxpolkit y el notificador de batería baja, y desactiva el
+salvapantallas/DPMS con `xset s off` y `xset -dpms`. La CPU arranca en
+`performance` con la unidad `dwm-setup-cpu-governor.service` y se alterna
+desde la barra.
 
 ```sh
 # desde TTY1
@@ -233,7 +248,12 @@ desktop-safe suspend        # suspender (xss-lock bloquea antes)
 desktop-safe logout         # cerrar sesión (bspc quit)
 desktop-safe poweroff       # apagar
 desktop-safe reboot         # reiniciar
+
+xset q                      # ver salvapantallas y DPMS
 ```
+
+La pantalla no se apaga por inactividad (`timeout: 0`, `DPMS is Disabled`).
+Para revertir el comportamiento: `xset s default && xset +dpms`.
 
 Si algo falla:
 
@@ -263,6 +283,7 @@ Si algo falla:
 | `Super+Alt+P` | ciclo A arriba → A abajo → B arriba → B abajo |
 | `Super+Alt+W` | alterna wallpaper principal / alternativo |
 | `Super+Alt+T` | alterna tema oscuro / claro |
+| `Ctrl+Space` | alternar flotante/tiled |
 | `Super+Shift+space` | alternar floating |
 | `Super+Shift+q` | cerrar ventana |
 | `Super+a` | enfocar contenedor padre |
@@ -279,6 +300,7 @@ Si algo falla:
 | `Print` | pantalla completa al portapapeles |
 | `Super+Print` | menú de capturas |
 | `XF86AudioRaise/Lower/Mute` | volumen |
+| `XF86AudioPlay` / `Next` / `Prev` | play-pausa y pista del reproductor activo |
 | `XF86MonBrightnessUp/Down` | brillo |
 
 `Ctrl+Tab` queda libre para navegadores y editores. `Super+Ctrl+Tab` y
@@ -308,8 +330,8 @@ Hay dos barras instaladas:
   red, volumen, batería, fecha, bandeja del sistema y brillo opcional. En
   monocle añade un contador `[N]` junto a los workspaces.
 - **referencia**: variante de 15 módulos (16 con backlight). Workspaces
-  como círculos al centro; a la izquierda `date`, `day`, `updates`, pomodoro
-  y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
+  como círculos al centro; a la izquierda `date`, `day`, **gobernador**, `updates`,
+  pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
   volumen, batería, bandeja del sistema y brillo opcional. En monocle, `[N]`
   junto a los círculos de workspaces.
   La bandeja usa XEmbed; Telegram/Discord modernos pueden no aparecer hasta
@@ -337,6 +359,43 @@ Los atajos de apps que aún no están instaladas se dejan puestos para no
 cambiar la memoria muscular; no hacen nada hasta instalar la app. `codium`
 requiere el repositorio de VSCodium. `Super+s/w/e` de i3 (stacking/tabbed)
 no tienen equivalente exacto en bspwm y no se mapean.
+
+## Música y streams
+
+Audio o vídeo de YouTube/YouTube Music sin salir de la terminal:
+
+```sh
+yt-play --audio https://music.youtube.com/watch?v=XXXX   # solo audio
+yt-play --video https://www.youtube.com/watch?v=XXXX     # vídeo en mpv
+yt-play lofi hip hop                                     # busca y elige con fzf
+```
+
+`--audio` es el modo por defecto. En la búsqueda, **Enter** reproduce solo
+audio y **Ctrl+V** abre el vídeo en una ventana de mpv; con `--video`, Enter
+abre el vídeo y Ctrl+V reproduce solo audio. La ventana de vídeo abre al 80%
+de la pantalla y se puede dejar flotante con `Ctrl+Space`.
+
+Trae 20 resultados por defecto (una página de YouTube, mismo coste que 10);
+se cambia con `YT_PLAY_RESULTS=40 yt-play lofi`.
+
+El menú de fzf muestra los títulos a la izquierda y, a la derecha, el
+**título, canal y duración** junto a la **miniatura del vídeo** (chafa en modo
+texto, `maxresdefault` con respaldo a `mqdefault`). La lista y las miniaturas
+se cachean en `~/.cache/yt-play/{meta,preview}`. `Ctrl+N`/`Ctrl+P` o flechas
+para moverse, `Enter`/`Ctrl+V` para reproducir y `Esc` cancela.
+
+`yt-play` usa siempre `~/.local/bin/yt-dlp` aunque esa carpeta no esté en el
+PATH (se la pasa a mpv delante), así que el paquete viejo de Debian no
+interfiere. El binario oficial se actualiza sin sudo:
+
+```sh
+ytdlp-check      # ¿hay versión nueva? solo avisa
+ytdlp-update     # actualiza, con copia .bak y rollback automático
+ytdlp-rollback   # vuelve a la anterior
+```
+
+`yt-play` avisa si YouTube cambia y yt-dlp ya no puede extraer el contenido.
+No actualiza nada por su cuenta: siempre decides tú con `ytdlp-update`.
 
 ## Tema y modo de color
 
@@ -411,7 +470,7 @@ y solo un tema propio permite colores de carpeta distintos por modo.
 install.sh                 Entrada principal
 lib/common.sh              Logs, sudo, ownership, backups, render
 lib/detect.sh              Detección de sistema/hardware
-lib/packages.sh            Grupos de paquetes y Nerd Font
+lib/packages.sh            Grupos de paquetes, compilación, Nerd Font y autoremove
 lib/bspwm.sh               bspwm, bspwmrc, autostart y .xinitrc
 lib/sxhkd.sh               sxhkdrc
 lib/polybar.sh             polybar config/modules/scripts/launch
@@ -424,11 +483,21 @@ lib/gpu.sh                 configuración Intel/NVIDIA
 lib/gtk.sh                 temas GTK Catppuccin, tema derivado e iconos
 lib/vlc.sh                 VLC con paleta oscura
 lib/config.sh              Configs de usuario, wallpaper y binarios
+lib/fastfetch.sh           fastfetch y logo Neofet.png
+lib/music.sh               yt-dlp oficial, scripts de streaming y teclas
+lib/firefox.sh             Firefox ESR, OpenH264, uBlock y SurfingKeys
 lib/verify.sh              Verificación estática final
-lib/theme.sh               Paletas (Mono Slate, Warm Charcoal, Nord) y render
+lib/theme.sh               Paletas (Mocha Black, Latte) y render
 lib/audio.sh               Quirk ALC255 condicionado por hardware
 bin/desktop-safe           Acciones de sesión
 bin/desktop-doctor         Diagnóstico y cámara (POSIX sh)
+bin/theme-mode             Cambio dark/light en caliente
+bin/yt-play                Audio o vídeo de YouTube (URL o búsqueda con fzf)
+bin/yt-preview             Miniatura para el preview de fzf
+bin/ytdlp-check            Aviso de versión nueva de yt-dlp
+bin/ytdlp-update           Actualización de yt-dlp con .bak y rollback
+bin/ytdlp-rollback         Restaura la copia anterior de yt-dlp
+bin/music-ctl              Teclas multimedia del reproductor activo
 templates/bspwm/           bspwmrc.in, autostart.in, scripts/
 templates/sxhkd/           sxhkdrc.in
 templates/polybar/         config.ini.in, modules/, scripts/ y variants/
@@ -466,7 +535,8 @@ docs/                      Hardware y testing
 - El instalador no modifica repositorios por defecto. Solo la opción 1 del
   menú añade componentes a entradas oficiales de Debian 13, tras un backup.
 - Se instala Firefox ESR como navegador del escritorio; no se instalan IDE,
-  cliente de correo ni música.
+  cliente de correo ni reproductores de música locales. El streaming de
+  YouTube se hace con `yt-play`.
 - `/etc/firefox-esr/zz-dwm-setup.js` habilita OpenH264 para que Teams pueda
   mostrar H.264 (pantalla compartida). Sin ese ajuste, el vídeo de Teams
   queda en negro en Firefox ESR.

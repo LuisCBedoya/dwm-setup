@@ -33,6 +33,10 @@ source "$PROJECT_ROOT/lib/bspwm.sh"
 source "$PROJECT_ROOT/lib/sxhkd.sh"
 # shellcheck source=lib/polybar.sh
 source "$PROJECT_ROOT/lib/polybar.sh"
+# shellcheck source=lib/cpu.sh
+source "$PROJECT_ROOT/lib/cpu.sh"
+# shellcheck source=lib/picom.sh
+source "$PROJECT_ROOT/lib/picom.sh"
 # shellcheck source=lib/dunst.sh
 source "$PROJECT_ROOT/lib/dunst.sh"
 # shellcheck source=lib/rofi.sh
@@ -51,6 +55,8 @@ source "$PROJECT_ROOT/lib/vlc.sh"
 source "$PROJECT_ROOT/lib/config.sh"
 # shellcheck source=lib/fastfetch.sh
 source "$PROJECT_ROOT/lib/fastfetch.sh"
+# shellcheck source=lib/music.sh
+source "$PROJECT_ROOT/lib/music.sh"
 # shellcheck source=lib/firefox.sh
 source "$PROJECT_ROOT/lib/firefox.sh"
 # shellcheck source=lib/verify.sh
@@ -87,8 +93,11 @@ Opciones avanzadas (automatización; normalmente no necesarias):
 Tema por defecto: mocha-black (Catppuccin Mocha Black, oscuro).
 El modo se cambia en caliente con: theme-mode dark|light|toggle|status.
 
+Música: yt-play (audio o vídeo de YouTube con fzf y miniatura), teclas XF86Audio*.
+Los binarios se actualizan con ytdlp-update; nunca solos.
+
 Sesión: startx manual desde TTY (no se instala display manager).
-Fases futuras (IDE, navegadores, música) no se instalan desde aquí.
+Fases futuras (IDE, correo) no se instalan desde aquí.
 EOF
 }
 
@@ -175,6 +184,8 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/bspwm.sh"
     "$PROJECT_ROOT/lib/sxhkd.sh"
     "$PROJECT_ROOT/lib/polybar.sh"
+    "$PROJECT_ROOT/lib/cpu.sh"
+    "$PROJECT_ROOT/lib/picom.sh"
     "$PROJECT_ROOT/lib/dunst.sh"
     "$PROJECT_ROOT/lib/rofi.sh"
     "$PROJECT_ROOT/lib/kitty.sh"
@@ -184,12 +195,20 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/vlc.sh"
     "$PROJECT_ROOT/lib/config.sh"
     "$PROJECT_ROOT/lib/fastfetch.sh"
+    "$PROJECT_ROOT/lib/music.sh"
     "$PROJECT_ROOT/lib/verify.sh"
     "$PROJECT_ROOT/lib/theme.sh"
     "$PROJECT_ROOT/lib/audio.sh"
     "$PROJECT_ROOT/lib/gpu.sh"
     "$PROJECT_ROOT/bin/desktop-safe"
     "$PROJECT_ROOT/bin/desktop-doctor"
+    "$PROJECT_ROOT/bin/dwm-setup-cpu-governor"
+    "$PROJECT_ROOT/templates/picom/picom.conf.in"
+    "$PROJECT_ROOT/templates/sudoers/dwm-setup-cpu-governor.in"
+    "$PROJECT_ROOT/templates/systemd/dwm-setup-cpu-governor.service"
+    "$PROJECT_ROOT/templates/polybar/modules/governor.ini.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/cpu-governor.sh.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/governor.ini.in"
     "$PROJECT_ROOT/templates/colors/base.sh"
     "$PROJECT_ROOT/templates/colors/palette-mocha-black.sh"
     "$PROJECT_ROOT/templates/colors/palette-latte.sh"
@@ -216,6 +235,12 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/icons/folders/cat-mocha-blue"
     "$PROJECT_ROOT/templates/icons/folders/cat-latte-blue"
     "$PROJECT_ROOT/bin/theme-mode"
+    "$PROJECT_ROOT/bin/yt-play"
+    "$PROJECT_ROOT/bin/yt-preview"
+    "$PROJECT_ROOT/bin/ytdlp-check"
+    "$PROJECT_ROOT/bin/ytdlp-update"
+    "$PROJECT_ROOT/bin/ytdlp-rollback"
+    "$PROJECT_ROOT/bin/music-ctl"
     "$PROJECT_ROOT/templates/firefox/userChrome.css.in"
     "$PROJECT_ROOT/templates/firefox/user.js.in"
     "$PROJECT_ROOT/templates/firefox/surfingkeys.js.in"
@@ -331,6 +356,9 @@ Home:                   $TARGET_HOME
 Log:                    $LOG_FILE
 Variantes polybar:      ~/.config/polybar/polybar-variant actual|referencia
 Modo de color:          theme-mode dark|light|toggle|status
+Compositor:             picom (vsync + fade sutil; sin transparencias/sombras)
+Gobernador CPU:         módulo polybar governor (clic alterna; performance al boot)
+Música/streams:         yt-play [--audio|--video] <url | búsqueda> · ytdlp-check|update|rollback
 Gráficos:               i915 FBC desactivado (requiere reinicio)
 Permisos:               sudo al inicio para paquetes, portal, opt-2 e i915
 
@@ -356,6 +384,10 @@ Atajos principales:
   Super+Shift+{1-7} mover ventana a escritorio
   Super+Alt+{h,j,k,l} redimensionar
   Super+Alt+t       tema oscuro / claro
+  XF86AudioPlay     play/pausa (mpv)
+  XF86AudioNext     siguiente
+  XF86AudioPrev     anterior
+  yt-play lofi      buscar y reproducir audio de YouTube
   Super+m           monocle/tiled
   Super+f           fullscreen
   XF86AudioRaise/Lower/Mute   volumen
@@ -435,6 +467,8 @@ main() {
   install_bspwm
   install_sxhkd
   install_polybar
+  install_cpu_governor
+  install_picom_config
   install_dunst
   install_rofi
   install_kitty
@@ -443,16 +477,20 @@ main() {
   install_zsh
   install_ranger
   install_fastfetch
+  install_music
   install_user_configs
 
   if ! dry_run; then
     if ! verify_install; then
       die "La verificación final falló. Revisa los errores y el log antes de reiniciar."
     fi
+    cleanup_packages
   else
+    cleanup_packages
     section "Dry-run"
     info "No se modificó el sistema. Las acciones anteriores son el plan completo."
   fi
+
   print_summary
 }
 

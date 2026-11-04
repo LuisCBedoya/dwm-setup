@@ -7,13 +7,25 @@ verify_install() {
   local home="$TARGET_HOME"
   local path module line
 
-  for cmd in bspwm sxhkd polybar dunst rofi feh kitty flameshot i3lock xss-lock \
+  for cmd in bspwm sxhkd polybar picom dunst rofi feh kitty flameshot i3lock xss-lock \
     brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl nvim \
-    zsh lsd ranger zathura vlc ueberzug fastfetch; do
+    zsh lsd ranger zathura vlc ueberzug fastfetch mpv fzf chafa; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
       error "Falta el comando requerido: $cmd"
+      failures=$((failures + 1))
+    fi
+  done
+
+  # La cadena de compilación se instala explícitamente y se protege del
+  # autoremove; si falta, la instalación no está completa.
+  for cmd in make gcc g++ patch cmake meson ninja autoconf automake libtool \
+    pkg-config git; do
+    if cmd_exists "$cmd"; then
+      debug "ok: $cmd"
+    else
+      error "Falta la herramienta de compilación: $cmd"
       failures=$((failures + 1))
     fi
   done
@@ -52,6 +64,8 @@ verify_install() {
     "$home/.config/polybar/modules/temp.ini" \
     "$home/.config/polybar/modules/memory.ini" \
     "$home/.config/polybar/modules/cpu.ini" \
+    "$home/.config/polybar/modules/governor.ini" \
+    "$home/.config/polybar/scripts/cpu-governor.sh" \
     "$home/.config/polybar/modules/network.ini" \
     "$home/.config/polybar/modules/services.ini" \
     "$home/.config/polybar/modules/battery.ini" \
@@ -88,6 +102,7 @@ verify_install() {
     "$home/.config/polybar/variants/reference/modules/services.ini" \
     "$home/.config/polybar/variants/reference/modules/memory.ini" \
     "$home/.config/polybar/variants/reference/modules/cpu.ini" \
+    "$home/.config/polybar/variants/reference/modules/governor.ini" \
     "$home/.config/polybar/variants/reference/modules/xkeyboard.ini" \
     "$home/.config/polybar/variants/reference/modules/fs.ini" \
     "$home/.config/polybar/variants/reference/modules/date.ini" \
@@ -118,6 +133,12 @@ verify_install() {
     "/usr/share/icons/Catppuccin-Mocha/index.theme" \
     "/usr/share/icons/Catppuccin-Latte/index.theme" \
     "/usr/local/bin/theme-mode" \
+    "/usr/local/bin/yt-play" \
+    "/usr/local/bin/yt-preview" \
+    "/usr/local/bin/ytdlp-check" \
+    "/usr/local/bin/ytdlp-update" \
+    "/usr/local/bin/ytdlp-rollback" \
+    "/usr/local/bin/music-ctl" \
     "$home/.local/share/dwm-setup/render.env" \
     "$home/.config/dwm-setup/mode" \
     "$home/.config/dwm-setup/surfingkeys.js" \
@@ -202,6 +223,68 @@ verify_install() {
       fi
     done < <(grep -oE '#[0-9A-Fa-f]{6,8}' "$themed_file" 2>/dev/null || true)
   done
+
+  # El módulo governor va junto al cpu en ambas variantes.
+  if [[ -f "$home/.config/polybar/config.ini" ]] &&
+     ! grep -qE '^modules-right = .*\bcpu governor\b' "$home/.config/polybar/config.ini"; then
+    error "La barra A no alterna el gobernador tras cpu (falta 'governor' en modules-right)"
+    failures=$((failures + 1))
+  fi
+  if [[ -f "$home/.config/polybar/variants/reference/config.ini" ]] &&
+     ! grep -qE '^modules-left = .*\bgovernor\b' "$home/.config/polybar/variants/reference/config.ini"; then
+    error "La barra B no integra el gobernador en la izquierda (falta 'governor' en modules-left)"
+    failures=$((failures + 1))
+  fi
+
+  # La cuenta necesaria para el cliente del módulo.
+  local module_script="$home/.config/polybar/scripts/cpu-governor.sh"
+  if [[ -f "$module_script" && ! -x "$module_script" ]]; then
+    error "cpu-governor.sh no es ejecutable"
+    failures=$((failures + 1))
+  fi
+
+  # picom: vsync es el núcleo anti-tearing; el resto se leen del conf.
+  if [[ -f "$home/.config/picom/picom.conf" ]]; then
+    if ! grep -qE '^vsync[[:space:]]*=[[:space:]]*true;' "$home/.config/picom/picom.conf"; then
+      error "picom.conf no tiene vsync = true"
+      failures=$((failures + 1))
+    fi
+    if ! grep -qE '^shadow[[:space:]]*=[[:space:]]*false;' "$home/.config/picom/picom.conf"; then
+      error "picom.conf activa sombras (inaceptable: sin transparencias/sombras)"
+      failures=$((failures + 1))
+    fi
+  fi
+
+  # Gobernador: helper root, sudoers acotado y unidad de arranque.
+  for gov_path in /usr/local/bin/dwm-setup-cpu-governor \
+    /etc/sudoers.d/dwm-setup-cpu-governor \
+    /etc/systemd/system/dwm-setup-cpu-governor.service; do
+    if [[ -e "$gov_path" ]]; then
+      debug "ok: $gov_path"
+    else
+      error "Falta el archivo requerido: $gov_path"
+      failures=$((failures + 1))
+    fi
+  done
+  if [[ -e /etc/sudoers.d/dwm-setup-cpu-governor ]]; then
+    if [[ "$(stat -c '%a' /etc/sudoers.d/dwm-setup-cpu-governor)" != "440" ]]; then
+      error "El fragmento de sudoers del gobernador no está 0440"
+      failures=$((failures + 1))
+    fi
+  fi
+  if ! grep -q 'NOPASSWD: /usr/local/bin/dwm-setup-cpu-governor' \
+    /etc/sudoers.d/dwm-setup-cpu-governor 2>/dev/null; then
+    error "El sudoers del gobernador no autoriza exactamente /usr/local/bin/dwm-setup-cpu-governor"
+    failures=$((failures + 1))
+  fi
+  if command -v systemctl >/dev/null 2>&1; then
+    if systemctl is-enabled dwm-setup-cpu-governor.service >/dev/null 2>&1; then
+      debug "ok: unidad del gobernador habilitada"
+    else
+      error "dwm-setup-cpu-governor.service no está habilitada"
+      failures=$((failures + 1))
+    fi
+  fi
 
   # bspwm solo ejecuta bspwmrc si es ejecutable.
   if [[ -x "$home/.config/bspwm/bspwmrc" ]]; then
@@ -292,6 +375,23 @@ verify_install() {
       error "kitty.conf no fija listen_on unix:kitty-{kitty_pid}"
       failures=$((failures + 1))
     fi
+  fi
+
+  # yt-dlp: el binario oficial en ~/.local/bin o, como respaldo, el de APT.
+  if [[ -x "$home/.local/bin/yt-dlp" ]]; then
+    debug "ok: yt-dlp oficial"
+  elif cmd_exists yt-dlp; then
+    warn "yt-dlp oficial ausente; yt-play usará el de Debian (puede fallar). Ejecuta: ytdlp-update"
+  else
+    error "Falta yt-dlp (ni ~/.local/bin/yt-dlp ni el paquete de Debian)"
+    failures=$((failures + 1))
+  fi
+
+  # Las teclas multimedia deben apuntar a music-ctl.
+  if [[ -f "$home/.config/sxhkd/sxhkdrc" ]] &&
+     ! grep -q 'music-ctl play-pause' "$home/.config/sxhkd/sxhkdrc"; then
+    error "sxhkdrc no tiene XF86AudioPlay -> music-ctl"
+    failures=$((failures + 1))
   fi
 
   # fastfetch debe usar el logo PNG, no el builtin.

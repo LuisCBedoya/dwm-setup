@@ -15,8 +15,9 @@ cd ~/dwm-setup
 for f in install.sh lib/*.sh; do bash -n "$f" || exit 1; done
 
 # Sintaxis POSIX de binarios y scripts de sesión
-for f in bin/desktop-safe bin/desktop-doctor; do sh -n "$f" || exit 1; done
+for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor; do sh -n "$f" || exit 1; done
 for f in templates/bspwm/autostart.in templates/bspwm/bspwmrc.in \
+         templates/polybar/scripts/cpu-governor.sh.in \
          templates/bspwm/scripts/*.in; do sh -n "$f" || exit 1; done
 
 # Plan sin cambios
@@ -729,3 +730,182 @@ Preview y validación estática; **no** se ha ejecutado la instalación real.
   respetando la proporción (956x1062).
 - Fuera de kitty cae al logo builtin; no es un fallo del config.
 - Pendiente: `sudo ./install.sh` y comprobar `~/.config/fastfetch/`.
+
+### Streaming de YouTube (2026-11-02)
+
+- `ytdlp-update` en sandbox (`YTDLP_BIN=/tmp/...`): descarga 2026.10.26,
+  `--version` correcto y "prueba de arranque: OK".
+- `ytdlp-check` con ese binario en PATH: "al día".
+- `ytdlp-rollback` sin `.bak`: error claro; con `.bak`: restaura.
+- `yt-play lofi` sin fzf y `yt-play <url>` sin mpv: mensajes claros.
+- Búsqueda real con yt-dlp: `ytsearch3:lofi hip hop` devuelve título, canal,
+  duración (NA en directos, mostrado como "en vivo") e id.
+- `install.sh --dry-run`: muestra la sección de streaming y no falla el layout.
+- Pendiente: instalar y probar reproducción real y teclas multimedia.
+
+### Preview de miniaturas (2026-11-02)
+
+- `yt-preview rFZHOHl-L8A` descarga la miniatura (320x180, ~10 KB) y la deja
+  en `~/.cache/yt-play/thumbs`; sin `chafa` imprime "sin preview".
+- La URL `i.ytimg.com/vi/<id>/mqdefault.jpg` responde para el id probado.
+- Con chafa 1.14.5 y un panel de 44×14, la salida son 13 líneas de texto
+  (18 KB), sin secuencias `\033_G` (kitty) ni `\033P` (sixel), y restaura el
+  cursor. Pendiente: comprobar visualmente el panel completo en fzf.
+- Sustituido por el preview equilibrado (opción A): panel al 50%, metadatos
+  y `maxresdefault` con respaldo.
+
+### Número de resultados de yt-play (2026-11-02)
+
+Con el binario oficial 2026.10.26, `--flat-playlist`:
+
+```text
+ytsearch10  → 2527 ms
+ytsearch20  → 2556 ms
+ytsearch30  → 3644 ms
+ytsearch50  → 4533 ms
+```
+
+20 es gratis frente a 10 (misma página); 30+ pagina y se nota.
+`YT_PLAY_RESULTS` se valida: vacío, `abc`, `0` y negativos usan 20.
+
+### Fix del preview de yt-play (2026-11-02)
+
+- Síntoma: al cerrar fzf con Esc, la miniatura se quedaba dibujada; al mover
+  el cursor se solapaban dos imágenes.
+- Causa: chafa en kitty usa el protocolo gráfico por defecto; fzf no limpia
+  esas capas.
+- Con `--format=symbols` la salida es texto (0 secuencias `\033_G`/`\033P`),
+  13 líneas para un panel de 14 y cursor restaurado.
+
+### Preview equilibrado de yt-play (2026-11-02)
+
+- `yt-play` con `yt-dlp` y `fzf` falsos: escribe
+  `~/.cache/yt-play/meta/<id>` con título, canal y duración; `NA` se guarda
+  como "en vivo". La entrada de fzf es solo `título<TAB>id`.
+- `yt-preview` con metadatos y red real: `dQw4w9WgXcQ` descarga
+  `maxresdefault` (1280x720) en `~/.cache/yt-play/preview`.
+- `yt-preview jNQXAC9IVRw`: `maxresdefault` responde 404 y se usa
+  `mqdefault` (320x180), sin dejar el archivo temporal.
+- Panel simulado de 60x30: título en 2 líneas, canal · duración, línea en
+  blanco y 17 líneas de chafa (21 en total). Sin secuencias kitty/sixel y
+  cursor restaurado.
+- Título con acentos y palabra larga en panel de 20 columnas: la salida es
+  UTF-8 válido (`iconv`) y no parte caracteres; un título con `ESC`/tab/CR
+  pierde los controles antes de imprimirse.
+- Pendiente: abrir `yt-play lofi` en la sesión viva y comprobar el panel
+  completo, el cambio de resultado y que Esc no deja restos.
+
+### Flujo de instalación y autoremove (2026-11-02)
+
+- `bash -n` de `install.sh`, `lib/*.sh` y los seis scripts de streaming:
+  OK. `shellcheck` no está instalado en el host.
+- `./install.sh --dry-run`: rc=0, 406 líneas, sin errores ni warnings.
+  Muestra la sección de streaming y termina con `apt-mark manual` y
+  `apt-get -y autoremove` simulados.
+- `install_music` en HOME temporal: primera ejecución descarga yt-dlp
+  2026.10.26 e instala los seis scripts 0755; la segunda imprime
+  "yt-dlp ya instalado" y no descarga.
+- `protect_build_toolchain` con los paquetes del host: ejecuta
+  `apt-mark manual build-essential make gcc g++ patch meson ninja-build
+  pkg-config git`. `cmake`, `autoconf`, `automake`, `libtool` y
+  `libtool-bin` aún no
+  están instalados, así que no aparecen hasta que los instale el
+  instalador.
+- `cleanup_packages` con un `apt-get` falso que falla: avisa
+  "apt-get autoremove falló" y devuelve 0, sin abortar la instalación.
+- Pendiente: ejecutar `sudo ./install.sh` en el host y comprobar que dunst
+  queda reiniciado con la paleta activa y que el autoremove real no toca
+  la cadena de compilación.
+
+- `desktop-safe lock` con un `i3lock` falso: en modo dark usa `0d0d14` y en
+  modo light `eff1f5`, leídos de `~/.local/share/dwm-setup/colors` y
+  `~/.config/dwm-setup/mode`.
+
+### Pantalla siempre encendida (2026-11-02)
+
+- Antes: `xset q` con `timeout: 600` y `DPMS is Enabled` (600 s).
+- `DISPLAY=:0 xset s off` y `DISPLAY=:0 xset -dpms`: `timeout: 0` y
+  `DPMS is Disabled`.
+- `sh -n templates/bspwm/autostart.in` y `sh -n
+  templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in`: OK.
+- `autostart` e `i3lock-fancy` instalados sincronizados desde las plantillas
+  con backup en `~/.config-backup/dwm-setup/20261102-193117`; `sh -n` de los
+  archivos instalados OK y permisos 0755 `luc:luc`.
+- Pendiente: `sudo ./install.sh` para el resto del bloque, reinicio de
+  sesión, inactividad >10 min, `Super+Shift+L` (pantalla encendida) y
+  suspensión (bloquea antes de dormir).
+
+### yt-play audio/vídeo y Ctrl+Space (2026-11-02)
+
+- `bash -n bin/yt-play`: OK.
+- `yt-play` con `mpv` falso y URL directa:
+  - sin flag y `--audio`: recibe `--no-video --ytdl-format=bestaudio`.
+  - `--video`: no recibe `--no-video` ni `--ytdl-format`; recibe la URL.
+- `yt-play` con `yt-dlp` y `fzf` falsos:
+  - fzf imprime una línea vacía + `<título>	<id>` (Enter) → audio.
+  - fzf imprime `ctrl-v` + `<título>	<id>` → vídeo.
+  - `--video` invierte el modo por defecto.
+- Error de extracción con un `mpv` falso que escribe en stderr: el `tee`
+  captura el mensaje y `yt-play` muestra "YouTube ha cambiado". Ya no se usa
+  `--log-file`.
+- `zsh -c 'bspc node -t ~floating'` falla con "no such user"; con
+  `'~floating'` bspwm cambia tiled→floating→tiled.
+- `sxhkdrc` contiene `ctrl + space` → `bspc node -t '~floating'`; también
+  están citados `'~fullscreen'`, `'~east'` y `'~south'`. sxhkd rearrancado
+  sin errores de grab.
+- `yt-play --video` con un `mpv` falso recibe `--autofit=80%x80%` y no
+  `--no-video`.
+- Pendiente: `sudo ./install.sh`, probar `Ctrl+Space`, `Super+Shift+Space`,
+  `Super+f`, los splits, audio y vídeo en vivo.
+
+### Compositor picom y módulo governor (2026-11-04)
+
+- `bash -n` en libs (`cpu.sh`, `picom.sh`) e `install.sh`: OK.
+- `sh -n` en `bin/dwm-setup-cpu-governor` (POSIX), `cpu-governor.sh.in`
+  y `autostart.in`: OK.
+- Helper con sysfs falsa en `/tmp/opencode` (override
+  `DWM_SETUP_CPU_SYS`): escribe `performance`/`powersave` en las 4 CPUs
+  falsas (rc 0); valor inexistente → rc 64 con lista de disponibles en
+  stderr; sin CpUs escribibles → rc 65; CPU parcialmente bloqueada →
+  rc 0 con aviso por la que no.
+- Script de la barra con sysfs falsa + `sudo` de stub + helper de stub:
+  `--status` imprime `%{F#89b4fa}%{T3}` rayo ` performance` (acento
+  mocha) y `%{T3}` velocímetro ` powersave` sin acento (bytes
+  `U+F10CB`/`U+F0F86` verificados con `od -c`); `--next` cicla en
+  caliente los dos modos con toasts dunst cada clic. Sin sudo real:
+  toast crítico "sudo denegado"/"Falta el helper" (comportamiento
+  esperado antes de `sudo ./install.sh`).
+- `sed "s/@USER@/luc/g"` del fragmento de sudoers → `visudo -cf`:
+  "parsed OK".
+- `systemd-analyze verify templates/systemd/...service`: la única
+  queja es el ejecutable de `/usr/local/bin aún no instalado (va con
+  `sudo ./install.sh`); la sintaxis de la unidad no produce errores.
+- `./install.sh --dry-run`: rc 0, sin modificaciones; el plan incluye
+  renders de `governor.ini` en ambas variantes, `cpu-governor.sh`,
+  helper/sudoers/unidad y picom.conf.
+- En vivo (host de referencia, variante referencia activa): backups en
+  `~/.config-backup/dwm-setup/20261104-130202/`; ` governor` insertado
+  tras `cpu` en ambos `config.ini`; módulos y script instalados con
+  acento del modo activo (light: `#1e66f5`); picom reiniciado con la
+  config final (pid activo) y polybar recargada con `launch.sh`.
+  El bloque root (helper/sudoers/unidad, unidad habilitada) quedó
+  instalado con el `sudo ./install.sh` de las 13:13. La prueba visual
+  del fade y del alternado por clic la hace el usuario; el store de
+  theme-mode quedó sincronizado tras el port.
+- picom usa libconfig: comentarios `#` (un `;` provoca "syntax error" y
+  el daemon aborta al arrancar).
+
+### Port de ajustes manuales del usuario (2026-11-04, tarde)
+
+- Origen: comparación render del repo vs ficheros vivos (ficheros cambiados
+  después del `sudo ./install.sh` de las 13:13); port de 8 archivos de
+  plantilla (B config, 2 governor, cpu A, 2 pipewire, memory B,
+  cpu-governor.sh) + check de verify + docs.
+- Prueba de identidad: re-render de las plantillas nuevas con las
+  variables del instalador (`render.env` + paleta del modo activo):
+  **9/9 IDÉNTICO** contra los ficheros en vivo, incluidos el
+  `@HOME@`/`@BAR_HEIGHT@` resueltos. El próximo render (`sudo
+  ./install.sh` o `theme-mode`) conserva los tweaks tal cual.
+- Store de theme-mode refrescado sin sudo (los tres ficheros del store
+  son user-owned): configurado antes del próximo `theme-mode toggle`.
+- `bash -n`/`sh -n` de todo: OK. `--dry-run`: rc 0 (275 pasos).
