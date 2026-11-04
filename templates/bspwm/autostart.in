@@ -19,8 +19,20 @@ fi
 # Esperar a que X esté listo
 sleep 0.5
 
+# --- Pantalla siempre encendida ---
+# Sin salvapantallas ni DPMS: no se apaga ni bloquea por inactividad.
+# xss-lock sigue bloqueando al suspender y con Super+Shift+L.
+xset s off 2>/dev/null || true
+xset -dpms 2>/dev/null || true
+
 # --- Directorios de usuario ---
 mkdir -p "$HOME/Pictures/Screenshots" 2>/dev/null || true
+
+# --- picom (compositor: se arranca con la sesión) ---
+# Guard con pgrep: si el usuario ya lo arrancó, no lo duplicamos.
+if command -v picom >/dev/null 2>&1 && ! pgrep -x picom >/dev/null 2>&1; then
+  picom -b --config "$HOME/.config/picom/picom.conf"
+fi
 
 # --- Polybar ---
 @HOME@/.config/polybar/launch.sh &

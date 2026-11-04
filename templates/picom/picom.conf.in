@@ -1,0 +1,31 @@
+# picom.conf — generado desde template; no editar directamente.
+# Config mínima: vsync contra el rasgado al arrastrar/scroll.
+# Fade sutil; SIN sombras, SIN blur y SIN transparencias de picom.
+# mpv a pantalla completa pasa sin composite (rendimiento).
+
+backend = "glx";
+vsync = true;
+use-damage = true;
+
+shadow = false;
+fading = true;
+fade-delta = 5;
+fade-in-step = 0.03;
+fade-out-step = 0.03;
+fade-exclude = [
+  "window_type = 'dock'",
+  "window_type = 'notification'",
+  "window_type = 'desktop'"
+];
+
+# Sin transparencias ni blur: opacidad siempre al 100 %.
+inactive-opacity = 1;
+active-opacity = 1;
+frame-opacity = 1;
+
+# mpv/vídeo a pantalla completa pasa sin composite.
+unredir-if-possible = true;
+
+detect-client-opacity = true;
+detect-transient = true;
+detect-client-leader = true;
