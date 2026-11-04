@@ -930,3 +930,9 @@ ytsearch50  → 4533 ms
   .deb trae el shim. Fix: retirar el legado antes del dpkg (instalador
   y `ytwatch-update --ueberzugpp`); sin dependientes en Debian 13 y
   ranger sigue con el shim. Re-ejecutar `sudo ./install.sh`.
+- 2026-11-04 (noche): miniaturas visibles confirmadas con
+  `preview.output = "x11"` en kitty+X11 (backend `kitty` del
+  ueberzugpp v0.1.0 no pinta). Audio sin ventana negra:
+  `--force-window=no` en `[mpv] args` gana contra el
+  `--force-window=immediate` de ytwatch (comprobado con xwininfo).
+  Pendiente: confirmar que `a` conmuta el modo y `Enter` abre vídeo.

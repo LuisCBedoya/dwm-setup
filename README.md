@@ -411,12 +411,16 @@ ytwatch            # abre con la búsqueda activa
 ytwatch lofi jazz  # abre con una búsqueda precargada
 ```
 
-**Enter** reproduce en audio (config del repo: `audio_only = true`);
+**Enter** reproduce en audio (config del repo: `audio_only = true`) y sin
+ventana de mpv: ytwatch fuerza `--force-window=immediate`, y la config
+añade `--force-window=no` en `[mpv] args` (gana el último flag) para que
+el audio sea puro. La tecla `a` conmuta audio↔vídeo (el footer
+`720p · ♪ audio` lo indica): pulsa `a` y luego `Enter` para ese vídeo.
 `d`/`a`/`Q` descargan (calidad/audio), `V` arma cola, `f` filtra,
-`?` muestra la ayuda completa con la tecla que carga el resultado en
-vídeo. Las miniaturas van por el protocolo nativo de kitty a través de
-`ueberzugpp` (instalado por el instalador como `.deb` del proyecto, sin
-añadir repositorios); el fallback es `chafa`. El binario se gestiona solo:
+`?` muestra la ayuda completa. Las miniaturas van con el backend `x11`
+de `ueberzugpp` (ventana-hija sobre la terminal; en Debian 13 llega por
+`.deb` del proyecto, sin añadir repositorios) y el fallback `chafa`
+queda comentado. El binario se gestiona solo:
 
 ```sh
 ytwatch-check        # ¿hay versión nueva de ytwatch o ueberzugpp? avisa por dunst

@@ -1076,3 +1076,15 @@ legado `ueberzug` (18.3.1-2+b1, Python) posee `/usr/bin/ueberzug` y el
   ueberzugpp da el mismo comando.
 - Pendiente: re-ejecutar `sudo ./install.sh` (idempotente; solo
   reintenta ueberzugpp y la verificación).
+
+### ytwatch: backend x11 y audio sin ventana (2026-11-04, noche)
+
+- Miniaturas confirmadas en vivo con `preview.output = "x11"` (el
+  backend `kitty` de ueberzugpp v0.1.0 no pinta en kitty+X11; el panel
+  se quedaba vacío aunque el doctor estaba OK).
+- mpv en modo audio abría una ventana negra: ytwatch pasa
+  `--force-window=immediate --no-video`. La config (plantilla y viva)
+  añade `[mpv] args = ["--force-window=no"]`; verificado con
+  `xwininfo` que el último flag gana y no se crea ventana.
+- Tecla `a` conmutando audio↔vídeo: pendiente de la prueba del
+  usuario (el footer `720p · ♪ audio` es el indicador del modo).

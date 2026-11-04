@@ -2608,10 +2608,15 @@ permanecen intactos. yt-dlp al día pasa a ser doblemente necesario.
    bloque tras la música, con backups previos.
 
 **Consecuencias:**
-- Las miniaturas dependen de ueberzugpp instalado (2.9.10) y del
-  protocolo del terminal; en kitty va por protocolo nativo. `? help`
-  del propio binario documenta teclas; el switch audio↔vídeo por
-  resultado quedó en revisión del usuario.
+- Miniaturas: backend **`x11`** de ueberzugpp (ventana-hija sobre la
+  terminal). El backend `kitty` de v0.1.0 no pinta en kitty+X11
+  (2026-11-04); `chafa` queda como fallback documentado. Confirmado en
+  vivo por el usuario.
+- Audio: ytwatch lanza mpv con `--force-window=immediate --no-video`,
+  lo que deja una ventana negra; la config del repo añade
+  `--force-window=no` en `[mpv] args` (en mpv gana el último flag;
+  verificado) para audio puro. La tecla `a` del TUI conmuta
+  audio↔vídeo y el footer lo refleja (`720p · ♪ audio`).
 - El `.deb` de Debian 13 instala un shim `/usr/bin/ueberzug` que choca
   con el paquete legado `ueberzug` (Python, presente en la máquina):
   el instalador y `ytwatch-update` lo retiran antes (`apt-get -y

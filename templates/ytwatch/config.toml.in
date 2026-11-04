@@ -11,7 +11,7 @@ quality = "720p"             # cuando toca vídeo o descarga
 
 [mpv]
 workspace = ""               # bspwm coloca la ventana; sin wmctrl
-args = []                    # extra mpv, por ejemplo ["--volume=60"]
+args = ["--force-window=no"] # audio sin ventana negra (ytwatch fuerza window)
 cookies_from_browser = ""    # p.ej. "firefox" si YouTube pide captcha
 
 [download]
@@ -22,8 +22,9 @@ args = []                    # extra yt-dlp, por ejemplo ["--embed-metadata"]
 name = "terminal"
 
 [preview]
-output = "kitty"             # protocolo nativo de kitty vía ueberzugpp
-# output = "chafa"           # fallback ANSI/bloques si el nativo falla
+output = "x11"               # ventana-hija sobre la terminal: backend más
+# output = "kitty"           # maduro en X11; el nativo de kitty v0.1.0 no pinta
+# output = "chafa"           # fallback ANSI/bloques si x11 falla
 
 [search]
 language = "es"
