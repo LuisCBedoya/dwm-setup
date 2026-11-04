@@ -1,0 +1,3 @@
+# dwm-setup — gobernador de CPU desde el módulo polybar (cuenta @USER@)
+# Solo autoriza el helper exacto; nada más obtiene NOPASSWD.
+@USER@ ALL=(root) NOPASSWD: /usr/local/bin/dwm-setup-cpu-governor

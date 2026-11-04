@@ -1,0 +1,13 @@
+; governor — gobernador de CPU; clic para alternar performance/powersave
+[module/governor]
+type = custom/script
+exec = @HOME@/.config/polybar/scripts/cpu-governor.sh
+interval = 5
+exec-if = test -d /sys/devices/system/cpu/cpu0/cpufreq
+format = <label>
+format-padding = 1
+format-background = ${colors.module-bg}
+format-font = 1
+format-foreground = ${colors.foreground}
+label = %output%%{O5}
+click-left = @HOME@/.config/polybar/scripts/cpu-governor.sh --next

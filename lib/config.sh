@@ -87,6 +87,7 @@ install_theme_store() {
   local -a template_files=(
     "templates/polybar/config.ini.in"
     "templates/polybar/variants/reference/config.ini.in"
+    "templates/polybar/scripts/cpu-governor.sh.in"
     "templates/kitty/kitty.conf.in"
     "templates/kitty/colorshemes/monochromatic.conf.in"
     "templates/dunst/dunstrc.in"

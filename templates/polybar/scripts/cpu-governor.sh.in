@@ -1,0 +1,98 @@
+#!/bin/sh
+# cpu-governor.sh — gobernador de CPU para polybar (status y clic).
+# Acento de la paleta activa: @COLOR_ACCENT@ (renderizado por install.sh y
+# re-renderizado por theme-mode).
+set -u
+
+CPUDIR=${DWM_SETUP_CPU_SYS:-/sys/devices/system/cpu}
+HELPER=${DWM_SETUP_CPU_HELPER:-/usr/local/bin/dwm-setup-cpu-governor}
+ACCENT='@COLOR_ACCENT@'
+NOTIFY=${DWM_SETUP_NOTIFY:-notify-send}
+
+# Iconos de la fuente (JetBrainsMono Nerd Font), verificados por charmap.
+ICON_PERF="󱃋 "     # nf-md-lightning_bolt (U+F10CB)
+ICON_SAVE="󰾆 "     # nf-md-speedometer_slow (U+F0F86)
+ICON_ALIEN=""     # cpu: estados no reconocidos (U+E266)
+
+notify() {
+  command -v "$NOTIFY" >/dev/null 2>&1 || return 0
+  "$NOTIFY" "$@" >/dev/null 2>&1 || true
+}
+
+# Gobernadores disponibles, uno por línea (el sysfs puede traer espacios y
+# saltos; nos quedamos con los tokens).
+available_governors() {
+  awk '{ for (i = 1; i <= NF; i++) print $i }'     "$CPUDIR/cpu0/cpufreq/scaling_available_governors" 2>/dev/null
+}
+
+# Gobernador actual de cpu0.
+current_governor() {
+  [ -r "$CPUDIR/cpu0/cpufreq/scaling_governor" ] || return 1
+  awk 'NR == 1 { print; exit }'     "$CPUDIR/cpu0/cpufreq/scaling_governor" 2>/dev/null
+}
+
+print_status() {
+  gov=$(current_governor)
+  [ -n "$gov" ] || gov='?'
+  case "$gov" in
+    performance)
+      printf '%s\n' "%{F$ACCENT}%{T3}$ICON_PERF%{T-}$gov%{F-}"
+      ;;
+    powersave)
+      printf '%s\n' "%{T3}$ICON_SAVE%{T-}$gov"
+      ;;
+    *)
+      printf '%s\n' "%{T3}$ICON_ALIEN%{T-} $gov"
+      ;;
+  esac
+}
+
+# Siguiente gobernador de la lista disponible (cíclico).
+next_governor() {
+  avail=$(available_governors)
+  [ -n "$avail" ] || return 1
+  cur=$(current_governor)
+  printf '%s\n' "$avail" | awk -v cur="$cur" '
+    { list[NR] = $0 }
+    END {
+      n = NR
+      if (n == 0) exit 1
+      if (n == 1) { print list[1]; exit }
+      found = 0
+      for (k = 1; k <= n; k++) {
+        if (list[k] == cur) { found = k; break }
+      }
+      if (found == 0) print list[1]; else print list[(found % n) + 1]
+    }'
+}
+
+apply_next() {
+  next=$(next_governor) || next=''
+  if [ -z "$next" ]; then
+    notify -u critical "Gobernador de CPU" "No hay gobernadores disponibles"
+    return 0
+  fi
+  if [ ! -x "$HELPER" ]; then
+    notify -u critical "Gobernador de CPU" "Falta el helper: ejecuta sudo ./install.sh"
+    return 0
+  fi
+  if sudo -n "$HELPER" "$next" >/dev/null 2>&1; then
+    notify "Gobernador de CPU" "Modo: $next"
+    print_status
+  else
+    notify -u critical "Gobernador de CPU" "No se pudo aplicar $next (sudo denegado)"
+  fi
+}
+
+case "${1:-}" in
+  ""|--status)
+    print_status
+    ;;
+  --next)
+    apply_next
+    ;;
+  *)
+    printf 'Uso: %s [--status|--next]\n' "$0" >&2
+    exit 2
+    ;;
+esac

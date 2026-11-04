@@ -1,0 +1,81 @@
+#!/bin/sh
+# dwm-setup-cpu-governor — helper root del módulo polybar "governor".
+#
+# Uso: dwm-setup-cpu-governor <governor>
+#
+# Valida el gobernador pedido contra
+# /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors y lo
+# escribe en TODAS las CPUs (*: scaling_governor). No hardcodea listas: si
+# el kernel ofrece otro gobernador, se cicla/acepta igual.
+#
+# Está pensado para ejecutarse vía sudo con el fragmento de sudoers de
+# dwm-setup (NOPASSWD limitado a este binario exacto). El override de
+# DWM_SETUP_CPU_SYS sirve para pruebas ejecutando el binario a mano:
+# sudo con env_reset no lo propaga y no cruza un sudo real.
+#
+# Códigos de salida:
+#   0  OK
+#   64 gobernador no disponible en esta máquina
+#   65 ninguna CPU aceptó la escritura (no root, cpufreq no escribible)
+#   66 no se puede leer la lista de gobernadores
+
+set -u
+
+CPUDIR=${DWM_SETUP_CPU_SYS:-/sys/devices/system/cpu}
+
+usage() {
+  printf 'Uso: %s <governor>\n' "${0##*/}"
+  printf 'Governor objetivo: quien escribe scaling_governor en todas las CPU.\n'
+}
+
+if [ $# -ne 1 ]; then
+  usage >&2
+  exit 64
+fi
+
+avail_file="$CPUDIR/cpu0/cpufreq/scaling_available_governors"
+if [ ! -r "$avail_file" ]; then
+  printf '%s: error: no se puede leer %s\n' "${0##*/}" "$avail_file" >&2
+  exit 66
+fi
+
+# La lista puede traer espacios o saltos; la separación de palabras de $( )
+# cubre ambos. Coincidencia exacta, no por prefijo.
+valid=
+for g in $(cat "$avail_file" 2>/dev/null); do
+  if [ "$g" = "$1" ]; then
+    valid=1
+    break
+  fi
+done
+
+if [ "$valid" != 1 ]; then
+  printf '%s: error: gobernador no disponible: %s\n' "${0##*/}" "$1" >&2
+  printf '%s: disponibles:' "${0##*/}" >&2
+  for g in $(cat "$avail_file" 2>/dev/null); do
+    printf ' %s' "$g" >&2
+  done
+  printf '\n' >&2
+  exit 64
+fi
+
+rc=0
+written=0
+for gov_path in "$CPUDIR"/cpu*/cpufreq/scaling_governor; do
+  [ -f "$gov_path" ] || continue
+  [ -w "$gov_path" ] || continue
+  if printf '%s\n' "$1" >"$gov_path" 2>/dev/null; then
+    written=$((written + 1))
+  else
+    printf '%s: aviso: no se pudo escribir %s\n' "${0##*/}" "$gov_path" >&2
+    rc=1
+  fi
+done
+
+if [ "$written" -eq 0 ]; then
+  printf '%s: error: ninguna CPU aceptó la escritura (¿ejecutaste como root?)\n' \
+    "${0##*/}" >&2
+  exit 65
+fi
+
+exit $rc
