@@ -7,24 +7,31 @@ action="${1:-play-pause}"
 
 usage() {
   cat <<'EOF'
-Uso: music-ctl <play-pause|next|prev|stop>
+Uso: music-ctl <play-pause|next|prev|stop|forward|backward>
 
-Controla el reproductor que esté sonando. Sin reproductor, no hace nada.
+  play-pause  pausa/reanuda todos los reproductores MPRIS
+  stop        detiene todos (tu "quitar" cuando hay varias instancias)
+  next/prev   siguiente/anterior en el reproductor activo
+  forward      adelanta 10 s
+  backward     retrocede 10 s
+Sin reproductor, no hace nada.
 EOF
 }
 
 case "$action" in
   -h|--help) usage; exit 0 ;;
-  play-pause|next|prev|stop) ;;
+  play-pause|next|prev|stop|forward|backward) ;;
   *) usage >&2; exit 2 ;;
 esac
 
-if command -v playerctl >/dev/null 2>&1 && playerctl status >/dev/null 2>&1; then
+if command -v playerctl >/dev/null 2>&1 && [[ -n "$(playerctl -l 2>/dev/null)" ]]; then
   case "$action" in
-    play-pause) playerctl play-pause ;;
+    play-pause) playerctl -a play-pause ;;
     next)       playerctl next ;;
     prev)       playerctl previous ;;
-    stop)       playerctl stop ;;
+    stop)       playerctl -a stop ;;
+    forward)    playerctl position 10+ ;;
+    backward)   playerctl position 10- ;;
   esac
   exit 0
 fi

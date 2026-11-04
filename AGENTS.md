@@ -111,7 +111,10 @@ La fase 1 termina en el escritorio. No implementar todavía:
     (`'~floating'`, `'~fullscreen'`, `'~east'`, `'~south'`): sxhkd ejecuta
     con `$SHELL` (zsh) y sin comillas `~floating` se expande a un usuario
     inexistente.
-    `XF86AudioPlay/Next/Prev/Stop` llaman a `music-ctl` (mpv vía MPRIS).
+    `XF86AudioPlay/Next/Prev/Stop/Forward/Rewind` llaman a `music-ctl`
+    (mpv vía MPRIS): play-pause y stop actúan sobre **todas** las
+    instancias (stop = limpieza cuando ytwatch dejó varias sonando);
+    next/prev/seek sobre el reproductor activo.
     `Super+Ctrl+Tab` y `Super+Ctrl+Shift+Tab` cambian de escritorio. No
     cambiar este mapa sin una decisión nueva.
 19. **Audio portable.** El watcher elige auriculares > HDMI > altavoces
@@ -188,7 +191,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `autostart` (antes de polybar, con guard `pgrep -x picom`) usando
     `~/.config/picom/picom.conf` generado desde `templates/picom/`:
     `backend glx`, `vsync true`, `use-damage`, fade sutil (delta 5,
-    pasos 0.03) que excluye dock/notificaciones/desktop, `shadow false`
+    pasos 0.05) que excluye dock/notificaciones/desktop, `shadow false`
     y todas las opacidades a 1. **No añadir sombras, blur ni
     transparencias de picom** (los quitarían de la decisión tomada en
     vivo); la translucidez de la barra B es el fondo `#00000000` de

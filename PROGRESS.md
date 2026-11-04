@@ -1088,3 +1088,16 @@ legado `ueberzug` (18.3.1-2+b1, Python) posee `/usr/bin/ueberzug` y el
   `xwininfo` que el último flag gana y no se crea ventana.
 - Tecla `a` conmutando audio↔vídeo: pendiente de la prueba del
   usuario (el footer `720p · ♪ audio` es el indicador del modo).
+
+### Pulido: controles de audio y fade de picom (2026-11-04, noche)
+
+- `music-ctl`: `play-pause` y `stop` actúan sobre **todas** las
+  instancias MPRIS (antes solo la default; con varias mpv de ytwatch
+  quedaban sonando). Nuevos `forward`/`backward` (position ±10 s).
+  sxhkd: `XF86AudioForward`/`XF86AudioRewind` añadidos (no-op si el
+  teclado no tiene esas teclas).
+- picom: `fade-in/out-step` 0.03 → 0.05 (delta 5): transición de
+  ~167 ms a ~100 ms, "un poco más rápido" pedido por el usuario.
+- Pendiente: `sudo ./install.sh` (instala el music-ctl nuevo en
+  /usr/local/bin y re-renderiza) y probar `a`+`Enter` (vídeo), stop
+  de varias instancias y seek.

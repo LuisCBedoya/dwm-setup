@@ -304,7 +304,9 @@ Si algo falla:
 | `Print` | pantalla completa al portapapeles |
 | `Super+Print` | menú de capturas |
 | `XF86AudioRaise/Lower/Mute` | volumen |
-| `XF86AudioPlay` / `Next` / `Prev` | play-pausa y pista del reproductor activo |
+| `XF86AudioPlay` / `Next` / `Prev` | play-pausa (todos), pista del activo |
+| `XF86AudioStop` | detiene todas las instancias (limpieza) |
+| `XF86AudioForward` / `Rewind` | ±10 s en el activo |
 | `XF86MonBrightnessUp/Down` | brillo |
 
 `Ctrl+Tab` queda libre para navegadores y editores. `Super+Ctrl+Tab` y

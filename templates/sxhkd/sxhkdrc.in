@@ -155,6 +155,10 @@ XF86AudioPrev
     /usr/local/bin/music-ctl prev
 XF86AudioStop
     /usr/local/bin/music-ctl stop
+XF86AudioForward
+    /usr/local/bin/music-ctl forward
+XF86AudioRewind
+    /usr/local/bin/music-ctl backward
 
 XF86MonBrightnessUp
     brightnessctl set +10%

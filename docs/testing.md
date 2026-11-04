@@ -936,3 +936,7 @@ ytsearch50  → 4533 ms
   `--force-window=no` en `[mpv] args` gana contra el
   `--force-window=immediate` de ytwatch (comprobado con xwininfo).
   Pendiente: confirmar que `a` conmuta el modo y `Enter` abre vídeo.
+- 2026-11-04 (noche): `music-ctl` pasó a controlar todas las instancias
+  (play-pause/stop con `playerctl -a`) y ganó forward/backward (±10 s)
+  con bindings XF86AudioForward/Rewind. picom con fade-step 0.05
+  (~100 ms). Pendiente de probar en sesión tras `sudo ./install.sh`.
