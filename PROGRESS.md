@@ -1105,3 +1105,18 @@ legado `ueberzug` (18.3.1-2+b1, Python) posee `/usr/bin/ueberzug` y el
   como viene de fábrica (mpv abre su ventana normal también en audio).
   La plantilla vuelve a `[mpv] args = []`. Se queda `preview.output =
   "x11"`, que es lo que da miniaturas. Control de audio por music-ctl.
+
+### Fix: grupo APT reintentaba el ueberzug legado (2026-11-04, 18:34)
+
+El `sudo ./install.sh` de las 18:34 abortó en el grupo obligatorio
+"escritorio": `apt-get install` intentó reinstalar `ueberzug` (estaba
+en `DESKTOP_PKGS` y el run anterior lo había quitado) y chocó con el
+shim de ueberzugpp (`trying to overwrite /usr/bin/ueberzug`).
+
+- `DESKTOP_PKGS` ya no lista `ueberzug`; con ytwatch el shim lo pone
+  ueberzugpp. El legado solo se instala con `--no-ytwatch`
+  (`install_group "ranger: ueberzug legado"`).
+- El post-check `required_pkgs` exige `ueberzug` solo en ese ramal.
+- Validado con `--dry-run` (grupo escritorio: 48 paquetes, sin
+  ueberzug) y `--dry-run --no-ytwatch` (pide el legado). Pendiente:
+  re-ejecutar `sudo ./install.sh`.

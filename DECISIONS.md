@@ -2625,6 +2625,11 @@ permanecen intactos. yt-dlp al día pasa a ser doblemente necesario.
   remove`; sin dependientes en Debian 13) y ranger sigue funcionando
   con su `preview_images_method ueberzug` vía shim. No se usa
   `--force-overwrite`.
+- Coherencia del grupo APT (2026-11-04, 18:34): `DESKTOP_PKGS` ya no
+  lista `ueberzug`; con ytwatch el shim lo aporta ueberzugpp. El
+  paquete legado solo se instala (y se exige en el post-check) con
+  `--no-ytwatch`. Reinstalar sin esta regla reintentaba el legado y
+  abortaba el grupo obligatorio por el conflicto de `/usr/bin/ueberzug`.
 - El pin del repo decide versiones en instalación limpia; para actualizar
   en una máquina ya instalada están los dos binarios nuevos.
 - El doctor global con avisos dunst de todo el sistema (idea del

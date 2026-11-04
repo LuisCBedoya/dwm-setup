@@ -51,7 +51,7 @@ DESKTOP_PKGS=(
   xwallpaper playerctl
   zsh zsh-autosuggestions lsd
   ranger zathura zathura-pdf-poppler zathura-cb zathura-djvu zathura-ps
-  vlc ueberzug poppler-utils libmupdf-dev zathura-dev meson ninja-build
+  vlc poppler-utils libmupdf-dev zathura-dev meson ninja-build
   bluez redshift
   scrot imagemagick
   lm-sensors upower acpi
@@ -532,6 +532,11 @@ install_base_packages() {
 install_desktop_packages() {
   section "Escritorio, audio, cámara y almacenamiento"
   install_group "escritorio (bspwm+sxhkd+polybar+apps)" required "${DESKTOP_PKGS[@]}"
+  # ueberzugpp (bloque ytwatch) instala el shim /usr/bin/ueberzug que usa
+  # ranger; el paquete legado solo se pide con --no-ytwatch (choca con el shim).
+  if [[ "${INSTALL_YTWATCH:-yes}" != "yes" ]]; then
+    install_group "ranger: ueberzug legado" required ueberzug
+  fi
   install_group "navegador" required "${BROWSER_PKGS[@]}"
   install_group "audio y códecs" required "${AUDIO_PKGS[@]}"
   install_group "cámara" optional "${CAMERA_PKGS[@]}"
@@ -690,7 +695,7 @@ install_packages() {
     bspwm sxhkd polybar picom kitty dunst rofi feh xwallpaper
     udiskie brightnessctl xclip thunar playerctl flameshot neovim i3lock xss-lock
     zsh zsh-autosuggestions lsd ranger zathura zathura-pdf-poppler zathura-cb zathura-djvu zathura-ps
-    vlc ueberzug poppler-utils libmupdf-dev zathura-dev
+    vlc poppler-utils libmupdf-dev zathura-dev
     build-essential make gcc g++ patch cmake autoconf automake libtool libtool-bin pkg-config git
     libnotify-bin gir1.2-notify-0.7 lm-sensors upower acpi fastfetch mpv mpv-mpris fzf chafa yt-dlp
     fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji fonts-noto-cjk
@@ -703,6 +708,8 @@ install_packages() {
     v4l-utils udisks2 gvfs gvfs-backends exfatprogs ntfs-3g dosfstools e2fsprogs
     lxpolkit
   )
+  # Sin ytwatch no hay ueberzugpp que aporte el shim; se usa el legado.
+  [[ "${INSTALL_YTWATCH:-yes}" == "yes" ]] || required_pkgs+=(ueberzug)
   local missing=()
   for pkg in "${required_pkgs[@]}"; do
     if ! dpkg -l "$pkg" 2>/dev/null | grep -q '^ii'; then

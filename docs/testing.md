@@ -944,3 +944,8 @@ ytsearch50  → 4533 ms
   revierte por decisión del usuario; ytwatch queda con el
   comportamiento del proyecto (ventana de mpv visible en audio). Se
   mantiene `preview.output = "x11"`.
+- Incidente 2026-11-04 18:34: `apt-get install` del grupo escritorio
+  reintentó el ueberzug legado (estaba en DESKTOP_PKGS tras haberlo
+  quitado para ueberzugpp) y falló a la inversa. Fix: sin `ueberzug`
+  en el grupo; se instala solo con `--no-ytwatch`. Validado con
+  dry-run en ambos ramales.
