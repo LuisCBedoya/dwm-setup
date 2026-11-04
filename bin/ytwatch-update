@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+# ytwatch-update — actualiza el binario TUI (~/.local/bin/ytwatch).
+# Con --ueberzugpp actualiza en su paquete .deb (necesita sudo).
+# Guarda la versión anterior como .bak y restaura si la nueva falla.
+set -Eeuo pipefail
+
+PROG="ytwatch-update"
+YTWATCH_BIN="${YTWATCH_BIN:-$HOME/.local/bin/ytwatch}"
+YTWATCH_REPO_URL="https://api.github.com/repos/geovannewashington/ytwatch/releases/latest"
+UEBERZUGPP_OBS="https://download.opensuse.org/repositories/home:/justkidding/Debian_13/amd64"
+
+help() {
+  cat <<'EOF'
+Uso: ytwatch-update [--ueberzugpp]
+
+  ytwatch-update               Descarga la última release de ytwatch,
+                               verifica su checksums.txt y la instala en
+                               ~/.local/bin (sin sudo).
+  ytwatch-update --ueberzugpp  Descarga el .deb correspondiente a la latest
+                               de jstkdng/ueberzugpp (build Debian 13) y lo
+                               instala con dpkg (pide sudo).
+EOF
+}
+
+die() { printf '%s: %s\n' "$PROG" "$*" >&2; exit 1; }
+
+notify() {
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send -a ytwatch "$@" 2>/dev/null || true
+}
+
+command -v curl >/dev/null 2>&1 || die "falta curl"
+
+gh_latest_src() {
+  curl -fsSL --max-time 8 "$YTWATCH_REPO_URL" 2>/dev/null |
+    sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -1
+}
+
+update_ytwatch() {
+  local tag ver used_url previous tmp_dir sha_ok tarball
+  tag=$(gh_latest_src)
+  [[ -n "$tag" ]] || die "no se pudo leer la última release de ytwatch"
+  ver="${tag#v}"
+  used_url="https://github.com/geovannewashington/ytwatch/releases/download/$tag/ytwatch_${ver}_linux_amd64.tar.gz"
+
+  current="ninguna"
+  if [[ -x "$YTWATCH_BIN" ]]; then
+    current=$("$YTWATCH_BIN" --version 2>/dev/null | awk '{print $NF}' || echo "desconocida")
+    if [[ "$current" == "$ver" ]]; then
+      printf '  ytwatch ya está al día: %s\n' "$current"
+      return 0
+    fi
+    printf '  versión actual: %s\n' "$current"
+  fi
+
+  tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/ytwatchupdate.XXXXXX")
+  trap 'rm -rf -- "$tmp_dir"' EXIT
+  printf '  descargando %s…\n' "$tag"
+  curl -fsSL --max-time 180 -o "$tmp_dir/tarball.tar.gz" "$used_url" || {
+    notify "ytwatch: no se pudo descargar" "Revisa la conexión; se mantiene la versión actual"
+    die "no se pudo descargar la release"
+  }
+  curl -fsSL --max-time 30 -o "$tmp_dir/checksums.txt" \
+    "https://github.com/geovannewashington/ytwatch/releases/download/$tag/checksums.txt" || true
+
+  if [[ -s "$tmp_dir/checksums.txt" ]]; then
+    if ! (cd "$tmp_dir" && sha256sum -c --ignore-missing checksums.txt >/dev/null 2>&1); then
+      notify "ytwatch: checksum inválido" "El tarball no coincide con checksums.txt; no se instaló nada"
+      die "checksum no coincide; no se instaló nada"
+    fi
+    sha_ok=OK
+  else
+    sha_ok="no verificado (sin checksums.txt)"
+  fi
+
+  tar xzf "$tmp_dir/tarball.tar.gz" -C "$tmp_dir"
+
+  if [[ ! -x "$tmp_dir/ytwatch" ]]; then
+    die "el tarball no contiene el binario ytwatch"
+  fi
+  if ! "$tmp_dir/ytwatch" --version >/dev/null 2>&1; then
+    notify "ytwatch: descarga inválida" "El binario nuevo no arranca; no se instaló nada"
+    die "el binario descargado no arranca; se mantiene la versión actual"
+  fi
+
+  if [[ -x "$YTWATCH_BIN" ]]; then
+    previous="$YTWATCH_BIN.bak"
+    cp -f -- "$YTWATCH_BIN" "$previous"
+    printf '  copia de seguridad: %s\n' "$previous"
+  fi
+
+  install -m 0755 -- "$tmp_dir/ytwatch" "$YTWATCH_BIN" || {
+    if [[ -n "${previous:-}" && -f "$previous" ]]; then
+      install -m 0755 -- "$previous" "$YTWATCH_BIN"
+    fi
+    die "no se pudo instalar el binario nuevo"
+  }
+  installed=$("$YTWATCH_BIN" --version 2>/dev/null | awk '{print $NF}' || echo "desconocida")
+
+  # Prueba de arranque final; si falla, vuelve la copia.
+  if ! "$YTWATCH_BIN" --version >/dev/null 2>&1; then
+    if [[ -n "${previous:-}" && -f "$previous" ]]; then
+      install -m 0755 -- "$previous" "$YTWATCH_BIN"
+      notify "ytwatch: restaurada la versión anterior" "$current"
+      die "la nueva no arranca; se restauró $current"
+    fi
+    die "la nueva no arranca y no hay copia de seguridad"
+  fi
+
+  printf '  checksum: %s\n' "$sha_ok"
+  printf '  instalada: %s (antes %s)\n' "$installed" "$current"
+  printf '  rollback manual: mv %s.bak %s && chmod +x %s\n' \
+    "$YTWATCH_BIN" "$YTWATCH_BIN" "$YTWATCH_BIN"
+  notify "ytwatch actualizado" "$current -> $installed"
+}
+
+ueberzugpp_installed_version() {
+  dpkg-query -W -f='${Version}' ueberzugpp 2>/dev/null | head -1
+}
+
+update_ueberzugpp() {
+  local tag ver current expected_url tmp_deb got
+  local rc=0
+  command -v dpkg-query >/dev/null 2>&1 || die "dpkg-query no disponible"
+  tag=$(curl -fsSL --max-time 8 \
+    https://api.github.com/repos/jstkdng/ueberzugpp/releases/latest 2>/dev/null |
+    sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+  [[ -n "$tag" ]] || die "no se pudo leer la última release de ueberzugpp"
+  ver="${tag#v}"
+
+  current=$(ueberzugpp_installed_version)
+  if [[ -n "$current" && "$current" == "$ver" ]]; then
+    printf '  ueberzugpp ya está al día: %s\n' "$current"
+    return 0
+  fi
+  if [[ -n "$current" ]]; then
+    printf '  versión actual: %s\n' "$current"
+  else
+    printf '  ueberzugpp no estaba instalado\n'
+  fi
+
+  expected_url="$UEBERZUGPP_OBS/ueberzugpp_${ver}_amd64.deb"
+  tmp_deb=$(mktemp "${TMPDIR:-/tmp}/ueberzugpp.XXXXXX.deb")
+  trap 'rm -f -- "$tmp_deb"' EXIT
+  printf '  descargando build de Debian 13 (%s)…\n' "$tag"
+  curl -fsSL --max-time 180 -o "$tmp_deb" "$expected_url" || {
+    notify "ueberzugpp: no se pudo descargar" "El build de OBS para $ver puede no existir aún"
+    die "no se pudo descargar $expected_url"
+  }
+
+  got=$(sha256sum "$tmp_deb" | awk '{print $1}')
+  printf '  sha256: %s\n' "$got"
+
+  if ! sudo dpkg -i -- "$tmp_deb"; then
+    printf '  dpkg pidió dependencias; apt-get -f las resuelve…\n'
+    sudo env DEBIAN_FRONTEND=noninteractive apt-get -y -f install || rc=1
+  else
+    rc=0
+  fi
+
+  current=$(ueberzugpp_installed_version)
+  if [[ "$rc" -eq 0 && -n "$current" ]]; then
+    printf '  instalada: %s\n' "$current"
+    notify "ueberzugpp actualizado" "Versión $current; reinicia ytwatch para ver miniaturas"
+  else
+    notify "ueberzugpp: instalación incompleta" "Revisa la salida de apt-get"
+    die "ueberzugpp no quedó instalado"
+  fi
+}
+
+case "${1:-}" in
+  --ueberzugpp) update_ueberzugpp ;;
+  ""|ytwatch|--ytwatch) update_ytwatch ;;
+  -h|--help|help) help ;;
+  *) printf 'opción desconocida: %s\n' "$*" >&2; help >&2; exit 2 ;;
+esac

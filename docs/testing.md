@@ -909,3 +909,19 @@ ytsearch50  → 4533 ms
 - Store de theme-mode refrescado sin sudo (los tres ficheros del store
   son user-owned): configurado antes del próximo `theme-mode toggle`.
 - `bash -n`/`sh -n` de todo: OK. `--dry-run`: rc 0 (275 pasos).
+
+### ytwatch en el instalador (2026-11-04, ADR-109)
+
+- Prueba del binario suelto en la máquina: release v0.1.0 verificada
+  con `checksums.txt` (SHA-256 OK), `ytwatch doctor` con yt-dlp/mpv/
+  ffmpeg/xclip/browser OK y solo ueberzugpp+wmctrl ausentes; capturas
+  del TUI (búsqueda, LIVE/VOD/SHORT/PLAYLIST, descripción y cola) sin
+  miniaturas.
+- Aprendido: `[preview] output = kitty|chafa` NO evita ueberzugpp; el
+  binario es el renderizador real → el instalador lo trae como .deb.
+- Validado en repo: `bash -n` completo, `--dry-run` rc 0 con URLs y
+  checksums, `--dry-run --no-ytwatch` omite el bloque, `ytwatch-check`
+  real (al día + ueberzugpp ausente) y `ytwatch-update` early-exit.
+- Pendiente: `sudo ./install.sh` en la sesión (instala .deb + config),
+  miniaturas en kitty, tecla de vídeo de `?` y prueba de
+  `ytwatch-update --ueberzugpp` cuando salga versión nueva.

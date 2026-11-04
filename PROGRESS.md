@@ -1026,3 +1026,36 @@ aisló los cambios reales y se portaron a las plantillas:
   owned: config.ini A/B y cpu-governor.sh.in) para que un
   `theme-mode toggle` no borre los tweaks antes del próximo
   `sudo ./install.sh`.
+
+## ytwatch integrado en el instalador (ADR-109, 2026-11-04)
+
+Buscador TUI de YouTube añadido al flujo con `--no-ytwatch` para
+saltarlo. No sustituye nada: usa el mismo yt-dlp oficial y mpv;
+`yt-play`, `ytdlp-*`, teclas XF86Audio y los toasts de dunst siguen
+intactos.
+
+- `lib/ytwatch.sh`: binario de GitHub `v0.1.0` con SHA-256 verificado en
+  `~/.local/bin/ytwatch` (usuario, sin sudo) y `ueberzugpp` 2.9.10 por
+  `.deb` directo del build Debian 13 del proyecto (sin añadir repos APT;
+  dependencias vía `apt-get -f`). Idempotente y sin red no rompe nada.
+- `templates/ytwatch/config.toml.in`: browser `firefox-esr`, audio
+  default (`audio_only = true`), `quality = "720p"`, tema `terminal`
+  (sigue la paleta viva de kitty; sin hex, fuera del store 20b),
+  `preview.output = "kitty"` con fallback comentado `chafa`.
+- `bin/ytwatch-check` (avisa por dunst, como `ytdlp-check`) y
+  `bin/ytwatch-update` (checksums.txt + `.bak`; `--ueberzugpp` refresca
+  el paquete con sudo).
+- `install.sh`: flag `--no-ytwatch`, layout ampliado, wiring tras
+  `install_music`, resumen y logs; `verify.sh` valida binario/config/
+  `/usr/bin/ueberzugpp` con gate por `INSTALL_YTWATCH`.
+- Backups previos: `~/.local/bin/ytwatch` y `~/.config/ytwatch`.
+
+Validado en el repo: `bash -n`/`bash -n bins` OK, `--dry-run` rc 0
+(bloque ytwatch con URLs y checksums), `--dry-run --no-ytwatch` salta
+el bloque, `ytwatch-check` real ("al día" + aviso de ueberzugpp
+ausente) y `ytwatch-update` early-exit con misma versión.
+
+Pendiente de la sesión viva: `sudo ./install.sh` para instalar el .deb
+y renderizar la config; comprobar miniaturas en kitty y la tecla de
+vídeo de `?`. Backlog del usuario: comando tipo doctor global con
+avisos dunst de todo el sistema (aparte de ytwatch-check).

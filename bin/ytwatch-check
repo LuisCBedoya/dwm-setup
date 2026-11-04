@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+# ytwatch-check — compara las versiones de ytwatch y ueberzugpp con las
+# últimas de GitHub. Solo lee y avisa (toast de dunst); no modifica nada.
+set -Eeuo pipefail
+
+PROG="ytwatch-check"
+quiet=0
+
+case "${1:-}" in
+  -q|--quiet) quiet=1 ;;
+  -h|--help)
+    cat <<'EOF'
+Uso: ytwatch-check [--quiet]
+
+  Compara ytwatch (~/.local/bin) y ueberzugpp con la última release.
+  Si hay alguna más nueva, imprime un aviso y lanza una notificación.
+  No actualiza: eso lo hace `ytwatch-update` cuando tú lo pides.
+EOF
+    exit 0
+    ;;
+esac
+
+gh_latest() { # $1 = user/repo de GitHub
+  local repo="$1"
+  command -v curl >/dev/null 2>&1 || return 0
+  curl -fsSL --max-time 8 "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null |
+    sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -1
+}
+
+notify_outdated() {
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send -a ytwatch -i software-update-available \
+    "ytwatch: hay actualización" "$1" 2>/dev/null || true
+}
+
+status=0
+
+# --- ytwatch (binario TUI) ---
+ytwatch_bin="$HOME/.local/bin/ytwatch"
+if [[ -x "$ytwatch_bin" ]]; then
+  current=$("$ytwatch_bin" --version 2>/dev/null | awk '{print $NF}') || current=""
+  if [[ -n "$current" ]]; then
+    latest=$(gh_latest geovannewashington/ytwatch)
+    latest="${latest#v}"
+    if [[ -n "$latest" && "$current" != "$latest" ]]; then
+      ((quiet)) || printf 'ytwatch: hay versión nueva (%s)\n  Tienes %s · actualiza con: ytwatch-update\n' "$latest" "$current"
+      notify_outdated "ytwatch: tienes $current, hay $latest · ytwatch-update"
+      status=1
+    else
+      ((quiet)) || printf 'ytwatch al día: %s\n' "$current"
+    fi
+  fi
+else
+  ((quiet)) || printf '%s: ytwatch no está instalado\n' "$PROG"
+fi
+
+# --- ueberzugpp (miniaturas) ---
+if command -v dpkg-query >/dev/null 2>&1 &&
+   dpkg-query -W -f='${db:Status-Abbrev}' ueberzugpp 2>/dev/null | grep -q '^ii'; then
+  current=$(dpkg-query -W -f='${Version}' ueberzugpp 2>/dev/null)
+  if [[ -n "$current" ]]; then
+    latest=$(gh_latest jstkdng/ueberzugpp)
+    latest="${latest#v}"
+    if [[ -n "$latest" && "$current" != "$latest" ]]; then
+      ((quiet)) || printf 'ueberzugpp: hay versión nueva (%s)\n  Tienes %s · actualiza con: ytwatch-update --ueberzugpp\n' "$latest" "$current"
+      notify_outdated "ueberzugpp: tienes $current, hay $latest · ytwatch-update --ueberzugpp"
+      status=1
+    else
+      ((quiet)) || printf 'ueberzugpp al día: %s\n' "$current"
+    fi
+  fi
+else
+  ((quiet)) || printf '%s: ueberzugpp no está instalado (ytwatch sin miniaturas)\n' "$PROG"
+fi
+
+exit "$status"

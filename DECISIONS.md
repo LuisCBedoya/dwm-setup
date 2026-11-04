@@ -2567,3 +2567,52 @@ máquina (intel_pstate HWP) solo existen esos dos gobernadores; el
   avisa con dunst.
 - EPP/balanceado puede añadirse después como ADR nuevo (requiere
   escribir `energy_performance_preference` por CPU).
+
+## ADR-109 — ytwatch: buscador TUI de YouTube (binario propio + ueberzugpp)
+
+**Contexto:** el usuario probó ytwatch (TUI Go/bubbletea, MIT) y quiere
+que el instalador reproduzca su máquina tal cual está. ytwatch no
+reemplaza nada: usa el **mismo** yt-dlp (`~/.local/bin`, ADR-103) para
+buscar/descargar y **el mismo mpv** para reproducir; `yt-play`,
+`ytdlp-{check,update,rollback}` y la notificación dunst de yt-play
+permanecen intactos. yt-dlp al día pasa a ser doblemente necesario.
+
+**Decisión:**
+1. El bloque es **por defecto ON** y se salta con `--no-ytwatch`
+   (`INSTALL_YTWATCH`, grupo opcional con avisos).
+2. Versiones **fijadas + SHA-256** en `lib/ytwatch.sh`: ytwatch
+   `v0.1.0` (checksums.txt de la release) y ueberzugpp `2.9.10` (build
+   Debian 13 del propio proyecto vía OBS). El `.deb` se descarga
+   directo y se instala con `dpkg -i` + `apt-get -f install` de
+   dependencias: **no se añade ningún repositorio APT** (regla 8);
+   instalación tercerizada aceptada explícitamente por el usuario
+   (2026-11-04). Desinstalarlo es `dpkg -r ueberzugpp`.
+3. `~/.local/bin/ytwatch` se descarga con checksum y queda como usuario
+   (sin sudo); backup previo del binario existente. Sin red no rompe
+   nada: avisa y continúa con el binario previo.
+4. Config de usuario desde `templates/ytwatch/config.toml.in`: browser
+   `firefox-esr` (regla 22), `audio_only = true` (default audio, al
+   estilo de ADR-105), `quality = "720p"`, tema `terminal` (sigue la
+   paleta viva de kitty que recolorea theme-mode: sin hex en el
+   render, no entra en el store 20b), `preview.output = "kitty"`
+   (fallback documentado `"chafa"`) e idioma de búsqueda `es`.
+5. `bin/ytwatch-check` compara ytwatch y ueberzugpp con su última
+   release (avisa también por dunst, patrón `ytdlp-check`);
+   `bin/ytwatch-update` instala la nueva con `checksums.txt` verificado
+   (backup `.bak`, rollback incluido) y `--ueberzugpp` refresca el
+   `.deb` con `sudo dpkg -i`.
+6. **Sin atajo de sxhkd**: decisión del usuario (2026-11-04), se lanza
+   tecleando `ytwatch` en una kitty.
+7. `verify.sh` valida binario, config y `/usr/bin/ueberzugpp`, gating
+   por `INSTALL_YTWATCH`; `install.sh` valida el layout y integra el
+   bloque tras la música, con backups previos.
+
+**Consecuencias:**
+- Las miniaturas dependen de ueberzugpp instalado (2.9.10) y del
+  protocolo del terminal; en kitty va por protocolo nativo. `? help`
+  del propio binario documenta teclas; el switch audio↔vídeo por
+  resultado quedó en revisión del usuario.
+- El pin del repo decide versiones en instalación limpia; para actualizar
+  en una máquina ya instalada están los dos binarios nuevos.
+- El doctor global con avisos dunst de todo el sistema (idea del
+  usuario) queda en backlog (PROGRESS), fuera de este ADR.

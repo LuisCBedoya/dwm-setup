@@ -55,13 +55,17 @@ Incluido:
 - **Firefox ESR** con uBlock Origin, SurfingKeys y OpenH264 para WebRTC.
 - **yt-play** para audio o vídeo de YouTube/YouTube Music con búsqueda en
   fzf y miniatura; `mpv` + `yt-dlp` oficial en `~/.local/bin`.
+- **ytwatch** (opcional, `--no-ytwatch` para saltarlo): buscador TUI de
+  YouTube con miniaturas (`ueberzugpp`), filtros, cola y descargas;
+  usa el mismo yt-dlp oficial y mpv. Actualizable con `ytwatch-check` /
+  `ytwatch-update`.
 - Backups, logs, `--dry-run` y diagnóstico con `desktop-doctor`.
 - NVIDIA detectada e instalada de forma condicional.
 
 No incluido todavía:
 
 - IDE (VS Code), Brave/Chromium, correo, Teams y reproductores de música
-  locales (cmus/mpd). Firefox ESR y el streaming con `yt-play` sí están.
+  locales (cmus/mpd). Firefox ESR y el streaming (`yt-play`, `ytwatch`) sí están.
 - Bluetooth, htop, ripgrep, nvitop/nvtop, Node/nvm.
 - XFCE, LightDM o un entorno de escritorio completo.
 - Repositorio de dotfiles externo: las plantillas de este repo son la
@@ -395,6 +399,32 @@ ytdlp-rollback   # vuelve a la anterior
 ```
 
 `yt-play` avisa si YouTube cambia y yt-dlp ya no puede extraer el contenido.
+
+## ytwatch — buscador TUI
+
+Perfil TUI (vim keys, miniaturas junto a cada resultado, filtros de
+tipo/duración/fecha, cola multi-select, playlists y live con chat). No
+sustituye a `yt-play`: es otra puerta al mismo yt-dlp + mpv.
+
+```sh
+ytwatch            # abre con la búsqueda activa
+ytwatch lofi jazz  # abre con una búsqueda precargada
+```
+
+**Enter** reproduce en audio (config del repo: `audio_only = true`);
+`d`/`a`/`Q` descargan (calidad/audio), `V` arma cola, `f` filtra,
+`?` muestra la ayuda completa con la tecla que carga el resultado en
+vídeo. Las miniaturas van por el protocolo nativo de kitty a través de
+`ueberzugpp` (instalado por el instalador como `.deb` del proyecto, sin
+añadir repositorios); el fallback es `chafa`. El binario se gestiona solo:
+
+```sh
+ytwatch-check        # ¿hay versión nueva de ytwatch o ueberzugpp? avisa por dunst
+ytwatch-update       # actualiza el TUI (checksums.txt + .bak)
+ytwatch-update --ueberzugpp   # refresca el paquete de miniaturas (sudo)
+```
+
+En una instalación sin el bloque: `./install.sh --no-ytwatch`.
 No actualiza nada por su cuenta: siempre decides tú con `ytdlp-update`.
 
 ## Tema y modo de color
@@ -498,6 +528,9 @@ bin/ytdlp-check            Aviso de versión nueva de yt-dlp
 bin/ytdlp-update           Actualización de yt-dlp con .bak y rollback
 bin/ytdlp-rollback         Restaura la copia anterior de yt-dlp
 bin/music-ctl              Teclas multimedia del reproductor activo
+bin/ytwatch-check          Aviso de versión nueva (ytwatch/ueberzugpp, dunst)
+bin/ytwatch-update         Actualiza ytwatch o ueberzugpp (--ueberzugpp)
+lib/ytwatch.sh             Instalación de ytwatch y ueberzugpp con SHA-256
 templates/bspwm/           bspwmrc.in, autostart.in, scripts/
 templates/sxhkd/           sxhkdrc.in
 templates/polybar/         config.ini.in, modules/, scripts/ y variants/
@@ -536,7 +569,7 @@ docs/                      Hardware y testing
   menú añade componentes a entradas oficiales de Debian 13, tras un backup.
 - Se instala Firefox ESR como navegador del escritorio; no se instalan IDE,
   cliente de correo ni reproductores de música locales. El streaming de
-  YouTube se hace con `yt-play`.
+  YouTube se hace con `yt-play` y, opcionalmente, `ytwatch` (TUI).
 - `/etc/firefox-esr/zz-dwm-setup.js` habilita OpenH264 para que Teams pueda
   mostrar H.264 (pantalla compartida). Sin ese ajuste, el vídeo de Teams
   queda en negro en Firefox ESR.

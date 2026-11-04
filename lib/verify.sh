@@ -255,6 +255,26 @@ verify_install() {
     fi
   fi
 
+  # ytwatch: buscador TUI solo si el bloque está habilitado (--no-ytwatch lo salta).
+  if [[ "${INSTALL_YTWATCH:-yes}" == "yes" ]]; then
+    for tw_path in "$home/.local/bin/ytwatch" \
+      "$home/.config/ytwatch/config.toml" \
+      /usr/bin/ueberzugpp; do
+      if [[ -e "$tw_path" ]]; then
+        debug "ok: $tw_path"
+      else
+        error "Falta el archivo requerido: $tw_path"
+        failures=$((failures + 1))
+      fi
+    done
+    if [[ -x "$home/.local/bin/ytwatch" ]]; then
+      debug "ok: ytwatch ejecutable"
+    else
+      error "ytwatch no es ejecutable"
+      failures=$((failures + 1))
+    fi
+  fi
+
   # Gobernador: helper root, sudoers acotado y unidad de arranque.
   for gov_path in /usr/local/bin/dwm-setup-cpu-governor \
     /etc/sudoers.d/dwm-setup-cpu-governor \

@@ -212,6 +212,21 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `theme-mode`, regla 20b). EPP/balanceado queda fuera hasta decisión
     nueva.
 
+27. **ytwatch (ADR-109).** Buscador TUI opcional, por defecto ON con
+    `--no-ytwatch` para saltarlo. Versiones fijadas con SHA-256 en
+    `lib/ytwatch.sh`: binario de GitHub en `~/.local/bin` (usuario, sin
+    sudo) y `ueberzugpp` 2.9.10 por `.deb` directo del proyecto (nunca
+    añadir el repo OBS a APT; solo `dpkg -i` + `apt-get -f`). ytwatch
+    usa el yt-dlp oficial y mpv; `yt-play`, `ytdlp-{check,update,
+    rollback}` y las notificaciones dunst NO se retiran. La config va
+    de `templates/ytwatch/config.toml.in` (tema `terminal`, sin hex:
+    no entra en el store 20b), browser es `firefox-esr` y
+    `audio_only = true`; si una prueba manda cambiar el default, se
+    discute antes. Actualizaciones: `ytwatch-check` (avisa por dunst) y
+    `ytwatch-update` (`--ueberzugpp` para el paquete). **Sin binding de
+    sxhkd**: se lanza tecleando `ytwatch`. El doctor global con avisos
+    dunst de todo el sistema es backlog, no fase actual.
+
 ## Estructura relevante
 
 | Archivo | Responsabilidad |
@@ -236,6 +251,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/config.sh` | Configs de usuario, wallpaper y binarios de sesión |
 | `lib/fastfetch.sh` | fastfetch: config y logo `Neofet.png` |
 | `lib/music.sh` | yt-dlp oficial, scripts de streaming y teclas |
+| `lib/ytwatch.sh` | ytwatch (binario GitHub) y ueberzugpp (.deb OBS) con SHA-256 |
 | `lib/firefox.sh` | Firefox ESR y OpenH264 para WebRTC/Teams |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paletas (Mocha Black, Latte), par de modos y render |
@@ -271,6 +287,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/ytdlp-update` | Actualiza yt-dlp con copia y rollback |
 | `bin/ytdlp-rollback` | Restaura la copia anterior de yt-dlp |
 | `bin/music-ctl` | Teclas multimedia del reproductor activo |
+| `bin/ytwatch-check` | Avisa (dunst) si ytwatch o ueberzugpp van desactualizados |
+| `bin/ytwatch-update` | Actualiza ytwatch (checksums.txt) o ueberzugpp (`--ueberzugpp`) |
+| `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview kitty) |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
 | `templates/colors/` | `palette-mocha-black.sh`, `palette-latte.sh` y helpers |
 | `assets/wallpaper.png` | Wallpaper principal |
@@ -291,7 +310,7 @@ for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor; do sh -
 sh -n templates/polybar/scripts/cpu-governor.sh.in
 bash -n bin/theme-mode
 bash -n bin/yt-play bin/yt-preview bin/ytdlp-check bin/ytdlp-update \
-  bin/ytdlp-rollback bin/music-ctl
+  bin/ytdlp-rollback bin/music-ctl bin/ytwatch-check bin/ytwatch-update
 bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
 
 # Gobernador: lista oficial y sudoers renderizado (sin tocar el sistema)
@@ -314,10 +333,12 @@ stat -c '%A %n' ~/.config/bspwm/bspwmrc ~/.xinitrc
 # ShellCheck (si está instalado)
 shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor \
   bin/dwm-setup-cpu-governor bin/theme-mode bin/yt-play bin/yt-preview \
-  bin/ytdlp-check bin/ytdlp-update bin/ytdlp-rollback bin/music-ctl
+  bin/ytdlp-check bin/ytdlp-update bin/ytdlp-rollback bin/music-ctl \
+  bin/ytwatch-check bin/ytwatch-update
 
 # Streaming y limpieza
 ytdlp-check
+ytwatch-check
 ./install.sh --dry-run 2>&1 | grep -A2 'Limpiando dependencias'
 
 # Modo de color (no pide sudo)

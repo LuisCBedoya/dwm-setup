@@ -57,6 +57,8 @@ source "$PROJECT_ROOT/lib/config.sh"
 source "$PROJECT_ROOT/lib/fastfetch.sh"
 # shellcheck source=lib/music.sh
 source "$PROJECT_ROOT/lib/music.sh"
+# shellcheck source=lib/ytwatch.sh
+source "$PROJECT_ROOT/lib/ytwatch.sh"
 # shellcheck source=lib/firefox.sh
 source "$PROJECT_ROOT/lib/firefox.sh"
 # shellcheck source=lib/verify.sh
@@ -87,6 +89,7 @@ Opciones avanzadas (automatización; normalmente no necesarias):
   --user USUARIO, --home RUTA, --nvidia, --no-nvidia,
   --cuda, --no-cuda,
   --headset-quirk, --no-headset-quirk, --intel-glitch,
+  --no-ytwatch,
   --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
   --theme mocha-black|latte
 
@@ -95,6 +98,8 @@ El modo se cambia en caliente con: theme-mode dark|light|toggle|status.
 
 Música: yt-play (audio o vídeo de YouTube con fzf y miniatura), teclas XF86Audio*.
 Los binarios se actualizan con ytdlp-update; nunca solos.
+Buscador: ytwatch (TUI con miniaturas y cola); sin --no-ytwatch se instala
+junto con ueberzugpp (miniaturas), ambos con ytwatch-check / ytwatch-update.
 
 Sesión: startx manual desde TTY (no se instala display manager).
 Fases futuras (IDE, correo) no se instalan desde aquí.
@@ -122,6 +127,7 @@ parse_args() {
       --no-cuda) INSTALL_CUDA="no" ;;
       --headset-quirk) HEADSET_QUIRK_MODE="yes" ;;
       --no-headset-quirk) HEADSET_QUIRK_MODE="no" ;;
+      --no-ytwatch) INSTALL_YTWATCH="no" ;;
       --intel-glitch) INTEL_GLITCH=1 ;;
       --theme)
         [[ $# -ge 2 ]] || die "--theme requiere un valor (mocha-black, latte)"
@@ -196,6 +202,7 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/config.sh"
     "$PROJECT_ROOT/lib/fastfetch.sh"
     "$PROJECT_ROOT/lib/music.sh"
+    "$PROJECT_ROOT/lib/ytwatch.sh"
     "$PROJECT_ROOT/lib/verify.sh"
     "$PROJECT_ROOT/lib/theme.sh"
     "$PROJECT_ROOT/lib/audio.sh"
@@ -241,6 +248,9 @@ check_project_layout() {
     "$PROJECT_ROOT/bin/ytdlp-update"
     "$PROJECT_ROOT/bin/ytdlp-rollback"
     "$PROJECT_ROOT/bin/music-ctl"
+    "$PROJECT_ROOT/bin/ytwatch-check"
+    "$PROJECT_ROOT/bin/ytwatch-update"
+    "$PROJECT_ROOT/templates/ytwatch/config.toml.in"
     "$PROJECT_ROOT/templates/firefox/userChrome.css.in"
     "$PROJECT_ROOT/templates/firefox/user.js.in"
     "$PROJECT_ROOT/templates/firefox/surfingkeys.js.in"
@@ -359,6 +369,7 @@ Modo de color:          theme-mode dark|light|toggle|status
 Compositor:             picom (vsync + fade sutil; sin transparencias/sombras)
 Gobernador CPU:         módulo polybar governor (clic alterna; performance al boot)
 Música/streams:         yt-play [--audio|--video] <url | búsqueda> · ytdlp-check|update|rollback
+Buscador TUI:           ytwatch (terminal) · ytwatch-check|update · miniaturas: ueberzugpp
 Gráficos:               i915 FBC desactivado (requiere reinicio)
 Permisos:               sudo al inicio para paquetes, portal, opt-2 e i915
 
@@ -478,6 +489,7 @@ main() {
   install_ranger
   install_fastfetch
   install_music
+  install_ytwatch
   install_user_configs
 
   if ! dry_run; then

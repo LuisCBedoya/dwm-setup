@@ -284,6 +284,8 @@ backup_existing_configs() {
   backup_user_path "$home/.config/dwm-setup"
   backup_user_path "$home/.config/fastfetch"
   backup_user_path "$home/.local/bin/yt-dlp"
+  backup_user_path "$home/.local/bin/ytwatch"
+  backup_user_path "$home/.config/ytwatch"
 
   # Perfil de Firefox: userChrome.css y user.js se reemplazan al instalar.
   local ff_profile=""

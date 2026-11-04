@@ -1,0 +1,43 @@
+# ytwatch — buscador TUI de YouTube (config del instalador dwm-setup).
+#
+# El tema "terminal" sigue la paleta viva de kitty, que theme-mode recolorea
+# en caliente; también vale un preset fijo como "catppuccin".
+# Audio por defecto; el modo por opción se consulta con la tecla ? dentro.
+
+[general]
+browser = "firefox-esr"      # o y chat en vivo (el default xdg apuntaba a chromium)
+audio_only = true
+quality = "720p"             # cuando toca vídeo o descarga
+
+[mpv]
+workspace = ""               # bspwm coloca la ventana; sin wmctrl
+args = []                    # extra mpv, por ejemplo ["--volume=60"]
+cookies_from_browser = ""    # p.ej. "firefox" si YouTube pide captcha
+
+[download]
+dir = "~/Downloads/ytwatch"
+args = []                    # extra yt-dlp, por ejemplo ["--embed-metadata"]
+
+[theme]
+name = "terminal"
+
+[preview]
+output = "kitty"             # protocolo nativo de kitty vía ueberzugpp
+# output = "chafa"           # fallback ANSI/bloques si el nativo falla
+
+[search]
+language = "es"
+region = ""
+hide = []                    # nunca mostrar: shorts, playlists, live, upcoming, vods
+
+[history]
+enabled = true
+max_age_days = 30
+max_entries = 100
+
+[cache]                      # miniaturas
+max_age_days = 7
+max_size_mb = 100
+
+[ui]
+animations = "full"          # full, minimal u off
