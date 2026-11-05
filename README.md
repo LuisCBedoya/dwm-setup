@@ -299,7 +299,7 @@ Si algo falla:
 | `Super+Shift+c` | recargar sxhkd y bspwm |
 | `Super+Shift+r` | reiniciar bspwm |
 | `Super+Alt+P` | ciclo A arriba → A abajo → B arriba → B abajo |
-| `Super+Alt+W` | alterna wallpaper principal / alternativo |
+| `Super+Alt+W` | alterna wallpaper dark / light |
 | `Super+Alt+T` | alterna tema oscuro / claro |
 | `Ctrl+Space` | alternar flotante/tiled |
 | `Super+Shift+space` | alternar floating |
@@ -468,8 +468,24 @@ theme-mode status
 
 `theme-mode` re-renderiza polybar A/B, kitty, dunst, rofi, zathura, bspwm,
 GTK, Firefox y VLC desde `~/.local/share/dwm-setup/`, y recarga en caliente
-polybar, dunst, los bordes de bspwm y kitty. **No pide sudo**: los temas ya
-están instalados. Firefox y VLC necesitan reiniciarse para aplicar el cambio.
+polybar, dunst, los bordes de bspwm, el **wallpaper del modo** y kitty. **No
+pide sudo**: los temas ya están instalados. Firefox y VLC necesitan
+reiniciarse para aplicar el cambio.
+
+### Wallpapers por modo y fondos personales
+
+`wallpaper.sh apply` elige el fondo según el modo (`dark` → `wallpaper.png`,
+`light` → `wallpaper-alt.png`); `Super+Alt+W` alterna entre ambos. Si existen
+estos archivos del usuario, **tienen prioridad**:
+
+```
+~/.local/share/wallpapers/local-dark.png
+~/.local/share/wallpapers/local-light.png
+```
+
+Sirven para fondos personales (por ejemplo arte con copyright de uso privado
+que no puede ir al repo): el instalador nunca los toca, y `theme-mode` los
+aplica automáticamente al cambiar de modo.
 
 kitty se recolorea en caliente con `kitty @ set-colors`, gracias a
 `allow_remote_control socket-only` y
@@ -571,8 +587,8 @@ templates/icons/           papirus-folders y carpetas cat-*
 templates/modprobe/        i915.conf y nvidia.conf
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
 templates/colors/          palette-mocha-black.sh y palette-latte.sh
-assets/wallpaper.png       Wallpaper principal
-assets/wallpaper-alt.png   Wallpaper alternativo
+assets/wallpaper.png       Wallpaper por defecto de dark
+assets/wallpaper-alt.png   Wallpaper por defecto de light
 docs/                      Hardware y testing
 ```
 

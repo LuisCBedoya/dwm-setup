@@ -214,6 +214,14 @@ reload_dunst() {
   return 0
 }
 
+# Vuelve a aplicar el wallpaper del modo recién activado (dark/light).
+reload_wallpaper() {
+  local script="$HOME_DIR/.config/bspwm/scripts/wallpaper.sh"
+  [[ -x "$script" ]] || return 1
+  "$script" apply >/dev/null 2>&1 || return 1
+  return 0
+}
+
 apply_gtk() {
   command -v gsettings >/dev/null 2>&1 || return 0
   gsettings set org.gnome.desktop.interface gtk-theme "$THEME_GTK" 2>/dev/null || true
@@ -250,6 +258,7 @@ apply_live() {
   done_parts+=("bspwm")
   reload_polybar && done_parts+=("polybar")
   reload_dunst && done_parts+=("dunst")
+  reload_wallpaper && done_parts+=("wallpaper")
   reload_kitty && done_parts+=("kitty")
   apply_gtk
   done_parts+=("GTK")

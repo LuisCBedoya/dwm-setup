@@ -969,3 +969,7 @@ ytsearch50  → 4533 ms
   (`libmtp-runtime`); backend gvfs MTP ya presente. Pendiente de prueba
   real con el móvil del usuario (conectar en modo transferencia y
   ver el dispositivo en Thunar).
+- 2026-11-04 (noche): wallpaper por modo y override local
+  (`local-dark/local-light`). `wallpaper.sh apply` respeta el modo;
+  `theme-mode` lo re-aplica. Previews Vagabond en /tmp para revisión;
+  los fondos finales serán locales (copyright) y no entran al repo.

@@ -1168,3 +1168,14 @@ acceso MTP sin root. Con el backend `gvfsd-mtp` (ya en gvfs-backends) y
 Thunar, al conectar un Android en modo *Transferencia de archivos*
 aparece como "Dispositivo Android" y se copia en ambos sentidos. Sin
 apps en el teléfono. Documentado en README (junto a udiskie/Thunar).
+
+### Wallpapers por modo + override local (2026-11-04)
+
+- `wallpaper.sh` ahora aplica el fondo según `~/.config/dwm-setup/mode`
+  (`apply`), mantiene `Super+Alt+W` alternando dark/light y prefiere
+  `~/.local/share/wallpapers/local-{dark,light}.png` si existen (fondos
+  personales fuera del repo; el instalador no los pisa).
+- `theme-mode` re-aplica el wallpaper del modo tras el render
+  (`reload_wallpaper`, cuenta en el resumen de recargas).
+- README: sección "Wallpapers por modo y fondos personales" + tabla de
+  atajos y estructura actualizadas.

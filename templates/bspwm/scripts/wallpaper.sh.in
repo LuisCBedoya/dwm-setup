@@ -1,15 +1,69 @@
 #!/bin/sh
-# wallpaper.sh — alterna entre el wallpaper principal y el alternativo.
+# wallpaper.sh — aplica el wallpaper del modo (dark/light) y alterna entre ambos.
+# Prefiere los wallpapers locales del usuario si existen:
+#   ~/.local/share/wallpapers/local-dark.png
+#   ~/.local/share/wallpapers/local-light.png
+# El instalador nunca los pisa: son para fondos personales (p. ej. arte
+# con copyright de uso privado que no debe ir al repo).
 set -u
 
 STATE_DIR="$HOME/.config/bspwm"
 STATE_FILE="$STATE_DIR/wallpaper"
-PRIMARY="$HOME/.local/share/wallpapers/wallpaper.png"
-ALT="$HOME/.local/share/wallpapers/wallpaper-alt.png"
+MODE_FILE="$HOME/.config/dwm-setup/mode"
+PRIMARY="$HOME/.local/share/wallpapers/wallpaper.png"        # sistema, dark
+ALT="$HOME/.local/share/wallpapers/wallpaper-alt.png"        # sistema, light
+LOCAL_DARK="$HOME/.local/share/wallpapers/local-dark.png"
+LOCAL_LIGHT="$HOME/.local/share/wallpapers/local-light.png"
 
 usage() {
   printf 'Uso: %s [apply|primary|alt|toggle]\n' "$0" >&2
   exit 1
+}
+
+mode_file_value() {
+  if [ -r "$MODE_FILE" ]; then
+    v=$(cat "$MODE_FILE" 2>/dev/null)
+    case "$v" in
+      light|dark) printf '%s' "$v"; return ;;
+    esac
+  fi
+  printf 'dark'
+}
+
+apply_image() {
+  if command -v xwallpaper >/dev/null 2>&1; then
+    xwallpaper --zoom "$1" || return 1
+  elif command -v feh >/dev/null 2>&1; then
+    feh --bg-fill "$1" || return 1
+  else
+    return 1
+  fi
+}
+
+pick() { # $1 = dark|light
+  case "$1" in
+    light)
+      if [ -r "$LOCAL_LIGHT" ]; then printf '%s' "$LOCAL_LIGHT"; else printf '%s' "$ALT"; fi
+      ;;
+    *)
+      if [ -r "$LOCAL_DARK" ]; then printf '%s' "$LOCAL_DARK"; else printf '%s' "$PRIMARY"; fi
+      ;;
+  esac
+}
+
+apply_wallpaper() { # $1 = dark|light
+  image=$(pick "$1")
+  # Si el fondo del modo no existe (instalación sin assets), usa el otro.
+  if [ ! -r "$image" ]; then
+    case "$1" in
+      dark) image=$(pick light) ;;
+      *) image=$(pick dark) ;;
+    esac
+  fi
+  [ -r "$image" ] || exit 1
+  apply_image "$image" || exit 1
+  mkdir -p "$STATE_DIR" 2>/dev/null || true
+  printf '%s\n' "$1" > "$STATE_FILE"
 }
 
 current=primary
@@ -18,39 +72,22 @@ if [ -r "$STATE_FILE" ]; then
 fi
 
 case "${1:-apply}" in
-  primary) mode=primary ;;
-  alt) mode=alt ;;
+  apply)
+    apply_wallpaper "$(mode_file_value)"
+    ;;
+  primary|dark)
+    apply_wallpaper dark
+    ;;
+  alt|light)
+    apply_wallpaper light
+    ;;
   toggle)
     case "$current" in
-      alt) mode=primary ;;
-      *) mode=alt ;;
+      alt|light) apply_wallpaper dark ;;
+      *) apply_wallpaper light ;;
     esac
     ;;
-  apply) mode=$current ;;
   *) usage ;;
 esac
-
-case "$mode" in
-  alt) image=$ALT ;;
-  *) mode=primary; image=$PRIMARY ;;
-esac
-
-# Si la alternativa no existe, vuelve a la principal.
-if [ ! -r "$image" ]; then
-  mode=primary
-  image=$PRIMARY
-fi
-[ -r "$image" ] || exit 1
-
-if command -v xwallpaper >/dev/null 2>&1; then
-  xwallpaper --zoom "$image" || exit 1
-elif command -v feh >/dev/null 2>&1; then
-  feh --bg-fill "$image" || exit 1
-else
-  exit 1
-fi
-
-mkdir -p "$STATE_DIR" 2>/dev/null || true
-printf '%s\n' "$mode" > "$STATE_FILE"
 
 exit 0
