@@ -7,8 +7,7 @@ backend = "glx";
 vsync = true;
 use-damage = true;
 
-# Sombras sutiles (ADR-110). Barra (dock) y escritorio excluidos para
-# no dejar bandas oscuras en los bordes de la pantalla.
+# Sombras sutiles (ADR-110). Barra (dock) y escritorio excluidos.
 shadow = true;
 shadow-radius = 10;
 shadow-opacity = 0.35;
@@ -16,6 +15,14 @@ shadow-offset-x = -8;
 shadow-offset-y = -8;
 shadow-exclude = [
   "window_type = 'dock'",
+  "window_type = 'desktop'"
+];
+# Esquinas redondeadas (solo ventanas normales); dock/notificaciones/
+# escritorio quedan fuera para no dejar huecos ni marcos descuadrados.
+corner-radius = 10;
+rounded-corners-exclude = [
+  "window_type = 'dock'",
+  "window_type = 'notification'",
   "window_type = 'desktop'"
 ];
 fading = true;

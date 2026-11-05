@@ -1,0 +1,34 @@
+#!/bin/sh
+# monocle.sh — alterna monocle/tiled y ajusta el radio de picom:
+# en monocle no hay esquinas redondeadas (ventana a pantalla completa);
+# al volver a tiled se usa la config normal (radio 10).
+set -u
+
+BASE="$HOME/.config/picom/picom.conf"
+TMP="$HOME/.cache/picom-monocle.conf"
+
+command -v bspc >/dev/null 2>&1 || exit 0
+bspc desktop -l next || exit 1
+
+layout=$(bspc query -T -d 2>/dev/null |
+  sed -n 's/.*"layout":"\([a-z]*\)".*/\1/p' | head -1)
+
+mkdir -p "$HOME/.cache" 2>/dev/null || true
+if [ "$layout" = "monocle" ]; then
+  if grep -q '^corner-radius' "$BASE" 2>/dev/null; then
+    sed 's/^corner-radius = .*/corner-radius = 0;/' "$BASE" >"$TMP"
+  else
+    cp -f "$BASE" "$TMP"
+  fi
+else
+  cp -f "$BASE" "$TMP" 2>/dev/null || exit 0
+fi
+
+if pgrep -x picom >/dev/null 2>&1; then
+  pkill -x picom 2>/dev/null || true
+  sleep 0.2
+fi
+
+[ -r "$TMP" ] || exit 0
+setsid picom -b --config "$TMP" >/dev/null 2>&1 &
+exit 0

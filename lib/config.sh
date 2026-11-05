@@ -88,6 +88,7 @@ install_theme_store() {
     "templates/polybar/config.ini.in"
     "templates/polybar/variants/reference/config.ini.in"
     "templates/polybar/scripts/cpu-governor.sh.in"
+    "templates/picom/picom.conf.in"
     "templates/kitty/kitty.conf.in"
     "templates/kitty/colorshemes/monochromatic.conf.in"
     "templates/dunst/dunstrc.in"

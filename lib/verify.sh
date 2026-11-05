@@ -122,6 +122,7 @@ verify_install() {
     "$home/.config/ranger/epub-cover.sh" \
     "$home/.config/bspwm/scripts/dunst-position.sh" \
     "$home/.config/bspwm/scripts/wallpaper.sh" \
+    "$home/.config/bspwm/scripts/monocle.sh" \
     "$home/.config/bspwm/scripts/resize-mode.sh" \
     "$home/.config/sxhkd/resize-mode.sxhkdrc" \
     "$home/.config/polybar/modules/resize.ini" \
@@ -196,6 +197,7 @@ verify_install() {
     "$home/.config/rofi/powermenu.rasi"
     "$home/.config/bspwm/bspwmrc"
     "$home/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh" \
+    "$home/.config/picom/picom.conf" \
     "$home/.config/gtk-3.0/gtk.css" \
     "$home/.config/gtk-4.0/gtk.css"
     "$home/.config/zathura/zathurarc"

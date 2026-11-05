@@ -1191,3 +1191,36 @@ apps en el teléfono. Documentado en README (junto a udiskie/Thunar).
   theme-mode lo hacía desaparecer en cada render).
 - Regla documentada en README: los ficheros renderizados no se editan a
   mano; los ajustes van a la plantilla.
+
+### Esquinas redondeadas, foco por sombra y monocle (2026-11-05)
+
+- picom: `corner-radius = 10` con `rounded-corners-exclude` para
+  dock/notificaciones/escritorio; `shadow-exclude` añade `!focused`
+  (solo la ventana activa proyecta sombra; dunst sin sombra).
+- bspwm: `border_width 0` (el borde cuadrado chocaba con el redondeo);
+  gap se queda en 10.
+- dunst: `corner_radius = 10` para que el marco acompañe.
+- Nuevo `bspwm/scripts/monocle.sh`: Super+m alterna monocle/tiled y
+  reinicia picom con `corner-radius 0` en monocle (y 10 al volver),
+  usando `~/.cache/picom-monocle.conf`.
+- Pendiente de commit (pedido explícito de no commitear todavía).
+- Foco con esquinas redondeadas: `inactive-dim = 0.18` +
+  `inactive-dim-fixed = true` (fuera del listado de exclusión, por eso
+  dunst se protege con la condición `!(class_g = 'Dunst')` en
+  `shadow-exclude`). Si la atenuación alcanza a dunst, plan B es
+  `opacity-rule` (100:Dunst, 100:focused, 85:!focused).
+- Foco en fondos negros: el dim no basta (multiplica color), así que la
+  ventana enfocada proyecta un **halo del acento** (`shadow-color =
+  @COLOR_ACCENT@`, radius 12, opacity 0.45, offsets 0/0) y dunst lo
+  conserva. picom entra al store de theme-mode (`lib/config.sh`) y
+  `theme-mode` re-renderiza su conf y lo reinicia (`reload_picom`);
+  `verify.sh` comprueba los colores de picom contra la paleta.
+  `inactive-dim 0.18` se queda como extra para ventanas claras.
+- Revertido el glow de acento y la atenuación de inactivas (resultado
+  feo en vivo): el foco se identifica con **borde 2 px** de bspwm
+  (color acento), gap 10. Se conserva `corner-radius = 10` y la
+  exclusión de dock/notificaciones/escritorio; sombras de vuelta a
+  ADR-110 (radius 10, opacity 0.35, offsets -8/-8). `monocle.sh`
+  sigue dejando picom sin radios en monocle.
+- Borde final de bspwm: **3** (el vivo y el runtime ya estaban en 3;
+  el "4" recordado no llegó a aplicarse). Plantilla actualizada.

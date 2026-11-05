@@ -314,7 +314,7 @@ Si algo falla:
 | `Super+{1-7}` | ir a escritorio |
 | `Super+Shift+{1-7}` | mover ventana a escritorio |
 | `Super+r`, luego `h/j/k/l` | modo resize (Escape o 6 s sale) |
-| `Super+m` | monocle/tiled |
+| `Super+m` | monocle/tiled (en monocle, picom sin esquinas ni sombra) |
 | `Print` | pantalla completa al portapapeles |
 | `Super+Print` | menú de capturas |
 | `XF86AudioRaise/Lower/Mute` | volumen |

@@ -125,6 +125,7 @@ render_mode() {
     "$h/.config/polybar/variants/reference/config.ini" 0644
   render_one "polybar/scripts/cpu-governor.sh.in" \
     "$h/.config/polybar/scripts/cpu-governor.sh" 0755
+  render_one "picom/picom.conf.in" "$h/.config/picom/picom.conf" 0644
   render_one "kitty/kitty.conf.in" "$h/.config/kitty/kitty.conf" 0644
   render_one "kitty/colorshemes/monochromatic.conf.in" \
     "$h/.config/kitty/colorshemes/monochromatic.conf" 0644
@@ -214,6 +215,16 @@ reload_dunst() {
   return 0
 }
 
+# Reinicia picom para aplicar el halo del acento del nuevo modo.
+reload_picom() {
+  command -v picom >/dev/null 2>&1 || return 1
+  pgrep -x picom >/dev/null 2>&1 || return 1
+  pkill -x picom 2>/dev/null || true
+  sleep 0.3
+  setsid picom -b --config "$HOME_DIR/.config/picom/picom.conf" >/dev/null 2>&1 &
+  return 0
+}
+
 # Vuelve a aplicar el wallpaper del modo recién activado (dark/light).
 reload_wallpaper() {
   local script="$HOME_DIR/.config/bspwm/scripts/wallpaper.sh"
@@ -259,6 +270,7 @@ apply_live() {
   reload_polybar && done_parts+=("polybar")
   reload_dunst && done_parts+=("dunst")
   reload_wallpaper && done_parts+=("wallpaper")
+  reload_picom && done_parts+=("picom")
   reload_kitty && done_parts+=("kitty")
   apply_gtk
   done_parts+=("GTK")

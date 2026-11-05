@@ -977,3 +977,18 @@ ytsearch50  → 4533 ms
   browser.fullscreen.autohide=false (Firefox) pasan a las plantillas.
   Aplicado en vivo (bspc config + user.js del perfil); Firefox lo toma
   al reiniciarse.
+- 2026-11-05: esquinas redondeadas (picom) + borde 0 + dunst
+  corner_radius 10; foco indicado por sombra (`!focused`); Super+m con
+  monocle.sh (picom sin radios en monocle). Probado el toggle
+  monocle/tiled y el radio temporal; sin commit aún.
+- 2026-11-05: `inactive-dim 0.18` + dunst con sombra
+  (`!focused && !(class_g = 'Dunst')`). Pendiente de confirmar en
+  pantalla si dunst queda sin atenuar (si no, pasar a opacity-rule).
+- 2026-11-05: halo de acento en la ventana enfocada (picom shadow-color
+  desde la paleta, offsets 0, radius 12, opacity 0.45). picom añadido
+  al store de theme-mode y a su re-render/reinicio; verify incluye
+  picom.conf en el chequeo de paleta. Aplicado en vivo; pendiente de
+  valoración y de commit.
+- 2026-11-05: se descartó el halo/inactive-dim por feo; foco por borde
+  2px (bspwm) con gap 10 y redondeo picom intacto. Aplicado en vivo;
+  pendiente de commit.

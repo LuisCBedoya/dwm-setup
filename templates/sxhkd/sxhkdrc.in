@@ -72,7 +72,7 @@ super + shift + q
 # ─── Estados de ventana ───
 # Alternar monocle / tiled
 super + m
-    bspc desktop -l next
+    @HOME@/.config/bspwm/scripts/monocle.sh
 
 super + t
     bspc node -t tiled
