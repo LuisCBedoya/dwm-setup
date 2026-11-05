@@ -13,12 +13,12 @@
     gap_size = 6
     padding = 12
     horizontal_padding = 12
-    frame_width = 2
+    frame_width = 3
     frame_color = "@COLOR_BORDER@"
     corner_radius = 10
     font = @FONT@ @FONT_SIZE@
     markup = full
-    format = "<b>%s</b>\n%b"
+    format = "<span foreground='@COLOR_ACCENT@'>▌</span> <b>%s</b>\n%b"
     alignment = left
     always_run_script = true
     show_age_threshold = 60
@@ -41,19 +41,19 @@
     context = ctrl+shift+period
 
 [urgency_low]
-    background = "@COLOR_BG@"
+    background = "@COLOR_BG_ELEV@"
     foreground = "@COLOR_FG@"
     frame_color = "@COLOR_GREEN@"
     timeout = 10
 
 [urgency_normal]
-    background = "@COLOR_BG@"
+    background = "@COLOR_BG_ELEV@"
     foreground = "@COLOR_FG@"
     frame_color = "@COLOR_ACCENT@"
     timeout = 10
 
 [urgency_critical]
-    background = "@COLOR_BG@"
+    background = "@COLOR_BG_ELEV@"
     foreground = "@COLOR_FG@"
     frame_color = "@COLOR_RED@"
     timeout = 10

@@ -1,0 +1,62 @@
+#!/bin/sh
+# display-setup — adapta las salidas de vídeo al hardware conectado.
+# Todo terreno: no asume nombres de salida ni resoluciones; usa el modo
+# preferido (EDID) de cada monitor y refuerza el no-blanqueo.
+#
+# Uso:
+#   display-setup.sh apply   aplica --auto a cada salida conectada
+#                            (DISPLAY_LAYOUT=mirror para espejar)
+#   display-setup.sh watch   re-aplica al conectar/desconectar pantalla
+set -u
+
+command -v xrandr >/dev/null 2>&1 || exit 0
+[ -n "${DISPLAY:-}" ] || exit 0
+
+# Sin blanqueo ni DPMS por inactividad (idempotente en cualquier hardware).
+xset s off 2>/dev/null || true
+xset s noblank 2>/dev/null || true
+xset -dpms 2>/dev/null || true
+
+layout=${DISPLAY_LAYOUT:-extend}
+
+connected() {
+  xrandr --query 2>/dev/null | awk '/ connected/ {print $1}'
+}
+
+apply_layout() {
+  set -- $(connected)
+  [ "$#" -gt 0 ] || return 0
+  first=$1
+  xrandr --output "$first" --auto --primary 2>/dev/null || true
+  shift
+  prev=$first
+  for out in "$@"; do
+    if [ "$layout" = "mirror" ]; then
+      xrandr --output "$out" --auto --same-as "$first" 2>/dev/null || true
+    else
+      xrandr --output "$out" --auto --right-of "$prev" 2>/dev/null || true
+    fi
+    prev=$out
+  done
+}
+
+case "${1:-apply}" in
+  apply)
+    apply_layout
+    ;;
+  watch)
+    sig=$(connected | tr '\n' ' ')
+    apply_layout
+    while :; do
+      sleep 5
+      now=$(connected | tr '\n' ' ')
+      [ "$now" = "$sig" ] && continue
+      sig=$now
+      apply_layout
+    done
+    ;;
+  *)
+    printf 'Uso: %s [apply|watch]\n' "$0" >&2
+    exit 2
+    ;;
+esac

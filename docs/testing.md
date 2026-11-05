@@ -994,3 +994,8 @@ ytsearch50  → 4533 ms
   pendiente de commit.
 - 2026-11-05: fade de picom ajustado a 0.035 (~143 ms) por sensación
   del usuario; reiniciado y verificado el valor en el conf vivo.
+- 2026-11-05: display-setup.sh todo terreno creado y aplicado en vivo
+  (HDMI-1 sigue en 1920x1080). i915 con PSR/DC off en plantilla
+  (pendiente de instalar con sudo + reboot). Apagón aleatorio del
+  monitor externo: pendiente de captura del kernel log y prueba de
+  cable/puerto.

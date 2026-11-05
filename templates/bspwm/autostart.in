@@ -23,7 +23,13 @@ sleep 0.5
 # Sin salvapantallas ni DPMS: no se apaga ni bloquea por inactividad.
 # xss-lock sigue bloqueando al suspender y con Super+Shift+L.
 xset s off 2>/dev/null || true
+xset s noblank 2>/dev/null || true
 xset -dpms 2>/dev/null || true
+
+# --- Pantallas: adaptar salidas conectadas y no-blanqueo (todo terreno) ---
+if [ -x "$HOME/.config/bspwm/scripts/display-setup.sh" ]; then
+  "$HOME/.config/bspwm/scripts/display-setup.sh" apply 2>/dev/null || true
+fi
 
 # --- Directorios de usuario ---
 mkdir -p "$HOME/Pictures/Screenshots" 2>/dev/null || true

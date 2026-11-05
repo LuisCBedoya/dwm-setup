@@ -122,6 +122,7 @@ verify_install() {
     "$home/.config/ranger/epub-cover.sh" \
     "$home/.config/bspwm/scripts/dunst-position.sh" \
     "$home/.config/bspwm/scripts/wallpaper.sh" \
+    "$home/.config/bspwm/scripts/display-setup.sh" \
     "$home/.config/bspwm/scripts/monocle.sh" \
     "$home/.config/bspwm/scripts/resize-mode.sh" \
     "$home/.config/sxhkd/resize-mode.sxhkdrc" \

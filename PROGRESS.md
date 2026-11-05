@@ -1231,3 +1231,20 @@ El usuario notó 0.05 demasiado rápido; se fija `fade-in/out-step =
 0.035` con `fade-delta 5` (~143 ms): fluido entre los ~100 ms de 0.05
 y los ~167 ms de 0.03. Aplicado en vivo (picom reiniciado) y docs
 alineadas (AGENTS regla 25, ADR-110).
+
+### Pantallas todo terreno + mitigación i915 (2026-11-05)
+
+- Nuevo `bspwm/scripts/display-setup.sh`: detecta salidas con `xrandr`
+  (sin nombres ni resoluciones hardcodeadas), aplica `--auto` a cada
+  monitor conectado (modo preferido por EDID), primario el primero,
+  extiende a la derecha en cadena (`DISPLAY_LAYOUT=mirror` espeja),
+  modo `watch` para hotplug cada 5 s, y refuerza
+  `xset s off / s noblank / -dpms`. `autostart` lo llama al iniciar.
+- `templates/modprobe/i915.conf`: `enable_psr=0 enable_dc=0`
+  (además de `enable_fbc=0`) para apagones aleatorios del monitor
+  externo por estados de ahorro de i915. Solo se instala en Intel
+  (lib/gpu.sh). Requiere reboot.
+- El apagón del monitor es aleatorio en uso sobre HDMI: se descarta
+  X/screensaver/logind; pendiente de probar cable/puerto y de capturar
+  el próximo evento en el log del kernel (journalctl -k necesita
+  sudo o grupo adm).

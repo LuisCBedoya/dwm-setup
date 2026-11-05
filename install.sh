@@ -238,6 +238,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/bspwm/scripts/thunar-defaults.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/dunst-position.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/wallpaper.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/display-setup.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/monocle.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/resize-mode.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
