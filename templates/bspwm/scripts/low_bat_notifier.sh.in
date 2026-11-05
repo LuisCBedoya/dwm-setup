@@ -1,15 +1,18 @@
 #!/bin/sh
-# low_bat_notifier — avisa al 10 % descargando y al 99 % cargando
+# low_bat_notifier — avisa al bajar de 10/7/5/3/1 % descargando y al 99 %
+# cargando. Bajo 5 % el aviso es pegajoso (no expira solo) para que no se
+# olvide enchufar el cargador. Cada umbral avisa una sola vez por descarga.
 # Solo se ejecuta si existe la batería (verificado en autostart)
 
 BATTERY="@BATTERY@"
-LOW_THRESHOLD=${LOW_THRESHOLD:-10}
+LOW_LEVELS=${LOW_LEVELS:-"10 7 5 3 1"}
+STICKY_LEVEL=${STICKY_LEVEL:-5}
 HIGH_THRESHOLD=${HIGH_THRESHOLD:-99}
 CHECK_INTERVAL=${CHECK_INTERVAL:-60}
 POWER_SUPPLY_DIR=${POWER_SUPPLY_DIR:-/sys/class/power_supply}
 NOTIFY_SEND=${NOTIFY_SEND:-notify-send}
 
-low_notified=0
+notified=""
 high_notified=0
 
 while true; do
@@ -22,13 +25,33 @@ while true; do
     esac
 
     if [ -n "$capacity" ]; then
-      if [ "$status" = "Discharging" ] && [ "$capacity" -le "$LOW_THRESHOLD" ]; then
-        if [ "$low_notified" -eq 0 ]; then
-          "$NOTIFY_SEND" -u critical "Batería baja" "Nivel: ${capacity}% — Conecte el cargador"
-          low_notified=1
+      if [ "$status" = "Discharging" ]; then
+        # Umbral efectivo: el más bajo de la lista que aún cubre la
+        # capacidad actual. Evita una ráfaga de 5 toasts si la batería
+        # salta varios niveles entre dos comprobaciones.
+        effective=""
+        for level in $LOW_LEVELS; do
+          if [ "$capacity" -le "$level" ]; then
+            effective="$level"
+          fi
+        done
+        if [ -n "$effective" ]; then
+          case " $notified " in
+            *" $effective "*) ;;
+            *)
+              if [ "$capacity" -le "$STICKY_LEVEL" ]; then
+                "$NOTIFY_SEND" -u critical -t 0 \
+                  "Batería baja: ${capacity}%" "Conecta el cargador YA"
+              else
+                "$NOTIFY_SEND" -u critical \
+                  "Batería baja: ${capacity}%" "Conecta el cargador"
+              fi
+              notified="$notified $effective"
+              ;;
+          esac
         fi
       else
-        low_notified=0
+        notified=""
       fi
 
       if { [ "$status" = "Charging" ] || [ "$status" = "Full" ]; } && [ "$capacity" -ge "$HIGH_THRESHOLD" ]; then

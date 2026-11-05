@@ -961,3 +961,7 @@ ytsearch50  → 4533 ms
   10 y prune de backups >3 días (conserva 3). Checkers con --no-notify.
   Pendiente: `sudo ./install.sh` para instalar binario/unidades/sysctl
   y probar el toast cuando alguna versión cambie.
+- 2026-11-04 (noche): notificador de batería con umbrales 10/7/5/3/1
+  (uno por descarga; ≤5 % toast pegajoso `-t 0`). Probado en sandbox
+  con POWER_SUPPLY_DIR falso: secuencia completa y salto 9→4 (una sola
+  notificación). Aplicado en vivo y notificador reiniciado.

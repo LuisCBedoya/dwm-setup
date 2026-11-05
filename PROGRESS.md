@@ -40,9 +40,12 @@ Procesos comprobados:
   sin conexión muestra `󰖩 NoC`. El layout `latam` se aplica con `setxkbmap` pero ya no
   ocupa un módulo de la barra.
 - `notify-send` funciona.
-- `low_bat_notifier.sh` avisa al 10 % descargando y al 99 % cargando
-  (`Charging`/`Full`), una vez por evento. Probado con batería simulada
-  mediante `POWER_SUPPLY_DIR` y un `notify-send` falso.
+- `low_bat_notifier.sh` avisa al bajar de 10/7/5/3/1 % descargando
+  (una vez por umbral; desde 5 % el toast es pegajoso con `-t 0`) y al
+  99 % cargando (`Charging`/`Full`), una vez por evento. Si la batería
+  salta varios niveles entre comprobaciones avisa una sola vez (umbral
+  efectivo, sin ráfagas). Probado con batería simulada mediante
+  `POWER_SUPPLY_DIR` y un `notify-send` falso.
 - `services.sh` cuenta los servicios systemd en ejecución y abre un menú
   `dmenu`/`rofi` con los servicios y su estado `enabled/disabled/static`.
   Al elegir uno consulta `systemctl is-active` y ofrece detener/reiniciar
