@@ -2,8 +2,7 @@
 Description=dwm-setup: chequeo diario de yt-dlp/ytwatch (aviso por dunst)
 
 [Timer]
-OnCalendar=*-*-* 09:00:00
-OnBootSec=3min
+OnCalendar=*-*-* 13:00:00
 RandomizedDelaySec=5min
 Persistent=true
 

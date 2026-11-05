@@ -229,8 +229,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
     TUI; cambiar el default exige decisión). Actualizaciones: `ytwatch-check` (avisa por dunst) y
     `ytwatch-update` (`--ueberzugpp` para el paquete). **Sin binding de
     sxhkd**: se lanza tecleando `ytwatch`. Un **timer de usuario**
-    `dwm-setup-yt-update-notify.timer` (09:00 diario + 3 min tras
-    arranque) ejecuta `bin/yt-update-notify`: corre los dos checkers con
+    `dwm-setup-yt-update-notify.timer` (13:00 diario; `Persistent`
+    cubre el arranque después de esa hora) ejecuta
+    `bin/yt-update-notify`: corre los dos checkers con
     `--quiet --no-notify` y manda un único toast de dunst; no toca APT
     ni el módulo `updates` de polybar. El doctor global con avisos
     dunst de todo el sistema es backlog, no fase actual. `lib/sysctl.sh`

@@ -1138,7 +1138,8 @@ reinicio de picom.
 ### Avisos de YouTube por dunst + swappiness + limpieza de backups (2026-11-04)
 
 - `bin/yt-update-notify` + `dwm-setup-yt-update-notify.{service,timer}`
-  (usuario): 09:00 diario + 3 min tras arranque, `Persistent=true`.
+  (usuario): 13:00 diario, `Persistent=true` (si el PC estaba apagado
+  a esa hora, corre al encender).
   Corre `ytdlp-check` y `ytwatch-check` con `--quiet --no-notify` y
   manda **un solo toast** si hay versiones nuevas; silencio si todo está
   al día. No toca APT (la calavera de polybar sigue igual) ni use sudo.

@@ -61,7 +61,8 @@ Incluido:
   usa el mismo yt-dlp oficial y mpv. Actualizable con `ytwatch-check` /
   `ytwatch-update`.
 - **Avisos de YouTube por dunst**: timer de usuario
-  (`dwm-setup-yt-update-notify.timer`, 09:00 + 3 min tras arranque) que
+  (`dwm-setup-yt-update-notify.timer`, 13:00 diario; si el PC estaba
+  apagado, corre al encender) que
   avisa con un solo toast si yt-dlp, ytwatch o ueberzugpp están viejos.
   No toca APT ni el módulo `updates` de la barra.
 - `vm.swappiness = 10` por `/etc/sysctl.d/99-dwm-setup-swappiness.conf`

@@ -45,7 +45,7 @@ install_yt_update_notify() {
       systemctl --user start dwm-setup-yt-update-notify.timer >/dev/null 2>&1 || true
     info "Timer activo: systemctl --user list-timers · dwm-setup-yt-update-notify"
   else
-    info "Timer habilitado; arrancará al iniciar sesión (120 s + 09:00 diario)"
+    info "Timer habilitado; arrancará al iniciar sesión (13:00 diario)"
   fi
   ok "Avisos por dunst: yt-dlp / ytwatch (sin tocar APT ni la barra)"
 }
