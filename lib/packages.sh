@@ -57,6 +57,8 @@ DESKTOP_PKGS=(
   lm-sensors upower acpi
   fastfetch
   mpv mpv-mpris fzf chafa yt-dlp
+  # Vulkan: loader + driver Intel/AMD (NVIDIA instala el suyo aparte)
+  libvulkan1 mesa-vulkan-drivers
   xdg-desktop-portal xdg-desktop-portal-gtk
 )
 

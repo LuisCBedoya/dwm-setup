@@ -1248,3 +1248,10 @@ alineadas (AGENTS regla 25, ADR-110).
   X/screensaver/logind; pendiente de probar cable/puerto y de capturar
   el próximo evento en el log del kernel (journalctl -k necesita
   sudo o grupo adm).
+
+### Vulkan en el instalador (2026-11-05)
+
+`libvulkan1` + `mesa-vulkan-drivers` al grupo escritorio: loader y
+driver Vulkan de Intel/AMD (NVIDIA aporta su ICD por su cuenta). En la
+máquina ya están instalados y `vulkaninfo --summary` muestra la Intel
+UHD 630; sin servicios ni configuración extra.

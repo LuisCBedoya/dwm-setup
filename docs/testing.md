@@ -999,3 +999,6 @@ ytsearch50  → 4533 ms
   (pendiente de instalar con sudo + reboot). Apagón aleatorio del
   monitor externo: pendiente de captura del kernel log y prueba de
   cable/puerto.
+- 2026-11-05: Vulkan verificado (Intel UHD 630 + llvmpipe) y añadido al
+  instalador (libvulkan1 + mesa-vulkan-drivers). Uso futuro: upscalers
+  ncnn si se opta por el camino local.
