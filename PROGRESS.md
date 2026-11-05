@@ -1125,3 +1125,12 @@ shim de ueberzugpp (`trying to overwrite /usr/bin/ueberzug`).
   por `--force-window=immediate` del proyecto). Decisión del usuario
   2026-11-04 tras ver que "audio por defecto" implicaba ventana negra
   o el override `--force-window=no`.
+
+### Sombras sutiles en picom (ADR-110, 2026-11-04)
+
+Pedido del usuario tras la auditoría: sombras sin transparencias.
+`shadow = true` (radius 10, opacity 0.35, offsets -8/-8) con
+`shadow-exclude` de dock y desktop; opacidades siguen a 1, sin blur,
+vsync/fade intactos. `verify.sh` actualizado a la nueva expectativa
+(añade check de blur-background prohibido). Aplicado en vivo con
+reinicio de picom.

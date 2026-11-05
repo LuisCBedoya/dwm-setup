@@ -953,3 +953,7 @@ ytsearch50  → 4533 ms
   decisión del usuario; el modo audio mantiene la ventana del proyecto
   (sin imagen). Revertir sería `audio_only = true` +
   `--force-window=no` si se quiere audio puro sin ventana.
+- 2026-11-04 (noche): sombras sutiles de picom (ADR-110): shadow true,
+  radius 10, opacity 0.35, offsets -8/-8, excluye dock/desktop; sin
+  transparencias ni blur. verify.sh comprueba shadow/opacity y rechaza
+  blur. Pendiente: valoración visual del usuario.

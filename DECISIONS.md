@@ -2633,3 +2633,26 @@ permanecen intactos. yt-dlp al día pasa a ser doblemente necesario.
   en una máquina ya instalada están los dos binarios nuevos.
 - El doctor global con avisos dunst de todo el sistema (idea del
   usuario) queda en backlog (PROGRESS), fuera de este ADR.
+
+## ADR-110 — Sombras sutiles en picom (sin transparencias)
+
+**Contexto:** el usuario pidió "un poco de sombras" para pulir el
+escritorio. ADR-107 había fijado `shadow false`; la regla 25 exige una
+decisión nueva para cambiarlo.
+
+**Decisión:**
+1. `shadow = true` con `shadow-radius = 10`, `shadow-opacity = 0.35`
+   y offsets `-8/-8`: sutiles, acordes a la estética plana del resto.
+2. `shadow-exclude` deja fuera `window_type = 'dock'` (barra polybar) y
+   `window_type = 'desktop'`, para no pintar bandas oscuras en bordes.
+3. Se mantienen `inactive/active/frame-opacity = 1` y la ausencia de
+   blur: **sin transparencias**; la translucidez de la barra B sigue
+   siendo su fondo `#00000000` (no un alpha de picom).
+4. `verify.sh` exige `shadow = true`, `shadow-opacity = 0.35` y la
+   ausencia de `blur-background = true`.
+
+**Consecuencias:**
+- Coste de composición despreciable en esta Intel; vsync y fade
+  (pasos 0.05) quedan intactos.
+- Dunst y ventanas normales ganan profundidad; la barra no proyecta
+  sombra sobre el contenido.

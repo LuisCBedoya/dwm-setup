@@ -191,10 +191,11 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `autostart` (antes de polybar, con guard `pgrep -x picom`) usando
     `~/.config/picom/picom.conf` generado desde `templates/picom/`:
     `backend glx`, `vsync true`, `use-damage`, fade sutil (delta 5,
-    pasos 0.05) que excluye dock/notificaciones/desktop, `shadow false`
-    y todas las opacidades a 1. **No añadir sombras, blur ni
-    transparencias de picom** (los quitarían de la decisión tomada en
-    vivo); la translucidez de la barra B es el fondo `#00000000` de
+    pasos 0.05) que excluye dock/notificaciones/desktop, `shadow true`
+    sutil (radius 10, opacity 0.35, offsets -8/-8, sin sombra en
+    dock/desktop) y todas las opacidades a 1. **No añadir blur ni
+    transparencias de picom** (romperían la decisión tomada en vivo);
+    la translucidez de la barra B es el fondo `#00000000` de
     polybar, no un alpha de picom. `unredir-if-possible` deja pasar el
     vídeo a pantalla completa. picom usa libconfig: comentarios `#`, no
     `;`. Si se añade color a alguna plantilla nueva de picom, entra al

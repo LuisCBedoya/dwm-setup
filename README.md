@@ -28,9 +28,10 @@ Incluido:
 - **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**
   (`--single-instance`),
   **flameshot**. Shell **zsh** con Oh My Zsh/cypher, autosuggestions y
-  **lsd**. Compositor **picom** (vsync + fade sutil, sin sombras/blur/
-  transparencias; ADR-107): mata el rasgado al arrastrar y hacer scroll y
-  la barra B se ve translúcida con su fondo transparente.
+  **lsd**. Compositor **picom** (vsync + fade sutil + sombras sutiles,
+  sin blur ni transparencias; ADR-107/ADR-110): mata el rasgado al
+  arrastrar y hacer scroll y la barra B se ve translúcida con su fondo
+  transparente.
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo,
   **ueberzug** para previsualizar imágenes y carátulas. Texto, código y
   Markdown se abren con **Neovim**. Tema GTK **Catppuccin** (Mocha Black o

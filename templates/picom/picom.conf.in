@@ -1,13 +1,23 @@
 # picom.conf — generado desde template; no editar directamente.
 # Config mínima: vsync contra el rasgado al arrastrar/scroll.
-# Fade sutil; SIN sombras, SIN blur y SIN transparencias de picom.
+# Fade sutil y sombras sutiles; SIN blur y SIN transparencias de picom.
 # mpv a pantalla completa pasa sin composite (rendimiento).
 
 backend = "glx";
 vsync = true;
 use-damage = true;
 
-shadow = false;
+# Sombras sutiles (ADR-110). Barra (dock) y escritorio excluidos para
+# no dejar bandas oscuras en los bordes de la pantalla.
+shadow = true;
+shadow-radius = 10;
+shadow-opacity = 0.35;
+shadow-offset-x = -8;
+shadow-offset-y = -8;
+shadow-exclude = [
+  "window_type = 'dock'",
+  "window_type = 'desktop'"
+];
 fading = true;
 fade-delta = 5;
 fade-in-step = 0.05;

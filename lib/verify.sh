@@ -249,8 +249,16 @@ verify_install() {
       error "picom.conf no tiene vsync = true"
       failures=$((failures + 1))
     fi
-    if ! grep -qE '^shadow[[:space:]]*=[[:space:]]*false;' "$home/.config/picom/picom.conf"; then
-      error "picom.conf activa sombras (inaceptable: sin transparencias/sombras)"
+    if ! grep -qE '^shadow[[:space:]]*=[[:space:]]*true;' "$home/.config/picom/picom.conf"; then
+      error "picom.conf no activa las sombras sutiles (ADR-110)"
+      failures=$((failures + 1))
+    fi
+    if ! grep -qE '^shadow-opacity[[:space:]]*=[[:space:]]*0?\.35;' "$home/.config/picom/picom.conf"; then
+      error "picom.conf no tiene shadow-opacity = 0.35"
+      failures=$((failures + 1))
+    fi
+    if grep -qE '^blur-background[[:space:]]*=[[:space:]]*true;' "$home/.config/picom/picom.conf"; then
+      error "picom.conf activa blur (no permitido: sin blur ni transparencias)"
       failures=$((failures + 1))
     fi
   fi
