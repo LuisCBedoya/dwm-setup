@@ -225,11 +225,16 @@ La fase 1 termina en el escritorio. No implementar todavía:
     rollback}` y las notificaciones dunst NO se retiran. La config va
     de `templates/ytwatch/config.toml.in` (tema `terminal`, sin hex:
     no entra en el store 20b), browser es `firefox-esr` y
-    `audio_only = true`; si una prueba manda cambiar el default, se
-    discute antes. Actualizaciones: `ytwatch-check` (avisa por dunst) y
+    `audio_only = false` (vídeo por defecto; `a` conmuta a audio en el
+    TUI; cambiar el default exige decisión). Actualizaciones: `ytwatch-check` (avisa por dunst) y
     `ytwatch-update` (`--ueberzugpp` para el paquete). **Sin binding de
-    sxhkd**: se lanza tecleando `ytwatch`. El doctor global con avisos
-    dunst de todo el sistema es backlog, no fase actual.
+    sxhkd**: se lanza tecleando `ytwatch`. Un **timer de usuario**
+    `dwm-setup-yt-update-notify.timer` (09:00 diario + 3 min tras
+    arranque) ejecuta `bin/yt-update-notify`: corre los dos checkers con
+    `--quiet --no-notify` y manda un único toast de dunst; no toca APT
+    ni el módulo `updates` de polybar. El doctor global con avisos
+    dunst de todo el sistema es backlog, no fase actual. `lib/sysctl.sh`
+    instala `vm.swappiness=10` vía `/etc/sysctl.d/` (23 GB de RAM).
 
 ## Estructura relevante
 
@@ -293,7 +298,11 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/music-ctl` | Teclas multimedia del reproductor activo |
 | `bin/ytwatch-check` | Avisa (dunst) si ytwatch o ueberzugpp van desactualizados |
 | `bin/ytwatch-update` | Actualiza ytwatch (checksums.txt) o ueberzugpp (`--ueberzugpp`) |
+| `bin/yt-update-notify` | Wrapper del timer: agrupa los dos checkers en un toast dunst |
+| `lib/yt-notify.sh` | Instala el timer de usuario de avisos (unidades + enable) |
+| `lib/sysctl.sh` | Instala `/etc/sysctl.d/99-dwm-setup-swappiness.conf` |
 | `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview kitty) |
+| `templates/sysctl/` | `99-dwm-setup-swappiness.conf` (vm.swappiness=10) |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
 | `templates/colors/` | `palette-mocha-black.sh`, `palette-latte.sh` y helpers |
 | `assets/wallpaper.png` | Wallpaper principal |
@@ -314,7 +323,8 @@ for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor; do sh -
 sh -n templates/polybar/scripts/cpu-governor.sh.in
 bash -n bin/theme-mode
 bash -n bin/yt-play bin/yt-preview bin/ytdlp-check bin/ytdlp-update \
-  bin/ytdlp-rollback bin/music-ctl bin/ytwatch-check bin/ytwatch-update
+  bin/ytdlp-rollback bin/music-ctl bin/ytwatch-check bin/ytwatch-update \
+  bin/yt-update-notify
 bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
 
 # Gobernador: lista oficial y sudoers renderizado (sin tocar el sistema)

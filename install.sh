@@ -59,6 +59,10 @@ source "$PROJECT_ROOT/lib/fastfetch.sh"
 source "$PROJECT_ROOT/lib/music.sh"
 # shellcheck source=lib/ytwatch.sh
 source "$PROJECT_ROOT/lib/ytwatch.sh"
+# shellcheck source=lib/yt-notify.sh
+source "$PROJECT_ROOT/lib/yt-notify.sh"
+# shellcheck source=lib/sysctl.sh
+source "$PROJECT_ROOT/lib/sysctl.sh"
 # shellcheck source=lib/firefox.sh
 source "$PROJECT_ROOT/lib/firefox.sh"
 # shellcheck source=lib/verify.sh
@@ -203,6 +207,8 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/fastfetch.sh"
     "$PROJECT_ROOT/lib/music.sh"
     "$PROJECT_ROOT/lib/ytwatch.sh"
+    "$PROJECT_ROOT/lib/yt-notify.sh"
+    "$PROJECT_ROOT/lib/sysctl.sh"
     "$PROJECT_ROOT/lib/verify.sh"
     "$PROJECT_ROOT/lib/theme.sh"
     "$PROJECT_ROOT/lib/audio.sh"
@@ -250,7 +256,11 @@ check_project_layout() {
     "$PROJECT_ROOT/bin/music-ctl"
     "$PROJECT_ROOT/bin/ytwatch-check"
     "$PROJECT_ROOT/bin/ytwatch-update"
+    "$PROJECT_ROOT/bin/yt-update-notify"
     "$PROJECT_ROOT/templates/ytwatch/config.toml.in"
+    "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.service"
+    "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.timer"
+    "$PROJECT_ROOT/templates/sysctl/99-dwm-setup-swappiness.conf"
     "$PROJECT_ROOT/templates/firefox/userChrome.css.in"
     "$PROJECT_ROOT/templates/firefox/user.js.in"
     "$PROJECT_ROOT/templates/firefox/surfingkeys.js.in"
@@ -370,6 +380,8 @@ Compositor:             picom (vsync + fade sutil; sin transparencias/sombras)
 Gobernador CPU:         módulo polybar governor (clic alterna; performance al boot)
 Música/streams:         yt-play [--audio|--video] <url | búsqueda> · ytdlp-check|update|rollback
 Buscador TUI:           ytwatch (terminal) · ytwatch-check|update · miniaturas: ueberzugpp
+Avisos YouTube:         timer de usuario (dunst) · systemctl --user list-timers
+Kernel:                 vm.swappiness=10 (/etc/sysctl.d/99-dwm-setup-swappiness.conf)
 Gráficos:               i915 FBC desactivado (requiere reinicio)
 Permisos:               sudo al inicio para paquetes, portal, opt-2 e i915
 
@@ -490,6 +502,8 @@ main() {
   install_fastfetch
   install_music
   install_ytwatch
+  install_yt_update_notify
+  install_sysctl
   install_user_configs
 
   if ! dry_run; then
@@ -502,6 +516,8 @@ main() {
     section "Dry-run"
     info "No se modificó el sistema. Las acciones anteriores son el plan completo."
   fi
+
+  prune_backups
 
   print_summary
 }

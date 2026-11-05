@@ -5,20 +5,28 @@ set -Eeuo pipefail
 
 PROG="ytdlp-check"
 quiet=0
+no_notify=0
 
-case "${1:-}" in
-  -q|--quiet) quiet=1 ;;
-  -h|--help)
-    cat <<'EOF'
-Uso: ytdlp-check [--quiet]
+while (($# > 0)); do
+  case "$1" in
+    -q|--quiet) quiet=1 ;;
+    -n|--no-notify) no_notify=1 ;;
+    -h|--help)
+      cat <<'EOF'
+Uso: ytdlp-check [--quiet] [--no-notify]
 
   Compara yt-dlp --version con la última release de GitHub.
   Si hay una más nueva, imprime un aviso y lanza una notificación.
+  --quiet     solo imprime cuando hay versión nueva
+  --no-notify no lanza el toast (para agrupar avisos)
   No actualiza: eso lo hace `ytdlp-update` cuando tú lo pides.
 EOF
-    exit 0
-    ;;
-esac
+      exit 0
+      ;;
+    *) printf '%s: opción desconocida: %s\n' "$PROG" "$1" >&2; exit 2 ;;
+  esac
+  shift
+done
 
 # Mismo criterio que yt-play: primero el binario oficial.
 YTDLP="yt-dlp"
@@ -62,7 +70,7 @@ else
   printf '  Tienes %s · actualiza con: ytdlp-update\n' "$current"
 fi
 
-if command -v notify-send >/dev/null 2>&1; then
+if (( ! no_notify )) && command -v notify-send >/dev/null 2>&1; then
   notify-send -a yt-dlp -i software-update-available \
     "yt-dlp: nueva versión $latest" \
     "Tienes $current · actualiza con: ytdlp-update" 2>/dev/null || true

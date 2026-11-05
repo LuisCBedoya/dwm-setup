@@ -60,6 +60,12 @@ Incluido:
   YouTube con miniaturas (`ueberzugpp`), filtros, cola y descargas;
   usa el mismo yt-dlp oficial y mpv. Actualizable con `ytwatch-check` /
   `ytwatch-update`.
+- **Avisos de YouTube por dunst**: timer de usuario
+  (`dwm-setup-yt-update-notify.timer`, 09:00 + 3 min tras arranque) que
+  avisa con un solo toast si yt-dlp, ytwatch o ueberzugpp están viejos.
+  No toca APT ni el módulo `updates` de la barra.
+- `vm.swappiness = 10` por `/etc/sysctl.d/99-dwm-setup-swappiness.conf`
+  (23 GB de RAM: menos swap y SSD más tranquilo).
 - Backups, logs, `--dry-run` y diagnóstico con `desktop-doctor`.
 - NVIDIA detectada e instalada de forma condicional.
 

@@ -1,0 +1,7 @@
+[Unit]
+Description=dwm-setup: aviso por dunst de yt-dlp/ytwatch desactualizados
+Documentation=file://@HOME@/.config/ytwatch/config.toml
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/yt-update-notify

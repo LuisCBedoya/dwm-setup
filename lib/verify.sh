@@ -281,6 +281,29 @@ verify_install() {
       error "ytwatch no es ejecutable"
       failures=$((failures + 1))
     fi
+    for tw_unit in "$home/.config/systemd/user/dwm-setup-yt-update-notify.service" \
+      "$home/.config/systemd/user/dwm-setup-yt-update-notify.timer" \
+      "$home/.config/systemd/user/timers.target.wants/dwm-setup-yt-update-notify.timer" \
+      /usr/local/bin/yt-update-notify; do
+      if [[ -e "$tw_unit" ]]; then
+        debug "ok: $tw_unit"
+      else
+        error "Falta el aviso de YouTube: $tw_unit"
+        failures=$((failures + 1))
+      fi
+    done
+  fi
+
+  # sysctl persistente (ADR del ajuste de swap).
+  if [[ -f /etc/sysctl.d/99-dwm-setup-swappiness.conf ]]; then
+    if [[ "$(cat /proc/sys/vm/swappiness 2>/dev/null || printf '')" == "10" ]]; then
+      debug "ok: vm.swappiness = 10"
+    else
+      warn "vm.swappiness no es 10 todavía (se aplica con sysctl --system o al reiniciar)"
+    fi
+  else
+    error "Falta /etc/sysctl.d/99-dwm-setup-swappiness.conf"
+    failures=$((failures + 1))
   fi
 
   # Gobernador: helper root, sudoers acotado y unidad de arranque.

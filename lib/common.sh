@@ -222,6 +222,41 @@ backup_user_path() {
   info "Backup: $src -> $dest"
 }
 
+# Borra backups con más de 3 días de antigüedad, conservando siempre los
+# 3 más recientes de cada carpeta (no te quedas sin red si algo se rompe).
+# En --dry-run solo se lista lo que se borraría.
+prune_backup_dir() {
+  local base="$1" d n skip
+  [[ -d "$base" ]] || return 0
+  local -a old=() newest=()
+  while IFS= read -r d; do
+    [[ -n "$d" ]] && old+=("$d")
+  done < <(find "$base" -mindepth 1 -maxdepth 1 -type d -mtime +3 2>/dev/null | sort)
+  while IFS= read -r d; do
+    [[ -n "$d" ]] && newest+=("$d")
+  done < <(find "$base" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' 2>/dev/null |
+    sort -rn | head -3 | awk '{print $2}')
+  ((${#old[@]} > 0)) || return 0
+  for d in "${old[@]}"; do
+    skip=0
+    for n in "${newest[@]}"; do
+      [[ "$d" == "$n" ]] && skip=1
+    done
+    ((skip)) && continue
+    if dry_run; then
+      log "[dry-run] retirar backup antiguo: $d"
+    else
+      run_root rm -rf -- "$d"
+      info "Backup antiguo retirado: $d"
+    fi
+  done
+}
+
+prune_backups() {
+  prune_backup_dir "/var/backups/dwm-setup"
+  prune_backup_dir "$TARGET_HOME/.config-backup/dwm-setup"
+}
+
 # Crea un directorio del usuario. Se usa run_user para que también los
 # directorios padre queden con el propietario correcto: `install -d -o` solo
 # aplica el propietario al último componente.
@@ -249,6 +284,7 @@ backup_existing_configs() {
   backup_root "/usr/local/bin/ytdlp-check"
   backup_root "/usr/local/bin/ytdlp-update"
   backup_root "/usr/local/bin/ytdlp-rollback"
+  backup_root "/usr/local/bin/yt-update-notify"
   backup_root "/usr/local/bin/music-ctl"
   backup_root "/usr/local/bin/dwm-setup-cpu-governor"
   backup_root "/etc/sudoers.d/dwm-setup-cpu-governor"

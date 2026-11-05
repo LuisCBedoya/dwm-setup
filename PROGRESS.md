@@ -1134,3 +1134,25 @@ Pedido del usuario tras la auditoría: sombras sin transparencias.
 vsync/fade intactos. `verify.sh` actualizado a la nueva expectativa
 (añade check de blur-background prohibido). Aplicado en vivo con
 reinicio de picom.
+
+### Avisos de YouTube por dunst + swappiness + limpieza de backups (2026-11-04)
+
+- `bin/yt-update-notify` + `dwm-setup-yt-update-notify.{service,timer}`
+  (usuario): 09:00 diario + 3 min tras arranque, `Persistent=true`.
+  Corre `ytdlp-check` y `ytwatch-check` con `--quiet --no-notify` y
+  manda **un solo toast** si hay versiones nuevas; silencio si todo está
+  al día. No toca APT (la calavera de polybar sigue igual) ni use sudo.
+- `--no-notify` añadido a ambos checkers (el uso manual sigue avisando).
+- `lib/yt-notify.sh` instala binario en /usr/local/bin, unidades en
+  `~/.config/systemd/user` y habilita el timer vía symlink
+  (`timers.target.wants`), arrancándolo si hay sesión.
+- `lib/sysctl.sh` + `templates/sysctl/99-dwm-setup-swappiness.conf`:
+  `vm.swappiness=10` persistente.
+- `prune_backups` en `lib/common.sh`: retira backups de >3 días
+  conservando los 3 más recientes de /var/backups/dwm-setup y
+  ~/.config-backup/dwm-setup; en dry-run solo lista.
+- `cleanup_packages` escribe en el log la simulación de autoremove
+  (sigue siendo el último paso, sin --purge y tras proteger la cadena
+  de compilación).
+- Limpieza manual del usuario: chromium y avahi-daemon fuera;
+  NetworkManager-wait-online desactivado; xdg default = Firefox ESR.

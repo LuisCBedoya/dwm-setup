@@ -957,3 +957,7 @@ ytsearch50  → 4533 ms
   radius 10, opacity 0.35, offsets -8/-8, excluye dock/desktop; sin
   transparencias ni blur. verify.sh comprueba shadow/opacity y rechaza
   blur. Pendiente: valoración visual del usuario.
+- 2026-11-04 (noche): timer de avisos de YouTube (usuario), swappiness
+  10 y prune de backups >3 días (conserva 3). Checkers con --no-notify.
+  Pendiente: `sudo ./install.sh` para instalar binario/unidades/sysctl
+  y probar el toast cuando alguna versión cambie.

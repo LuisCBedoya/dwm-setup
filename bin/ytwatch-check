@@ -5,32 +5,41 @@ set -Eeuo pipefail
 
 PROG="ytwatch-check"
 quiet=0
+no_notify=0
 
-case "${1:-}" in
-  -q|--quiet) quiet=1 ;;
-  -h|--help)
-    cat <<'EOF'
-Uso: ytwatch-check [--quiet]
+while (($# > 0)); do
+  case "$1" in
+    -q|--quiet) quiet=1 ;;
+    -n|--no-notify) no_notify=1 ;;
+    -h|--help)
+      cat <<'EOF'
+Uso: ytwatch-check [--quiet] [--no-notify]
 
   Compara ytwatch (~/.local/bin) y ueberzugpp con la última release.
   Si hay alguna más nueva, imprime un aviso y lanza una notificación.
+  --quiet     solo imprime cuando hay versión nueva
+  --no-notify no lanza el toast (para agrupar avisos)
   No actualiza: eso lo hace `ytwatch-update` cuando tú lo pides.
 EOF
-    exit 0
-    ;;
-esac
+      exit 0
+      ;;
+    *) printf '%s: opción desconocida: %s\n' "$PROG" "$1" >&2; exit 2 ;;
+  esac
+  shift
+done
+
+notify_outdated() {
+  (( no_notify )) && return 0
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send -a ytwatch -i software-update-available \
+    "ytwatch: hay actualización" "$1" 2>/dev/null || true
+}
 
 gh_latest() { # $1 = user/repo de GitHub
   local repo="$1"
   command -v curl >/dev/null 2>&1 || return 0
   curl -fsSL --max-time 8 "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null |
     sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' | head -1
-}
-
-notify_outdated() {
-  command -v notify-send >/dev/null 2>&1 || return 0
-  notify-send -a ytwatch -i software-update-available \
-    "ytwatch: hay actualización" "$1" 2>/dev/null || true
 }
 
 status=0

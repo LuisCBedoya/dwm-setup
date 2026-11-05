@@ -764,6 +764,18 @@ cleanup_packages() {
 
   protect_build_toolchain
 
+  # Constancia en el log de qué se llevaría el autoremove (simulación).
+  # Solo retira paquetes auto-instalados sin dependientes: lo que pediste
+  # explícitamente está marcado manual y no entra aquí.
+  local sim
+  sim=$(DEBIAN_FRONTEND=noninteractive apt-get -s autoremove 2>/dev/null |
+    awk '/^Remv/ {print $2}' | tr '\n' ' ' | sed 's/ $//')
+  if [[ -n "$sim" ]]; then
+    info "Autoremove retirará: $sim"
+  else
+    info "Autoremove: no hay dependencias huérfanas"
+  fi
+
   local out rc
   if [[ "$EUID" -eq 0 ]]; then
     if out=$(DEBIAN_FRONTEND=noninteractive apt-get -y autoremove 2>&1); then

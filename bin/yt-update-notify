@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# yt-update-notify — avisa por dunst (un solo toast) si el software de
+# YouTube está desactualizado: yt-dlp, ytwatch o ueberzugpp.
+#
+# Lo ejecuta dwm-setup-yt-update-notify.timer (unidad de usuario, diaria).
+# Solo lee: no actualiza nada y no usa sudo. Silencio total si todo está al día.
+set -Eeuo pipefail
+
+find_bin() {
+  local name="$1"
+  if command -v "$name" >/dev/null 2>&1; then
+    command -v "$name"
+  elif [[ -x "/usr/local/bin/$name" ]]; then
+    printf '%s\n' "/usr/local/bin/$name"
+  fi
+}
+
+lines=()
+
+ytdlp=$(find_bin ytdlp-check || true)
+if [[ -n "$ytdlp" ]]; then
+  out=$("$ytdlp" --quiet --no-notify 2>/dev/null || true)
+  [[ -n "$out" ]] && lines+=("$out")
+fi
+
+ytwatch=$(find_bin ytwatch-check || true)
+if [[ -n "$ytwatch" ]]; then
+  out=$("$ytwatch" --quiet --no-notify 2>/dev/null || true)
+  [[ -n "$out" ]] && lines+=("$out")
+fi
+
+# Nada pendiente: silencio absoluto (el timer no molesta).
+((${#lines[@]} > 0)) || exit 0
+
+body=$(printf '%s\n' "${lines[@]}")
+body+=$'\n\nActualiza con: ytdlp-update · ytwatch-update'
+
+printf '%s\n' "$body"
+if command -v notify-send >/dev/null 2>&1; then
+  notify-send -a "dwm-setup" -i software-update-available \
+    "Software de YouTube desactualizado" "$body" 2>/dev/null || true
+fi
