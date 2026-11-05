@@ -965,3 +965,7 @@ ytsearch50  → 4533 ms
   (uno por descarga; ≤5 % toast pegajoso `-t 0`). Probado en sandbox
   con POWER_SUPPLY_DIR falso: secuencia completa y salto 9→4 (una sola
   notificación). Aplicado en vivo y notificador reiniciado.
+- 2026-11-04 (noche): MTP por cable añadido al instalador
+  (`libmtp-runtime`); backend gvfs MTP ya presente. Pendiente de prueba
+  real con el móvil del usuario (conectar en modo transferencia y
+  ver el dispositivo en Thunar).

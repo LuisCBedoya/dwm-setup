@@ -200,6 +200,12 @@ less ~/.local/state/dwm-setup/session.log
 `udiskie -N -a` monta el dispositivo y muestra una notificación. No se abre
 ninguna ventana. Thunar se abre manualmente con `Super+Shift+F`.
 
+**Móvil por cable (MTP)**: con `libmtp-runtime` (reglas udev) y el backend MTP
+de gvfs, al conectar un Android y elegir *Transferencia de archivos* aparece
+en la barra lateral de Thunar como "Dispositivo Android"; se copia en ambos
+sentidos sin instalar nada en el teléfono. Si no aparece, reconectar el cable
+o comprobarlo con `gio mount -l`.
+
 ### Audio y vídeo
 
 PipeWire es el servidor; WirePlumber es el gestor de sesión. `pavucontrol`

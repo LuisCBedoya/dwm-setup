@@ -1160,3 +1160,11 @@ reinicio de picom.
   de compilación).
 - Limpieza manual del usuario: chromium y avahi-daemon fuera;
   NetworkManager-wait-online desactivado; xdg default = Firefox ESR.
+
+### Móvil por cable (MTP) en el instalador (2026-11-04)
+
+`libmtp-runtime` añadido a `DESKTOP_PKGS`: aporta las reglas udev del
+acceso MTP sin root. Con el backend `gvfsd-mtp` (ya en gvfs-backends) y
+Thunar, al conectar un Android en modo *Transferencia de archivos*
+aparece como "Dispositivo Android" y se copia en ambos sentidos. Sin
+apps en el teléfono. Documentado en README (junto a udiskie/Thunar).
