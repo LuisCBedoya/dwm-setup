@@ -27,8 +27,8 @@ rounded-corners-exclude = [
 ];
 fading = true;
 fade-delta = 5;
-fade-in-step = 0.05;
-fade-out-step = 0.05;
+fade-in-step = 0.035;
+fade-out-step = 0.035;
 fade-exclude = [
   "window_type = 'dock'",
   "window_type = 'notification'",

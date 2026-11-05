@@ -992,3 +992,5 @@ ytsearch50  → 4533 ms
 - 2026-11-05: se descartó el halo/inactive-dim por feo; foco por borde
   2px (bspwm) con gap 10 y redondeo picom intacto. Aplicado en vivo;
   pendiente de commit.
+- 2026-11-05: fade de picom ajustado a 0.035 (~143 ms) por sensación
+  del usuario; reiniciado y verificado el valor en el conf vivo.

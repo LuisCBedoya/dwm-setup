@@ -191,7 +191,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `autostart` (antes de polybar, con guard `pgrep -x picom`) usando
     `~/.config/picom/picom.conf` generado desde `templates/picom/`:
     `backend glx`, `vsync true`, `use-damage`, fade sutil (delta 5,
-    pasos 0.05) que excluye dock/notificaciones/desktop, `shadow true`
+    pasos 0.035) que excluye dock/notificaciones/desktop, `shadow true`
     sutil (radius 10, opacity 0.35, offsets -8/-8, sin sombra en
     dock/desktop) y todas las opacidades a 1. **No añadir blur ni
     transparencias de picom** (romperían la decisión tomada en vivo);

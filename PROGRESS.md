@@ -1224,3 +1224,10 @@ apps en el teléfono. Documentado en README (junto a udiskie/Thunar).
   sigue dejando picom sin radios en monocle.
 - Borde final de bspwm: **3** (el vivo y el runtime ya estaban en 3;
   el "4" recordado no llegó a aplicarse). Plantilla actualizada.
+
+### Fade de picom a 0.035 (2026-11-05)
+
+El usuario notó 0.05 demasiado rápido; se fija `fade-in/out-step =
+0.035` con `fade-delta 5` (~143 ms): fluido entre los ~100 ms de 0.05
+y los ~167 ms de 0.03. Aplicado en vivo (picom reiniciado) y docs
+alineadas (AGENTS regla 25, ADR-110).

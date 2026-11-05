@@ -2503,7 +2503,7 @@ sutil. No quiere transparencias ni sombras de picom.
 **Decisión:**
 1. picom 12.5 entra a la sesión formalmente: `backend glx`, `vsync true`,
    `use-damage true`.
-2. `fading true` sutil (`fade-delta 5`, pasos 0.05), excluyendo dock,
+2. `fading true` sutil (`fade-delta 5`, pasos 0.035), excluyendo dock,
    notificaciones y desktop: la barra y dunst no hacen fade.
 3. NO sombras, NO blur, NO alpha de picom: todas las opacidades a 1. La
    barra B translúcida se mantiene: es el fondo `#00000000` de polybar
@@ -2653,6 +2653,6 @@ decisión nueva para cambiarlo.
 
 **Consecuencias:**
 - Coste de composición despreciable en esta Intel; vsync y fade
-  (pasos 0.05) quedan intactos.
+  (pasos 0.035) quedan intactos.
 - Dunst y ventanas normales ganan profundidad; la barra no proyecta
   sombra sobre el contenido.
