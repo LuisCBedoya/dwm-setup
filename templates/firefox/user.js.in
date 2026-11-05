@@ -3,3 +3,5 @@
 user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 user_pref("ui.systemUsesDarkTheme", @THEME_PREFERS_DARK@);
 user_pref("layout.css.prefers-color-scheme.content-override", @THEME_CONTENT_OVERRIDE@);
+// Mantiene las barras visibles al entrar en pantalla completa (ajuste del usuario).
+user_pref("browser.fullscreen.autohide", false);

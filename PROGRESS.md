@@ -1179,3 +1179,15 @@ apps en el teléfono. Documentado en README (junto a udiskie/Thunar).
   (`reload_wallpaper`, cuenta en el resumen de recargas).
 - README: sección "Wallpapers por modo y fondos personales" + tabla de
   atajos y estructura actualizadas.
+
+### Ajustes del usuario: borde/gaps bspwm y fullscreen de Firefox (2026-11-05)
+
+- `bspwmrc` en las plantillas: `border_width 2` y `window_gap 10`
+  (antes 1/0). El usuario los había aplicado en caliente; el
+  re-render de `theme-mode` a las 11:03 los revirtió porque el archivo
+  se genera desde `templates/bspwm/bspwmrc.in`.
+- `templates/firefox/user.js.in`: `browser.fullscreen.autohide = false`
+  (el usuario lo puso en about:config; el `user.js` generado por
+  theme-mode lo hacía desaparecer en cada render).
+- Regla documentada en README: los ficheros renderizados no se editan a
+  mano; los ajustes van a la plantilla.

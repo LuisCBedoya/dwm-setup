@@ -973,3 +973,7 @@ ytsearch50  → 4533 ms
   (`local-dark/local-light`). `wallpaper.sh apply` respeta el modo;
   `theme-mode` lo re-aplica. Previews Vagabond en /tmp para revisión;
   los fondos finales serán locales (copyright) y no entran al repo.
+- 2026-11-05: borde 2 / gap 10 de bspwm y
+  browser.fullscreen.autohide=false (Firefox) pasan a las plantillas.
+  Aplicado en vivo (bspc config + user.js del perfil); Firefox lo toma
+  al reiniciarse.

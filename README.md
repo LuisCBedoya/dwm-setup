@@ -472,6 +472,11 @@ polybar, dunst, los bordes de bspwm, el **wallpaper del modo** y kitty. **No
 pide sudo**: los temas ya están instalados. Firefox y VLC necesitan
 reiniciarse para aplicar el cambio.
 
+Los ficheros generados (`bspwmrc`, `user.js`, `kitty.conf`, `dunstrc`…) no se
+editan a mano: `theme-mode` y `sudo ./install.sh` los regeneran desde
+`templates/` y el cambio manual se pierde. Cualquier ajuste va a la plantilla
+y se commitea.
+
 ### Wallpapers por modo y fondos personales
 
 `wallpaper.sh apply` elige el fondo según el modo (`dark` → `wallpaper.png`,
