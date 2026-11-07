@@ -1,40 +1,93 @@
 #!/bin/sh
 # display-setup — adapta las salidas de vídeo al hardware conectado.
-# Todo terreno: no asume nombres de salida ni resoluciones; usa el modo
-# preferido (EDID) de cada monitor y refuerza el no-blanqueo.
+# Todo terreno: no asume nombres de salida ni resoluciones; usa la
+# resolución preferida (EDID) de cada monitor y, dentro de ella, la tasa
+# de refresco más alta disponible (fluidez). Refuerza el no-blanqueo.
+#
+# Variables:
+#   DISPLAY_LAYOUT=extend|mirror   distribución con varios monitores
+#   DISPLAY_REFRESH=max|preferred|<Hz>  tasa de refresco (max por defecto)
 #
 # Uso:
-#   display-setup.sh apply   aplica --auto a cada salida conectada
-#                            (DISPLAY_LAYOUT=mirror para espejar)
+#   display-setup.sh apply   aplica ahora
 #   display-setup.sh watch   re-aplica al conectar/desconectar pantalla
 set -u
 
 command -v xrandr >/dev/null 2>&1 || exit 0
 [ -n "${DISPLAY:-}" ] || exit 0
 
-# Sin blanqueo ni DPMS por inactividad (idempotente en cualquier hardware).
 xset s off 2>/dev/null || true
 xset s noblank 2>/dev/null || true
 xset -dpms 2>/dev/null || true
 
 layout=${DISPLAY_LAYOUT:-extend}
+refresh=${DISPLAY_REFRESH:-max}
 
 connected() {
   xrandr --query 2>/dev/null | awk '/ connected/ {print $1}'
+}
+
+# Líneas de modos de una salida (tras su cabecera hasta la siguiente salida).
+output_modes() {
+  xrandr --query 2>/dev/null | awk -v o="$1" '$1==o{f=1;next} f&&!/^[[:space:]]/{exit} f{print}'
+}
+
+# Resolución preferida de la salida (marcada con '+'), o la primera.
+preferred_resolution() {
+  modes=$(output_modes "$1")
+  res=$(printf '%s\n' "$modes" | awk '/\+/{print $1; exit}')
+  [ -n "$res" ] || res=$(printf '%s\n' "$modes" | awk 'NF>=2{print $1; exit}')
+  printf '%s' "$res"
+}
+
+# tasa de refresco a usar para resolución $1 de la salida $2.
+choose_rate() {
+  res=$1
+  modes=$(output_modes "$2")
+  rates=$(printf '%s\n' "$modes" | awk -v m="$res" '$1==m{for(i=2;i<=NF;i++) print $i}' |
+    sed 's/[*+]//g' | grep -E '^[0-9.]+$' || true)
+  [ -n "$rates" ] || return 0
+  case "$refresh" in
+    preferred)
+      pref=$(printf '%s\n' "$rates" | head -1)
+      printf '%s' "$pref"
+      ;;
+    *[!0-9.]*|'')
+      printf '%s' "$(printf '%s\n' "$rates" | sort -rn | head -1)"
+      ;;
+    *)
+      printf '%s' "$refresh"
+      ;;
+  esac
+}
+
+apply_output() {
+  out=$1 res=$2 rate=$3
+  shift 3
+  if [ -n "$res" ] && [ -n "$rate" ]; then
+    xrandr --output "$out" --mode "$res" --rate "$rate" "$@" 2>/dev/null ||
+      xrandr --output "$out" --auto "$@" 2>/dev/null || true
+  else
+    xrandr --output "$out" --auto "$@" 2>/dev/null || true
+  fi
 }
 
 apply_layout() {
   set -- $(connected)
   [ "$#" -gt 0 ] || return 0
   first=$1
-  xrandr --output "$first" --auto --primary 2>/dev/null || true
+  res=$(preferred_resolution "$first")
+  rate=$(choose_rate "$res" "$first")
+  apply_output "$first" "$res" "$rate" --primary
   shift
   prev=$first
   for out in "$@"; do
+    res=$(preferred_resolution "$out")
+    rate=$(choose_rate "$res" "$out")
     if [ "$layout" = "mirror" ]; then
-      xrandr --output "$out" --auto --same-as "$first" 2>/dev/null || true
+      apply_output "$out" "$res" "$rate" --same-as "$first"
     else
-      xrandr --output "$out" --auto --right-of "$prev" 2>/dev/null || true
+      apply_output "$out" "$res" "$rate" --right-of "$prev"
     fi
     prev=$out
   done

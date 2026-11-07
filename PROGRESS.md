@@ -1255,3 +1255,18 @@ alineadas (AGENTS regla 25, ADR-110).
 driver Vulkan de Intel/AMD (NVIDIA aporta su ICD por su cuenta). En la
 máquina ya están instalados y `vulkaninfo --summary` muestra la Intel
 UHD 630; sin servicios ni configuración extra.
+
+### Fluidez: refresco automático y VA-API en Firefox (2026-11-06)
+
+- `display-setup.sh` ahora elige, para cada monitor, la resolución
+  preferida (EDID) y **la tasa de refresco más alta** disponible
+  (`DISPLAY_REFRESH=max|preferred|<Hz>`, por defecto max). En esta
+  máquina pasa a **120 Hz** (era 60). Mantiene extend/mirror, watch y
+  no-blanqueo. Todo terreno: sin nombres ni modos hardcodeados.
+- Firefox: `media.ffmpeg.vaapi.enabled = true` en `user.js` (plantilla
+  y perfil vivo). Decodificación por GPU si hay driver (Intel iHD aquí);
+  fallback a CPU si no.
+- Diagnóstico previo: compositor correcto (glx/vsync/use-damage/Present),
+  GLX directo Intel, sin swap, gobernador performance; WebExtensions
+  consumía CPU por pestañas/extensiones (uBlock/SurfingKeys), ajeno a
+  la config.

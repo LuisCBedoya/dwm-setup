@@ -1002,3 +1002,7 @@ ytsearch50  → 4533 ms
 - 2026-11-05: Vulkan verificado (Intel UHD 630 + llvmpipe) y añadido al
   instalador (libvulkan1 + mesa-vulkan-drivers). Uso futuro: upscalers
   ncnn si se opta por el camino local.
+- 2026-11-06: fluidez verificada. `xrandr` aplica 120 Hz vía
+  display-setup (resolución preferida + max rate). VA-API activado en
+  Firefox por pref (requiere reiniciar el navegador para verse en
+  about:support). Compositor y sistema sin cuellos de botella.

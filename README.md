@@ -32,6 +32,12 @@ Incluido:
   sin blur ni transparencias; ADR-107/ADR-110): mata el rasgado al
   arrastrar y hacer scroll y la barra B se ve translúcida con su fondo
   transparente.
+- **Pantallas**: `display-setup.sh` detecta los monitores conectados y usa
+  su **resolución preferida (EDID) y la tasa de refresco más alta**
+  (120 Hz si el monitor lo permite; `DISPLAY_REFRESH=60` para forzarla).
+  Extiende o espeja (`DISPLAY_LAYOUT=mirror`), soporta hotplug (`watch`) y
+  refuerza el no-blanqueo. Firefox usa **VA-API** para decodificar vídeo
+  por GPU cuando el driver está disponible.
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo,
   **ueberzug** para previsualizar imágenes y carátulas. Texto, código y
   Markdown se abren con **Neovim**. Tema GTK **Catppuccin** (Mocha Black o

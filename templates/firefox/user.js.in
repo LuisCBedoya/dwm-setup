@@ -5,3 +5,6 @@ user_pref("ui.systemUsesDarkTheme", @THEME_PREFERS_DARK@);
 user_pref("layout.css.prefers-color-scheme.content-override", @THEME_CONTENT_OVERRIDE@);
 // Mantiene las barras visibles al entrar en pantalla completa (ajuste del usuario).
 user_pref("browser.fullscreen.autohide", false);
+// Decodificación de vídeo por GPU (VA-API). Firefox la usa solo si el
+// driver existe (Intel iHD/AMD); si no, cae a CPU sin romper nada.
+user_pref("media.ffmpeg.vaapi.enabled", true);
