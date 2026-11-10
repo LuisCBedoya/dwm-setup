@@ -13,6 +13,7 @@ export COLOR_BG_ELEV="#ccd0da"     # surface0 — tarjetas
 export COLOR_BG_HOVER="#bcc0cc"    # surface1 — selección
 export COLOR_BORDER="#bcc0cc"      # surface1 — contornos
 export COLOR_BORDER_ALT="#acb0be"  # surface2 — contornos suaves
+export COLOR_SEL_BG="#acb0be"      # selección de texto (surface2 Catppuccin)
 
 # Texto
 export COLOR_FG="#4c4f69"          # text

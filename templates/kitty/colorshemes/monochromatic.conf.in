@@ -5,7 +5,7 @@ background            @COLOR_TERM_BG@
 foreground            @COLOR_FG@
 cursor                @COLOR_ACCENT@
 cursor_text_color     @COLOR_TERM_BG@
-selection_background  @COLOR_BG_HOVER@
+selection_background  @COLOR_SEL_BG@
 selection_foreground  @COLOR_FG@
 url_color             @COLOR_TERM_4@
 

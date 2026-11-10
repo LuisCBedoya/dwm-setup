@@ -35,11 +35,13 @@ hex_to_rgba() {
 }
 
 # Export helpers para plantillas que necesitan rgba (se llaman después de cargar la paleta)
+# Los *_RGB definidos en la paleta (SGR decimal, p. ej. "137;180;250") tienen
+# prioridad: no pisarlos con el hex sin '#'. Solo se derivan si no existen.
 export_rgba_helpers() {
-  export COLOR_BG_RGB="${COLOR_BG#\#}"
-  export COLOR_BG_ALT_RGB="${COLOR_BG_ALT#\#}"
-  export COLOR_BG_ELEV_RGB="${COLOR_BG_ELEV#\#}"
-  export COLOR_ACCENT_RGB="${COLOR_ACCENT#\#}"
+  export COLOR_BG_RGB="${COLOR_BG_RGB:-${COLOR_BG#\#}}"
+  export COLOR_BG_ALT_RGB="${COLOR_BG_ALT_RGB:-${COLOR_BG_ALT#\#}}"
+  export COLOR_BG_ELEV_RGB="${COLOR_BG_ELEV_RGB:-${COLOR_BG_ELEV#\#}}"
+  export COLOR_ACCENT_RGB="${COLOR_ACCENT_RGB:-${COLOR_ACCENT#\#}}"
   export COLOR_BG_RGBA_92="$(hex_to_rgba "$COLOR_BG" 0.92)"
   export COLOR_BG_ALT_RGBA_92="$(hex_to_rgba "$COLOR_BG_ALT" 0.92)"
   export COLOR_BG_ELEV_RGBA_92="$(hex_to_rgba "$COLOR_BG_ELEV" 0.92)"
