@@ -85,6 +85,9 @@ theme_var() {
       COLOR_CYAN) val="#94e2d5" ;;
       COLOR_PURPLE) val="#cba6f7" ;;
       COLOR_BLUE) val="#89b4fa" ;;
+      COLOR_ACCENT_RGB) val="137;180;250" ;;
+      COLOR_ACCENT_ALT_RGB) val="180;190;254" ;;
+      COLOR_FG_DIM_RGB) val="108;112;134" ;;
       *) val="#ff00ff" ;;
     esac
   fi
@@ -114,6 +117,7 @@ render_theme_template() {
   for var in COLOR_BG COLOR_BG_DEEP COLOR_BG_DEEPEST COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
              COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM \
              COLOR_BORDER COLOR_BORDER_ALT COLOR_ACCENT COLOR_ACCENT_ALT \
+             COLOR_ACCENT_RGB COLOR_ACCENT_ALT_RGB COLOR_FG_DIM_RGB \
              COLOR_GREEN COLOR_YELLOW COLOR_ORANGE COLOR_RED COLOR_CYAN \
              COLOR_PURPLE COLOR_BLUE \
              COLOR_TERM_BG COLOR_TERM_0 COLOR_TERM_1 COLOR_TERM_2 \

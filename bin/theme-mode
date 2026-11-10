@@ -133,6 +133,7 @@ render_mode() {
   render_one "rofi/config.rasi.in" "$h/.config/rofi/config.rasi" 0644
   render_one "rofi/powermenu.rasi.in" "$h/.config/rofi/powermenu.rasi" 0644
   render_one "zathura/zathurarc.in" "$h/.config/zathura/zathurarc" 0644
+  render_one "fastfetch/config.jsonc.in" "$h/.config/fastfetch/config.jsonc" 0644
   render_one "bspwm/bspwmrc.in" "$h/.config/bspwm/bspwmrc" 0755
   render_one "bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in" \
     "$h/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh" 0755

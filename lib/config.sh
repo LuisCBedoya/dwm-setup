@@ -105,6 +105,7 @@ install_theme_store() {
     "templates/vlc/vlcrc.in"
     "templates/firefox/userChrome.css.in"
     "templates/firefox/user.js.in"
+    "templates/fastfetch/config.jsonc.in"
   )
 
   make_user_dir "$store"

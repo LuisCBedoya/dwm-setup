@@ -18,10 +18,13 @@ export COLOR_BORDER_ALT="#acb0be"  # surface2 — contornos suaves
 export COLOR_FG="#4c4f69"          # text
 export COLOR_FG_MUTED="#6c6f85"    # subtext0
 export COLOR_FG_DIM="#9ca0b0"      # overlay0
+export COLOR_FG_DIM_RGB="156;160;176" # overlay0 en RGB decimal (SGR 38;2)
 
 # Acentos y estados
 export COLOR_ACCENT="#1e66f5"      # blue (oscurecido para contraste)
 export COLOR_ACCENT_ALT="#7287fd"  # lavender
+export COLOR_ACCENT_RGB="30;102;245"     # blue en RGB decimal (SGR 38;2)
+export COLOR_ACCENT_ALT_RGB="114;135;253" # lavender en RGB decimal
 export COLOR_GREEN="#40a02b"
 export COLOR_YELLOW="#df8e1d"
 export COLOR_ORANGE="#fe640b"      # peach
