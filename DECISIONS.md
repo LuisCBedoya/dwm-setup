@@ -2698,3 +2698,46 @@ incondicional.
 - Mantener el driver conserva los ~6 s de carga de módulos al arranque
   (compensables bajando el timeout GRUB de 5 a 2 s; pendiente de
   aprobación del usuario).
+
+## ADR-112 — Escritorios dinámicos y mapa de teclas sin Super+h/j/k/l
+
+**Contexto:** el usuario pidió quitar `Super+h/j/k/l` dejando `Alt+Tab`
+como ciclo de ventanas, y escritorios dinámicos: arrancar con uno solo,
+crear los demás saltando con `Super+N`, recorrerlos con `Ctrl+Tab` y que
+los vacíos se borren solos al salir de ellos. La regla 18 exige decisión
+nueva para tocar el mapa.
+
+**Decisión:**
+1. `sxhkdrc`: fuera `super + {_,shift + }{h,j,k,l}` (foco y swap).
+   Quedan `Alt+Tab`/`Alt+Shift+Tab`, `Super+c` y el modo resize
+   (`Super+r`, modal).
+2. Nuevo `templates/bspwm/scripts/workspace.sh` (POSIX `sh`):
+   los escritorios son una secuencia densa `1..N` (el daemon y el
+   propio script renumera con `bspc monitor -d 1..N`, puro rename, al
+   borrar y al arrancar; `-o` deja de hacer falta). `focus N` /
+   `move N`: si `N ≤ total` van al escritorio N; si `N > total` crean
+   el siguiente (`total+1`) — pedido explícito del usuario: con 2
+   escritorios, Super+5 crea el 3, y si el 5 existe, Super+5 va al 5.
+   `next`/`prev` recorren los existentes; `daemon` (`bspc subscribe
+   desktop_focus node_remove node_transfer`, consulta `-d focused`)
+   borra los escritorios no enfocados sin ventanas (`-n .window.!sticky`,
+   sticky no cuenta), cubriendo también el vaciado sin cambio de foco.
+3. `bspwmrc`: `bspc monitor -d 1` y lanzamiento del daemon con guard
+   `pgrep` (como sxhkd/picom).
+4. Navegación: `Ctrl+Tab` / `Ctrl+Shift+Tab` cambian de escritorio,
+   petición explícita del usuario aun sabiendo que Firefox pierde
+   `Ctrl+Tab` (le quedan `Ctrl+PageUp/PageDown`). Se mantienen
+   `Super+Ctrl+(Shift+)Tab` y `Super+bracket{left,right}`.
+5. `verify.sh`: exige `bspc monitor -d 1`, `workspace.sh` ejecutable,
+   el daemon en `bspwmrc` y la ausencia del bloque `hjkl` en `sxhkdrc`.
+6. Aplicación en vivo sin `bspc wm -r` (consolidaría ventanas): los
+   escritorios viejos se limpian al navegar; el arranque limpio llega
+   con el próximo `startx`.
+
+**Consecuencias:**
+- Polibar pinta solo los escritorios existentes (`internal/bspwm`):
+  dígitos en A, círculos en B.
+- La barra nunca muestra huecos: al borrar un vacío los siguientes se
+  renumeran (`1..N`); las ventanas no se tocan al renombrar.
+- `Super+N` funciona 1–9 en el script; el mapa fija 1–7.
+- `Ctrl+Tab` ya no cambia de pestaña en Firefox.

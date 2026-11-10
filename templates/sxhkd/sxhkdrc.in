@@ -106,10 +106,9 @@ super + ctrl + y
 super + ctrl + z
     bspc node -g private
 
-# ─── Foco y movimiento ───
-# Direcciones
-super + {_,shift + }{h,j,k,l}
-    bspc node -{f,s} {west,south,north,east}
+# ─── Foco y ciclo de ventanas ───
+# ADR-112: sin Super+h/j/k/l (ni su versión Shift); el ciclo es Alt+Tab
+# y next/prev con Super+c.
 
 # Alt+Tab: ciclo de ventanas del escritorio actual
 alt + Tab
@@ -121,15 +120,23 @@ alt + shift + Tab
 super + {_,shift + }c
     bspc node -f {next,prev}.local.!hidden.window
 
-# Escritorios (5)
+# Escritorios dinámicos (ADR-112): se crean al saltar y se borran
+# vacíos al salir de ellos; workspace.sh usa nombres, no posiciones
+# (con huecos, '^N' apuntaría a otra cosa).
+ctrl + Tab
+    @HOME@/.config/bspwm/scripts/workspace.sh next
+ctrl + shift + Tab
+    @HOME@/.config/bspwm/scripts/workspace.sh prev
 super + ctrl + Tab
     bspc desktop -f next.local
 super + ctrl + shift + Tab
     bspc desktop -f prev.local
 super + bracket{left,right}
     bspc desktop -f {prev,next}.local
-super + {_,shift + }{1-7}
-    bspc {desktop -f,node -d} '^{1-7}'
+super + {1-7}
+    @HOME@/.config/bspwm/scripts/workspace.sh focus {1-7}
+super + shift + {1-7}
+    @HOME@/.config/bspwm/scripts/workspace.sh move {1-7}
 
 # ─── Modo resize: Super+r, luego h/j/k/l; Escape o 6 s sale ───
 # resize-mode.sh arranca un sxhkd hijo que solo captura h/j/k/l/Escape.

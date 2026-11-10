@@ -1,4 +1,4 @@
-; bspwm — workspaces compactos con glifos de bspwm_circle
+; bspwm — escritorios dinámicos con círculos, solo los existentes (ADR-112)
 [module/bspwm]
 type = internal/bspwm
 

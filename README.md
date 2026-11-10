@@ -20,7 +20,7 @@ Incluido:
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
 - **polybar** con **13 módulos** (14 con backlight), más la bandeja del
-  sistema (XEmbed): logo StumbleUpon, workspaces 1-7, pomodoro, temperatura,
+  sistema (XEmbed): logo StumbleUpon, escritorios dinámicos, pomodoro, temperatura,
   RAM, CPU, **gobernador de CPU** (clic alterna performance/powersave + notificación),
   red unificada (`󰖩/󰈀 connected`, `󰖩 NoC` sin conexión), servicios
   systemd, volumen, batería, fecha y actualizaciones (calavera + número).
@@ -316,11 +316,10 @@ Si algo falla:
 | `Super+b` / `Super+v` | split horizontal / vertical (preselección) |
 | `Super+f` | fullscreen |
 | `Alt+Tab` / `Alt+Shift+Tab` | siguiente / anterior ventana |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | siguiente / anterior escritorio (ADR-112) |
 | `Super+Ctrl+Tab` / `Super+Ctrl+Shift+Tab` | siguiente / anterior escritorio |
-| `Super+{h,j,k,l}` | foco ventanas |
-| `Super+Shift+{h,j,k,l}` | mover/intercambiar ventanas |
-| `Super+{1-7}` | ir a escritorio |
-| `Super+Shift+{1-7}` | mover ventana a escritorio |
+| `Super+{1-7}` | ir al escritorio N; si no existe, crea el siguiente |
+| `Super+Shift+{1-7}` | mover ventana al N; si no existe, crea el siguiente |
 | `Super+r`, luego `h/j/k/l` | modo resize (Escape o 6 s sale) |
 | `Super+m` | monocle/tiled (en monocle, picom sin esquinas ni sombra) |
 | `Print` | pantalla completa al portapapeles |
@@ -331,12 +330,16 @@ Si algo falla:
 | `XF86AudioForward` / `Rewind` | ±10 s en el activo |
 | `XF86MonBrightnessUp/Down` | brillo |
 
-`Ctrl+Tab` queda libre para navegadores y editores. `Super+Ctrl+Tab` y
-`Super+Ctrl+Shift+Tab` cambian de escritorio; `Super+Left/Right` y
-`Super+1..5` siguen disponibles.
+Escritorios dinámicos (ADR-112): la sesión arranca con uno solo; `Super+1..7`
+salta al N si ya existe y, si no, crea el siguiente (secuencia densa `1..N`
+sin huecos: al borrarse un vacío, los demás se renumeran). Recorren los
+existentes `Ctrl+Tab`,
+`Ctrl+Shift+Tab`, `Super+Ctrl+(Shift+)Tab` y `Super+bracket{left,right}`.
+`Ctrl+Tab` deja de cambiar de pestaña en el navegador (quedan
+`Ctrl+PageUp/PageDown`).
 
 `Super` es la tecla Windows. La barra muestra 13 módulos (14 si hay
-backlight): logo StumbleUpon, workspaces 1-7, pomodoro, temperatura, RAM,
+backlight): logo StumbleUpon, escritorios dinámicos, pomodoro, temperatura, RAM,
 CPU, red, servicios, volumen, batería, fecha, actualizaciones y bandeja del
 sistema. La red muestra un solo `󰖩 connected` o
 `󰈀 connected`; Ethernet tiene prioridad si el cable está conectado. Si no

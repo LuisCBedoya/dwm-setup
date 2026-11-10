@@ -1017,3 +1017,14 @@ ytsearch50  → 4533 ms
   estáticos OK (bash -n, sh -n, --dry-run). Pendiente de aplicar en
   vivo con `sudo ./install.sh` y validar `prime-run glxinfo -B` /
   `prime-run vulkaninfo --summary` (GTX 1050 Ti).
+- 2026-11-10: escritorios dinámicos (ADR-112) aplicados en vivo:
+  workspace.sh (focus/move/next/prev/daemon), bspwmrc `-d 1`,
+  sxhkdrc sin hjkl y con Ctrl+Tab. Backup previo, daemon activo.
+  Pendiente: `sudo ./install.sh` y prueba manual (Super+3 aparece, al
+  volver al 1 desaparece; Ctrl+Tab recorre solo existentes;
+  Super+Shift+3 mueve y crea). No usar `Super+Shift+r` (reinicia
+  bspwm y re-ejecuta bspwmrc con `-d 1`) hasta el próximo startx.
+- 2026-11-10: regla densa de escritorios: Super+N salta al N si
+  existe y crea el siguiente si no; renumeración 1..N tras borrar.
+  Probado en vivo (1→2, [1,2]→3, [1..5] Super+5 va al 5, move y
+  rename con ventanas). Pendiente `sudo ./install.sh`.

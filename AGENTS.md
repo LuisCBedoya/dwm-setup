@@ -15,7 +15,7 @@ y almacenamiento extraíble con notificación. La CPU arranca en
 
 La barra final es la de la config viva: **13 módulos** (**14 con backlight**),
 logo StumbleUpon
-(`U+F1A4`), workspaces 1-7, actualizaciones al inicio de la derecha, fecha al final,
+(`U+F1A4`), escritorios dinámicos (solo los existentes), actualizaciones al inicio de la derecha, fecha al final,
 red unificada (`󰖩/󰈀 connected`, Ethernet prioritario, `󰖩 NoC` sin conexión), servicios systemd, gobernador
 de CPU (`󱃋 performance` con acento, `󰾆 powersave`; clic alterna + toast), volumen,
 batería y fecha; sin `dots`. Sin `xkeyboard`, `wlan`/`eth` separados ni
@@ -28,7 +28,7 @@ nuevo marginal): `cpu` cierra en `%{O2}`, `governor` añade `%{O5}` y
 `memory` padding 1).
 
 Hay una **variante B "referencia"** instalada aparte: 15 módulos (16 con
-backlight), 5 workspaces como círculos al centro; a la izquierda `date`, `day`,
+backlight), escritorios dinámicos como círculos al centro; a la izquierda `date`, `day`,
 gobernador, `updates`,
 pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU,
 red, volumen y batería. Barra de 30 px con fondo del modo activo, fuentes 10/13 y flechas del color del
@@ -118,8 +118,17 @@ La fase 1 termina en el escritorio. No implementar todavía:
     (mpv vía MPRIS): play-pause y stop actúan sobre **todas** las
     instancias (stop = limpieza cuando ytwatch dejó varias sonando);
     next/prev/seek sobre el reproductor activo.
-    `Super+Ctrl+Tab` y `Super+Ctrl+Shift+Tab` cambian de escritorio. No
-    cambiar este mapa sin una decisión nueva.
+    ADR-112 retira `Super+h/j/k/l` (y su Shift): el ciclo de ventanas es
+    `Alt+Tab` o `Super+c`. Escritorios dinámicos con
+    `scripts/workspace.sh` (`focus/move/next/prev/daemon`): nombres
+    densos `1..N`, nunca `^N`. `bspwmrc` arranca con `bspc monitor -d 1`;
+    `Super+N` va al N si existe y, si no, crea el siguiente (`total+1`);
+    `Super+Shift+N` igual pero moviendo la ventana; el daemon borra al
+    cambiar de foco los vacíos y renumera para no dejar huecos.
+    `Ctrl+Tab` y `Ctrl+Shift+Tab` cambian de escritorio (petición del
+    usuario; el navegador usa `Ctrl+PageUp/PageDown`), además de
+    `Super+Ctrl+(Shift+)Tab` y `Super+bracket{left,right}`. No cambiar
+    este mapa sin una decisión nueva.
 19. **Audio portable.** El watcher elige auriculares > HDMI > altavoces
     detectando tarjetas/perfiles/puertos con `pactl`; no hardcodear
     `alsa_card.*`, nombres de monitor ni perfiles salvo como fallback
@@ -272,7 +281,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/desktop-safe` | Acciones de sesión (lock/suspend/logout/poweroff) |
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
 | `bin/dwm-setup-cpu-governor` | Helper root del módulo governor: valida y escribe `scaling_governor` |
-| `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults) |
+| `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults y workspace.sh, ADR-112) |
 | `templates/sxhkd/` | sxhkdrc |
 | `templates/polybar/` | config.ini, modules/ (incl. governor), scripts/ (cpu-governor.sh) y variants/ |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
@@ -331,6 +340,7 @@ bash -n bin/yt-play bin/yt-preview bin/ytdlp-check bin/ytdlp-update \
   bin/ytdlp-rollback bin/music-ctl bin/ytwatch-check bin/ytwatch-update \
   bin/yt-update-notify
 bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
+sh -n templates/bspwm/scripts/workspace.sh.in
 
 # Gobernador: lista oficial y sudoers renderizado (sin tocar el sistema)
 sh -n bin/dwm-setup-cpu-governor

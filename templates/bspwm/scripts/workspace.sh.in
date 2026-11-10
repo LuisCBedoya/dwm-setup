@@ -1,0 +1,105 @@
+#!/bin/sh
+# workspace.sh — escritorios dinámicos de bspwm (ADR-112)
+# Generado desde template; no editar directamente.
+#
+# Los escritorios son una secuencia densa 1..N (sin huecos): al borrar
+# un vacío los demás se renumeran.
+#
+# focus N    si N <= total, salta al escritorio N; si no, crea el
+#            siguiente (total+1) y salta a él
+# move N     igual pero moviendo la ventana enfocada
+# next/prev  escritorio existente siguiente/anterior
+# daemon     se suscribe a eventos y borra los escritorios vacíos
+#            (no enfocados, sin ventanas ni sticky) al cambiar de foco
+
+set -u
+
+usage() {
+  printf 'uso: workspace.sh focus N | move N | next | prev | daemon\n' >&2
+  exit 2
+}
+
+command -v bspc >/dev/null 2>&1 || exit 1
+
+# ¿existe el escritorio con ese nombre?
+desktop_exists() {
+  bspc query -D --names 2>/dev/null | grep -qx -- "$1"
+}
+
+count_desktops() {
+  bspc query -D --names 2>/dev/null | wc -l | tr -d ' '
+}
+
+# deja los nombres densos 1..N (con el mismo número de nombres,
+# bspc monitor -d solo renombra; las ventanas no se tocan)
+renumber_desktops() {
+  count=$(count_desktops)
+  [ "$count" -gt 0 ] || return 0
+  i=1
+  names=""
+  while [ "$i" -le "$count" ]; do
+    names="$names $i"
+    i=$((i + 1))
+  done
+  bspc monitor -d $names 2>/dev/null || true
+}
+
+# destino: N si existe; si no, el siguiente de la secuencia
+resolve_target() {
+  count=$(count_desktops)
+  if [ "$1" -le "$count" ]; then
+    printf '%s\n' "$1"
+  else
+    printf '%s\n' "$((count + 1))"
+  fi
+}
+
+ensure_desktop() {
+  desktop_exists "$1" && return 0
+  bspc monitor -a "$1" || return 1
+}
+
+# borra escritorios vacíos salvo el enfocado ($1)
+remove_empty_desktops() {
+  current="$1"
+  for d in $(bspc query -D --names 2>/dev/null); do
+    [ "$d" = "$current" ] && continue
+    if [ -z "$(bspc query -N -d "$d" -n '.window.!sticky' 2>/dev/null)" ]; then
+      bspc desktop "$d" -r 2>/dev/null || true
+    fi
+  done
+}
+
+[ "$#" -ge 1 ] || usage
+case "$1" in
+  focus|move)
+    [ "$#" -eq 2 ] || usage
+    case "$2" in [1-9]) ;; *) usage ;; esac
+    renumber_desktops
+    target=$(resolve_target "$2")
+    ensure_desktop "$target" || exit 1
+    if [ "$1" = focus ]; then
+      exec bspc desktop -f "$target"
+    else
+      exec bspc node -d "$target"
+    fi
+    ;;
+  next|prev)
+    bspc desktop -f "$1.local"
+    ;;
+  daemon)
+    renumber_desktops
+    # desktop_focus no trae el nombre (solo ids): se pregunta el
+    # enfocado. node_remove/node_transfer permiten limpiar un escritorio
+    # que se vació sin cambiar de foco.
+    bspc subscribe desktop_focus node_remove node_transfer | while read -r ev a b c; do
+      current=$(bspc query -D -d focused --names 2>/dev/null) || continue
+      [ -n "$current" ] || continue
+      remove_empty_desktops "$current"
+      renumber_desktops
+    done
+    ;;
+  *)
+    usage
+    ;;
+esac

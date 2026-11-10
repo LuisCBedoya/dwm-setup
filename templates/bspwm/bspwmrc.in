@@ -5,7 +5,14 @@
 pgrep -x sxhkd > /dev/null || sxhkd -c @HOME@/.config/sxhkd/sxhkdrc &
 
 # Monitores y escritorios
-bspc monitor -d 1 2 3 4 5 6 7
+# Escritorios dinámicos (ADR-112): arranca con uno solo; workspace.sh
+# crea los demás bajo demanda y el daemon borra los que quedan vacíos.
+bspc monitor -d 1
+
+# Daemon de escritorios dinámicos: borra los vacíos al cambiar de foco
+if ! pgrep -f '@HOME@/.config/bspwm/scripts/workspace.sh daemon' >/dev/null 2>&1; then
+  @HOME@/.config/bspwm/scripts/workspace.sh daemon &
+fi
 
 # Geometría
 bspc config border_width         3

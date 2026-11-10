@@ -1311,3 +1311,38 @@ UHD 630; sin servicios ni configuración extra.
   las líneas de prime-run y Vulkan visibles. Pendiente: `sudo
   ./install.sh` y validar `prime-run glxinfo -B` /
   `prime-run vulkaninfo --summary` (deben listar la 1050 Ti).
+
+### Escritorios dinámicos y teclas sin Super+h/j/k/l (ADR-112) — 2026-11-10
+
+- `sxhkdrc` sin `super + {_,shift + }{h,j,k,l}`: el ciclo de ventanas
+  queda en `Alt+Tab`/`Alt+Shift+Tab` y `Super+c`; el modo resize
+  (`Super+r`) sigue. Nuevo `templates/bspwm/scripts/workspace.sh.in`
+  (POSIX sh, `sh -n`): `focus/move` crean el escritorio si falta
+  (`bspc monitor -a` + `-o` para orden numérico) y seleccionan por
+  nombre (los `^N` posicionales se rompen con huecos); `next/prev`
+  recorren; `daemon` (`bspc subscribe desktop_focus node_remove
+  node_transfer`, consulta `-d focused`) borra los no enfocados sin
+  ventanas (`-n .window.!sticky`), también al vaciarlos sin cambiar de
+  foco. Sintaxis verificada en
+  vivo: `-a`/`-o`/`bspc desktop <sel> -r` (este último sin argumentos
+  tras el comando).
+- `bspwmrc`: `bspc monitor -d 1` y daemon con guard `pgrep`.
+- `Ctrl+Tab`/`Ctrl+Shift+Tab` pasan a cambiar de escritorio (petición
+  del usuario); Firefox pierde `Ctrl+Tab` (quedan
+  `Ctrl+PageUp/PageDown`). `verify.sh` exige `-d 1`, workspace.sh
+  ejecutable, el daemon y la ausencia del bloque hjkl.
+- Aplicado en vivo **sin** `bspc wm -r`: los 7 escritorios actuales se
+  irán limpiando al navegar (solo el 1 tenía ventanas). Pendiente:
+  probar Super+N/Ctrl+Tab y `sudo ./install.sh`.
+
+### Escritorios: secuencia densa al pedir Super+N (ajuste ADR-112) — 2026-11-10
+
+- Ajuste pedido en vivo: Super+N ya no crea el escritorio N; si N ≤
+  total salta al N y, si N > total, crea el siguiente (total+1). Los
+  escritorios son siempre 1..N: el daemon y el propio script renumera
+  con `bspc monitor -d 1..N` (puro rename) tras cada borrado y al
+  arrancar, así desaparece el reordenado `-o`.
+- Probado en vivo con ventanas reales: [1] + focus 5 → crea 2;
+  [1,2] + focus 5 → crea 3; [1..5] + focus 5 → va al 5;
+  `move 5` con 2 escritorios mueve al nuevo 3; gap intermedio con
+  contenido se renumera sin perder ventanas.

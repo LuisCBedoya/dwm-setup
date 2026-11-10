@@ -54,6 +54,7 @@ verify_install() {
     "$home/.config/bspwm/scripts/screenshot_full.sh" \
     "$home/.config/bspwm/scripts/audio-switch.sh" \
     "$home/.config/bspwm/scripts/audio-watch.sh" \
+    "$home/.config/bspwm/scripts/workspace.sh" \
     "$home/.config/sxhkd/sxhkdrc" \
     "$home/.config/polybar/config.ini" \
     "$home/.config/polybar/launch.sh" \
@@ -295,6 +296,32 @@ verify_install() {
         failures=$((failures + 1))
       fi
     done
+  fi
+
+  # Escritorios dinámicos (ADR-112): arranca con uno, workspace.sh
+  # instalado, daemon lanzado desde bspwmrc y sin bloque hjkl viejo.
+  if [[ -f "$home/.config/bspwm/bspwmrc" ]]; then
+    if grep -q 'bspc monitor -d 1 2 3' "$home/.config/bspwm/bspwmrc"; then
+      error "bspwmrc sigue creando escritorios fijos (ADR-112: debe ser -d 1)"
+      failures=$((failures + 1))
+    elif ! grep -q 'bspc monitor -d 1$' "$home/.config/bspwm/bspwmrc"; then
+      error "bspwmrc no arranca con un solo escritorio (bspc monitor -d 1)"
+      failures=$((failures + 1))
+    fi
+    if ! grep -q 'workspace.sh daemon' "$home/.config/bspwm/bspwmrc"; then
+      error "bspwmrc no lanza el daemon de escritorios dinámicos"
+      failures=$((failures + 1))
+    fi
+  fi
+  if [[ -f "$home/.config/sxhkd/sxhkdrc" ]]; then
+    if grep -q 'super + {_,shift + }{h,j,k,l}' "$home/.config/sxhkd/sxhkdrc"; then
+      error "sxhkdrc mantiene el bloque Super+h/j/k/l retirado por ADR-112"
+      failures=$((failures + 1))
+    fi
+    if ! grep -q 'workspace.sh next' "$home/.config/sxhkd/sxhkdrc"; then
+      error "sxhkdrc no registra Ctrl+Tab de escritorios (workspace.sh next)"
+      failures=$((failures + 1))
+    fi
   fi
 
   # prime-run: render offload NVIDIA (ADR-111). Si existe, debe ser

@@ -1,4 +1,4 @@
-; bspwm — workspaces 1-7 con dígitos árabes, solo el enfocado tiene caja clara
+; bspwm — escritorios dinámicos con dígitos, solo los existentes (ADR-112)
 [module/bspwm]
 type = internal/bspwm
 
