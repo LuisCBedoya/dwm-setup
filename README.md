@@ -74,7 +74,9 @@ Incluido:
 - `vm.swappiness = 10` por `/etc/sysctl.d/99-dwm-setup-swappiness.conf`
   (23 GB de RAM: menos swap y SSD más tranquilo).
 - Backups, logs, `--dry-run` y diagnóstico con `desktop-doctor`.
-- NVIDIA detectada e instalada de forma condicional.
+- NVIDIA detectada e instalada de forma condicional; con driver
+  propietario deja `prime-run` para render offload por app a la dGPU y
+  el ICD de Vulkan (ADR-111). La Intel sigue siendo la GPU primaria.
 
 No incluido todavía:
 

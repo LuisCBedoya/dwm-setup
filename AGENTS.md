@@ -80,7 +80,10 @@ La fase 1 termina en el escritorio. No implementar todavía:
    `pulseaudio-utils` solo aporta `pactl`.
 10. **No introducir NVIDIA/CUDA incondicionalmente.** La GPU se detecta; el
     driver propietario es opcional y se omite con Secure Boot activo salvo
-    `--nvidia`.
+    `--nvidia`. Con driver presente el instalador deja `prime-run` (offload
+    por app a la dGPU, ADR-111) y `nvidia-vulkan-icd`; sin driver no crea
+    nada. La Intel sigue primaria en Xorg. Docker GPU
+    (nvidia-container-toolkit) solo documentado, nunca automático.
 11. **No abrir gestores de archivos automáticamente** al montar USB.
     `udiskie` solo monta y notifica; Thunar se abre con `Super+Shift+f`.
 12. **Mantener las rutas portables.** Las plantillas usan `@HOME@`, `@FONT@`,
@@ -305,6 +308,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview kitty) |
 | `templates/sysctl/` | `99-dwm-setup-swappiness.conf` (vm.swappiness=10) |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
+| `templates/nvidia/prime-run` | Wrapper de offload por app a la dGPU NVIDIA (ADR-111) |
 | `templates/colors/` | `palette-mocha-black.sh`, `palette-latte.sh` y helpers |
 | `assets/wallpaper.png` | Wallpaper principal |
 | `assets/wallpaper-alt.png` | Wallpaper alternativo |

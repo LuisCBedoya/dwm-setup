@@ -1270,3 +1270,44 @@ UHD 630; sin servicios ni configuración extra.
   GLX directo Intel, sin swap, gobernador performance; WebExtensions
   consumía CPU por pestañas/extensiones (uBlock/SurfingKeys), ajeno a
   la config.
+
+### Fastfetch en azules suaves (truecolor por paleta) — 2026-11-06
+
+- La config de fastfetch ahora toma los colores de las paletas mediante
+  códigos SGR '38;2;R;G;B' que se componen al renderizar: las paredes y
+  el marco van en COLOR_FG_DIM_RGB, cabeceras e iconos en
+  COLOR_ACCENT_ALT_RGB (lavanda) y etiquetas en COLOR_ACCENT_RGB (azul).
+  Los valores quedan en color por defecto y la fila de círculos sigue
+  usando la paleta viva del terminal (ANSI 1;30..1;37).
+- Para ello las paletas exportan tres variables RGB decimales nuevas
+  (COLOR_ACCENT_RGB, COLOR_ACCENT_ALT_RGB, COLOR_FG_DIM_RGB) en ambos
+  temas (mocha-black y latte); lib/theme.sh las sustituye en la lista de
+  render_theme_template y theme-mode vía paleta sourceada.
+- La plantilla entra al store (rule 20b): 'templates/fastfetch/
+  config.jsonc.in' en lib/config.sh y en bin/theme-mode (render_one).
+  Store sincronizado a mano; re-render con theme-mode --no-reload dark.
+  Validado: bash -n/lib+bin, shellcheck n/a, --dry-run ok, sin regresión
+  (dunst corner_radius/frame 3, bspwm alturas/borders 3/gap 10 intactos).
+
+### prime-run + Vulkan ICD para la dGPU NVIDIA (ADR-111) — 2026-11-10
+
+- Debian 13 no trae `nvidia-prime`: se añadió el wrapper propio
+  `templates/nvidia/prime-run` (POSIX sh, `sh -n`) que exporta
+  `__NV_PRIME_RENDER_OFFLOAD`, `__GLX_VENDOR_LIBRARY_NAME=nvidia`,
+  `__VK_LAYER_NV_optimus` y `__EGL_VENDOR_LIBRARY_FILENAMES`
+  (10_nvidia.json), comprueba `/proc/driver/nvidia` y avisa si el
+  driver no está cargado. `lib/gpu.sh` lo instala en `/usr/local/bin`
+  (0755) solo con NVIDIA + driver presente (`nvidia_driver_present()`),
+  con ramas mensajadas y dry-run solo anuncia.
+- `lib/packages.sh`: `nvidia-vulkan-icd` entra al grupo del driver
+  (antes faltaba: `vulkaninfo` solo veía Intel y llvmpipe).
+- `lib/verify.sh`: exige prime-run ejecutable con offload
+  (`__NV_PRIME_RENDER_OFFLOAD`) y error si hay driver cargado sin
+  wrapper.
+- Xorg y módulos intactos: la Intel sigue primaria y los módulos
+  NVIDIA cargan al boot (prime/CUDA). Docker GPU queda documentado,
+  nunca automático (regla 8).
+- Checks: bash -n (lib + install), sh -n del wrapper, --dry-run con
+  las líneas de prime-run y Vulkan visibles. Pendiente: `sudo
+  ./install.sh` y validar `prime-run glxinfo -B` /
+  `prime-run vulkaninfo --summary` (deben listar la 1050 Ti).

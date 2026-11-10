@@ -2656,3 +2656,45 @@ decisión nueva para cambiarlo.
   (pasos 0.035) quedan intactos.
 - Dunst y ventanas normales ganan profundidad; la barra no proyecta
   sombra sobre el contenido.
+
+## ADR-111 — `prime-run`: offload por app a la dGPU NVIDIA
+
+**Contexto:** el portátil es Optimus (Intel UHD 630 alimenta la
+pantalla, GTX 1050 Ti es 3D sin salidas de vídeo). El driver 550 estaba
+instalado y cargado pero no se podía usar bajo demanda: Debian 13 no
+incluye el paquete `nvidia-prime` (por tanto, sin `prime-run`) y faltaba
+el ICD de Vulkan, por lo que `vulkaninfo` solo veía Intel y llvmpipe.
+El usuario quiere lanzar programas con `prime-run` y que la instalación
+lo prepare cuando detecte NVIDIA. Regla 10 exige que nada sea
+incondicional.
+
+**Decisión:**
+1. Wrapper propio `templates/nvidia/prime-run` instalado en
+   `/usr/local/bin/prime-run` (0755, `install -D` root). POSIX `sh`
+   (pasa `sh -n`): exporta `__NV_PRIME_RENDER_OFFLOAD=1`,
+   `__GLX_VENDOR_LIBRARY_NAME=nvidia`, `__VK_LAYER_NV_optimus=NVIDIA_only`
+   y `__EGL_VENDOR_LIBRARY_FILENAMES` apuntado a `10_nvidia.json`;
+   verifica `/proc/driver/nvidia` y falla con aviso claro si el driver
+   no está cargado (reinicio pendiente).
+2. Se crea solo si `HAS_NVIDIA=1` y el driver propietario está presente
+   (`nvidia_driver_present()`: `dpkg -s nvidia-driver` o `/proc/driver/
+   nvidia`). Con Secure Boot activo o `--no-nvidia` no se crea; sin
+   NVIDIA tampoco. Cada rama queda con mensaje visible y `--dry-run`
+   solo anuncia.
+3. `nvidia-vulkan-icd` entra al grupo de paquetes del driver NVIDIA
+   (con él, Vulkan ve la 1050 Ti bajo offload). CUDA/toolkit sigue
+   solo a petición explícita.
+4. Xorg intocable: la Intel sigue primaria (`20-modesetting.conf`). Los
+   módulos nvidia siguen cargando al boot; prime y CUDA los necesitan.
+5. `verify.sh`: si existe `prime-run` debe ser ejecutable y contener
+   `__NV_PRIME_RENDER_OFFLOAD`; con driver cargado y sin wrapper es
+   error.
+
+**Consecuencias:**
+- Tras `sudo ./install.sh`: validar `prime-run glxinfo -B` y
+  `prime-run vulkaninfo --summary` (deben listar la GTX 1050 Ti).
+- Docker GPU (`nvidia-container-toolkit`) queda documentado como paso
+  manual, nunca automático (exige repo externo de NVIDIA, regla 8).
+- Mantener el driver conserva los ~6 s de carga de módulos al arranque
+  (compensables bajando el timeout GRUB de 5 a 2 s; pendiente de
+  aprobación del usuario).

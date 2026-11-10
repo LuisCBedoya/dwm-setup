@@ -1006,3 +1006,14 @@ ytsearch50  → 4533 ms
   display-setup (resolución preferida + max rate). VA-API activado en
   Firefox por pref (requiere reiniciar el navegador para verse en
   about:support). Compositor y sistema sin cuellos de botella.
+- 2026-11-06: fastfetch truecolor por paleta (marco overlay0, lavanda
+  cabeceras/iconos, azul etiquetas). Verificado con --pipe false +
+  cat -v: secuencias \e[1;38;2;… correctas, valores sin color (
+  \e[m tras cada clave), placeholders @…@ = 0, dry-run OK.
+- 2026-11-10: `prime-run` y Vulkan de la dGPU implementados (ADR-111):
+  wrapper POSIX en `templates/nvidia/prime-run`, `nvidia-vulkan-icd`
+  con el grupo del driver, checks de verify (ejecutable + offload) y
+  bloque de `lib/gpu.sh` condicionado a driver presente. Checks
+  estáticos OK (bash -n, sh -n, --dry-run). Pendiente de aplicar en
+  vivo con `sudo ./install.sh` y validar `prime-run glxinfo -B` /
+  `prime-run vulkaninfo --summary` (GTX 1050 Ti).
