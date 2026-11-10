@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 # lib/gpu.sh — configuración Xorg/i915 según el hardware detectado
 
+# ¿Está instalado el driver propietario? (lectura, sin modificar nada)
+nvidia_driver_present() {
+  dpkg -s nvidia-driver >/dev/null 2>&1 || [[ -d /proc/driver/nvidia ]]
+}
+
 install_gpu_configs() {
   local connected=""
   local edp=0
@@ -26,6 +31,21 @@ install_gpu_configs() {
     info "NVIDIA detectada; se mantiene como PRIME/offload, no como GPU primaria"
   fi
   [[ -n "$connected" ]] && info "Salidas conectadas: $connected"
+
+  # prime-run: offload por app a la dGPU (wrapper propio; nvidia-prime
+  # no existe en Debian 13). Se crea solo con driver propietario.
+  if [[ "$HAS_NVIDIA" -eq 1 ]]; then
+    if dry_run; then
+      log "[dry-run] instalar /usr/local/bin/prime-run (si hay driver)"
+    elif nvidia_driver_present; then
+      run_root install -D -m 0755 \
+        "$PROJECT_ROOT/templates/nvidia/prime-run" \
+        /usr/local/bin/prime-run
+      ok "NVIDIA: prime-run listo (offload por app; ADR-111)"
+    else
+      info "NVIDIA: sin driver propietario; no se crea prime-run"
+    fi
+  fi
 
   if [[ "$HAS_INTEL" -eq 0 ]]; then
     if [[ "$INTEL_GLITCH" -eq 1 ]]; then

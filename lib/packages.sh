@@ -566,6 +566,9 @@ install_gpu_packages() {
   if [[ "$HAS_NVIDIA" -eq 1 ]]; then
     if nvidia_driver_wanted; then
       gpu_pkgs+=(nvidia-driver nvidia-settings nvidia-vaapi-driver nvidia-smi linux-headers-amd64)
+      # Vulkan de la dGPU para PRIME offload (ADR-111); con Secure Boot
+      # o si se omite el driver, no se añade (sería un driver a medias).
+      gpu_pkgs+=(nvidia-vulkan-icd)
       if [[ "${INSTALL_CUDA:-auto}" == "yes" ]]; then
         gpu_pkgs+=(nvidia-cuda-toolkit)
       elif [[ "$DRY_RUN" -eq 0 && "$ASSUME_YES" -eq 0 && -t 0 && "${INSTALL_CUDA:-auto}" == "auto" ]]; then

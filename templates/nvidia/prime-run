@@ -1,0 +1,26 @@
+#!/bin/sh
+# prime-run — lanza un programa renderizando en la GPU NVIDIA discreta
+# (PRIME render offload) mientras una GPU integrada maneja la pantalla.
+# Lo instala dwm-setup cuando detecta NVIDIA con driver propietario;
+# Debian 13 no trae nvidia-prime, por eso el wrapper es propio.
+#
+# Uso: prime-run glxinfo -B | grep renderer
+#      prime-run <programa> [args…]
+set -u
+
+if [ "$#" -eq 0 ]; then
+  printf 'uso: prime-run <programa> [args…]\n' >&2
+  exit 2
+fi
+
+# El driver debe estar cargado; si no, es un error de reinicio pendiente.
+if [ ! -d /proc/driver/nvidia ]; then
+  printf 'prime-run: el driver NVIDIA no está cargado (¿queda un reinicio?)\n' >&2
+  exit 1
+fi
+
+__NV_PRIME_RENDER_OFFLOAD=1 \
+__GLX_VENDOR_LIBRARY_NAME=nvidia \
+__VK_LAYER_NV_optimus=NVIDIA_only \
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json \
+exec "$@"

@@ -297,6 +297,27 @@ verify_install() {
     done
   fi
 
+  # prime-run: render offload NVIDIA (ADR-111). Si existe, debe ser
+  # ejecutable y activar el offload; si hay driver cargado sin wrapper,
+  # es una instalación incompleta.
+  if [[ -e /usr/local/bin/prime-run ]]; then
+    if [[ -x /usr/local/bin/prime-run ]]; then
+      debug "ok: prime-run ejecutable"
+    else
+      error "prime-run no es ejecutable"
+      failures=$((failures + 1))
+    fi
+    if grep -q '__NV_PRIME_RENDER_OFFLOAD' /usr/local/bin/prime-run; then
+      debug "ok: prime-run usa render offload"
+    else
+      error "prime-run no activa el offload (falta __NV_PRIME_RENDER_OFFLOAD)"
+      failures=$((failures + 1))
+    fi
+  elif [[ "$HAS_NVIDIA" -eq 1 && -d /proc/driver/nvidia ]]; then
+    error "Hay driver NVIDIA cargado y falta /usr/local/bin/prime-run"
+    failures=$((failures + 1))
+  fi
+
   # sysctl persistente (ADR del ajuste de swap).
   if [[ -f /etc/sysctl.d/99-dwm-setup-swappiness.conf ]]; then
     if [[ "$(cat /proc/sys/vm/swappiness 2>/dev/null || printf '')" == "10" ]]; then
