@@ -187,6 +187,12 @@ La fase 1 termina en el escritorio. No implementar todavía:
     La config de SurfingKeys se genera en
     `~/.config/dwm-setup/surfingkeys.js` y se pega una vez a mano: la
     extensión no lee archivos locales sin native host.
+    Telemetría: `policies.json` incluye `DisableTelemetry`,
+    `DisableFirefoxStudies` y `DisablePocket`, y `user.js.in` apaga
+    telemetría/datareporting/Normandy/pings de newtab/crash/Pocket.
+    Las prefs viven en el template + store (regla 20b) y `verify.sh`
+    exige ambas cosas. Las pestañas verticales a la derecha
+    (`sidebar.*`) son ajuste de perfil, no están en el repo.
 
 23. **Bandeja del sistema.** Polybar usa `internal/tray` en A y B, al final
     de `modules-right`. Solo soporta XEmbed; las apps que usan

@@ -18,7 +18,7 @@
 #navigator-toolbox {
   background: var(--ctp-mantle) !important;
   color: var(--ctp-text) !important;
-  border-bottom: 1px solid var(--ctp-border) !important;
+  border-bottom: none !important;
 }
 
 #TabsToolbar,
@@ -179,4 +179,24 @@ tab {
 #userContext-label,
 #userContext-indicator {
   display: none !important;
+}
+
+/* ── Barra minimalista ─────────────────────────────────────── */
+#firefox-view-button,
+#alltabs-button,
+#sidebar-button,
+#fxa-toolbar-menu-button,
+#reset-pbm-toolbar-button,
+#unified-extensions-button {
+  display: none !important;
+}
+
+/* Panel de pestañas verticales: sin botón + ni scrollbar */
+#tabs-newtab-button,
+#vertical-tabs-newtab-button {
+  display: none !important;
+}
+
+#tabbrowser-tabs {
+  scrollbar-width: none !important;
 }

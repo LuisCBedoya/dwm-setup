@@ -254,7 +254,14 @@ if not isinstance(ext, dict):
     print(f"{base_path}: 'ExtensionSettings' no es un objeto", file=sys.stderr)
     sys.exit(1)
 
-ext.update(add.get("policies", {}).get("ExtensionSettings", {}))
+add_policies = add.get("policies", {}) or {}
+ext.update(add_policies.get("ExtensionSettings", {}) or {})
+
+# El resto de claves del template (DisableTelemetry, DisableFirefoxStudies,
+# DisablePocket, …) se aplican tal cual, conservando las del sistema.
+for key, value in add_policies.items():
+    if key != "ExtensionSettings":
+        policies[key] = value
 
 with open(base_path, "w", encoding="utf-8") as fh:
     json.dump(data, fh, indent=2, ensure_ascii=False)

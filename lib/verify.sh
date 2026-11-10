@@ -178,7 +178,7 @@ verify_install() {
   local -a palette_hex=()
   local color_var
   for color_var in COLOR_BG COLOR_BG_DEEP COLOR_BG_DEEPEST COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
-                   COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM COLOR_BORDER COLOR_BORDER_ALT \
+                   COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM COLOR_BORDER COLOR_BORDER_ALT COLOR_SEL_BG \
                    COLOR_ACCENT COLOR_ACCENT_ALT COLOR_GREEN COLOR_YELLOW \
                    COLOR_ORANGE COLOR_RED COLOR_CYAN COLOR_PURPLE COLOR_BLUE \
                    COLOR_TERM_BG COLOR_TERM_0 COLOR_TERM_1 COLOR_TERM_2 \
@@ -463,6 +463,21 @@ verify_install() {
       error "Firefox no tiene SurfingKeys en /etc/firefox/policies/policies.json"
       failures=$((failures + 1))
     fi
+    if ! grep -q '"DisableTelemetry": *true' /etc/firefox/policies/policies.json; then
+      error "Firefox sin DisableTelemetry en /etc/firefox/policies/policies.json"
+      failures=$((failures + 1))
+    fi
+  fi
+
+  # La telemetría también debe estar apagada en el user.js del perfil
+  # activo (los perfiles legacy sin usar no se renderizan).
+  local fw_profile ujs
+  if fw_profile=$(detect_firefox_profile "$home" 2>/dev/null); then
+    ujs="$fw_profile/user.js"
+    if [[ -f "$ujs" ]] && ! grep -q 'toolkit.telemetry.enabled", false' "$ujs"; then
+      error "user.js del perfil activo sin toolkit.telemetry.enabled=false ($ujs)"
+      failures=$((failures + 1))
+    fi
   fi
 
   # kitty debe aceptar control remoto para que theme-mode lo recoloree.
@@ -500,6 +515,13 @@ verify_install() {
   if [[ -f "$home/.config/fastfetch/config.jsonc" ]] &&
      ! grep -q 'Neofet.png' "$home/.config/fastfetch/config.jsonc"; then
     error "fastfetch no apunta al logo Neofet.png"
+    failures=$((failures + 1))
+  fi
+
+  # fastfetch: 38;2 debe llevar R;G;B decimal; un hex sin '#' rompe el color.
+  if [[ -f "$home/.config/fastfetch/config.jsonc" ]] &&
+     grep -Eq '38;2;[0-9a-fA-F]{6}[;}]' "$home/.config/fastfetch/config.jsonc"; then
+    error "fastfetch: color hex dentro de SGR 38;2 (debe ser R;G;B decimal)"
     failures=$((failures + 1))
   fi
 
