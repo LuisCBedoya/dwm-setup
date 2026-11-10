@@ -1028,3 +1028,30 @@ ytsearch50  → 4533 ms
   existe y crea el siguiente si no; renumeración 1..N tras borrar.
   Probado en vivo (1→2, [1,2]→3, [1..5] Super+5 va al 5, move y
   rename con ventanas). Pendiente `sudo ./install.sh`.
+- 2026-11-10: selección de kitty #585b70 y bordes (foco #89b4fa,
+  vecina #35353f) vía COLOR_SEL_BG/paleta. Aplicado en vivo: bspc
+  config + kitty @ set-colors, verificado con get-colors. Pendiente
+  comprobar en pantalla y `sudo ./install.sh`.
+- 2026-11-10: install falló por placeholder `@COLOR_SEL_BG@` (lista
+  fija en lib/theme.sh). Añadido a lib/theme.sh (render + fallback) y
+  a lib/verify.sh (palette_hex). Re-render en vivo OK y kitty
+  recoloreado; pendiente repetir `sudo ./install.sh` para verificación
+  completa.
+- 2026-11-10: fastfetch roto por `export_rgba_helpers` (hex sin # en
+  SGR 38;2). Corregido base.sh, store + re-render en vivo OK y guard
+  en verify. Pendiente repetir `sudo ./install.sh`.
+- 2026-11-10: telemetría de Firefox apagada por user.js + policies
+  (DisableTelemetry/Studies/Pocket) y verify ampliado. Render en vivo
+  OK. Pendiente: cerrar Firefox para borrar IDs cacheados y
+  `sudo ./install.sh` para las policies.
+- 2026-11-10: fallo de install por (1) merge de policies que solo
+  tocaba ExtensionSettings y (2) verify mirando perfiles legacy.
+  Corregidos ambos; merge probado en /tmp. Pendiente repetir
+  `sudo ./install.sh` + reiniciar Firefox.
+- 2026-11-10: barra de Firefox minimalista por CSS (firefox-view,
+  alltabs, sidebar ocultos). Render vivo OK; pendiente reiniciar
+  Firefox para comprobarlo en pantalla.
+- 2026-11-10: más minimalismo Firefox: iconos cuenta/privacidad/
+  extensiones ocultos, panel sin «+» ni scrollbar, borde inferior
+  quitado, tools=history,bookmarks. Render OK; pendiente reinicio y
+  comprobación visual.

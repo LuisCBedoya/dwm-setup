@@ -1346,3 +1346,102 @@ UHD 630; sin servicios ni configuración extra.
   [1,2] + focus 5 → crea 3; [1..5] + focus 5 → va al 5;
   `move 5` con 2 escritorios mueve al nuevo 3; gap intermedio con
   contenido se renumera sin perder ventanas.
+
+### Selección de kitty y contraste de bordes (paleta) — 2026-11-10
+
+- Selección de texto: nueva `COLOR_SEL_BG` en ambas paletas (#585b70
+  mocha-black, #acb0be latte; surface2 Catppuccin) usada por
+  `kitty/colorshemes/monochromatic.conf.in` en `selection_background`;
+  el texto sigue en COLOR_FG. Antes usaba COLOR_BG_HOVER (#26262f),
+  que sobre #0d0d14 casi no se veía.
+- Bordes bspwm: enfocado y presel pasan a COLOR_ACCENT (#89b4fa);
+  la ventana vecina del escritorio (active) usa COLOR_BORDER_ALT
+  (#35353f), que antes era COLOR_BG_ELEV (#1a1a24, invisible sobre
+  negro). normal sigue COLOR_BORDER (#26262f).
+- Store sincronizado y theme-mode --no-reload dark; aplicado en vivo
+  con `bspc config` (sin wm -r) y `kitty @ set-colors --all
+  --configured`, verificado con `kitty @ get-colors`. Backup en
+  ~/.config-backup/dwm-setup/20261110-120542.
+
+### Fix: COLOR_SEL_BG en la lista de render del instalador — 2026-11-10
+
+- El primer `sudo ./install.sh` tras añadir la selección falló en la
+  verificación: `render_theme_template` (lib/theme.sh) sustituye solo
+  una lista fija de variables y `COLOR_SEL_BG` no estaba en ella, así
+  que quedó literal `@COLOR_SEL_BG@` en
+  `~/.config/kitty/colorshemes/monochromatic.conf` (theme-mode sí lo
+  resolvía porque usa `compgen -v`).
+- Fix: `COLOR_SEL_BG` añadido a la lista de sustitución de
+  `lib/theme.sh` y a su fallback de `theme_var` (#585b70), y a la
+  lista `palette_hex` de `lib/verify.sh` para que #585b70 se acepte
+  como color de paleta. Re-render en vivo con theme-mode y
+  `kitty @ set-colors`; pendiente re-ejecutar `sudo ./install.sh`
+  para completar la verificación.
+
+### Fix: fastfetch con `38;2;<hex>` tras install (base.sh) — 2026-11-10
+
+- Tras el `sudo ./install.sh` de las 12:09, `fastfetch` fallaba con
+  `invalid color code found: b4fa`: el config tenía
+  `{#1;38;2;89b4fa}` en vez de `{#1;38;2;137;180;250}`.
+- Causa: `templates/colors/base.sh` → `export_rgba_helpers()` pisaba
+  `COLOR_ACCENT_RGB` (y BG/BG_ALT/BG_ELEV) con el hex sin `#`. Solo lo
+  llama `load_theme()` del instalador (theme-mode no), de ahí que unos
+  renders salieran bien y otros no.
+- Fix: `${VAR:-...}` en `export_rgba_helpers` para respetar los valores
+  SGR de la paleta; store sincronizado y re-render en vivo con
+  fastfetch correcto. Guard nuevo en `verify.sh`: `38;2;<hex>` en el
+  config de fastfetch = error.
+
+### Telemetría de Firefox desactivada — 2026-11-10
+
+- `templates/firefox/user.js.in`: bloque nuevo que apaga
+  toolkit.telemetry (enabled/unified/archive/server/reportingpolicy),
+  datareporting (healthreport/dataSubmission + BypassNotification),
+  ping-centre, Normandy, SHIELD, discovery, pings de newtab, crash
+  reports y Pocket. Re-renderizado en el perfil vivo con theme-mode.
+- `templates/firefox/policies.json`: DisableTelemetry,
+  DisableFirefoxStudies y DisablePocket (se aplican como root en el
+  próximo `sudo ./install.sh`). `verify.sh` exige DisableTelemetry y
+  toolkit.telemetry.enabled=false en el user.js del perfil.
+- Pestañas verticales a la derecha: ajuste solo de perfil (sidebar.*);
+  se dejó fuera del repo por decisión del usuario.
+- Pendiente: borrar IDs cacheados del perfil con Firefox cerrado y
+  aplicar policies con sudo.
+
+### Fix: merge de policies y verificación por perfil — 2026-11-10
+
+- El merge de `/etc/firefox/policies/policies.json` solo aplicaba
+  `ExtensionSettings`; DisableTelemetry/Studies/Pocket se descartaban.
+  Ahora `merge_firefox_policies` copia el resto de claves de policies
+  conservando las existentes (probado en /tmp: 3 claves nuevas +
+  ExtensionSettings intacta).
+- `verify.sh` exigía telemetría en TODOS los `*.default*`; el perfil
+  legacy `logituk4.default` (sin usar) hacía fallar la verificación.
+  Ahora usa `detect_firefox_profile` y solo valida el perfil activo
+  (`r6w1ime9.default-esr`).
+- Pendiente: `sudo ./install.sh` para escribir las policies y pasar la
+  verificación; reiniciar Firefox para aplicar user.js + policies.
+
+### Firefox: barra minimalista (sin Firefox View/alltabs/sidebar) — 2026-11-10
+
+- `templates/firefox/userChrome.css.in`: bloque nuevo que oculta
+  `#firefox-view-button`, `#alltabs-button` y `#sidebar-button` con
+  `display: none !important`. Store sincronizado y re-render con
+  theme-mode en el perfil activo; 0 placeholders.
+- Se conservan uBlock, extensiones, descargas y cuenta; las pestañas
+  verticales y el panel lateral siguen funcionando por menú/atajos.
+- Pendiente: reiniciar Firefox para que cargue el userChrome.
+
+### Firefox: más minimalismo (iconos, panel y borde) — 2026-11-10
+
+- userChrome.css.in: oculta también cuenta (#fxa), privacidad
+  (#reset-pbm) y extensiones (#unified-extensions); quita el botón «+»
+  del panel de pestañas (#tabs-newtab-button /
+  #vertical-tabs-newtab-button) y el scrollbar de #tabbrowser-tabs;
+  borde inferior de #navigator-toolbox a none. Se conservan descargas
+  y uBlock.
+- user.js.in: sidebar.main.tools = "history,bookmarks" (fuera AIChat,
+  sincronizadas y pestañas abiertas).
+- Store sincronizado y re-render vivo sin placeholders. Pendiente
+  reiniciar Firefox y confirmar en pantalla (si el «+» vertical usa
+  otro id, ajustar selector).
