@@ -37,7 +37,7 @@ Uso: theme-mode [--no-reload] <dark|light|toggle|status>
   --no-reload   re-renderiza sin reiniciar polybar ni dunst
   -h, --help    esta ayuda
 
-No requiere sudo. Firefox y VLC necesitan reiniciarse para aplicar el cambio.
+No requiere sudo. VLC necesita reiniciarse para aplicar el cambio.
 EOF
 }
 
@@ -118,7 +118,6 @@ render_one() {
 
 render_mode() {
   local h="$HOME_DIR"
-  local profile="${FIREFOX_PROFILE:-}"
 
   render_one "polybar/config.ini.in" "$h/.config/polybar/config.ini" 0644
   render_one "polybar/variants/reference/config.ini.in" \
@@ -144,10 +143,6 @@ render_mode() {
   render_one "gtk/gtkrc-2.0.in" "$h/.gtkrc-2.0" 0644
   render_one "vlc/vlcrc.in" "$h/.config/vlc/vlcrc" 0600
 
-  if [[ -n "$profile" && -d "$profile" ]]; then
-    render_one "firefox/userChrome.css.in" "$profile/chrome/userChrome.css" 0644
-    render_one "firefox/user.js.in" "$profile/user.js" 0644
-  fi
 }
 
 write_state() {
@@ -280,7 +275,7 @@ apply_live() {
   if [[ " ${done_parts[*]} " != *" kitty "* ]]; then
     info "kitty: sin socket de control remoto; reinícialo para ver la paleta"
   fi
-  info "Firefox y VLC: reinicia las apps para aplicar el cambio"
+  info "VLC: reinicia la app para aplicar el cambio"
 }
 
 cmd_status() {
@@ -288,19 +283,12 @@ cmd_status() {
   mode=$(current_mode)
   theme=$(theme_for_mode "$mode")
 
-  local firefox_profile=""
-  if [[ -f "$RENDER_ENV" ]]; then
-    firefox_profile=$(env_get FIREFOX_PROFILE)
-  fi
 
   printf '%s: %s (%s)\n' "$PROG" "$mode" "$theme"
   if [[ -f "$GTK_ENV" ]]; then
     # shellcheck source=/dev/null
     source "$GTK_ENV"
     printf '  GTK: %s · iconos: %s\n' "${GTK_THEME:-?}" "${ICON_THEME:-?}"
-  fi
-  if [[ -n "$firefox_profile" && -d "$firefox_profile" ]]; then
-    printf '  Firefox: %s\n' "$firefox_profile"
   fi
 }
 
@@ -325,7 +313,6 @@ main() {
   fi
 
   require_store
-  FIREFOX_PROFILE=$(env_get FIREFOX_PROFILE)
 
   if [[ "$mode" == "toggle" ]]; then
     if [[ "$(current_mode)" == "dark" ]]; then mode="light"; else mode="dark"; fi

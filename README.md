@@ -36,12 +36,15 @@ Incluido:
   su **resolución preferida (EDID) y la tasa de refresco más alta**
   (120 Hz si el monitor lo permite; `DISPLAY_REFRESH=60` para forzarla).
   Extiende o espeja (`DISPLAY_LAYOUT=mirror`), soporta hotplug (`watch`) y
-  refuerza el no-blanqueo. Firefox usa **VA-API** para decodificar vídeo
-  por GPU cuando el driver está disponible.
-- **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo,
-  **ueberzug** para previsualizar imágenes y carátulas. Texto, código y
+  refuerza el no-blanqueo. Brave usa **VA-API** para decodificar vídeo
+  por GPU cuando el driver está disponible (actívalo en `brave://flags`,
+  `VaapiVideoDecoder`).
+- **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo y
+  previews de imagen por el protocolo gráfico de **kitty**. Texto, código y
   Markdown se abren con **Neovim**. Tema GTK **Catppuccin** (Mocha Black o
   Latte) e iconos **Papirus** con carpetas Catppuccin.
+- Asociaciones de archivo: PDF/EPUB/CB → **zathura**, imágenes → **feh**,
+  vídeo → **VLC** (`xdg-mime`, sin pasar por el navegador).
 - Bloqueo con **i3lock** + **xss-lock**.
 - Pantalla siempre encendida: sin salvapantallas ni DPMS por inactividad.
   El bloqueo manual (`Super+Shift+L`) y el de suspensión siguen activos.
@@ -59,7 +62,7 @@ Incluido:
 - Fuente JetBrainsMono Nerd Font, wallpaper oscuro y paleta **Catppuccin**:
   `mocha-black` (oscuro) y `latte` (claro): base `#0d0d14` / `#eff1f5`,
   texto `#cdd6f4` / `#4c4f69`, acento `#89b4fa` / `#1e66f5`.
-- **Firefox ESR** con uBlock Origin, SurfingKeys y OpenH264 para WebRTC.
+- **Brave** con Shields, SurfingKeys, tema Catppuccin Mocha y atajos nativos de pestañas.
 - **yt-play** para audio o vídeo de YouTube/YouTube Music con búsqueda en
   fzf y miniatura; `mpv` + `yt-dlp` oficial en `~/.local/bin`.
 - **ytwatch** (opcional, `--no-ytwatch` para saltarlo): buscador TUI de
@@ -73,6 +76,25 @@ Incluido:
   No toca APT ni el módulo `updates` de la barra.
 - `vm.swappiness = 10` por `/etc/sysctl.d/99-dwm-setup-swappiness.conf`
   (23 GB de RAM: menos swap y SSD más tranquilo).
+- Arranque más corto (`lib/boot.sh`): `GRUB_TIMEOUT=2`, nvidia fuera del
+  boot (se carga con `prime-run`), limpieza de `/tmp` diferida 1 h y
+  `NetworkManager-wait-online` desactivado.
+- Límite de carga de la batería al **80 %** (`lib/power.sh`): unidad
+  `battery-charge-threshold.service` + helper
+  `dwm-setup-battery-limit`; solo se instala si el hardware expone
+  `charge_control_end_threshold` (ASUS/TUF y similares).
+  `desktop-doctor` avisa si la salud de la batería baja del 60 %.
+- Modo del ventilador con un clic en la barra (`fan`, tras `governor`):
+  ASUS `fan_boost_mode`/`throttle_thermal_policy` (normal/overboost/silent)
+  o `platform_profile` genérico (quiet/balanced/performance). Se oculta en
+  equipos sin soporte y usa un sudoers acotado para el helper. El clic
+  cicla `auto → normal → overboost → silent → auto`; en `auto` el daemon
+  `dwm-setup-fan-auto` sube a overboost a 80 °C/80 % (10 s) y baja a
+  normal a 70 °C/<40 % (30 s).
+- Perfil de energía automático (`dwm-setup-power-auto`): con cargador
+  `performance` + EPP performance; con batería `powersave` + EPP
+  `balance_performance` + suelo de 1.2 GHz (sin la lentitud del powersave
+  puro). El clic del módulo `governor` aplica el mismo perfil completo.
 - Backups, logs, `--dry-run` y diagnóstico con `desktop-doctor`.
 - NVIDIA detectada e instalada de forma condicional; con driver
   propietario deja `prime-run` para render offload por app a la dGPU y
@@ -80,8 +102,8 @@ Incluido:
 
 No incluido todavía:
 
-- IDE (VS Code), Brave/Chromium, correo, Teams y reproductores de música
-  locales (cmus/mpd). Firefox ESR y el streaming (`yt-play`, `ytwatch`) sí están.
+- IDE (VS Code), Firefox ESR, correo, Teams y reproductores de música
+  locales (cmus/mpd). Brave y el streaming (`yt-play`, `ytwatch`) sí están.
 - Bluetooth, htop, ripgrep, nvitop/nvtop, Node/nvm.
 - XFCE, LightDM o un entorno de escritorio completo.
 - Repositorio de dotfiles externo: las plantillas de este repo son la
@@ -297,7 +319,7 @@ Si algo falla:
 | `Super+Shift+d` | rofi -show run |
 | `Super+Shift+s` | scrot: seleccionar región y copiar al portapapeles |
 | `Super+Shift+p` | pcmanfm (pendiente de instalar) |
-| `Super+Shift+b` | firefox |
+| `Super+Shift+b` | brave-browser |
 | `Super+Shift+v` | codium (pendiente; no está en Debian) |
 | `Super+Shift+i` | ristretto (pendiente) |
 | `Super+Shift+a` | lxappearance (pendiente) |
@@ -317,6 +339,13 @@ Si algo falla:
 | `Super+f` | fullscreen |
 | `Alt+Tab` / `Alt+Shift+Tab` | siguiente / anterior ventana |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | siguiente / anterior escritorio (ADR-112) |
+| `Ctrl+N` / `Ctrl+P` (Brave) | siguiente / anterior pestaña (nativo) |
+| `Alt+Q` / `Alt+K` (Brave) | cerrar / nueva pestaña |
+| `Alt+O` (Brave) | recargar |
+| `Alt+H` / `Alt+L` (Brave) | ir al panel izquierdo / derecho (vista dividida) |
+| `Alt+N` (Brave) | expandir/colapsar pestañas verticales |
+| `Alt+Shift+N` (Brave) | ventana nueva |
+| `Ctrl+Alt+L` / `Ctrl+Alt+H` (Brave) | dividir con la pestaña actual / nueva vista dividida |
 | `Super+Ctrl+Tab` / `Super+Ctrl+Shift+Tab` | siguiente / anterior escritorio |
 | `Super+{1-7}` | ir al escritorio N; si no existe, crea el siguiente |
 | `Super+Shift+{1-7}` | mover ventana al N; si no existe, crea el siguiente |
@@ -478,12 +507,12 @@ theme-mode status
 ```
 
 `theme-mode` re-renderiza polybar A/B, kitty, dunst, rofi, zathura, bspwm,
-GTK, Firefox y VLC desde `~/.local/share/dwm-setup/`, y recarga en caliente
+GTK y VLC desde `~/.local/share/dwm-setup/`, y recarga en caliente
 polybar, dunst, los bordes de bspwm, el **wallpaper del modo** y kitty. **No
-pide sudo**: los temas ya están instalados. Firefox y VLC necesitan
-reiniciarse para aplicar el cambio.
+pide sudo**: los temas ya están instalados. VLC necesita reiniciarse para
+aplicar el cambio; Brave usa el tema fijo de la Chrome Web Store.
 
-Los ficheros generados (`bspwmrc`, `user.js`, `kitty.conf`, `dunstrc`…) no se
+Los ficheros generados (`bspwmrc`, `kitty.conf`, `dunstrc`…) no se
 editan a mano: `theme-mode` y `sudo ./install.sh` los regeneran desde
 `templates/` y el cambio manual se pierde. Cualquier ajuste va a la plantilla
 y se commitea.
@@ -511,24 +540,45 @@ un reinicio de kitty.
 
 El atajo es `Super+Alt+t` y muestra una notificación con el modo nuevo.
 
-### Firefox y SurfingKeys
+### Brave y SurfingKeys
 
-`userChrome.css` aplica Catppuccin al chrome, mantiene la barra compacta y
-deja visibles atrás, adelante, recargar, parar, descargas y el menú
-hamburguesa. Se instala en el perfil y se regenera con `theme-mode`.
+Brave es el navegador del escritorio (ADR-113). El tema Catppuccin Mocha y
+SurfingKeys se instalan por policy desde la Chrome Web Store, y los atajos
+nativos (`Ctrl+N/P`, `Alt+Q/O/K`, `Alt+H/L` para los paneles y `Alt+N` /
+`Alt+Shift+N`) se escriben en `brave.accelerators` del perfil (con Brave cerrado).
+Chromium **no soporta `userChrome`/CSS de UI**:
+el aspecto es el del tema de CWS y no replica el minimalismo que tenía
+Firefox.
 
-El **contenido web** (Google, YouTube) no cambia en caliente: el esquema de
-color del contenido es una preferencia que Firefox lee al arrancar. Tras
-`Super+Alt+t`, cierra y abre Firefox. Google Search respeta
-`prefers-color-scheme`; YouTube solo si pones *Ajustes → Apariencia → Usar
-tema del dispositivo* una vez.
+La telemetría se apaga por `/etc/brave/policies/managed/dwm-setup.json`
+(P3A, stats ping, Web Discovery, Rewards, Wallet, News, Talk, VPN, Leo,
+metrics/crash, UKM, sugerencias y surveys) y `BookmarkBarEnabled: false`
+quita la barra de marcadores.
 
-SurfingKeys viene `force_installed` desde `policies.json`. Su configuración
-vive en `~/.config/dwm-setup/surfingkeys.js`; se pega **una vez** en
-SurfingKeys → Ajustes → Advanced mode → editor → Save. No hay botón de
-importar y Firefox no permite que la extensión lea archivos locales sin un
-native host. El tema usa `prefers-color-scheme`, así que sigue al modo sin
-volver a pegarlo.
+La interfaz va limpia (`lib/brave.sh` → `install_brave_minimal`): NTP sin
+reloj, estadísticas, noticias, Rewards, VPN, patrocinados ni fondos; sin
+iconos de Rewards/Wallet/Leo/Today/marcadores/sidebar/tab-search; pestañas
+verticales sin scrollbar ni botón de plegado y con la × oculta. Además la
+NTP se sustituye por `/usr/share/dwm-setup/newtab.html` (negro liso, sin
+buscador ni sitios) con la policy `NewTabPageLocation`. Chromium no
+permite CSS de UI, así que el puzzle de extensiones, el avatar y el escudo
+de Shields siguen ahí.
+
+SurfingKeys viene `force_installed` desde las policies. Su configuración vive
+en `~/.config/dwm-setup/surfingkeys.js`; se pega **una vez** en SurfingKeys →
+Ajustes → Advanced mode → editor → Save. No se puede automatizar: la
+extensión no lee archivos locales sin native host. Conserva el mapa de
+siempre: `o` (búsqueda Google, alias `go`), `O` (pestaña nueva), `b`
+(elegir pestaña), `H`/`L` (atrás/adelante) y `<Alt-y>` (historial). Los
+`Alt+Q/O/H/K/N` son nativos de Brave y no se mapean aquí.
+
+VA-API se activa solo: `install_brave_vaapi` deja un wrapper en
+`~/.local/bin/brave-browser` con `--enable-features=VaapiVideoDecoder` y un
+`.desktop` propio en `~/.local/share/applications` que apunta a él
+(Brave borra ese flag de `Local State` al salir). `brave://gpu` muestra
+*Video Decode: Hardware accelerated*. El instalador **exige Brave
+cerrado**: con Brave abierto no se pueden escribir atajos/prefs y aborta. `Ctrl+N`/`Ctrl+P` funcionan ahora como pestañas
+nativas también con el foco en la barra de direcciones.
 
 Temas GTK instalados:
 
@@ -567,7 +617,7 @@ lib/vlc.sh                 VLC con paleta oscura
 lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/fastfetch.sh           fastfetch y logo Neofet.png
 lib/music.sh               yt-dlp oficial, scripts de streaming y teclas
-lib/firefox.sh             Firefox ESR, OpenH264, uBlock y SurfingKeys
+lib/brave.sh               Brave: repo APT, policies, atajos y SurfingKeys
 lib/verify.sh              Verificación estática final
 lib/theme.sh               Paletas (Mocha Black, Latte) y render
 lib/audio.sh               Quirk ALC255 condicionado por hardware
@@ -617,17 +667,16 @@ docs/                      Hardware y testing
 - NVIDIA propietario y Secure Boot requiere MOK; si Secure Boot no está
   desactivado, el driver se omite y se avisa.
 - `libcamera-tools`, firmware y drivers propietarios son opcionales.
-- El instalador no modifica repositorios por defecto. Solo la opción 1 del
-  menú añade componentes a entradas oficiales de Debian 13, tras un backup.
-- Se instala Firefox ESR como navegador del escritorio; no se instalan IDE,
+- El instalador añade el repo APT oficial de Brave (ADR-113, autorizado por
+  el usuario) y con él instala el navegador. Fuera de eso no modifica otros
+  repositorios: solo la opción 1 del menú añade componentes a entradas
+  oficiales de Debian 13, tras un backup.
+- Se instala Brave como navegador del escritorio; no se instalan IDE,
   cliente de correo ni reproductores de música locales. El streaming de
   YouTube se hace con `yt-play` y, opcionalmente, `ytwatch` (TUI).
-- `/etc/firefox-esr/zz-dwm-setup.js` habilita OpenH264 para que Teams pueda
-  mostrar H.264 (pantalla compartida). Sin ese ajuste, el vídeo de Teams
-  queda en negro en Firefox ESR.
-- `/etc/firefox/policies/policies.json` instala uBlock Origin con
-  `force_installed`: no se puede desinstalar, pero se puede desactivar por
-  sitio desde su popup.
+- `/etc/brave/policies/managed/dwm-setup.json` apaga la telemetría de Brave y
+  fuerza SurfingKeys y el tema Catppuccin Mocha desde la Chrome Web Store.
+- Firefox, OpenH264 y sus policies/autoconfig se retiran en la migración.
 - Los atajos `Super+Shift+p/v/i/a` existen en `sxhkdrc` pero las apps
   (`pcmanfm`, `codium`, `ristretto`, `lxappearance`) no se
   instalan en esta fase. `codium` requiere el repositorio de VSCodium.

@@ -1,0 +1,48 @@
+#!/bin/sh
+# dwm-setup-power-auto — aplica el perfil de energía según el cargador.
+#
+#   cargador conectado  -> dwm-setup-power-profile ac
+#   con batería         -> dwm-setup-power-profile battery
+#
+# Sondea el estado de la fuente de alimentación cada POWER_POLL segundos y
+# solo actúa cuando cambia (o al arrancar). Nunca toca nada si el helper no
+# está instalado.
+set -u
+
+HELPER=${DWM_SETUP_POWER_HELPER:-/usr/local/bin/dwm-setup-power-profile}
+AC_GLOB=${DWM_SETUP_AC_GLOB:-/sys/class/power_supply/A*/online}
+POLL=${DWM_SETUP_POWER_POLL:-10}
+
+[ -x "$HELPER" ] || exit 0
+
+ac_online() {
+  # shellcheck disable=SC2086
+  cat $AC_GLOB 2>/dev/null | head -1
+}
+
+profile_for_state() {
+  # Sin dispositivo de CA (torre) se asume enchufado.
+  case "$(ac_online)" in
+    0) printf '%s\n' battery ;;
+    *) printf '%s\n' ac ;;
+  esac
+}
+
+apply() {
+  sudo -n "$HELPER" "$1" >/dev/null 2>&1 || true
+}
+
+if [ "${1:-}" = "--once" ]; then
+  apply "$(profile_for_state)"
+  exit 0
+fi
+
+current=""
+while :; do
+  want=$(profile_for_state)
+  if [ "$want" != "$current" ]; then
+    apply "$want"
+    current=$want
+  fi
+  sleep "$POLL"
+done

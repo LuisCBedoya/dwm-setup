@@ -5,7 +5,7 @@
 # Audio por defecto; el modo por opción se consulta con la tecla ? dentro.
 
 [general]
-browser = "firefox-esr"      # o y chat en vivo (el default xdg apuntaba a chromium)
+browser = "brave-browser"      # o y chat en vivo (el default xdg apuntaba a chromium)
 audio_only = false           # Enter = vídeo; `a` conmuta a audio en el TUI
 quality = "720p"             # cuando toca vídeo o descarga
 

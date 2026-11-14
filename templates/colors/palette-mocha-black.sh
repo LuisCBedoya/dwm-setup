@@ -30,6 +30,7 @@ export COLOR_FG_DIM_RGB="108;112;134" # overlay0 en RGB decimal (SGR 38;2)
 # Acentos y estados
 export COLOR_ACCENT="#89b4fa"      # blue
 export COLOR_ACCENT_ALT="#b4befe"  # lavender
+export COLOR_ACCENT_STRONG="#1e66f5"  # azul intenso (hints/info)
 export COLOR_ACCENT_RGB="137;180;250"     # blue en RGB decimal (SGR 38;2)
 export COLOR_ACCENT_ALT_RGB="180;190;254" # lavender en RGB decimal
 export COLOR_GREEN="#a6e3a1"

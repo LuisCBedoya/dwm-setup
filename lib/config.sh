@@ -12,6 +12,7 @@ install_user_configs() {
     log "[dry-run] instalar /usr/local/bin/desktop-safe, desktop-doctor y theme-mode"
     log "[dry-run] instalar plantillas y paletas en ~/.local/share/dwm-setup"
     log "[dry-run] corregir propietario de ~/.config, ~/.local y ~/.config-backup"
+    log "[dry-run] asociar PDF→zathura, imágenes→feh y vídeo→VLC (xdg-mime)"
     return 0
   fi
 
@@ -46,6 +47,9 @@ install_user_configs() {
   # Plantillas y paletas para theme-mode (cambio de modo sin sudo)
   install_theme_store
 
+  # Asociaciones de archivos: PDF, imágenes y vídeo fuera del navegador.
+  install_file_associations
+
   # Restos de la barra anterior: ya no se usan (el backup ya se hizo antes).
   run_root rm -rf "/usr/local/share/fonts/dwm-setup"
   run_root rm -rf "$home/.local/share/fonts/DesktopLogo"
@@ -60,6 +64,42 @@ install_user_configs() {
   ok "Configuración instalada para $TARGET_USER"
   info "Para iniciar: ejecuta 'startx' desde TTY (usa ~/.xinitrc → bspwm)"
   info "Binarios: desktop-safe, desktop-doctor y theme-mode dark|light|toggle|status"
+}
+
+# Asociaciones MIME del escritorio: PDF → zathura, imágenes → feh, vídeo → VLC.
+# xdg-mime fusiona en ~/.config/mimeapps.list sin pisar las del navegador.
+install_file_associations() {
+  local -a pairs=(
+    "application/pdf:org.pwmt.zathura.desktop"
+    "application/epub+zip:org.pwmt.zathura.desktop"
+    "application/x-cbz:org.pwmt.zathura.desktop"
+    "application/x-cbr:org.pwmt.zathura.desktop"
+    "image/png:feh.desktop"
+    "image/jpeg:feh.desktop"
+    "image/gif:feh.desktop"
+    "image/webp:feh.desktop"
+    "image/bmp:feh.desktop"
+    "image/tiff:feh.desktop"
+    "video/mp4:vlc.desktop"
+    "video/x-matroska:vlc.desktop"
+    "video/webm:vlc.desktop"
+    "video/quicktime:vlc.desktop"
+    "video/x-msvideo:vlc.desktop"
+  )
+  local pair mime app
+
+  if ! cmd_exists xdg-mime; then
+    warn "xdg-mime no está disponible; se omiten las asociaciones de archivos"
+    return 0
+  fi
+
+  for pair in "${pairs[@]}"; do
+    mime="${pair%%:*}"
+    app="${pair#*:}"
+    run_user xdg-mime default "$app" "$mime" >/dev/null 2>&1 \
+      || warn "No se pudo asociar $mime con $app"
+  done
+  ok "Asociaciones: PDF → zathura, imágenes → feh, vídeo → VLC"
 }
 
 # Escribe un archivo del usuario desde una cadena.
@@ -103,8 +143,6 @@ install_theme_store() {
     "templates/gtk/gtk-4.0.css.in"
     "templates/gtk/gtkrc-2.0.in"
     "templates/vlc/vlcrc.in"
-    "templates/firefox/userChrome.css.in"
-    "templates/firefox/user.js.in"
     "templates/fastfetch/config.jsonc.in"
   )
 
@@ -122,7 +160,6 @@ install_theme_store() {
       "$PROJECT_ROOT/templates/colors/$rel" "$store/colors/$rel"
   done
 
-  profile=$(detect_firefox_profile "$home" 2>/dev/null || true)
 
   local mode="dark" tmp
   [[ "$THEME_NAME" == "latte" ]] && mode="light"
@@ -130,7 +167,6 @@ install_theme_store() {
   tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-render-env.XXXXXX")
   {
     polybar_common_vars
-    printf 'FIREFOX_PROFILE=%s\n' "$profile"
   } >"$tmp"
   run_root install -D -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" \
     "$tmp" "$store/render.env"

@@ -79,6 +79,7 @@ render_polybar_templates() {
     "modules/memory.ini"
     "modules/cpu.ini"
     "modules/governor.ini"
+    "modules/fan.ini"
     "modules/network.ini"
     "modules/services.ini"
     "modules/brightness.ini"
@@ -94,7 +95,7 @@ render_polybar_templates() {
       "$home/.config/polybar/$m" 0644 "${common_vars[@]}"
   done
 
-  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/network-menu.sh" "scripts/services.sh" "scripts/volume.sh" "scripts/monocle-count.sh" "scripts/cpu-governor.sh")
+  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/network-menu.sh" "scripts/services.sh" "scripts/volume.sh" "scripts/monocle-count.sh" "scripts/cpu-governor.sh" "scripts/fan-mode.sh")
   local s
   for s in "${scripts[@]}"; do
     render_theme_template "$PROJECT_ROOT/templates/polybar/$s.in" \
@@ -128,6 +129,7 @@ render_polybar_templates() {
     "modules/memory.ini"
     "modules/cpu.ini"
     "modules/governor.ini"
+    "modules/fan.ini"
     "modules/xkeyboard.ini"
     "modules/fs.ini"
     "modules/date.ini"

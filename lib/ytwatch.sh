@@ -10,9 +10,9 @@ INSTALL_YTWATCH="${INSTALL_YTWATCH:-yes}"
 
 # Versiones fijadas para instalaciones reproducibles. Para actualizar en
 # una máquina existente: ytwatch-check / ytwatch-update.
-YTWATCH_VERSION="v0.1.0"
+YTWATCH_VERSION="v0.3.0"
 # SHA-256 del tarball amd64 (checksums.txt de la propia release).
-YTWATCH_SHA256="9e8914fc6af09dba7a728e08b0f9c119a075bd8e7471cf54dcb04eab30bd87c3"
+YTWATCH_SHA256="8634951408637c63cf623fd7f6c53b2588b2e9baed687f64565bcc9e2d624560"
 
 UEBERZUGPP_VERSION="2.9.10"
 # Build Debian 13 del proyecto (OBS build service, repo home:justkidding).
@@ -41,6 +41,7 @@ install_ytwatch() {
     section "Configurando ytwatch (buscador TUI de YouTube)"
     log "[dry-run] descargar $(ytwatch_download_tarball_url) (SHA-256 verificado)"
     log "[dry-run] instalar ~/.local/bin/ytwatch 0755 (usuario)"
+    log "[dry-run] instalar ~/.local/bin/ytwatch-{check,update} 0755 (usuario)"
     log "[dry-run] render ~/.config/ytwatch/config.toml desde templates/ytwatch"
     log "[dry-run] descargar $(ueberzugpp_deb_url) (SHA-256 verificado) y 'sudo dpkg -i'"
     log "[dry-run] si dpkg falla por dependencias: apt-get -y -f install"
@@ -48,11 +49,37 @@ install_ytwatch() {
   fi
 
   section "Configurando ytwatch (buscador TUI de YouTube)"
+  install_ytwatch_tools
   install_ytwatch_binary
   install_ytwatch_config
   install_ueberzugpp
   ok "ytwatch listo: escribe ytwatch en una kitty (audio por defecto)"
   info "Estado y actualizaciones: ytwatch-check · ytwatch-update"
+}
+
+# Helpers de estado/actualización en ~/.local/bin (usuario, sin sudo).
+# Sin ellos, el timer de avisos nunca revisa ytwatch (`find_bin` los salta).
+install_ytwatch_tools() {
+  local dir="$TARGET_HOME/.local/bin"
+  local name src dst
+
+  make_user_dir "$dir"
+  for name in ytwatch-check ytwatch-update; do
+    src="$PROJECT_ROOT/bin/$name"
+    dst="$dir/$name"
+    if [[ ! -f "$src" ]]; then
+      warn "Falta $src; se omite $name"
+      continue
+    fi
+    if [[ -f "$dst" ]] && cmp -s "$src" "$dst"; then
+      continue
+    fi
+    if [[ -f "$dst" ]]; then
+      backup_user_path "$dst"
+    fi
+    run_user install -m 0755 -- "$src" "$dst"
+  done
+  ok "ytwatch: ytwatch-check y ytwatch-update en $dir"
 }
 
 # Versión del binario ytwatch en ~/.local/bin (vacía si no está).
@@ -79,6 +106,11 @@ install_ytwatch_binary() {
     return 0
   fi
   if [[ -n "$installed" ]]; then
+    # Nunca retroceder: si la instalada es más nueva que la fijada, se respeta.
+    if [[ "$(printf '%s\n%s\n' "$installed" "$want" | sort -V | tail -1)" == "$installed" ]]; then
+      info "ytwatch instalado ($installed) es más nuevo que el fijado ($want); no se toca"
+      return 0
+    fi
     info "ytwatch instalado: $installed; el repo fija $want"
   fi
 
@@ -113,7 +145,8 @@ install_ytwatch_binary() {
 # Descarga el tarball a un tmpdir y verifica el SHA-256 fijado.
 fetch_ytwatch_tarball() {
   local tmpdir
-  tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/ytwatch.XXXXXX")
+  # Como el usuario: si lo crea root (0700), curl no puede escribir.
+  tmpdir=$(run_user mktemp -d "${TMPDIR:-/tmp}/ytwatch.XXXXXX")
   YT_TMP_DIR="$tmpdir"
 
   if ! run_user curl -fsSL --max-time 180 -o "$tmpdir/tarball.tar.gz" "$(ytwatch_download_tarball_url)"; then

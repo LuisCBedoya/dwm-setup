@@ -1,3 +1,6 @@
 # VLC — interfaz según el modo activo
 # qt-dark-palette=1 en oscuro, 0 en claro.
 qt-dark-palette=@THEME_VLC_DARK@
+# Sin diálogo de privacidad en el primer arranque ni metadatos en red.
+qt-privacy-ask=0
+metadata-network-access=0

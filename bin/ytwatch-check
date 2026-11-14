@@ -52,7 +52,11 @@ if [[ -x "$ytwatch_bin" ]]; then
     latest=$(gh_latest geovannewashington/ytwatch)
     latest="${latest#v}"
     if [[ -n "$latest" && "$current" != "$latest" ]]; then
-      ((quiet)) || printf 'ytwatch: hay versión nueva (%s)\n  Tienes %s · actualiza con: ytwatch-update\n' "$latest" "$current"
+      if ((quiet)); then
+        printf 'ytwatch: %s -> %s\n' "$current" "$latest"
+      else
+        printf 'ytwatch: hay versión nueva (%s)\n  Tienes %s · actualiza con: ytwatch-update\n' "$latest" "$current"
+      fi
       notify_outdated "ytwatch: tienes $current, hay $latest · ytwatch-update"
       status=1
     else
@@ -71,7 +75,11 @@ if command -v dpkg-query >/dev/null 2>&1 &&
     latest=$(gh_latest jstkdng/ueberzugpp)
     latest="${latest#v}"
     if [[ -n "$latest" && "$current" != "$latest" ]]; then
-      ((quiet)) || printf 'ueberzugpp: hay versión nueva (%s)\n  Tienes %s · actualiza con: ytwatch-update --ueberzugpp\n' "$latest" "$current"
+      if ((quiet)); then
+        printf 'ueberzugpp: %s -> %s\n' "$current" "$latest"
+      else
+        printf 'ueberzugpp: hay versión nueva (%s)\n  Tienes %s · actualiza con: ytwatch-update --ueberzugpp\n' "$latest" "$current"
+      fi
       notify_outdated "ueberzugpp: tienes $current, hay $latest · ytwatch-update --ueberzugpp"
       status=1
     else

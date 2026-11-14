@@ -63,8 +63,14 @@ source "$PROJECT_ROOT/lib/ytwatch.sh"
 source "$PROJECT_ROOT/lib/yt-notify.sh"
 # shellcheck source=lib/sysctl.sh
 source "$PROJECT_ROOT/lib/sysctl.sh"
-# shellcheck source=lib/firefox.sh
-source "$PROJECT_ROOT/lib/firefox.sh"
+# shellcheck source=lib/boot.sh
+source "$PROJECT_ROOT/lib/boot.sh"
+# shellcheck source=lib/power.sh
+source "$PROJECT_ROOT/lib/power.sh"
+# shellcheck source=lib/fans.sh
+source "$PROJECT_ROOT/lib/fans.sh"
+# shellcheck source=lib/brave.sh
+source "$PROJECT_ROOT/lib/brave.sh"
 # shellcheck source=lib/verify.sh
 source "$PROJECT_ROOT/lib/verify.sh"
 # shellcheck source=lib/theme.sh
@@ -263,11 +269,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.service"
     "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.timer"
     "$PROJECT_ROOT/templates/sysctl/99-dwm-setup-swappiness.conf"
-    "$PROJECT_ROOT/templates/firefox/userChrome.css.in"
-    "$PROJECT_ROOT/templates/firefox/user.js.in"
-    "$PROJECT_ROOT/templates/firefox/surfingkeys.js.in"
-    "$PROJECT_ROOT/templates/firefox/zz-dwm-setup.js"
-    "$PROJECT_ROOT/templates/firefox/policies.json"
+    "$PROJECT_ROOT/templates/brave/surfingkeys.js.in"
     "$PROJECT_ROOT/templates/polybar/config.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/logo.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/bspwm.ini.in"
@@ -397,7 +399,7 @@ Próximo paso:
 Atajos principales:
   Super+Return      kitty
   Super+d           rofi (drun)
-  Super+Shift+b     firefox
+  Super+Shift+b     brave-browser
   Super+Shift+e     VS Code (no instalado en fase 1)
   Super+Shift+f     thunar
   Super+Shift+l     bloquear
@@ -448,6 +450,12 @@ main() {
 
   detect_all
 
+  # Brave debe estar cerrado: con Brave abierto se saltan atajos, interfaz
+  # y VA-API, y la verificación final fallaría a medias.
+  if ! dry_run && cmd_exists brave-browser && pgrep -x brave >/dev/null 2>&1; then
+    die "Brave está abierto. Ciérralo y vuelve a ejecutar: sus ajustes viven en el perfil y no se pueden escribir con Brave en marcha."
+  fi
+
   # Crea ~/.config, ~/.local, ~/.config-backup con el propietario correcto.
   prepare_user_dirs
 
@@ -486,13 +494,14 @@ main() {
   fi
 
   install_packages
-  install_firefox
+  install_brave
   install_gpu_configs
   install_headset_quirk
   install_bspwm
   install_sxhkd
   install_polybar
   install_cpu_governor
+  install_fan_control
   install_picom_config
   install_dunst
   install_rofi
@@ -506,6 +515,9 @@ main() {
   install_ytwatch
   install_yt_update_notify
   install_sysctl
+  install_boot_tweaks
+  install_battery_threshold
+  install_power_profile
   install_user_configs
 
   if ! dry_run; then

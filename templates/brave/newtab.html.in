@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Nueva pestaña</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: @COLOR_BG@;
+    color: @COLOR_FG@;
+  }
+</style>
+</head>
+<body></body>
+</html>

@@ -323,15 +323,8 @@ backup_existing_configs() {
   backup_user_path "$home/.local/bin/ytwatch"
   backup_user_path "$home/.config/ytwatch"
 
-  # Perfil de Firefox: userChrome.css y user.js se reemplazan al instalar.
-  local ff_profile=""
-  if declare -F detect_firefox_profile >/dev/null 2>&1; then
-    ff_profile=$(detect_firefox_profile "$home" 2>/dev/null || true)
-  fi
-  if [[ -n "$ff_profile" ]]; then
-    backup_user_path "$ff_profile/chrome/userChrome.css"
-    backup_user_path "$ff_profile/user.js"
-  fi
+  # Perfil de Brave: los atajos nativos se reescriben al instalar.
+  backup_user_path "$home/.config/BraveSoftware/Brave-Browser/Default/Preferences"
 }
 
 # Corrige homes que quedaron con ~/.config, ~/.local o ~/.config-backup

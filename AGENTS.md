@@ -8,7 +8,7 @@ proyecto. Leer primero `README.md`, `PROGRESS.md` y `DECISIONS.md`.
 Instalador reproducible de un escritorio mínimo para **Debian 13 (trixie)**
 con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 **polybar**, **dunst**, **rofi**, **kitty**, **flameshot**, **zsh/Oh My Zsh**, **lsd**,
-**ranger**, **zathura**, **VLC**, **Firefox ESR**,
+**ranger**, **zathura**, **VLC**, **Brave**,
 **i3lock/xss-lock**, **picom** (compositor, ADR-107), PipeWire, cámara UVC
 y almacenamiento extraíble con notificación. La CPU arranca en
 `performance` y se alterna desde la barra (módulo `governor`, ADR-108).
@@ -38,8 +38,7 @@ bloque; temperatura conserva fondo en warning. Se cambia con
 La fase 1 termina en el escritorio. No implementar todavía:
 
 - VS Code y Node/nvm. Neovim sí se usa para editar archivos.
-- Brave/Chromium u otros navegadores (Firefox ESR sí forma parte del
-  escritorio).
+- Firefox ESR, OpenH264 y \`userChrome\` (sustituidos por Brave, ADR-113).
 - Correo, Teams.
 - Reproductores de música locales (cmus/mpd) y widgets de música. `mpv` y
   `yt-dlp` sí se usan para streaming de YouTube; VLC para vídeo local.
@@ -172,27 +171,52 @@ La fase 1 termina en el escritorio. No implementar todavía:
 21. **No commitear sin permiso.** No ejecutar `git commit` ni `git add`
     definitivo sin autorización explícita del usuario.
 
-22. **Firefox ESR y Teams.** `firefox-esr` es el navegador del escritorio y
-    `Super+Shift+b` lo abre. `/etc/firefox-esr/zz-dwm-setup.js` habilita
-    OpenH264 (`media.gmp-gmpopenh264.enabled`) para H.264 en WebRTC; sin
-    eso Teams no muestra la pantalla compartida. No capturar `Ctrl+Shift+B`
-    en sxhkd: es el atajo de la barra de marcadores del navegador.
-    `/etc/firefox/policies/policies.json` fuerza uBlock Origin
-    (`uBlock0@raymondhill.net`) y SurfingKeys
-    (`{a8332c60-5b6d-41ee-bfc8-e9bb331d34ad}`) con `force_installed`; uBlock
-    se puede desactivar por sitio desde el popup, pero no desinstalar.
-    El color del **contenido** (`prefers-color-scheme`) solo se aplica al
-    reiniciar Firefox: es una preferencia, no CSS. YouTube requiere además
-    "Usar tema del dispositivo" en su configuración de apariencia.
+22. **Brave y Teams.** `brave-browser` es el navegador del escritorio
+    (ADR-113) y `Super+Shift+b` lo abre. Se instala desde el **repo APT
+    oficial** de Brave (llave en
+    `/usr/share/keyrings/brave-browser-archive-keyring.gpg`, fuente
+    `brave-browser-release.list`; autorizado por el usuario, regla 8).
+    `/etc/brave/policies/managed/dwm-setup.json` apaga telemetría
+    (P3A, stats ping, Web Discovery, Rewards, Wallet, News, Talk, VPN,
+    Leo, metrics/crash, UKM, sugerencias y surveys) y fuerza por
+    `ExtensionSettings` SurfingKeys (`gfbliohnnapiefjpjlpjnehglfpaknnc`)
+    y el tema oficial Catppuccin Mocha
+    (`bkkmolkhemgaeaeggcmfbghljjjoofoh`).
+    Los atajos nativos viven en `brave.accelerators` del perfil
+    (`Preferences`): `lib/brave.sh` escribe Ctrl+N/P (pestañas,
+    quitándolos de ventana nueva/imprimir), Alt+Q cerrar, Alt+O
+    recargar, Alt+K nueva pestaña, Alt+N expandir/colapsar pestañas
+    verticales, Alt+Shift+N ventana nueva, Ctrl+Alt+L dividir con la
+    pestaña actual, Ctrl+Alt+H nueva vista dividida, y Alt+H/Alt+L para
+    saltar al panel izquierdo/derecho de la vista dividida (son
+    "panel anterior/siguiente", cíclicos). Alt+H ya no abre el
+    historial: queda solo Ctrl+H. IDs 34016/17/15/02, 34014, 56215,
+    34000, 34057, 56325, 39005 (panel anterior) y 39004 (panel
+    siguiente). Con Brave abierto ese paso se omite (se pide cerrarlo y
+    repetir). `verify.sh` exige las policies y los atajos.
     La config de SurfingKeys se genera en
     `~/.config/dwm-setup/surfingkeys.js` y se pega una vez a mano: la
-    extensión no lee archivos locales sin native host.
-    Telemetría: `policies.json` incluye `DisableTelemetry`,
-    `DisableFirefoxStudies` y `DisablePocket`, y `user.js.in` apaga
-    telemetría/datareporting/Normandy/pings de newtab/crash/Pocket.
-    Las prefs viven en el template + store (regla 20b) y `verify.sh`
-    exige ambas cosas. Las pestañas verticales a la derecha
-    (`sidebar.*`) son ajuste de perfil, no están en el repo.
+    extensión no lee archivos locales sin native host. Mantiene el mapa
+    heredado (`o` = búsqueda Google por el alias `go`, `O` = pestaña
+    nueva, `b` = elegir pestaña, `H`/`L` = atrás/adelante). Los
+    `Alt+…` nativos (Alt+Q/O/H/K/N) los captura Brave antes que la
+    página, así que no se mapean en SurfingKeys: el historial de páginas
+    queda en `<Alt-y>`. Los hints se pintan a 15px con
+    `Hints.style(...)` y las variables `--sk-*` de `:root` (shadow
+    root). La interfaz se limpia con `install_brave_minimal`
+    (`brave.new_tab_page.*`, iconos de la barra y pestañas verticales);
+    `BookmarkBarEnabled: false` quita la barra de marcadores y
+    `NewTabPageLocation` apunta a `/usr/share/dwm-setup/newtab.html`
+    (renderizado desde `templates/brave/newtab.html.in`, negro liso).
+    Chromium no
+    soporta `userChrome`/CSS de UI: el tema es el de CWS (Mocha
+    estándar, no el mocha-black exacto) y no se puede replicar el
+    minimalismo de Firefox. VA-API queda activo por
+    `install_brave_vaapi`: wrapper `~/.local/bin/brave-browser` con
+    `--enable-features=VaapiVideoDecoder` y `.desktop` de usuario que
+    apunta a él (Brave borra ese flag de `Local State` al salir). El
+    instalador aborta si Brave está abierto (preflight en `install.sh`). Firefox, OpenH264 y sus
+    policies/autoconfig ya no se instalan.
 
 23. **Bandeja del sistema.** Polybar usa `internal/tray` en A y B, al final
     de `modules-right`. Solo soporta XEmbed; las apps que usan
@@ -203,7 +227,10 @@ La fase 1 termina en el escritorio. No implementar todavía:
 24. **Pantalla siempre encendida.** `autostart` ejecuta `xset s off` y
     `xset -dpms`; no hay bloqueo por inactividad. No reintroducir blanking,
     DPMS ni `xset dpms force off` en scripts de sesión. El bloqueo manual
-    (`Super+Shift+L`) y el de suspensión siguen activos.
+    (`Super+Shift+L`) y el de suspensión siguen activos. Las notificaciones
+    de dunst **deben verse también con una ventana a pantalla completa**:
+    no poner `fullscreen = delay` ni `pushback` en `dunstrc` (el valor por
+    defecto, `show`, es el deseado).
 
 25. **Compositor picom (ADR-107).** picom 12.5 inicializa la sesión desde
     `autostart` (antes de polybar, con guard `pgrep -x picom`) usando
@@ -228,7 +255,24 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `/etc/sudoers.d/dwm-setup-cpu-governor` (`NOPASSWD` para ese binario
     exacto, validado con `visudo -cf` antes de instalar); no ampliar el
     sudoers. La unidad `dwm-setup-cpu-governor.service` aplica
-    `performance` al boot. Iconos del módulo: `U+F10CB`
+    `performance` al boot. La carga de la batería se limita al 80 % con
+    `battery-charge-threshold.service` + `dwm-setup-battery-limit`
+    (`lib/power.sh`), solo si existe
+    `/sys/class/power_supply/BAT*/charge_control_end_threshold`;
+    `desktop-doctor` avisa si la salud cae por debajo del 60 %. El modo
+    del ventilador se cicla desde el módulo `fan` (tras `governor` en A,
+    tras `cpu` en B): `dwm-setup-fan-mode` detecta
+    `fan_boost_mode`/`throttle_thermal_policy` (normal/overboost/silent)
+    o `platform_profile` (quiet/balanced/performance); sin backend el
+    módulo se oculta con `exec-if` y no se escribe sudoers. Iconos:
+    `U+F0210` normal, `U+F0241` overboost, `U+F0717` silent. Estado en
+    `~/.config/dwm-setup/fan-mode` (`auto` por defecto o `manual:<modo>`);
+    el clic cicla `auto → normal → overboost → silent → auto` y
+    `dwm-setup-fan-auto` solo actúa en `auto` (80 °C/80 % 10 s para subir,
+    70 °C/<40 % 30 s para bajar). Energía:
+    `dwm-setup-power-auto` aplica `performance` con cargador y `powersave`
+    + EPP `balance_performance` + suelo 1.2 GHz con batería; el clic del
+    gobernador usa el mismo helper `dwm-setup-power-profile`. Iconos del módulo: `U+F10CB`
     performance, `U+F0F86` powersave (font-3); el acento performance
     sale de `@COLOR_ACCENT@` en `scripts/cpu-governor.sh` (re-render de
     `theme-mode`, regla 20b). EPP/balanceado queda fuera hasta decisión
@@ -242,10 +286,12 @@ La fase 1 termina en el escritorio. No implementar todavía:
     usa el yt-dlp oficial y mpv; `yt-play`, `ytdlp-{check,update,
     rollback}` y las notificaciones dunst NO se retiran. La config va
     de `templates/ytwatch/config.toml.in` (tema `terminal`, sin hex:
-    no entra en el store 20b), browser es `firefox-esr` y
+    no entra en el store 20b), browser es `brave-browser` y
     `audio_only = false` (vídeo por defecto; `a` conmuta a audio en el
     TUI; cambiar el default exige decisión). Actualizaciones: `ytwatch-check` (avisa por dunst) y
-    `ytwatch-update` (`--ueberzugpp` para el paquete). **Sin binding de
+    `ytwatch-update` (`--ueberzugpp` para el paquete); `lib/ytwatch.sh`
+    instala ambos en `~/.local/bin` (usuario, sin sudo) — sin ellos el
+    timer de avisos no puede revisar ytwatch. **Sin binding de
     sxhkd**: se lanza tecleando `ytwatch`. Un **timer de usuario**
     `dwm-setup-yt-update-notify.timer` (13:00 diario; `Persistent`
     cubre el arranque después de esa hora) ejecuta
@@ -254,6 +300,11 @@ La fase 1 termina en el escritorio. No implementar todavía:
     ni el módulo `updates` de polybar. El doctor global con avisos
     dunst de todo el sistema es backlog, no fase actual. `lib/sysctl.sh`
     instala `vm.swappiness=10` vía `/etc/sysctl.d/` (23 GB de RAM).
+    `lib/boot.sh` acorta el arranque: `GRUB_TIMEOUT=2`, quita
+    `/etc/modules-load.d/nvidia.conf` (nvidia-drm se carga con
+    `prime-run`), difiere `systemd-tmpfiles-clean.timer` (`OnBootSec=1h`)
+    y desactiva `NetworkManager-wait-online`. Medido antes: 22,4 s de
+    boot (GRUB 8,6 + modules-load 6,3 por nvidia + tmpfiles 4,8).
 
 ## Estructura relevante
 
@@ -272,7 +323,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/rofi.sh` | powermenu.rasi |
 | `lib/kitty.sh` | kitty.conf y paleta del terminal |
 | `lib/zsh.sh` | zsh, Oh My Zsh y lsd |
-| `lib/ranger.sh` | ranger, zathura, VLC y previews |
+| `lib/ranger.sh` | ranger, zathura, VLC y previews (método `kitty`) |
 | `lib/gpu.sh` | configuración Xorg/i915/NVIDIA por hardware |
 | `lib/gtk.sh` | temas GTK Catppuccin, tema derivado e iconos |
 | `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
@@ -280,7 +331,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/fastfetch.sh` | fastfetch: config y logo `Neofet.png` |
 | `lib/music.sh` | yt-dlp oficial, scripts de streaming y teclas |
 | `lib/ytwatch.sh` | ytwatch (binario GitHub) y ueberzugpp (.deb OBS) con SHA-256 |
-| `lib/firefox.sh` | Firefox ESR y OpenH264 para WebRTC/Teams |
+| `lib/brave.sh` | Brave: repo APT, policies, atajos y SurfingKeys |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paletas (Mocha Black, Latte), par de modos y render |
 | `lib/audio.sh` | Quirk ALC255 condicionado por DMI/códec |
@@ -301,7 +352,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/sudoers/` | Fragmento de sudoers del gobernador (`@USER@`) |
 | `templates/systemd/` | `dwm-setup-cpu-governor.service` (performance al boot) |
 | `templates/gtk/` | settings GTK2/3/4 y CSS |
-| `templates/firefox/` | `zz-dwm-setup.js` (OpenH264), `policies.json` (uBlock + SurfingKeys), `userChrome.css.in`, `user.js.in` y `surfingkeys.js.in` |
+| `templates/brave/` | `surfingkeys.js.in` (config para pegar a mano) |
 | `templates/vlc/` | vlcrc (oscuro o claro según el modo) |
 | `templates/zathura/` | zathurarc |
 | `templates/themes/` | `catppuccin-mocha-blue` y `catppuccin-latte-blue` |
@@ -319,6 +370,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/ytwatch-update` | Actualiza ytwatch (checksums.txt) o ueberzugpp (`--ueberzugpp`) |
 | `bin/yt-update-notify` | Wrapper del timer: agrupa los dos checkers en un toast dunst |
 | `lib/yt-notify.sh` | Instala el timer de usuario de avisos (unidades + enable) |
+| `lib/boot.sh` | Arranque: GRUB 2 s, nvidia fuera del boot, tmpfiles diferido, sin wait-online |
+| `lib/power.sh` | Límite de carga de batería (80 %) vía sysfs + unidad systemd |
+| `lib/fans.sh` | Modo del ventilador: helper root y sudoers acotado |
 | `lib/sysctl.sh` | Instala `/etc/sysctl.d/99-dwm-setup-swappiness.conf` |
 | `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview kitty) |
 | `templates/sysctl/` | `99-dwm-setup-swappiness.conf` (vm.swappiness=10) |

@@ -1055,3 +1055,84 @@ ytsearch50  → 4533 ms
   extensiones ocultos, panel sin «+» ni scrollbar, borde inferior
   quitado, tools=history,bookmarks. Render OK; pendiente reinicio y
   comprobación visual.
+- 2026-11-10: telemetría restante cubierta (usage/Glean-gate/PPA/
+  serp/urlbar/crash/ads) + DisableFeedbackCommands; render OK.
+  Pendiente reinicio, sudo install y borrado de pings/IDs con Firefox
+  cerrado.
+- 2026-11-10: SurfingKeys Ctrl+n/Ctrl+p → next/previousTab y Alt+N →
+  firefox-sidebar.sh (xdotool + Ctrl+Alt+Z nativo, filtrado por
+  WM_CLASS). sxhkd recargado; pendiente instalar xdotool y pegar la
+  config en la extensión para probar en pantalla.
+- 2026-11-10: ui.prefersReducedMotion=1 (sidebar instantánea con
+  Alt+N). Render OK; pendiente reiniciar Firefox y pegar la config de
+  SurfingKeys para Ctrl+N/P.
+- 2026-11-10: corregida la sintaxis de Ctrl+N/P en SurfingKeys
+  (mapkey + RUNTIME). Alt+N verificado en vivo (toggle sidebar
+  ~1.25M px por pulsación). Pendiente re-pegar la config y probar.
+- 2026-11-10: Ctrl+N/Ctrl+P implementados por autoconfig de Firefox
+  (reservado en el navegador para Ctrl+N). Pendiente `sudo
+  ./install.sh` + reinicio y prueba real.
+- 2026-11-10: autoconfig reescrita con reapuntado de key_newNavigator
+  y printKb (reserved). Pendiente sudo install + reinicio + prueba.
+- 2026-11-10: migración Brave (ADR-113): repo APT, policies, atajos
+  nativos y tema CWS. Checks estáticos OK; pendiente instalar en vivo y
+  validar atajos/policies/tema y VA-API.
+- 2026-11-13: atajos Brave Alt+N (panel), Alt+Shift+N (ventana) y
+  Ctrl+Alt+L/H (split) añadidos y probados en vivo con IDs 56215,
+  34000, 34057 y 56325. Pendiente sudo install para llevarlo al repo.
+- 2026-11-13: Alt+H/Alt+L mapeados a panel anterior/siguiente
+  (39005/39004) y Alt+H retirado de Historial. F6/Shift+F6 probados en
+  vivo moviendo el foco entre los dos paneles del split; pendiente
+  probar Alt+H/Alt+L tras cerrar Brave y reescribir las prefs.
+- 2026-11-13: SurfingKeys: `o`/`O`/`b`/`H`/`L` conservados; historial
+  movido a `<Alt-y>` y retirados los Alt+Q/Alt+O que Brave intercepta.
+  Pendiente pegar la config en la extensión del perfil de Brave y
+  comprobar con `?`.
+- 2026-11-13: Brave minimalista (NTP limpia, iconos apagados, verticales
+  sobrias) y hints de SurfingKeys a 15px azules. Pendiente reiniciar
+  Brave y revisar captura; `BookmarkBarEnabled` requiere `sudo
+  ./install.sh` para escribir la policy.
+- 2026-11-13: NTP de Brave sustituida por /usr/share/dwm-setup/newtab.html
+  vía policy NewTabPageLocation (negro liso, sin buscador ni sitios).
+  Pendiente `sudo ./install.sh` con Brave cerrado y captura de Ctrl+T.
+- 2026-11-13: hints de SurfingKeys a 17px con fondo azul sólido y
+  letra oscura (colores literales; `var()` no resuelve en el shadow
+  root). Pendiente re-pegar la config y comprobar con `f`.
+- 2026-11-13: pendiente probar que dunst sigue mostrando toasts con una
+  ventana a pantalla completa (valor por defecto `fullscreen = show`).
+- 2026-11-13: análisis de rendimiento completo (aperturas, GPU, boot,
+  idle). Pendiente tras `sudo ./install.sh` + reinicio: confirmar
+  arranque ~8-10 s más corto y `prime-run glxinfo` sin nvidia-drm
+  precargado. VA-API verificado el 2026-11-13: `brave://gpu` muestra
+  "Video Decode: Hardware accelerated" con `VaapiVideoDecoder`.
+- 2026-11-13: pruebas funcionales (zathura, feh, VLC, mpv, ranger,
+  audio, portapapeles, dunst). Corregido: previews de ranger con
+  `kitty`, asociaciones MIME (zathura/feh/VLC) y diálogo de privacidad
+  de VLC. Pendiente revalidar tras `sudo ./install.sh`.
+- 2026-11-13: `ytwatch-check`/`ytwatch-update` instalados en
+  `~/.local/bin` y `--quiet` corregido; `yt-update-notify` probado con
+  toast real de dunst (ytwatch 0.1.0→0.3.0, ueberzugpp 2.9.10→2.9.11).
+- 2026-11-13: `ytwatch-update` arreglado (checksum por nombre real de
+  asset) y actualizado a 0.3.0. Avisos de actualización persistentes
+  (`[actualizaciones]`, timeout 0) y clicables: probado clic izquierdo →
+  kitty "dwm-setup: actualizar". Nota: tras cambiar `mouse_*` hay que
+  reiniciar dunst.
+- 2026-11-13: instalador aborta si Brave está abierto; verify de Brave
+  pasa a JSON; VA-API por wrapper (`~/.local/bin/brave-browser` +
+  `.desktop`). Ya aplicado del intento anterior: GRUB 2 s, nvidia fuera
+  del boot, tmpfiles 1 h, wait-online off, newtab.html, at-spi2-core.
+- 2026-11-13: ytwatch pin v0.3.0 + SHA verificado; tmpdir del tarball
+  creado por el usuario y guardia anti-downgrade. Pendiente reejecutar
+  `sudo ./install.sh` y comprobar que no hay `curl: (23)`.
+- 2026-11-14: límite de carga de batería al 80 % (helper + unidad).
+  Comprobado que el portátil (TUF FX504GE) expone
+  `charge_control_end_threshold` (estaba en 100) y que `desktop-doctor`
+  calcula la salud (42 %). Pendiente `sudo ./install.sh` para escribirlo
+  y verificar.
+- 2026-11-14: módulo `fan` (modo del ventilador) en A y B. En este TUF
+  el backend es `fan_boost_mode` (normal/overboost/silent). Pendiente
+  `sudo ./install.sh` (helper + sudoers) y prueba del clic con toast.
+- 2026-11-14: daemons `dwm-setup-fan-auto` y `dwm-setup-power-auto`,
+  estado `auto` del ventilador y perfiles de energía. Pendiente
+  `sudo ./install.sh` (helpers + sudoers) y probar clic de 4 estados y
+  cambio AC/batería.

@@ -8,7 +8,7 @@ verify_install() {
   local path module line
 
   for cmd in bspwm sxhkd polybar picom dunst rofi feh kitty flameshot i3lock xss-lock \
-    brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl nvim \
+    brightnessctl xclip xdotool thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl nvim \
     zsh lsd ranger zathura vlc ueberzug fastfetch mpv fzf chafa; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
@@ -66,7 +66,9 @@ verify_install() {
     "$home/.config/polybar/modules/memory.ini" \
     "$home/.config/polybar/modules/cpu.ini" \
     "$home/.config/polybar/modules/governor.ini" \
+    "$home/.config/polybar/modules/fan.ini" \
     "$home/.config/polybar/scripts/cpu-governor.sh" \
+    "$home/.config/polybar/scripts/fan-mode.sh" \
     "$home/.config/polybar/modules/network.ini" \
     "$home/.config/polybar/modules/services.ini" \
     "$home/.config/polybar/modules/battery.ini" \
@@ -104,6 +106,7 @@ verify_install() {
     "$home/.config/polybar/variants/reference/modules/memory.ini" \
     "$home/.config/polybar/variants/reference/modules/cpu.ini" \
     "$home/.config/polybar/variants/reference/modules/governor.ini" \
+    "$home/.config/polybar/variants/reference/modules/fan.ini" \
     "$home/.config/polybar/variants/reference/modules/xkeyboard.ini" \
     "$home/.config/polybar/variants/reference/modules/fs.ini" \
     "$home/.config/polybar/variants/reference/modules/date.ini" \
@@ -142,6 +145,12 @@ verify_install() {
     "/usr/local/bin/ytdlp-update" \
     "/usr/local/bin/ytdlp-rollback" \
     "/usr/local/bin/music-ctl" \
+    "$home/.local/bin/dwm-setup-fan-auto" \
+    "$home/.local/bin/dwm-setup-power-auto" \
+    "$home/.config/dwm-setup/fan-mode" \
+    "$home/.local/bin/ytwatch" \
+    "$home/.local/bin/ytwatch-check" \
+    "$home/.local/bin/ytwatch-update" \
     "$home/.local/share/dwm-setup/render.env" \
     "$home/.config/dwm-setup/mode" \
     "$home/.config/dwm-setup/surfingkeys.js" \
@@ -164,8 +173,7 @@ verify_install() {
     "$home/Pictures/Screenshots" \
     "/usr/local/bin/desktop-safe" \
     "/usr/local/bin/desktop-doctor" \
-    "/etc/firefox-esr/zz-dwm-setup.js" \
-    "/etc/firefox/policies/policies.json"; do
+    "/etc/brave/policies/managed/dwm-setup.json"; do
     if [[ -e "$path" ]]; then
       debug "ok: $path"
     else
@@ -237,6 +245,38 @@ verify_install() {
   if [[ -f "$home/.config/polybar/variants/reference/config.ini" ]] &&
      ! grep -qE '^modules-left = .*\bgovernor\b' "$home/.config/polybar/variants/reference/config.ini"; then
     error "La barra B no integra el gobernador en la izquierda (falta 'governor' en modules-left)"
+    failures=$((failures + 1))
+  fi
+
+  # Módulo de ventilador: presente en A y B, y helper root instalado.
+  if [[ -f "$home/.config/polybar/config.ini" ]] &&
+     ! grep -qE '^modules-right = .*\bfan\b' "$home/.config/polybar/config.ini"; then
+    error "La barra A no incluye el módulo fan"
+    failures=$((failures + 1))
+  fi
+  if [[ -f "$home/.config/polybar/variants/reference/config.ini" ]] &&
+     ! grep -qE '^modules-right = .*\bfan\b' "$home/.config/polybar/variants/reference/config.ini"; then
+    error "La barra B no incluye el módulo fan"
+    failures=$((failures + 1))
+  fi
+  if [[ -e /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]] &&
+     [[ ! -f /etc/sudoers.d/dwm-setup-power-profile ]]; then
+    error "Falta /etc/sudoers.d/dwm-setup-power-profile"
+    failures=$((failures + 1))
+  fi
+  if [[ -e /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]] &&
+     [[ ! -x /usr/local/bin/dwm-setup-power-profile ]]; then
+    error "Falta /usr/local/bin/dwm-setup-power-profile"
+    failures=$((failures + 1))
+  fi
+  if [[ ! -x /usr/local/bin/dwm-setup-fan-mode ]]; then
+    error "Falta /usr/local/bin/dwm-setup-fan-mode"
+    failures=$((failures + 1))
+  elif [[ -e /sys/devices/platform/asus-nb-wmi/fan_boost_mode ||
+          -e /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy ||
+          -r /sys/firmware/acpi/platform_profile ]] &&
+       [[ ! -f /etc/sudoers.d/dwm-setup-fan-mode ]]; then
+    error "Falta /etc/sudoers.d/dwm-setup-fan-mode con soporte de ventilador"
     failures=$((failures + 1))
   fi
 
@@ -443,41 +483,132 @@ verify_install() {
     failures=$((failures + 1))
   fi
 
-  # Firefox ESR: OpenH264 activo para WebRTC/Teams.
-  if ! command -v firefox >/dev/null 2>&1; then
-    error "Firefox no está instalado"
+  # Brave: navegador del escritorio (ADR-113) con policies de privacidad.
+  if ! command -v brave-browser >/dev/null 2>&1; then
+    error "Brave no está instalado"
     failures=$((failures + 1))
   fi
-  if [[ -f /etc/firefox-esr/zz-dwm-setup.js ]]; then
-    if ! grep -q 'media.gmp-gmpopenh264.enabled", true' /etc/firefox-esr/zz-dwm-setup.js ||
-       ! grep -q 'media.peerconnection.video.h264_enabled", true' /etc/firefox-esr/zz-dwm-setup.js; then
-      error "Firefox no tiene OpenH264 habilitado en /etc/firefox-esr/zz-dwm-setup.js"
+  local brave_policy=/etc/brave/policies/managed/dwm-setup.json
+  if [[ -f "$brave_policy" ]]; then
+    for key in '"BraveP3AEnabled": false' '"BraveStatsPingEnabled": false' \
+               '"BraveWebDiscoveryEnabled": false' '"BraveRewardsDisabled": true' \
+               '"BookmarkBarEnabled": false' '"NewTabPageLocation"'; do
+      if ! grep -q "$key" "$brave_policy"; then
+        error "Brave: falta $key en $brave_policy"
+        failures=$((failures + 1))
+      fi
+    done
+    if ! grep -q 'gfbliohnnapiefjpjlpjnehglfpaknnc' "$brave_policy"; then
+      error "Brave: SurfingKeys no está forzada en las policies"
       failures=$((failures + 1))
+    fi
+    if ! grep -q 'bkkmolkhemgaeaeggcmfbghljjjoofoh' "$brave_policy"; then
+      error "Brave: tema Catppuccin no está forzado en las policies"
+      failures=$((failures + 1))
+    fi
+  else
+    error "Falta $brave_policy"
+    failures=$((failures + 1))
+  fi
+
+  # Página de nueva pestaña propia (policy NewTabPageLocation).
+  if [[ ! -f /usr/share/dwm-setup/newtab.html ]]; then
+    error "Falta /usr/share/dwm-setup/newtab.html (NTP de Brave)"
+    failures=$((failures + 1))
+  fi
+
+  # Atajos nativos (solo si el perfil ya existe).
+  local brave_prefs="$home/.config/BraveSoftware/Brave-Browser/Default/Preferences"
+  if [[ -f "$brave_prefs" ]]; then
+    for combo in 'Control+KeyN' 'Control+KeyP' 'Alt+KeyQ' 'Alt+KeyO' 'Alt+KeyK' \
+                 'Alt+KeyN' 'Alt+Shift+KeyN' 'Control+Alt+KeyH' 'Control+Alt+KeyL' \
+                 'Alt+KeyH' 'Alt+KeyL'; do
+      if ! grep -q "$combo" "$brave_prefs"; then
+        error "Brave: falta el atajo $combo en Preferences"
+        failures=$((failures + 1))
+      fi
+    done
+    # Interfaz minimalista: Brave reescribe Preferences en JSON compacto,
+    # así que se comprueban los valores, no el texto.
+    local bad
+    bad=$(python3 - "$brave_prefs" <<'PYCHK' 2>/dev/null || printf 'Preferences ilegible\n'
+import json
+import sys
+
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+brave = data.get("brave", {})
+ntp = brave.get("new_tab_page", {})
+tabs = brave.get("tabs", {})
+checks = (
+    ("show_brave_news", ntp.get("show_brave_news"), False),
+    ("show_side_panel_button", brave.get("show_side_panel_button"), False),
+    ("always_hide_tab_close_button", tabs.get("always_hide_tab_close_button"), True),
+    ("vertical_tabs_show_scrollbar", tabs.get("vertical_tabs_show_scrollbar"), False),
+)
+for name, got, want in checks:
+    if got != want:
+        print(f"{name} (valor {got!r}, se espera {want!r})")
+PYCHK
+)
+    if [[ -n "$bad" ]]; then
+      while IFS= read -r line; do
+        [[ -n "$line" ]] || continue
+        error "Brave: interfaz minimalista sin aplicar: $line"
+        failures=$((failures + 1))
+      done <<<"$bad"
     fi
   fi
 
-  # SurfingKeys debe venir forzada desde la misma política.
-  if [[ -f /etc/firefox/policies/policies.json ]]; then
-    if ! grep -q '{a8332c60-5b6d-41ee-bfc8-e9bb331d34ad}' /etc/firefox/policies/policies.json ||
-       ! grep -q 'surfingkeys_ff' /etc/firefox/policies/policies.json; then
-      error "Firefox no tiene SurfingKeys en /etc/firefox/policies/policies.json"
+  # VA-API: wrapper con --enable-features (Brave borra el flag de Local State).
+  if [[ -f "$home/.local/bin/brave-browser" ]]; then
+    if ! grep -q 'VaapiVideoDecoder' "$home/.local/bin/brave-browser"; then
+      error "Wrapper de Brave sin --enable-features=VaapiVideoDecoder"
       failures=$((failures + 1))
     fi
-    if ! grep -q '"DisableTelemetry": *true' /etc/firefox/policies/policies.json; then
-      error "Firefox sin DisableTelemetry en /etc/firefox/policies/policies.json"
+  else
+    error "Falta ~/.local/bin/brave-browser (wrapper de VA-API)"
+    failures=$((failures + 1))
+  fi
+  if [[ -f "$home/.local/share/applications/brave-browser.desktop" ]] &&
+     ! grep -q "^Exec=$home/.local/bin/brave-browser" \
+       "$home/.local/share/applications/brave-browser.desktop"; then
+    error "El .desktop de Brave no usa el wrapper de VA-API"
+    failures=$((failures + 1))
+  fi
+
+  # Arranque: GRUB, módulos y timers (lib/boot.sh).
+  if [[ -f /etc/default/grub ]]; then
+    if ! grep -qx 'GRUB_TIMEOUT=2' /etc/default/grub; then
+      error "GRUB_TIMEOUT no es 2 en /etc/default/grub"
       failures=$((failures + 1))
     fi
   fi
+  if [[ -f /etc/modules-load.d/nvidia.conf ]]; then
+    error "nvidia-drm sigue cargándose en el boot (/etc/modules-load.d/nvidia.conf)"
+    failures=$((failures + 1))
+  fi
+  if ! grep -qs 'OnBootSec=1h' /etc/systemd/system/systemd-tmpfiles-clean.timer.d/10-dwm-setup.conf; then
+    error "Falta el drop-in de systemd-tmpfiles-clean.timer (OnBootSec=1h)"
+    failures=$((failures + 1))
+  fi
+  if systemctl is-enabled --quiet NetworkManager-wait-online.service 2>/dev/null; then
+    error "NetworkManager-wait-online sigue habilitado"
+    failures=$((failures + 1))
+  fi
 
-  # La telemetría también debe estar apagada en el user.js del perfil
-  # activo (los perfiles legacy sin usar no se renderizan).
-  local fw_profile ujs
-  if fw_profile=$(detect_firefox_profile "$home" 2>/dev/null); then
-    ujs="$fw_profile/user.js"
-    if [[ -f "$ujs" ]] && ! grep -q 'toolkit.telemetry.enabled", false' "$ujs"; then
-      error "user.js del perfil activo sin toolkit.telemetry.enabled=false ($ujs)"
+  # Límite de carga de la batería (solo si el hardware lo expone).
+  if compgen -G '/sys/class/power_supply/BAT*/charge_control_end_threshold' >/dev/null; then
+    if ! systemctl is-enabled --quiet battery-charge-threshold.service 2>/dev/null; then
+      error "battery-charge-threshold.service no está habilitado"
       failures=$((failures + 1))
     fi
+    for f in /sys/class/power_supply/BAT*/charge_control_end_threshold; do
+      [[ -e "$f" ]] || continue
+      if [[ "$(cat "$f" 2>/dev/null)" != "80" ]]; then
+        error "Umbral de carga de $(basename "$(dirname "$f")") no es 80 ($(cat "$f" 2>/dev/null))"
+        failures=$((failures + 1))
+      fi
+    done
   fi
 
   # kitty debe aceptar control remoto para que theme-mode lo recoloree.
@@ -539,13 +670,21 @@ verify_install() {
     failures=$((failures + 1))
   fi
 
-  # uBlock Origin debe venir forzado desde la política de Firefox.
-  if [[ -f /etc/firefox/policies/policies.json ]]; then
-    if ! grep -q '"uBlock0@raymondhill.net"' /etc/firefox/policies/policies.json ||
-       ! grep -q '"force_installed"' /etc/firefox/policies/policies.json; then
-      error "Firefox no tiene uBlock Origin force-installed en /etc/firefox/policies/policies.json"
+  # Notificaciones de actualización: persistentes y con acción al clic.
+  if [[ -f "$home/.config/dunst/dunstrc" ]]; then
+    if ! grep -q '^    mouse_left_click = do_action' "$home/.config/dunst/dunstrc"; then
+      error "dunstrc: mouse_left_click no es do_action (el toast no se puede pulsar)"
       failures=$((failures + 1))
     fi
+    if ! grep -q '\[actualizaciones\]' "$home/.config/dunst/dunstrc"; then
+      error "dunstrc: falta la regla [actualizaciones] (timeout = 0)"
+      failures=$((failures + 1))
+    fi
+  fi
+  if [[ -f "$home/.config/systemd/user/dwm-setup-yt-update-notify.service" ]] &&
+     ! grep -q '^KillMode=process' "$home/.config/systemd/user/dwm-setup-yt-update-notify.service"; then
+    error "yt-update-notify.service no tiene KillMode=process (el listener del clic moriría)"
+    failures=$((failures + 1))
   fi
 
   # VLC debe seguir el modo activo (1 en oscuro, 0 en claro).
@@ -555,6 +694,32 @@ verify_install() {
       error "VLC no sigue el modo activo (se espera qt-dark-palette=$expected_vlc)"
       failures=$((failures + 1))
     fi
+    if ! grep -qx 'qt-privacy-ask=0' "$home/.config/vlc/vlcrc"; then
+      error "vlcrc no desactiva el diálogo de privacidad (qt-privacy-ask=0)"
+      failures=$((failures + 1))
+    fi
+  fi
+
+  # Ranger: previews con el protocolo de kitty (ueberzug no está instalado).
+  if [[ -f "$home/.config/ranger/rc.conf" ]] &&
+     ! grep -qx 'set preview_images_method kitty' "$home/.config/ranger/rc.conf"; then
+    error "ranger no usa preview_images_method kitty (las previews no se ven)"
+    failures=$((failures + 1))
+  fi
+
+  # Asociaciones de archivos fuera del navegador.
+  if cmd_exists xdg-mime; then
+    local mime_pair mime want got
+    for mime_pair in 'application/pdf:org.pwmt.zathura.desktop' \
+                     'image/png:feh.desktop' 'video/mp4:vlc.desktop'; do
+      mime="${mime_pair%%:*}"
+      want="${mime_pair#*:}"
+      got=$(run_user xdg-mime query default "$mime" 2>/dev/null || printf '')
+      if [[ "$got" != "$want" ]]; then
+        error "Asociación de $mime: se espera $want y hay '${got:-ninguna}'"
+        failures=$((failures + 1))
+      fi
+    done
   fi
 
   # Tema GTK e iconos del modo activo.

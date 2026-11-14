@@ -36,6 +36,11 @@ settings.hintAlign = "left";
 settings.tabsThreshold = 0;
 settings.modeAfterYank = 'Normal';
 Hints.setCharacters('asdfgyuiopqwertnmzxcvb');
+// Etiquetas de hints: 17px, fondo azul intenso y letra oscura. Se usan
+// colores literales de la paleta (@COLOR_*@): dentro del shadow root los
+// var(--sk-*) no resuelven y el fondo quedaría transparente.
+Hints.style('div{font-size:17px;font-weight:700;padding:3px 7px;border-radius:4px;background:@COLOR_ACCENT_STRONG@;color:@COLOR_BG_DEEP@;border:2px solid @COLOR_ACCENT_STRONG@;box-shadow:0 2px 8px @COLOR_BG_DEEP@;}');
+Hints.style('div{font-size:17px;font-weight:700;padding:3px 7px;border-radius:4px;background:@COLOR_ACCENT_STRONG@;color:@COLOR_BG_DEEP@;border:2px solid @COLOR_ACCENT_STRONG@;}', 'text');
 
 map('o', 'go');
 map('b', 'T');
@@ -46,11 +51,15 @@ map('L', 'D');
 // Scroll Page Down/Up
 mapkey("<Ctrl-d>", "Scroll down", () => { Normal.scroll("pageDown"); });
 mapkey("<Ctrl-u>", "Scroll up", () => { Normal.scroll("pageUp"); });
-mapkey('<Alt-h>', 'Open history in omnibar', () => Front.openOmnibar({ type: 'History' }));
+// Pestañas verticales: siguiente (abajo) / anterior (arriba)
+mapkey('<Ctrl-n>', 'Tab siguiente (abajo)', () => { RUNTIME('nextTab'); });
+mapkey('<Ctrl-p>', 'Tab anterior (arriba)', () => { RUNTIME('previousTab'); });
+mapkey('<Alt-y>', 'Open history in omnibar', () => Front.openOmnibar({ type: 'History' }));
 
 // --- Tabs ---
-map('<Alt-q>', 'x');
-map('<Alt-o>', 'R');
+// Alt+Q / Alt+O / Alt+H son atajos nativos de Brave (cerrar, recargar,
+// panel izquierdo): el navegador los captura antes que la página, así que
+// no se mapean aquí. El historial de páginas vive en <Alt-y>.
 map('>', '>>');
 map('<', '<<');
 

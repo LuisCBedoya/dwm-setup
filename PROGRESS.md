@@ -1445,3 +1445,319 @@ UHD 630; sin servicios ni configuración extra.
 - Store sincronizado y re-render vivo sin placeholders. Pendiente
   reiniciar Firefox y confirmar en pantalla (si el «+» vertical usa
   otro id, ajustar selector).
+
+### Firefox: telemetría restante (usage/Glean/PPA/crash/ads) — 2026-11-10
+
+- user.js.in: +19 prefs — datareporting.usage, newtab privatePing,
+  FxA client-association, serpEventTelemetry (y Categorization),
+  urlbar eventTelemetry, dom.private-attribution (PPA),
+  tabs.crashReporting.sendReport, breakpad.reportURL vacío,
+  media.video_stats, messaging-system.rsexperimentloader,
+  showSponsored*/topstories y privacidad de UX (sin sugerencias de
+  búsqueda ni chat IA). Total 41 user_pref en el perfil.
+- policies.json: + DisableFeedbackCommands.
+- Rastros en disco detectados y pendientes de borrar con Firefox
+  cerrado: datareporting/archived (764 KB), datareporting/glean (24 KB),
+  state/session-state, crashes/events + store, IDs en prefs.js.
+- Pendiente: sudo ./install.sh (policy), reiniciar Firefox y limpieza
+  con el navegador cerrado.
+
+### Firefox: Ctrl+N/P en SurfingKeys y Alt+N para la sidebar — 2026-11-10
+
+- surfingkeys.js (template + vivo): `Ctrl+n`/`Ctrl+p` mapeados a
+  `nextTab`/`previousTab` (bajar/subir pestaña en la barra vertical).
+  Firefox sí permite al contenido interceptar ambas (a diferencia de
+  Chrome). Hay que pegar de nuevo la config en la extensión.
+- `Alt+N` → `firefox-sidebar.sh` (sxhkd): comprueba que la ventana
+  activa es Firefox (WM_CLASS "Navigator","firefox-esr") y envía el
+  atajo nativo Ctrl+Alt+Z (toggle sidebar). Requiere xdotool (añadido
+  a DESKTOP_PKGS y a verify). Sin Firefox enfocado no hace nada.
+- Aplicado en vivo: script + sxhkd recargado; SurfingKeys vivo
+  actualizado. Pendiente `sudo ./install.sh` para xdotool.
+
+### Firefox: Alt+N instantáneo (reduced motion) — 2026-11-10
+
+- user.js.in: `ui.prefersReducedMotion = 1` para desactivar animaciones
+  de UI; el toggle de la sidebar vía Alt+N (Ctrl+Alt+Z) responde al
+  instante (la animación tardaba ~1-2 s). Store + render vivo OK.
+- Recordatorio: SurfingKeys conserva la config del 2-nov en
+  storage-sync-v2.sqlite; Ctrl+N/P no funcionarán hasta pegar la
+  config actualizada en la extensión.
+
+### Fix: mapeo correcto de Ctrl+N/P en SurfingKeys — 2026-11-10
+
+- `map('<Ctrl-n>', 'nextTab')` mapeaba a la secuencia de teclas
+  "nextTab", no a la acción. Sustituido por
+  `mapkey('<Ctrl-n>', ..., () => { RUNTIME('nextTab'); })` y lo mismo
+  para Ctrl+p → previousTab (RUNTIME ya estaba importado).
+- Alta+o no se toca (decisión del usuario). Requiere pegar de nuevo la
+  config en la extensión para que aplique.
+
+### Ctrl+N/Ctrl+P por autoconfig de Firefox — 2026-11-10
+
+- Ctrl+N está reservado por el navegador (abre ventana nueva antes del
+  contenido) y SurfingKeys no puede interceptarlo; Ctrl+P sí llegaba.
+- Solución: autoconfig de chrome (root) — `autoconfig.js` +
+  `dwm-setup.cfg` + `dwm-setup-chrome.js`: listener en captura sobre
+  cada ventana browser.xhtml que mapea Ctrl+N/Ctrl+P a
+  `advanceSelectedTab(±1, true)` (wrap incluido), funcione o no el
+  foco en la barra de direcciones. Instalado por `lib/firefox.sh`
+  (`install_firefox_autoconfig`) y exigido por verify.
+- Rollback: borrar los 3 ficheros (ver README/AGENTS).
+
+### Fix: autoconfig con reapuntado de <key> (Ctrl+N reserved) — 2026-11-10
+
+- El listener de keydown no funcionaba porque `key_newNavigator` tiene
+  `reserved="true"` (el navegador lo procesa antes y preventDefault no
+  lo para). El script ahora reapunta `key_newNavigator` (Ctrl+N) y
+  `printKb` (Ctrl+P) a `advanceSelectedTab(±1, true)`; los menús usan
+  sus propios `command="cmd_*"` y siguen funcionando.
+- Pendiente: `sudo ./install.sh`, reinicio y prueba real.
+
+### Migración a Brave como navegador (ADR-113) — 2026-11-10
+
+- `lib/brave.sh`: repo APT oficial, `brave-browser`, policies de
+  telemetría/extensiones, atajos en `brave.accelerators` y generación de
+  SurfingKeys; `remove_firefox` purga y limpia (backup del perfil).
+- Atajos nativos: Ctrl+N/P pestañas (quitados de ventana nueva/imprimir),
+  Alt+Q cerrar, Alt+O recargar, Alt+H historial, Alt+K nueva pestaña.
+- Policies: SurfingKeys y tema Catppuccin Mocha (CWS) forzados; telemetría
+  y ads off.
+- Eliminados `lib/firefox.sh`, `templates/firefox/` y la autoconfig;
+  `templates/brave/surfingkeys.js.in` sustituye a la config de Firefox.
+- `Super+Shift+b` → brave-browser; ranger y ytwatch usan brave-browser.
+- Pendiente: `sudo ./install.sh` real, validar policies/atajos/tema y
+  medir CPU/VA-API.
+
+### Atajos de Brave ampliados (panel, split y ventana) — 2026-11-13
+
+- `lib/brave.sh`/verify: añadidos Alt+N (expandir/colapsar verticales,
+  ID 56215), Alt+Shift+N (ventana nueva, 34000),
+  Ctrl+Alt+L (split con la pestaña actual, 34057) y
+  Ctrl+Alt+H (nueva vista dividida, 56325).
+- IDs obtenidos de `chrome_command_ids.h` y del código de Brave;
+  verificado en vivo: Alt+N expande el panel, Alt+Shift+N abre ventana,
+  Ctrl+Alt+L/H crean el split. La acción "Abrir en vista dividida"
+  (Tile tabs) no responde con pestañas normales; se usa nueva vista
+  dividida.
+
+### Foco entre paneles de la vista dividida — 2026-11-13
+
+- `lib/brave.sh`/verify: Alt+H salta al panel anterior (izquierda, ID
+  39005) y Alt+L al panel siguiente (derecha, 39004). Alt+H deja de
+  abrir Historial (40010 queda solo con Ctrl+H).
+- Verificado en vivo que F6/Shift+F6 ya cambian de panel (desde la
+  izquierda F6 pasa a la derecha y viceversa) y que Brave permite
+  asignar "Destacar panel siguiente/anterior" en
+  `brave://settings/system/shortcuts`. Son acciones cíclicas: desde el
+  último panel el "siguiente" cae en la barra de direcciones.
+- Para dividir dos pestañas ya abiertas: menú de la pestaña →
+  "Organizar la vista dividida" (no incluye añadir pestaña en 1.99.56);
+  vías reales: arrastrar la pestaña al borde izq./dcha.
+  (`browser.split_view_drag_and_drop_enabled`), vista dividida en
+  blanco + elegir pestaña, o clic derecho en un enlace → "Abrir enlace
+  en vista dividida/izquierda/derecha".
+
+### SurfingKeys: Alt+H/Alt+O liberados — 2026-11-13
+
+- La plantilla mantiene el mapa heredado del usuario: `o` → `go`
+  (búsqueda Google por alias), `O` → `t` (pestaña nueva), `b` → `T`
+  (elegir pestaña), `H` → `S` y `L` → `D` (atrás/adelante).
+- Como Brave captura antes los `Alt+…` nativos, se retiran
+  `map('<Alt-q>','x')` y `map('<Alt-o>','R')` de la plantilla y el
+  historial de SurfingKeys pasa de `<Alt-h>` a `<Alt-y>`.
+- La config del perfil de Brave estaba vacía (nunca se pegó); el
+  archivo `~/.config/dwm-setup/surfingkeys.js` sí tenía el mapa.
+
+### Brave minimalista y hints azules — 2026-11-13
+
+- `lib/brave.sh` → `install_brave_minimal`: NTP sin widgets (reloj,
+  stats, news, rewards, VPN, patrocinados, fondos, Binance/Gemini/
+  Together, opciones), sin barra de marcadores en NTP, sin iconos de
+  Rewards/Wallet/Leo/Today/marcadores/sidebar/tab-search ni botón home,
+  y pestañas verticales sin scrollbar, sin toggle y con × oculta.
+- Policy nueva `BookmarkBarEnabled: false` (barra de marcadores fuera en
+  todas las páginas).
+- SurfingKeys: `Hints.style(...)` a 15px con `var(--sk-bg-deep)` /
+  `var(--sk-accent)`; los `--sk-*` se publican ahora en `:root` para que
+  se hereden hasta el shadow root de los hints.
+- Límite documentado: sin CSS de UI no se pueden quitar el puzzle de
+  extensiones, el avatar ni el escudo de Shields.
+
+### NTP de Brave sustituida — 2026-11-13
+
+- `templates/brave/newtab.html.in` renderizado a
+  `/usr/share/dwm-setup/newtab.html` (fondo `@COLOR_BG@`, sin buscador ni
+  sitios) e instalado por `install_brave_newtab`.
+- Policy `NewTabPageLocation` apunta a ese fichero: `Ctrl+T` abre una
+  pestaña negra con el foco en la barra. El color se fija al instalar
+  (no lo re-renderiza `theme-mode`, es fichero de sistema).
+- `verify.sh` exige la policy y el fichero.
+
+### Hints de SurfingKeys con color sólido — 2026-11-13
+
+- `Hints.style` pasa a colores literales de la paleta
+  (`@COLOR_ACCENT@` de fondo, `@COLOR_BG_DEEP@` de letra, borde 2px) a
+  17px. Con `var(--sk-*)` el fondo salía transparente: las variables no
+  resuelven dentro del shadow root de los hints.
+- Recordatorio: hay que pegar `~/.config/dwm-setup/surfingkeys.js`
+  (renderizado, no la plantilla con `@SK_THEME@`).
+- Notificaciones: se mantiene `fullscreen = show` (por defecto). dunst
+  debe verse por encima de ventanas a pantalla completa; no cambiar a
+  `delay`/`pushback`.
+
+### Hints: azul intenso — 2026-11-13
+
+- Nueva variable de paleta `COLOR_ACCENT_STRONG` (#1e66f5) en mocha-black
+  y latte; añadida a `render_theme_template` y a `base.sh`.
+- Los hints usan `background/border: COLOR_ACCENT_STRONG` y letra
+  `COLOR_BG_DEEP` a 17px. Recordatorio: recargar la pestaña tras pegar la
+  config, porque `Hints.style` se aplica al cargar la página.
+
+### Análisis de rendimiento y arranque — 2026-11-13
+
+- Medido: i5-8300H, 23 GB, NVMe, UHD 630 + GTX 1050 Ti, 120 Hz;
+  92 % idle, swap 0, 60-68 °C; 1 hilo 3.7 GHz, 8 hilos 2.3 GHz (base).
+- Aperturas (ventana visible): rofi 62 ms, flameshot 202, kitty 251,
+  zathura 307, Brave 500, thunar 812.
+- GPU: glxgears 120,6 fps con vsync (979 sin), picom glx+vsync.
+- Arranque 22,4 s: GRUB 8,6 s, `systemd-modules-load` 6,3 s (nvidia-drm),
+  `systemd-tmpfiles-clean` 4,8 s, wait-online activo.
+- `lib/boot.sh` nuevo: GRUB 2 s, nvidia fuera del boot, tmpfiles
+  `OnBootSec=1h`, wait-online off; checks en `verify.sh`.
+- `at-spi2-core` añadido (avisos AT-SPI de lxpolkit/udiskie) y
+  `install_brave_vaapi`: escribe `VaapiVideoDecoder` (sin `@1`, ese
+  formato lo descarta Brave) en `browser.enabled_labs_experiments` de
+  `Local State`. Verificado en vivo: `brave://gpu` muestra
+  **Video Decode: Hardware accelerated** (antes software).
+- En `brave://gpu` aparece `Optimus: true` y la GTX 1050 Ti como GPU
+  `*ACTIVE*`: Chrome renderiza en la dGPU. Vigilar consumo si se usa
+  con batería.
+- `monocle.sh` ya estaba en el repo (`templates/bspwm/scripts/`), el
+  vivo es idéntico: sin cambios.
+- `ctrl+space` funciona (probado con bspc): el warning de sxhkd es
+  histórico, no un fallo.
+
+### Pruebas funcionales y arreglos — 2026-11-13
+
+- Probado en vivo: zathura (PDF), feh (imagen), VLC y mpv (vídeo),
+  ranger, audio (`paplay`), portapapeles, dunst y capturas. Todo OK
+  salvo tres cosas, ya corregidas:
+- ranger usaba `preview_images_method ueberzug` y el módulo Python no
+  está (solo `ueberzugpp`): las previews salían vacías. Ahora `kitty`
+  (probado: miniatura visible en el panel de preview).
+- `xdg-mime` mandaba PDF e imágenes a Brave. `install_file_associations`
+  (`lib/config.sh`) fija PDF/EPUB/CB → zathura, imágenes → feh y vídeo →
+  VLC con `xdg-mime default` (fusiona en `mimeapps.list`).
+- VLC mostraba el diálogo de privacidad en el primer arranque:
+  `vlcrc` instala ahora `qt-privacy-ask=0` y `metadata-network-access=0`
+  (también para vlcrc existentes).
+
+### ytwatch-check/update instalados y aviso arreglado — 2026-11-13
+
+- `bin/ytwatch-check` y `bin/ytwatch-update` existían pero **ningún
+  instalador los copiaba**; el timer `yt-update-notify` los saltaba con
+  `find_bin`. `lib/ytwatch.sh` → `install_ytwatch_tools` los instala en
+  `~/.local/bin` (0755, backup si cambian) y `verify.sh` los exige.
+- `ytwatch-check --quiet` no imprimía nada (usaba `((quiet)) || printf`
+  también para “hay versión nueva”), así que el wrapper agrupador nunca
+  generaba toast. Ahora con `--quiet` imprime una línea por componente
+  (`ytwatch: 0.1.0 -> 0.3.0`), igual que `ytdlp-check`.
+- Verificado: `yt-update-notify` imprime las dos líneas y dunst muestra
+  “Software de YouTube desactualizado”.
+
+### Avisos de actualización: persistentes y clicables — 2026-11-13
+
+- `ytwatch-update` fallaba con "checksum no coincide": descargaba el
+  tarball como `tarball.tar.gz` pero `checksums.txt` lista
+  `ytwatch_<ver>_linux_amd64.tar.gz`, así que `sha256sum -c
+  --ignore-missing` no verificaba nada y abortaba. Ahora se descarga con
+  el nombre real y se compara esa línea. Probado: ytwatch 0.1.0 → 0.3.0.
+- También se corrigió el `trap` de limpieza (`tmp_dir` local sin definir
+  al salir, con `set -u`).
+- `dunstrc`: `mouse_left_click = do_action` y regla
+  `[actualizaciones]` (`appname = "yt-dlp|ytwatch|dwm-setup"`,
+  `urgency = critical`, `timeout = 0`) → los avisos de actualizar no se
+  cierran solos. Requiere **reiniciar dunst** (`dunstctl reload` no
+  recarga los bindings de ratón).
+- `yt-update-notify` manda el toast con `-A "default=Actualizar ahora"`;
+  al pulsarlo abre `kitty` con `ytdlp-update; ytwatch-update;
+  ytwatch-update --ueberzugpp`. El listener corre en segundo plano, así
+  que la unidad lleva `KillMode=process`.
+- Verificado en vivo: clic izquierdo → "default" → kitty
+  "dwm-setup: actualizar" ejecutando las actualizaciones.
+
+### Brave: preflight, verify JSON y VA-API por wrapper — 2026-11-13
+
+- `sudo ./install.sh` con Brave abierto saltaba atajos/UI/VA-API y luego
+  `verify` fallaba con 5 errores. Ahora `install.sh` **aborta al
+  principio** si `pgrep -x brave` (antes de backups y paquetes).
+- 4 de esos errores eran falsos: Brave reescribe `Preferences` en JSON
+  compacto (`"clave":valor`) y `verify` buscaba con espacio. Ahora las
+  prefs se comprueban con Python/JSON.
+- El flag `VaapiVideoDecoder` en `Local State` no persiste (Brave lo
+  borra al salir). Sustituido por wrapper en `~/.local/bin/brave-browser`
+  con `--enable-features=VaapiVideoDecoder` + `.desktop` de usuario.
+  Verificado: el proceso arranca con el flag.
+
+### Fix: permisos del .desktop de Brave — 2026-11-13
+
+- `install_brave_vaapi` creaba el `.desktop` en un `mktemp` de root (0600)
+  y luego lo copiaba con `run_user install` → "Permiso denegado". Ahora
+  se instala con `run_root install -D -m 0644 -o $USER -g $GROUP`
+  (también el wrapper, para que quede del usuario). El `.desktop` que se
+  perdió en el intento fallido se regeneró a mano en el home.
+
+### ytwatch: pin 0.3.0 y tmpdir del usuario — 2026-11-13
+
+- `fetch_ytwatch_tarball` creaba el tmpdir como root (0700) y `run_user
+  curl` no podía escribir: `curl: (23)`. Ahora el tmpdir lo crea el
+  usuario (`run_user mktemp -d`).
+- El repo fijaba `v0.1.0` (habría hecho downgrade desde 0.3.0). Subido a
+  `v0.3.0` con su SHA-256 verificado
+  (`8634951408637c63cf623fd7f6c53b2588b2e9baed687f64565bcc9e2d624560`).
+- Guardia anti-downgrade: si la versión instalada es más nueva que la
+  fijada (`sort -V`), no se toca.
+
+### Límite de carga de la batería al 80 % — 2026-11-14
+
+- `bin/dwm-setup-battery-limit` (POSIX sh): escribe el umbral en todas
+  las `BAT*/charge_control_end_threshold`, valida rango 20-100 y sale 1
+  si no hay soporte.
+- `templates/systemd/battery-charge-threshold.service.in` (oneshot,
+  `ConditionPathExistsGlob`, `RemainAfterExit`), instalado por
+  `lib/power.sh` solo si el hardware expone el atributo.
+- `verify.sh`: exige unidad habilitada y umbral 80 cuando hay soporte.
+- `desktop-doctor`: muestra la salud (`charge_full/charge_full_design`)
+  y avisa si < 60 % (en este equipo: 42 %, DEGRADADA).
+
+### Modo del ventilador desde polybar — 2026-11-14
+
+- `bin/dwm-setup-fan-mode`: backend ASUS `fan_boost_mode` (0 normal,
+  1 overboost, 2 silent), `throttle_thermal_policy` o ACPI
+  `platform_profile`; comandos `supported|status|cycle|set`.
+- Sudoers acotado `templates/sudoers/dwm-setup-fan-mode.in` (visudo -cf)
+  y módulo `fan` en A (tras governor) y B (tras cpu); `exec-if` lo oculta
+  sin backend. `scripts/fan-mode.sh` pinta icono+modo y cicla con toast.
+- Iconos verificados en JetBrainsMono Nerd Font: U+F0210 fan,
+  U+F0241 flash, U+F0717 snowflake. (El `performance` del gobernador usa
+  U+F10CB, que en esta fuente se ve como un aro: no se toca por petición.)
+- `verify.sh` exige módulo en ambas barras, helper y sudoers si hay soporte.
+
+### Automatización de ventilador y energía — 2026-11-14
+
+- Ventilador: estado en `~/.config/dwm-setup/fan-mode` (`auto` por
+  defecto, o `manual:normal|overboost|silent`). El clic cicla los cuatro;
+  `bin/dwm-setup-fan-auto` solo actúa en `auto` (5 s; sube a overboost con
+  80 °C u 80 % de CPU durante 10 s; baja a normal con 70 °C y <40 %
+  durante 30 s). Cachea el modo efectivo en `~/.cache/dwm-setup/fan-effective`.
+- Energía: `bin/dwm-setup-power-profile ac|battery` (root) aplica
+  gobernador + EPP + `scaling_min_freq`; `bin/dwm-setup-power-auto`
+  (usuario) lo llama al arrancar y cuando cambia el cargador (sondeo 10 s).
+  AC: performance/performance/min; batería: powersave/balance_performance/1.2 GHz.
+- El clic del módulo `governor` pasa a usar el perfil completo (nada de
+  powersave “lento” manual). Sudoers acotado para el helper nuevo.
+- Ambos daemons arrancan desde `autostart` con guard `pgrep`.
+- El estado `auto` muestra el **modo real** del EC (`fan_boost_mode`),
+  no solo la caché: Fn+F5 o el propio EC pueden cambiarlo. Comprobado
+  que el equipo estaba en overboost (1) mientras la caché decía normal.

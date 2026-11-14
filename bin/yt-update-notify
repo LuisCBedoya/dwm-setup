@@ -35,8 +35,28 @@ fi
 body=$(printf '%s\n' "${lines[@]}")
 body+=$'\n\nActualiza con: ytdlp-update · ytwatch-update'
 
+# Abre una terminal visible con la secuencia de actualización.
+run_update_terminal() {
+  local cmd='ytdlp-update; ytwatch-update; ytwatch-update --ueberzugpp; printf "\nListo. Pulsa Enter para cerrar.\n"; read -r _'
+  if command -v kitty >/dev/null 2>&1; then
+    setsid kitty --title "dwm-setup: actualizar" -e sh -c "$cmd" >/dev/null 2>&1 &
+  else
+    setsid sh -c "$cmd" >/dev/null 2>&1 &
+  fi
+}
+
 printf '%s\n' "$body"
 if command -v notify-send >/dev/null 2>&1; then
-  notify-send -a "dwm-setup" -i software-update-available \
-    "Software de YouTube desactualizado" "$body" 2>/dev/null || true
+  if notify-send --help 2>&1 | grep -q -- '--action'; then
+    # Toast persistente con acción: al pulsarlo se abre la terminal de updates.
+    (
+      action=$(notify-send -a "dwm-setup" -i software-update-available \
+        -A "default=Actualizar ahora" \
+        "Software de YouTube desactualizado" "$body" 2>/dev/null) || true
+      [[ "$action" == "default" ]] && run_update_terminal
+    ) &
+  else
+    notify-send -a "dwm-setup" -i software-update-available \
+      "Software de YouTube desactualizado" "$body" 2>/dev/null || true
+  fi
 fi

@@ -48,7 +48,7 @@ print_header "Binarios esenciales"
 for c in bspwm sxhkd polybar dunst rofi kitty feh flameshot i3lock xss-lock \
          brightnessctl xclip thunar udiskie v4l2-ctl ffmpeg pamixer wpctl \
          xwallpaper playerctl nvim lxpolkit zsh lsd ranger zathura vlc ueberzug \
-         firefox; do
+         brave-browser; do
   check_cmd "$c"
 done
 
@@ -65,21 +65,18 @@ check_file "$CONFIG/bspwm/scripts/dunst-position.sh"
 check_file "$CONFIG/bspwm/scripts/wallpaper.sh"
 check_file "$CONFIG/bspwm/scripts/resize-mode.sh"
 check_file "$CONFIG/sxhkd/resize-mode.sxhkdrc"
-check_file "/etc/firefox-esr/zz-dwm-setup.js"
-if [ -f /etc/firefox-esr/zz-dwm-setup.js ]; then
-  if grep -q 'media.gmp-gmpopenh264.enabled", true' /etc/firefox-esr/zz-dwm-setup.js; then
-    printf '  [OK] OpenH264 habilitado para WebRTC/Teams\n'
+check_file "/etc/brave/policies/managed/dwm-setup.json"
+if [ -f /etc/brave/policies/managed/dwm-setup.json ]; then
+  if grep -q '"BraveP3AEnabled": false' /etc/brave/policies/managed/dwm-setup.json; then
+    printf '  [OK] telemetría de Brave desactivada por policy\n'
   else
-    printf '  [MAL] OpenH264 deshabilitado; Teams no verá H.264\n'
+    printf '  [MAL] falta BraveP3AEnabled=false en la política\n'
   fi
-fi
-check_file "/etc/firefox/policies/policies.json"
-if [ -f /etc/firefox/policies/policies.json ]; then
-  if grep -q '"uBlock0@raymondhill.net"' /etc/firefox/policies/policies.json &&
-     grep -q '"force_installed"' /etc/firefox/policies/policies.json; then
-    printf '  [OK] uBlock Origin force-installed\n'
+  if grep -q 'gfbliohnnapiefjpjlpjnehglfpaknnc' /etc/brave/policies/managed/dwm-setup.json &&
+     grep -q '"force_installed"' /etc/brave/policies/managed/dwm-setup.json; then
+    printf '  [OK] SurfingKeys force-installed\n'
   else
-    printf '  [MAL] uBlock Origin no está forzado en la política\n'
+    printf '  [MAL] SurfingKeys no está forzada en la política\n'
   fi
 fi
 check_file "$CONFIG/polybar/modules/resize.ini"
@@ -175,6 +172,24 @@ for bat in /sys/class/power_supply/BAT*; do
   found_bat=1
 done
 if [ "$found_bat" -eq 1 ]; then printf '\n'; else printf 'ninguna\n'; fi
+
+# Salud de la batería: capacity = carga completa real / capacidad de diseño.
+for bat in /sys/class/power_supply/BAT*; do
+  [ -d "$bat" ] || continue
+  full=$(cat "$bat/charge_full" 2>/dev/null)
+  design=$(cat "$bat/charge_full_design" 2>/dev/null)
+  case "$full$design" in
+    ''|*[!0-9]*) continue ;;
+  esac
+  [ "$design" -gt 0 ] || continue
+  pct=$((full * 100 / design))
+  if [ "$pct" -lt 60 ]; then
+    printf '  Salud %s: %s%% (DEGRADADA; valora cambiar la batería)\n' \
+      "$(basename "$bat")" "$pct"
+  else
+    printf '  Salud %s: %s%%\n' "$(basename "$bat")" "$pct"
+  fi
+done
 
 # ─── Procesos (si estamos en sesión gráfica) ───
 if [ -n "${DISPLAY:-}" ] || [ -n "${WAYLAND_DISPLAY:-}" ]; then

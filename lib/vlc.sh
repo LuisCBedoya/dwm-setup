@@ -29,11 +29,19 @@ install_vlc_config() {
   make_user_dir "$home/.config/vlc"
 
   if [[ -f "$vlcrc" ]]; then
-    if grep -qE '^#?qt-dark-palette=' "$vlcrc"; then
-      run_user sed -i "s/^#\\{0,1\\}qt-dark-palette=.*/qt-dark-palette=$dark/" "$vlcrc"
-    else
-      printf '\nqt-dark-palette=%s\n' "$dark" >>"$vlcrc"
-    fi
+    # Fija clave=valor respetando la propiedad del archivo (se corre como el usuario).
+    _vlcrc_set() {
+      local key="$1" value="$2"
+      if grep -qE "^#?${key}=" "$vlcrc"; then
+        run_user sed -i "s|^#\\{0,1\\}${key}=.*|${key}=${value}|" "$vlcrc"
+      else
+        printf '%s=%s\n' "$key" "$value" | run_user tee -a "$vlcrc" >/dev/null
+      fi
+    }
+    _vlcrc_set qt-dark-palette "$dark"
+    _vlcrc_set qt-privacy-ask 0
+    _vlcrc_set metadata-network-access 0
+    unset -f _vlcrc_set
   else
     render_theme_template "$PROJECT_ROOT/templates/vlc/vlcrc.in" "$vlcrc" 0600
   fi

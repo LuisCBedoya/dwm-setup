@@ -1,0 +1,38 @@
+#!/bin/sh
+# dwm-setup-battery-limit — fija el umbral de fin de carga de la batería.
+# Uso: dwm-setup-battery-limit [porcentaje]   (por defecto 80)
+# Solo escribe en baterías que expongan charge_control_end_threshold.
+# Sale 1 si no encontró ninguna batería compatible (no rompe nada).
+set -u
+
+threshold=${1:-80}
+case "$threshold" in
+  ''|*[!0-9]*) echo "umbral inválido: $threshold" >&2; exit 2 ;;
+esac
+if [ "$threshold" -lt 20 ] || [ "$threshold" -gt 100 ]; then
+  echo "umbral fuera de rango (20-100): $threshold" >&2
+  exit 2
+fi
+
+applied=0
+found=0
+for file in /sys/class/power_supply/BAT*/charge_control_end_threshold; do
+  [ -e "$file" ] || continue
+  found=1
+  bat=${file#/sys/class/power_supply/}
+  bat=${bat%/charge_control_end_threshold}
+  if printf '%s\n' "$threshold" >"$file" 2>/dev/null; then
+    now=$(cat "$file" 2>/dev/null || printf '?')
+    printf '%s: umbral %s%%\n' "$bat" "$now"
+    applied=$((applied + 1))
+  else
+    printf '%s: no se pudo escribir el umbral\n' "$bat" >&2
+  fi
+done
+
+if [ "$found" -eq 0 ]; then
+  echo "sin baterías con charge_control_end_threshold" >&2
+  exit 1
+fi
+[ "$applied" -gt 0 ] || exit 1
+exit 0

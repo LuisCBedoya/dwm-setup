@@ -4,7 +4,7 @@
 BASE_PKGS=(
   build-essential git curl ca-certificates xz-utils unzip tar file pkg-config
   procps pciutils usbutils dmidecode inxi bash-completion sudo less rsync
-  python3 initramfs-tools
+  python3 initramfs-tools at-spi2-core
 )
 
 XORG_PKGS=(
@@ -47,7 +47,7 @@ STORAGE_PKGS=(
 DESKTOP_PKGS=(
   bspwm sxhkd polybar picom
   dunst rofi dmenu feh kitty flameshot neovim i3lock xss-lock
-  brightnessctl xclip thunar libmtp-runtime
+  brightnessctl xclip xdotool thunar libmtp-runtime curl
   xwallpaper playerctl
   zsh zsh-autosuggestions lsd
   ranger zathura zathura-pdf-poppler zathura-cb zathura-djvu zathura-ps
@@ -62,8 +62,9 @@ DESKTOP_PKGS=(
   xdg-desktop-portal xdg-desktop-portal-gtk
 )
 
-# Navegador del escritorio. Firefox ESR es el que abre Super+Shift+b.
-BROWSER_PKGS=(firefox-esr)
+# Navegador del escritorio: Brave (lib/brave.sh, ADR-113) abre Super+Shift+b.
+BROWSER_PKGS=()  # Brave se instala en lib/brave.sh (repo APT propio,
+# ADR-113)
 
 NETWORK_PKGS=(network-manager network-manager-gnome dbus-user-session dbus-x11)
 
@@ -539,7 +540,9 @@ install_desktop_packages() {
   if [[ "${INSTALL_YTWATCH:-yes}" != "yes" ]]; then
     install_group "ranger: ueberzug legado" required ueberzug
   fi
-  install_group "navegador" required "${BROWSER_PKGS[@]}"
+  if ((${#BROWSER_PKGS[@]} > 0)); then
+    install_group "navegador" required "${BROWSER_PKGS[@]}"
+  fi
   install_group "audio y códecs" required "${AUDIO_PKGS[@]}"
   install_group "cámara" optional "${CAMERA_PKGS[@]}"
   install_group "almacenamiento extraíble" required "${STORAGE_PKGS[@]}"

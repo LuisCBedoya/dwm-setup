@@ -6,6 +6,7 @@ set -u
 
 CPUDIR=${DWM_SETUP_CPU_SYS:-/sys/devices/system/cpu}
 HELPER=${DWM_SETUP_CPU_HELPER:-/usr/local/bin/dwm-setup-cpu-governor}
+POWER_HELPER=${DWM_SETUP_POWER_HELPER:-/usr/local/bin/dwm-setup-power-profile}
 ACCENT='@COLOR_ACCENT@'
 NOTIFY=${DWM_SETUP_NOTIFY:-notify-send}
 
@@ -47,40 +48,26 @@ print_status() {
   esac
 }
 
-# Siguiente gobernador de la lista disponible (cíclico).
-next_governor() {
-  avail=$(available_governors)
-  [ -n "$avail" ] || return 1
-  cur=$(current_governor)
-  printf '%s\n' "$avail" | awk -v cur="$cur" '
-    { list[NR] = $0 }
-    END {
-      n = NR
-      if (n == 0) exit 1
-      if (n == 1) { print list[1]; exit }
-      found = 0
-      for (k = 1; k <= n; k++) {
-        if (list[k] == cur) { found = k; break }
-      }
-      if (found == 0) print list[1]; else print list[(found % n) + 1]
-    }'
-}
-
+# Aplica el perfil completo: performance (AC) o powersave+batería (EPP 1.2 GHz).
 apply_next() {
-  next=$(next_governor) || next=''
-  if [ -z "$next" ]; then
-    notify -u critical "Gobernador de CPU" "No hay gobernadores disponibles"
-    return 0
+  cur=$(current_governor)
+  if [ "$cur" = performance ]; then
+    target=battery
+    label=powersave
+  else
+    target=ac
+    label=performance
   fi
-  if [ ! -x "$HELPER" ]; then
+
+  if [ ! -x "$POWER_HELPER" ]; then
     notify -u critical "Gobernador de CPU" "Falta el helper: ejecuta sudo ./install.sh"
     return 0
   fi
-  if sudo -n "$HELPER" "$next" >/dev/null 2>&1; then
-    notify "Gobernador de CPU" "Modo: $next"
+  if sudo -n "$POWER_HELPER" "$target" >/dev/null 2>&1; then
+    notify "Gobernador de CPU" "Modo: $label"
     print_status
   else
-    notify -u critical "Gobernador de CPU" "No se pudo aplicar $next (sudo denegado)"
+    notify -u critical "Gobernador de CPU" "No se pudo aplicar $label (sudo denegado)"
   fi
 }
 

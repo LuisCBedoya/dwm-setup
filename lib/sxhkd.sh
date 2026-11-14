@@ -43,7 +43,7 @@ render_sxhkd_template() {
     "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png" \
     "TERM=kitty --single-instance" \
     "MENU=rofi -show drun" \
-    "BROWSER=firefox" \
+    "BROWSER=brave-browser" \
     "EDITOR=codium" \
     "FILEMGR=thunar" \
     "LOCK=/usr/local/bin/desktop-safe lock" \

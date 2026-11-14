@@ -2741,3 +2741,45 @@ nueva para tocar el mapa.
   renumeran (`1..N`); las ventanas no se tocan al renombrar.
 - `Super+N` funciona 1–9 en el script; el mapa fija 1–7.
 - `Ctrl+Tab` ya no cambia de pestaña en Firefox.
+
+## ADR-113 — Brave sustituye a Firefox ESR como navegador del escritorio
+
+**Contexto:** Firefox reserva `Ctrl+N` a nivel de navegador
+(`reserved="true"`): el contenido no puede interceptarlo y ni el listener
+de chrome ni el reapuntado de `<key>` consiguieron que funcionara como
+pestaña. El usuario pidió `Ctrl+N`/`Ctrl+P` para pestañas, eligió Brave
+porque sus **atajos nativos son editables** (`brave://settings/system/
+shortcuts`) y porque permite **pestañas verticales a la derecha**
+(`brave.tabs.vertical_tabs_on_right`).
+
+**Decisión:**
+1. `brave-browser` se instala desde el **repo APT oficial** (llave y
+   `brave-browser-release.list`); autorización explícita del usuario para
+   la regla 8. `BROWSER_PKGS` queda vacío y la lógica vive en
+   `lib/brave.sh`.
+2. `/etc/brave/policies/managed/dwm-setup.json` apaga telemetría (P3A,
+   stats ping, Web Discovery, Rewards, Wallet, News, Talk, VPN, Leo,
+   metrics/crash, UKM, SearchSuggest y surveys) y fuerza por
+   `ExtensionSettings` SurfingKeys (`gfbliohnnapiefjpjlpjnehglfpaknnc`)
+   y el tema oficial Catppuccin Mocha
+   (`bkkmolkhemgaeaeggcmfbghljjjoofoh`).
+3. Atajos en `brave.accelerators` (perfil `Preferences`):
+   `Ctrl+N`/`Ctrl+P` pestañas siguiente/anterior (se quitan de ventana
+   nueva/imprimir), `Alt+Q` cerrar, `Alt+O` recargar, `Alt+H` historial
+   y `Alt+K` nueva pestaña. Con Brave abierto se omite el paso.
+4. SurfingKeys se fuerza instalada pero su configuración se **pega a
+   mano** (sin native host); plantilla en `templates/brave/`.
+5. Firefox se purga (`firefox-esr`), se borran sus policies/autoconfig y
+   el perfil, con backup en `~/.config-backup/dwm-setup`.
+6. `Super+Shift+b` abre `brave-browser`. Chromium no soporta
+   `userChrome`/CSS de UI: el tema es el de CWS (Mocha estándar, no el
+   mocha-black exacto) y no se replica el minimalismo de Firefox.
+7. VA-API se activa manualmente en `brave://flags`
+   (`VaapiVideoDecoder`).
+
+**Consecuencias:**
+- `Ctrl+N`/`Ctrl+P` funcionan de verdad, también con foco en la barra de
+  direcciones (lo que Firefox no permitía).
+- Se pierde `userChrome` y la paleta exacta: el tema es aproximado.
+- El repo depende del repo APT de Brave (autorizado) y actualiza por apt.
+- SurfingKeys sigue requiriendo pegado manual.

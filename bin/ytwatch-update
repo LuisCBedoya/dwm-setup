@@ -41,7 +41,8 @@ update_ytwatch() {
   tag=$(gh_latest_src)
   [[ -n "$tag" ]] || die "no se pudo leer la última release de ytwatch"
   ver="${tag#v}"
-  used_url="https://github.com/geovannewashington/ytwatch/releases/download/$tag/ytwatch_${ver}_linux_amd64.tar.gz"
+  asset="ytwatch_${ver}_linux_amd64.tar.gz"
+  used_url="https://github.com/geovannewashington/ytwatch/releases/download/$tag/$asset"
 
   current="ninguna"
   if [[ -x "$YTWATCH_BIN" ]]; then
@@ -54,9 +55,9 @@ update_ytwatch() {
   fi
 
   tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/ytwatchupdate.XXXXXX")
-  trap 'rm -rf -- "$tmp_dir"' EXIT
+  trap 'rm -rf -- "${tmp_dir:-}"' EXIT
   printf '  descargando %s…\n' "$tag"
-  curl -fsSL --max-time 180 -o "$tmp_dir/tarball.tar.gz" "$used_url" || {
+  curl -fsSL --max-time 180 -o "$tmp_dir/$asset" "$used_url" || {
     notify "ytwatch: no se pudo descargar" "Revisa la conexión; se mantiene la versión actual"
     die "no se pudo descargar la release"
   }
@@ -64,7 +65,14 @@ update_ytwatch() {
     "https://github.com/geovannewashington/ytwatch/releases/download/$tag/checksums.txt" || true
 
   if [[ -s "$tmp_dir/checksums.txt" ]]; then
-    if ! (cd "$tmp_dir" && sha256sum -c --ignore-missing checksums.txt >/dev/null 2>&1); then
+    local want got
+    want=$(awk -v f="$asset" '$2 == f { print $1 }' "$tmp_dir/checksums.txt")
+    got=$(sha256sum "$tmp_dir/$asset" | awk '{ print $1 }')
+    if [[ -z "$want" ]]; then
+      notify "ytwatch: checksum ausente" "checksums.txt no lista $asset; no se instaló nada"
+      die "checksums.txt no lista $asset"
+    fi
+    if [[ "$want" != "$got" ]]; then
       notify "ytwatch: checksum inválido" "El tarball no coincide con checksums.txt; no se instaló nada"
       die "checksum no coincide; no se instaló nada"
     fi
@@ -73,7 +81,7 @@ update_ytwatch() {
     sha_ok="no verificado (sin checksums.txt)"
   fi
 
-  tar xzf "$tmp_dir/tarball.tar.gz" -C "$tmp_dir"
+  tar xzf "$tmp_dir/$asset" -C "$tmp_dir"
 
   if [[ ! -x "$tmp_dir/ytwatch" ]]; then
     die "el tarball no contiene el binario ytwatch"

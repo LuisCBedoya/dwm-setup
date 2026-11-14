@@ -97,6 +97,16 @@ fi
 # --- Cursor ---
 xsetroot -cursor_name left_ptr &
 
+# --- Daemons de energía y ventilador (perfiles automáticos) ---
+if [ -x "$HOME/.local/bin/dwm-setup-power-auto" ] &&
+   ! pgrep -f "$HOME/.local/bin/dwm-setup-power-auto" >/dev/null 2>&1; then
+  "$HOME/.local/bin/dwm-setup-power-auto" &
+fi
+if [ -x "$HOME/.local/bin/dwm-setup-fan-auto" ] &&
+   ! pgrep -f "$HOME/.local/bin/dwm-setup-fan-auto" >/dev/null 2>&1; then
+  "$HOME/.local/bin/dwm-setup-fan-auto" &
+fi
+
 # --- Polkit agent (lxpolkit es el que está instalado) ---
 if command -v lxpolkit >/dev/null 2>&1; then
   lxpolkit &
