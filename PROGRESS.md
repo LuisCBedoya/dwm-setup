@@ -1809,3 +1809,18 @@ UHD 630; sin servicios ni configuración extra.
   `format-warn = <ramp><label-warn>` con el mismo padding (1) y color
   (`colors.foreground`); la B ya lo tenía con `colors.alert`. Probado a
   88 °C: icono visible; a 66 °C, rampa normal.
+
+### Ajustes manuales de barra (2) — 2026-11-14
+
+- A `temp`: `format-padding` y `format-warn-padding` a 2.
+- B `network`: `format-padding` a 1 (igual que la A).
+- B `config`: `updates` pasa de `modules-left` a `modules-right`, justo
+  después de `izq` (alineado con la A).
+- `lib/verify.sh`: el check del módulo `fan` en B ahora busca en
+  `modules-left` (estaba en `modules-right` y habría fallado el próximo
+  install).
+- La plantilla B conserva `@BRIGHTNESS_MODULE@` (vacío en este portátil,
+  sin backlight): renderiza `pipewire  battery` con dos espacios, que
+  polybar ignora; el fichero vivo quedó con uno solo. El store de
+  `theme-mode` se sincronizó para que el orden de `updates` sobreviva a
+  los cambios dark/light.

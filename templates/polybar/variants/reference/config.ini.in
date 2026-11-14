@@ -46,8 +46,8 @@ font-4 = "Font Awesome 6 Free:style=Solid:pixelsize=9;3"
 font-5 = "@FONT@:size=52;0"
 
 modules-center = bspwm monocle resize
-modules-left = date day governor fan updates polypomo der 
-modules-right = izq services temp memory cpu network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ tray
+modules-left = date day governor fan polypomo der 
+modules-right = izq updates services temp memory cpu network pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ tray
 
 cursor-click = pointer
 cursor-scroll = ns-resize

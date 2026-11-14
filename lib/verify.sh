@@ -255,7 +255,7 @@ verify_install() {
     failures=$((failures + 1))
   fi
   if [[ -f "$home/.config/polybar/variants/reference/config.ini" ]] &&
-     ! grep -qE '^modules-right = .*\bfan\b' "$home/.config/polybar/variants/reference/config.ini"; then
+     ! grep -qE '^modules-left = .*\bfan\b' "$home/.config/polybar/variants/reference/config.ini"; then
     error "La barra B no incluye el módulo fan"
     failures=$((failures + 1))
   fi
