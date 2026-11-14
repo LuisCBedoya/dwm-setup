@@ -72,5 +72,6 @@ export THEME_PREFERS_DARK="1"
 export THEME_CONTENT_OVERRIDE="0"   # 0 = oscuro (se aplica al reiniciar Firefox)
 export THEME_COLOR_SCHEME="prefer-dark"
 export THEME_CURSOR="Adwaita"
+export THEME_LOGO="dark"
 
 validate_palette

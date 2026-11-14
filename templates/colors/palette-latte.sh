@@ -66,5 +66,6 @@ export THEME_PREFERS_DARK="0"
 export THEME_CONTENT_OVERRIDE="1"   # 1 = claro (se aplica al reiniciar Firefox)
 export THEME_COLOR_SCHEME="default"
 export THEME_CURSOR="Adwaita"
+export THEME_LOGO="light"
 
 validate_palette

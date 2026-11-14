@@ -1136,3 +1136,12 @@ ytsearch50  → 4533 ms
   estado `auto` del ventilador y perfiles de energía. Pendiente
   `sudo ./install.sh` (helpers + sudoers) y probar clic de 4 estados y
   cambio AC/batería.
+- 2026-11-14: wallpaper dark B (`#14161f`, grano 0.32, viñeta 15 %,
+  tira `1259x333+341+384`) aplicado en vivo y copiado a `local-dark.png`;
+  backup del original en `local-dark-original.png`.
+- 2026-11-14: anillo del logo de fastfetch por modo. `theme-mode
+  --no-reload` en un HOME simulado: `light` → `Neofet-light.png`
+  (`#8b9cf7`), `dark` → `Neofet-dark.png` (`#89b4fa`); el modo real no
+  cambia. PNG vivos 640x640 de 8 bits, 19.764 px de anillo exactos y
+  ninguno dentro del arte; `~/.cache/fastfetch/images` borrado.
+  Pendiente ver `fastfetch` en kitty en ambos modos.

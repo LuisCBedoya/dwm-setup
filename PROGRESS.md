@@ -1824,3 +1824,22 @@ UHD 630; sin servicios ni configuración extra.
   polybar ignora; el fichero vivo quedó con uno solo. El store de
   `theme-mode` se sincronizó para que el orden de `updates` sobreviva a
   los cambios dark/light.
+
+### Wallpaper dark B y anillo de fastfetch por modo — 2026-11-14
+
+- Wallpaper dark elegido: fondo `#14161f` (grafito azulado), grano
+  `-attenuate 0.32` y viñeta radial 15 %; misma tira B/N en
+  `1259x333+341+384`. Queda un paso más claro que el terminal/barra
+  (`#0d0d14`), igual que en light el fondo es un paso más oscuro.
+  Backup del dark anterior en `local-dark-original.png`; el instalador
+  sigue sin pisar los `local-*.png`.
+- Fastfetch: el anillo del logo ahora depende del modo. Dos PNG de
+  640x640: `Neofet-light.png` (lavanda `#8b9cf7`, el de siempre) y
+  `Neofet-dark.png` (azul de acento `#89b4fa`, el mismo de la barra y
+  las etiquetas). `THEME_LOGO=dark|light` en las paletas y
+  `@THEME_LOGO@` en el `source` del `config.jsonc.in`; `theme-mode`
+  re-renderiza el config y fastfetch cachea por ruta, así que cada modo
+  usa su logo.
+- El recoloreado del anillo toca solo sus 19.764 píxeles exactos; el
+  arte no contiene ese color. Mantener los PNG en 8 bits y borrar
+  `~/.cache/fastfetch/images` tras cambiarlos.

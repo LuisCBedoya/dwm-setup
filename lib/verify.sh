@@ -155,7 +155,8 @@ verify_install() {
     "$home/.config/dwm-setup/mode" \
     "$home/.config/dwm-setup/surfingkeys.js" \
     "$home/.config/fastfetch/config.jsonc" \
-    "$home/.config/fastfetch/Neofet.png" \
+    "$home/.config/fastfetch/Neofet-dark.png" \
+    "$home/.config/fastfetch/Neofet-light.png" \
     "$home/.config/gtk-3.0/settings.ini" \
     "$home/.config/gtk-3.0/gtk.css" \
     "$home/.config/gtk-4.0/gtk.css" \
@@ -642,10 +643,10 @@ PYCHK
     failures=$((failures + 1))
   fi
 
-  # fastfetch debe usar el logo PNG, no el builtin.
+  # fastfetch debe usar el logo PNG del modo, no el builtin.
   if [[ -f "$home/.config/fastfetch/config.jsonc" ]] &&
-     ! grep -q 'Neofet.png' "$home/.config/fastfetch/config.jsonc"; then
-    error "fastfetch no apunta al logo Neofet.png"
+     ! grep -qE 'Neofet-(dark|light)\.png' "$home/.config/fastfetch/config.jsonc"; then
+    error "fastfetch no apunta al logo Neofet-{dark,light}.png"
     failures=$((failures + 1))
   fi
 

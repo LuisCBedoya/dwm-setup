@@ -328,7 +328,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/gtk.sh` | temas GTK Catppuccin, tema derivado e iconos |
 | `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
 | `lib/config.sh` | Configs de usuario, wallpaper y binarios de sesión |
-| `lib/fastfetch.sh` | fastfetch: config y logo `Neofet.png` |
+| `lib/fastfetch.sh` | fastfetch: config y logos `Neofet-{light,dark}.png` |
 | `lib/music.sh` | yt-dlp oficial, scripts de streaming y teclas |
 | `lib/ytwatch.sh` | ytwatch (binario GitHub) y ueberzugpp (.deb OBS) con SHA-256 |
 | `lib/brave.sh` | Brave: repo APT, policies, atajos y SurfingKeys |
@@ -357,7 +357,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/zathura/` | zathurarc |
 | `templates/themes/` | `catppuccin-mocha-blue` y `catppuccin-latte-blue` |
 | `templates/fastfetch/` | `config.jsonc.in` (logo PNG y módulos) |
-| `assets/fastfetch/` | `Neofet.png` |
+| `assets/fastfetch/` | `Neofet-{light,dark}.png` |
 | `templates/icons/` | `papirus-folders` y carpetas `cat-mocha-blue`/`cat-latte-blue` |
 | `bin/theme-mode` | Cambio de modo dark/light en caliente |
 | `bin/yt-play` | Reproduce audio o vídeo de YouTube (URL o búsqueda con fzf) |

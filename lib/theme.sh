@@ -141,7 +141,8 @@ render_theme_template() {
   local theme_var_name
   for theme_var_name in THEME_GTK THEME_ICONS THEME_FOLDER_COLOR THEME_VLC_DARK \
                         THEME_FIREFOX_DARK THEME_PREFERS_DARK \
-                        THEME_CONTENT_OVERRIDE THEME_COLOR_SCHEME THEME_CURSOR; do
+                        THEME_CONTENT_OVERRIDE THEME_COLOR_SCHEME THEME_CURSOR \
+                        THEME_LOGO; do
     content="${content//@${theme_var_name}@/${!theme_var_name}}"
   done
 

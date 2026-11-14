@@ -57,8 +57,8 @@ Incluido:
 - Thunar como gestor de archivos puntual (`Super+Shift+F`), con la paleta
   global, sin menú, panel lateral ni barra de estado (Ctrl+M y F9 los
   recuperan).
-- **fastfetch** con logo propio (`Neofet.png`) y módulos de hardware,
-  software y tema.
+- **fastfetch** con logo propio (`Neofet-light.png`/`Neofet-dark.png`) y
+  módulos de hardware, software y tema.
 - Fuente JetBrainsMono Nerd Font, wallpaper oscuro y paleta **Catppuccin**:
   `mocha-black` (oscuro) y `latte` (claro): base `#0d0d14` / `#eff1f5`,
   texto `#cdd6f4` / `#4c4f69`, acento `#89b4fa` / `#1e66f5`.
@@ -621,7 +621,7 @@ lib/gpu.sh                 configuración Intel/NVIDIA
 lib/gtk.sh                 temas GTK Catppuccin, tema derivado e iconos
 lib/vlc.sh                 VLC con paleta oscura
 lib/config.sh              Configs de usuario, wallpaper y binarios
-lib/fastfetch.sh           fastfetch y logo Neofet.png
+lib/fastfetch.sh           fastfetch y logos Neofet-{light,dark}.png
 lib/music.sh               yt-dlp oficial, scripts de streaming y teclas
 lib/brave.sh               Brave: repo APT, policies, atajos y SurfingKeys
 lib/verify.sh              Verificación estática final
@@ -654,7 +654,7 @@ templates/vlc/             vlcrc (oscuro o claro según el modo)
 templates/zathura/         zathurarc.in
 templates/themes/          catppuccin-mocha-blue y catppuccin-latte-blue
 templates/fastfetch/       config.jsonc.in
-assets/fastfetch/          Neofet.png (logo de fastfetch)
+assets/fastfetch/          Neofet-{light,dark}.png (logos de fastfetch)
 templates/icons/           papirus-folders y carpetas cat-*
 templates/modprobe/        i915.conf y nvidia.conf
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
