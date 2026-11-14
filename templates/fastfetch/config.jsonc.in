@@ -3,8 +3,9 @@
      "logo": {
          "type": "kitty",
          "source": "@HOME@/.config/fastfetch/Neofet.png",
-         "width": 24,
-         "height": 13
+         "width": 27,
+         "height": 11,
+         "padding": { "top": 2 }
      },
     "display": {
         "separator": "  "

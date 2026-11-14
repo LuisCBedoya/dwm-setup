@@ -84,6 +84,12 @@ Incluido:
   `dwm-setup-battery-limit`; solo se instala si el hardware expone
   `charge_control_end_threshold` (ASUS/TUF y similares).
   `desktop-doctor` avisa si la salud de la batería baja del 60 %.
+- La barra usa `COLOR_BAR_ACCENT` (mocha `#89b4fa`, latte lavanda
+  `#7287fd`): el acento de la barra puede ser más suave que el acento
+  general del modo. El borde de la ventana enfocada usa
+  `COLOR_FOCUS_BORDER` (mocha `#89b4fa`, latte lavanda suave `#8b9cf7`). Fondos
+  personales: `~/.local/share/wallpapers/local-dark.png` y
+  `local-light.png` (el instalador no los toca).
 - Modo del ventilador con un clic en la barra (`fan`, tras `governor`):
   ASUS `fan_boost_mode`/`throttle_thermal_policy` (normal/overboost/silent)
   o `platform_profile` genérico (quiet/balanced/performance). Se oculta en

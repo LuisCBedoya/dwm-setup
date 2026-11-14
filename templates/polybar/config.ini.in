@@ -9,11 +9,11 @@ background = @COLOR_BG@
 background-alt = @COLOR_BG_ALT@
 foreground = @COLOR_FG@
 foreground-alt = @COLOR_FG_MUTED@
-primary = @COLOR_ACCENT@
+primary = @COLOR_BAR_ACCENT@
 secondary = @COLOR_ACCENT_ALT@
 alert = @COLOR_RED@
 disabled = @COLOR_FG_DIM@
-selected = @COLOR_ACCENT@
+selected = @COLOR_BAR_ACCENT@
 
 ; Alias para módulos portados
 nord0 = @COLOR_BG@

@@ -12,11 +12,11 @@ STATE=$CONF_DIR/fan-mode
 CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup
 EFFECTIVE=$CACHE_DIR/fan-effective
 
-ACCENT='@COLOR_ACCENT@'
+ACCENT='@COLOR_BAR_ACCENT@'
 GREEN='@COLOR_GREEN@'
 
 ICON_FAN="󰈐 "      # U+F0210 fan
-ICON_FAST="󰉁 "     # U+F0241 flash
+ICON_FAST="󰢚 "     # U+F089A alien
 ICON_SILENT="󰜗 "   # U+F0717 snowflake
 
 notify() {

@@ -1761,3 +1761,51 @@ UHD 630; sin servicios ni configuración extra.
 - El estado `auto` muestra el **modo real** del EC (`fan_boost_mode`),
   no solo la caché: Fn+F5 o el propio EC pueden cambiarlo. Comprobado
   que el equipo estaba en overboost (1) mientras la caché decía normal.
+
+### Fondo light y acento de barra suave — 2026-11-14
+
+- `~/.local/share/wallpapers/local-light.png`: variante light del fondo
+  de Musashi (tira original + fondo `#e9eef7` con grano). El dark
+  (`local-dark.png`) no se toca.
+- Nueva variable de paleta `COLOR_BAR_ACCENT` (mocha `#89b4fa`, latte
+  `#7287fd`): `primary`/`selected` de polybar y el acento de
+  `cpu-governor.sh`/`fan-mode.sh` la usan, así la barra en light es
+  lavanda suave sin cambiar el acento general del modo.
+- Añadida a `lib/theme.sh`, `base.sh` y al store de `theme-mode`
+  (incluido `fan-mode.sh.in`).
+
+### Borde neutro y fondo light con grano — 2026-11-14
+
+- Nueva `COLOR_FOCUS_BORDER`: mocha `#89b4fa`, latte `#8b9cf7`; el
+  `focused_border_color` de bspwm la usa (antes era el acento `#1e66f5`,
+  demasiado azul en claro). Añadida a `lib/theme.sh`, `base.sh` y paletas.
+- `local-light.png` pasa a la variante G45 (fondo `#e6ebf4` con grano al
+  45 %), tira de Musashi intacta; `local-dark.png` sin cambios.
+
+### Barra: negrita/rayo y logo circular — 2026-11-14
+
+- Módulo `governor` con `format-font = 2` (Bold 10) en A y B; icono de
+  performance: alien `U+F089A` (antes carita `U+F10CB`, luego rayo
+  `U+F0241`).
+- `assets/fastfetch/Neofet.png` (640x640, alfa, **8 bits**): recorte que
+  **llena** el círculo (cuadrado 956 px desplazado 50 px para centrar la
+  cara) y anillo lavanda `#8b9cf7` de 10 px con el **borde exterior en el
+  radio de la máscara** (310→320 px). `config.jsonc`: `width 27`,
+  `height 11` y `padding.top 2`.
+- Ojo: fastfetch no dibuja PNG de 16 bits con el protocolo kitty (el logo
+  desaparece) y cachea en `~/.cache/fastfetch/images`; tras cambiarlo hay
+  que borrar ese directorio.
+
+### Ajustes manuales de barra y termómetro — 2026-11-14
+
+- Portados a las plantillas los retoques hechos a mano en la barra:
+  `governor` A y B con `%output%%{O1}` (antes `O5`), `memory` B con
+  espacio tras el icono y `%percentage_used:%%` (sin ancho fijo `:2`),
+  y el icono alien `U+F089A` en `cpu-governor.sh` y `fan-mode.sh`.
+  Render idéntico plantillas↔vivo (0 diferencias).
+- Corregido el termómetro que desaparecía a ≥75 °C en la variante A:
+  polybar cambia a `format-warn` y, al no estar definido, caía al
+  fallback `label-warn` (solo texto, sin `<ramp>`). Añadido
+  `format-warn = <ramp><label-warn>` con el mismo padding (1) y color
+  (`colors.foreground`); la B ya lo tenía con `colors.alert`. Probado a
+  88 °C: icono visible; a 66 °C, rampa normal.
