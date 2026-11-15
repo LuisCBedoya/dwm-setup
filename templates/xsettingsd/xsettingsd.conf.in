@@ -1,0 +1,9 @@
+# xsettingsd — generado desde plantilla; no editar directamente.
+# Publica el tema GTK del modo activo por XSETTINGS. theme-mode lo
+# recarga con SIGHUP y las apps GTK (Brave incluido) lo ven en caliente.
+Net/ThemeName "@THEME_GTK@"
+Net/IconThemeName "@THEME_ICONS@"
+Gtk/ApplicationPreferDarkTheme @THEME_PREFERS_DARK@
+Gtk/CursorThemeName "@THEME_CURSOR@"
+Gtk/CursorThemeSize 0
+Gtk/FontName "Sans 10"

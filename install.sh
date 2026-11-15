@@ -256,6 +256,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/icons/folders/cat-mocha-blue"
     "$PROJECT_ROOT/templates/icons/folders/cat-latte-blue"
     "$PROJECT_ROOT/bin/theme-mode"
+    "$PROJECT_ROOT/bin/brave-theme"
     "$PROJECT_ROOT/bin/yt-play"
     "$PROJECT_ROOT/bin/yt-preview"
     "$PROJECT_ROOT/bin/ytdlp-check"
@@ -347,6 +348,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/gtk/gtkrc-2.0.in"
     "$PROJECT_ROOT/templates/gtk/gtk-3.0.css.in"
     "$PROJECT_ROOT/templates/gtk/gtk-4.0.css.in"
+    "$PROJECT_ROOT/templates/xsettingsd/xsettingsd.conf.in"
     "$PROJECT_ROOT/templates/vlc/vlcrc.in"
     "$PROJECT_ROOT/templates/modprobe/alsa-fx504.conf"
     "$PROJECT_ROOT/templates/xorg/20-modesetting.conf.in"
@@ -520,6 +522,7 @@ main() {
   install_battery_threshold
   install_power_profile
   install_user_configs
+  install_brave_theme_state
 
   if ! dry_run; then
     if ! verify_install; then

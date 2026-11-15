@@ -2783,3 +2783,108 @@ shortcuts`) y porque permite **pestañas verticales a la derecha**
 - Se pierde `userChrome` y la paleta exacta: el tema es aproximado.
 - El repo depende del repo APT de Brave (autorizado) y actualiza por apt.
 - SurfingKeys sigue requiriendo pegado manual.
+
+## ADR-114 — Brave sigue el modo Catppuccin con el color base de cada pack
+
+> **Superseded por ADR-115 (2026-11-14).** Se conserva como histórico: el
+> escritorio pasó a «Usar GTK» + xsettingsd para el cambio en caliente.
+
+**Contexto:** el ADR-113 fijaba el tema Catppuccin Mocha de la Chrome Web
+Store por policy. El usuario pidió que Brave siga el modo dark/light del
+escritorio. Se probó a inyectar el acento del escritorio con
+`browser.theme.user_color2`, pero el toolbar quedaba claro sobre contenido
+oscuro y el resultado no gustó. Chromium no permite CSS de UI
+(`userChrome`), así que la vía es elegir el pack de CWS y usar sus colores
+base. Una policy `force_installed` solo puede apuntar a un tema y no cambia
+en caliente; además, los temas recomendados (`normal_installed`) no se
+pueden desinstalar porque `MustRemainInstalled()` devuelve `true` y
+`RemoveUnusedThemes()` los conserva.
+
+**Decisión:**
+1. En `/etc/brave/policies/managed/dwm-setup.json`, SurfingKeys sigue
+   `force_installed`; los temas oficiales Mocha
+   (`bkkmolkhemgaeaeggcmfbghljjjoofoh`) y Latte
+   (`jhjnalhegpceacdhbplhnakmkdliaddd`) pasan a `normal_installed`.
+2. Nuevo helper de usuario `bin/brave-theme` (`apply|status`), sin sudo:
+   lee `~/.config/dwm-setup/mode` y la paleta del store, y escribe en
+   `Preferences` el `extensions.theme.id/pack` activo, `color_scheme2` y
+   `follows_system_colors = false`. Elimina `user_color2` y
+   `color_variant2` para no pisar el color base del pack. Marca el activo
+   con `disable_reasons: []` y el inactivo con `[1]`. Backup en
+   `Preferences.dwm-setup.bak`, escritura atómica `0600` y `flock`.
+3. `theme-mode` llama al helper después de `write_state` también con
+   `--no-reload` (es una escritura de prefs, no una recarga de servicio).
+   Si Brave está abierto, el helper devuelve 3 y la notificación avisa de
+   que se aplicará al reiniciarlo.
+4. El wrapper `~/.local/bin/brave-browser` ejecuta `brave-theme apply
+   --quiet` antes del `exec`. Brave puede reescribir las prefs al instalar
+   o actualizar un tema; el wrapper vuelve a fijar el tema del modo en el
+   arranque siguiente, siempre con el color base.
+5. El instalador instala el helper y aplica el modo activo después de
+   `install_user_configs` (necesita el store y `~/.config/dwm-setup/mode`).
+   Sigue abortando si Brave está abierto.
+6. Las paletas exponen `THEME_BRAVE_ID` y `THEME_BRAVE_SCHEME`;
+   `lib/verify.sh` comprueba la policy, el helper, el wrapper y las prefs
+   del modo activo, incluida la ausencia de `user_color2` y
+   `color_variant2`.
+
+**Consecuencias:**
+- Brave alterna Mocha/Latte con `theme-mode`, sin `sudo` y sin tocar
+  polybar; el toolbar usa el color base del pack.
+- No hay toolbar claro artificial en dark: el acento del escritorio no se
+  inyecta en Chromium.
+- No hay cambio en caliente con Brave abierto: se aplica al reiniciarlo.
+- La primera instalación de Latte por policy puede necesitar un arranque
+  extra; el wrapper vuelve a fijar el tema en el siguiente.
+- Algunos controles legacy de Chromium 157 siguen en azul Google.
+
+## ADR-115 — Brave usa «Usar GTK» y xsettingsd para el cambio en caliente
+
+**Contexto:** el ADR-114 alternaba packs de la CWS escribiendo
+`extensions.theme.id/pack` en `Preferences`. Con Brave abierto no se podía
+escribir y el cambio exigía reiniciar; además el pack de CWS no coincidía
+exactamente con el tema GTK (`catppuccin-mocha-black`). El usuario usa
+«Usar GTK» y quiere conservar los colores Catppuccin actuales y cambiar con
+`Super+Alt+T` sin cerrar Brave. `theme-mode` ya escribía `gsettings` y
+`settings.ini`, pero sin un daemon XSettings las apps GTK no reciben el
+cambio en caliente.
+
+**Decisión:**
+1. `xsettingsd` (Debian trixie/main) se instala como parte del escritorio y
+   se arranca desde `autostart` con
+   `~/.config/xsettingsd/xsettingsd.conf`, renderizado desde
+   `templates/xsettingsd/xsettingsd.conf.in`. Publica `Net/ThemeName`,
+   `Net/IconThemeName`, `Gtk/ApplicationPreferDarkTheme`,
+   `Gtk/CursorThemeName`, `Gtk/CursorThemeSize` y `Gtk/FontName`.
+2. `theme-mode` re-renderiza el config y recarga xsettingsd con `SIGHUP`
+   (si no corre, lo arranca cuando hay `DISPLAY`). No usa `Gtk/ColorScheme`
+   porque en GTK3 mapea a `gtk-color-scheme`, obsoleto/ignorado;
+   `Net/ThemeName` es la clave efectiva.
+3. Brave queda en «Usar GTK»: `extensions.theme.id=""`,
+   `extensions.theme.system_theme=1`, `browser.theme.color_scheme2=0`
+   (sistema), sin `extensions.theme.pack`, `user_color2` ni
+   `color_variant2`. `bin/brave-theme` asegura ese estado sin sudo y
+   devuelve 3 solo si hay cambios pendientes y Brave está abierto; el
+   wrapper lo reaplica al arrancar.
+4. Los temas Mocha/Latte de la CWS siguen `normal_installed` como
+   opcionales; el cambio de modo no depende de ellos.
+5. `lib/verify.sh` comprueba el paquete `xsettingsd`, el config
+   renderizado, el arranque desde `autostart` y las prefs GTK de Brave.
+6. La NTP no usa `prefers-color-scheme`: Chromium 157 no actualiza ese
+   media query con GTK para contenido web. Se renderiza al modo activo en
+   `~/.local/share/dwm-setup/newtab.html` y
+   `/usr/share/dwm-setup/newtab.html` es un symlink; `theme-mode` la
+   re-renderiza sin sudo. Las pestañas abiertas necesitan recarga.
+7. `gtk-3.0.css`/`gtk-4.0.css` quedan solo con ajustes estructurales, sin
+   colores: el tema los pone y así xsettingsd cambia el toolbar de Brave
+   en caliente sin recargar CSS de usuario.
+
+**Consecuencias:**
+- `Super+Alt+T` cambia Brave (y las apps GTK) en caliente, sin reiniciar,
+  conservando los colores exactos de `catppuccin-mocha-black`/`latte-blue`.
+- La NTP nueva sale con el color del modo; una pestaña ya abierta necesita
+  `Ctrl+R` porque Chromium no actualiza el contenido por sí solo.
+- Si Brave estaba pendiente de migrar a «Usar GTK», hay que reiniciarlo una
+  vez; después el cambio es en caliente.
+- Depende de que `xsettingsd` esté vivo en la sesión; `autostart` lo
+  arranca y `theme-mode` lo relanza si falta.

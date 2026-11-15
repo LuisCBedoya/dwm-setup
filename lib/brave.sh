@@ -2,6 +2,8 @@
 # lib/brave.sh — Brave como navegador del escritorio (ADR-113).
 # Instala el repo APT oficial, policies de privacidad, atajos nativos y
 # genera la config de SurfingKeys (se pega a mano en la extensión).
+# Brave usa «Usar GTK» (ADR-115): el tema lo publica xsettingsd y cambia
+# en caliente con theme-mode.
 
 install_brave() {
   section "Configurando Brave"
@@ -10,10 +12,11 @@ install_brave() {
     log "[dry-run] configurar repo APT oficial de Brave"
     log "[dry-run] instalar brave-browser"
     log "[dry-run] escribir /etc/brave/policies/managed/dwm-setup.json"
+    log "[dry-run] instalar el helper ~/.local/bin/brave-theme"
     log "[dry-run] escribir atajos en el perfil de Brave"
     log "[dry-run] limpiar la interfaz de Brave (NTP, iconos, verticales)"
     log "[dry-run] activar VA-API en Brave (VaapiVideoDecoder)"
-    log "[dry-run] instalar /usr/share/dwm-setup/newtab.html (NTP en negro)"
+    log "[dry-run] instalar ~/.local/share/dwm-setup/newtab.html y su symlink (NTP del modo)"
     log "[dry-run] generar ~/.config/dwm-setup/surfingkeys.js (si falta)"
     log "[dry-run] purgar firefox-esr y limpiar su configuración"
     return 0
@@ -26,12 +29,13 @@ install_brave() {
 
   install_brave_newtab
   install_brave_policies
+  install_brave_theme_helper
   install_brave_shortcuts
   install_brave_minimal
   install_brave_vaapi
   install_surfingkeys_config
   remove_firefox
-  ok "Brave configurado (atajos, policies y SurfingKeys pendiente de pegar)"
+  ok "Brave configurado (atajos, policies, temas Catppuccin y SurfingKeys pendiente de pegar)"
 }
 
 # Repo APT oficial de Brave (autorizado explícitamente por el usuario, regla 8).
@@ -62,16 +66,28 @@ install_brave_repo() {
   ok "Brave: repo APT oficial configurado"
 }
 
-# Página de nueva pestaña propia: negra, sin buscador ni sitios.
+# Página de nueva pestaña propia: fondo liso del modo activo, sin buscador
+# ni sitios. Se instala en ~/.local/share/dwm-setup/newtab.html (usuario) y
+# /usr/share/dwm-setup/newtab.html es un symlink; theme-mode la re-renderiza
+# sin sudo al cambiar de modo. Las pestañas ya abiertas necesitan recarga.
 install_brave_newtab() {
-  local target=/usr/share/dwm-setup/newtab.html
+  local user_target="$TARGET_HOME/.local/share/dwm-setup/newtab.html"
+  local link=/usr/share/dwm-setup/newtab.html
 
+  make_user_dir "$(dirname "$user_target")"
   render_theme_template "$PROJECT_ROOT/templates/brave/newtab.html.in" \
-    "$target" 0644
-  ok "Brave: página de nueva pestaña en $target"
+    "$user_target" 0644
+
+  run_root install -d -m 0755 "$(dirname "$link")"
+  backup_root "$link"
+  run_root rm -f -- "$link"
+  run_root ln -s -- "$user_target" "$link"
+  ok "Brave: página de nueva pestaña en $user_target ($link)"
 }
 
-# Policies: telemetría/ads fuera, SurfingKeys y tema Catppuccin forzados.
+# Policies: telemetría/ads fuera y SurfingKeys forzada. Los dos temas
+# Catppuccin quedan normal_installed como opcionales: el escritorio usa
+# «Usar GTK» y no depende de los packs de la CWS (ADR-115).
 install_brave_policies() {
   local policy=/etc/brave/policies/managed/dwm-setup.json
   local tmp
@@ -101,7 +117,11 @@ install_brave_policies() {
       "update_url": "https://clients2.google.com/service/update2/crx"
     },
     "bkkmolkhemgaeaeggcmfbghljjjoofoh": {
-      "installation_mode": "force_installed",
+      "installation_mode": "normal_installed",
+      "update_url": "https://clients2.google.com/service/update2/crx"
+    },
+    "jhjnalhegpceacdhbplhnakmkdliaddd": {
+      "installation_mode": "normal_installed",
       "update_url": "https://clients2.google.com/service/update2/crx"
     }
   }
@@ -111,7 +131,47 @@ EOF
   backup_root "$policy"
   run_root install -D -m 0644 "$tmp" "$policy"
   rm -f -- "$tmp"
-  ok "Brave: telemetría desactivada y extensiones forzadas"
+  ok "Brave: telemetría desactivada, SurfingKeys forzada y temas Mocha/Latte opcionales"
+}
+
+# Helper de usuario que asegura «Usar GTK» en el perfil de Brave.
+# No escribe `user_color2`, `color_variant2` ni packs de la CWS: el color
+# lo publica xsettingsd y theme-mode lo cambia en caliente.
+# No necesita sudo: solo escribe el Preferences del perfil.
+install_brave_theme_helper() {
+  local helper="$TARGET_HOME/.local/bin/brave-theme"
+
+  make_user_dir "$(dirname "$helper")"
+  backup_user_path "$helper"
+  run_root install -D -m 0755 -o "$TARGET_USER" -g "$TARGET_GROUP" \
+    "$PROJECT_ROOT/bin/brave-theme" "$helper"
+  ok "Brave: helper brave-theme en $helper"
+}
+
+# Aplica «Usar GTK» al perfil. Se llama después de install_user_configs
+# para que ~/.config/dwm-setup/mode ya exista (status y validación).
+install_brave_theme_state() {
+  local helper="$TARGET_HOME/.local/bin/brave-theme"
+
+  if dry_run; then
+    log "[dry-run] asegurar «Usar GTK» en el perfil de Brave"
+    return 0
+  fi
+
+  if [[ ! -x "$helper" ]]; then
+    warn "Brave: falta $helper; no se aseguró «Usar GTK»"
+    return 0
+  fi
+  if pgrep -x brave >/dev/null 2>&1; then
+    warn "Brave está abierto: «Usar GTK» se aplicará al reiniciarlo"
+    return 0
+  fi
+
+  if run_user "$helper" apply --quiet; then
+    ok "Brave: «Usar GTK» preparado para seguir el tema del escritorio"
+  else
+    warn "Brave: no se pudo preparar «Usar GTK»; se reintentará al abrir Brave"
+  fi
 }
 
 # Atajos nativos en brave.accelerators (Brave debe estar cerrado).
@@ -276,7 +336,10 @@ install_brave_vaapi() {
   tmp=$(mktemp "${TMPDIR:-/tmp}/brave-wrapper.XXXXXX")
   cat >"$tmp" <<'EOF'
 #!/bin/sh
-# Wrapper de dwm-setup: decodificación de vídeo por hardware en la iGPU.
+# Wrapper de dwm-setup: asegura «Usar GTK» y VA-API en la iGPU.
+if [ -x "$HOME/.local/bin/brave-theme" ]; then
+  "$HOME/.local/bin/brave-theme" apply --quiet || :
+fi
 exec /usr/bin/brave-browser --enable-features=VaapiVideoDecoder "$@"
 EOF
   backup_root "$wrapper"

@@ -12,6 +12,8 @@ con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 **i3lock/xss-lock**, **picom** (compositor, ADR-107), PipeWire, cámara UVC
 y almacenamiento extraíble con notificación. La CPU arranca en
 `performance` y se alterna desde la barra (módulo `governor`, ADR-108).
+**Brave** usa **«Usar GTK»** y sigue el tema Catppuccin del modo en
+caliente mediante `xsettingsd` (ADR-115).
 
 La barra final es la de la config viva: **13 módulos** (**14 con backlight**),
 logo StumbleUpon
@@ -161,12 +163,25 @@ La fase 1 termina en el escritorio. No implementar todavía:
 20b. **Modo de color en caliente.** `theme-mode dark|light|toggle|status`
     cambia entre las dos paletas re-renderizando desde
     `~/.local/share/dwm-setup` (plantillas y paletas instaladas) y recargando
-    polybar, dunst, bspwm y kitty. No debe pedir sudo. Si se añade una
-    plantilla con color, hay que incluirla en el store de `lib/config.sh` y en
-    `bin/theme-mode`. kitty se recolorea con
+    polybar, dunst, bspwm, kitty y `xsettingsd`. No debe pedir sudo. Si se
+    añade una plantilla con color, hay que incluirla en el store de
+    `lib/config.sh` y en `bin/theme-mode`. kitty se recolorea con
     `kitty @ set-colors --all --configured <colorsheme>`, que exige
     `allow_remote_control socket-only` y `listen_on unix:kitty-{kitty_pid}`
     en `kitty.conf`; sin ese socket, kitty solo cambia al reiniciarse.
+    `xsettingsd` publica `Net/ThemeName` y el resto de claves del tema
+    desde `~/.config/xsettingsd/xsettingsd.conf`; `theme-mode` lo
+    re-renderiza y lo recarga con `SIGHUP` (si no corre, lo arranca con
+    `DISPLAY`). No usar `Gtk/ColorScheme`: en GTK3 mapea a
+    `gtk-color-scheme`, obsoleto/ignorado. `theme-mode` también llama a
+    `~/.local/bin/brave-theme apply --mode` (también con `--no-reload`,
+    porque es una escritura de prefs): asegura `extensions.theme.id=""`,
+    `extensions.theme.system_theme=1` y `browser.theme.color_scheme2=0`,
+    y elimina `pack`, `user_color2` y `color_variant2`. Con Brave abierto
+    no se tocan las prefs; el wrapper lo reaplica al arrancar. Los dos
+    temas de la CWS van `normal_installed` en la policy (no
+    `force_installed`) como opcionales: el cambio de modo no depende de
+    ellos.
 
 21. **No commitear sin permiso.** No ejecutar `git commit` ni `git add`
     definitivo sin autorización explícita del usuario.
@@ -179,9 +194,23 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `/etc/brave/policies/managed/dwm-setup.json` apaga telemetría
     (P3A, stats ping, Web Discovery, Rewards, Wallet, News, Talk, VPN,
     Leo, metrics/crash, UKM, sugerencias y surveys) y fuerza por
-    `ExtensionSettings` SurfingKeys (`gfbliohnnapiefjpjlpjnehglfpaknnc`)
-    y el tema oficial Catppuccin Mocha
-    (`bkkmolkhemgaeaeggcmfbghljjjoofoh`).
+    `ExtensionSettings` SurfingKeys (`gfbliohnnapiefjpjlpjnehglfpaknnc`);
+    los temas oficiales Catppuccin Mocha
+    (`bkkmolkhemgaeaeggcmfbghljjjoofoh`) y Latte
+    (`jhjnalhegpceacdhbplhnakmkdliaddd`) quedan `normal_installed` (no
+    `force_installed`) como opcionales: el escritorio usa «Usar GTK» y no
+    depende de ellos. El helper `~/.local/bin/brave-theme`
+    (`bin/brave-theme`) asegura en el `Preferences` del perfil, sin sudo,
+    `extensions.theme.id=""`, `extensions.theme.system_theme=1` y
+    `browser.theme.color_scheme2=0` (sistema), y elimina
+    `extensions.theme.pack`, `user_color2` y `color_variant2`. El color lo
+    pone `xsettingsd` con `Net/ThemeName`. `theme-mode` lo llama al cambiar
+    de modo y el wrapper de Brave lo reaplica antes del `exec` (Brave
+    puede reescribir las prefs al instalar o actualizar un tema). Si Brave
+    está abierto y hay cambios pendientes, el helper devuelve 3 y no
+    escribe; se aplican al reiniciarlo. La barra de herramientas usa el
+    tema GTK exacto (`catppuccin-mocha-black`/`latte-blue`); algunos
+    controles legacy siguen en azul Google.
     Los atajos nativos viven en `brave.accelerators` del perfil
     (`Preferences`): `lib/brave.sh` escribe Ctrl+N/P (pestañas,
     quitándolos de ventana nueva/imprimir), Alt+Q cerrar, Alt+O
@@ -206,12 +235,14 @@ La fase 1 termina en el escritorio. No implementar todavía:
     root). La interfaz se limpia con `install_brave_minimal`
     (`brave.new_tab_page.*`, iconos de la barra y pestañas verticales);
     `BookmarkBarEnabled: false` quita la barra de marcadores y
-    `NewTabPageLocation` apunta a `/usr/share/dwm-setup/newtab.html`
-    (renderizado desde `templates/brave/newtab.html.in`, negro liso).
-    Chromium no
-    soporta `userChrome`/CSS de UI: el tema es el de CWS (Mocha
-    estándar, no el mocha-black exacto) y no se puede replicar el
-    minimalismo de Firefox. VA-API queda activo por
+    `NewTabPageLocation` apunta a `/usr/share/dwm-setup/newtab.html`, un
+    symlink a `~/.local/share/dwm-setup/newtab.html` (renderizado desde
+    `templates/brave/newtab.html.in` con la paleta activa; sin
+    `prefers-color-scheme`, que Chromium 157 no actualiza con GTK para
+    contenido web). `theme-mode` la re-renderiza sin sudo; las pestañas
+    abiertas necesitan recarga. Chromium no
+    soporta `userChrome`/CSS de UI: el aspecto es el del tema GTK y no
+    se puede replicar el minimalismo de Firefox. VA-API queda activo por
     `install_brave_vaapi`: wrapper `~/.local/bin/brave-browser` con
     `--enable-features=VaapiVideoDecoder` y `.desktop` de usuario que
     apunta a él (Brave borra ese flag de `Local State` al salir). El
@@ -325,7 +356,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/zsh.sh` | zsh, Oh My Zsh y lsd |
 | `lib/ranger.sh` | ranger, zathura, VLC y previews (método `kitty`) |
 | `lib/gpu.sh` | configuración Xorg/i915/NVIDIA por hardware |
-| `lib/gtk.sh` | temas GTK Catppuccin, tema derivado e iconos |
+| `lib/gtk.sh` | temas GTK Catppuccin, tema derivado, iconos y xsettingsd.conf |
 | `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
 | `lib/config.sh` | Configs de usuario, wallpaper y binarios de sesión |
 | `lib/fastfetch.sh` | fastfetch: config y logos `Neofet-{light,dark}.png` |
@@ -352,6 +383,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/sudoers/` | Fragmento de sudoers del gobernador (`@USER@`) |
 | `templates/systemd/` | `dwm-setup-cpu-governor.service` (performance al boot) |
 | `templates/gtk/` | settings GTK2/3/4 y CSS |
+| `templates/xsettingsd/` | `xsettingsd.conf.in` (tema GTK del modo) |
 | `templates/brave/` | `surfingkeys.js.in` (config para pegar a mano) |
 | `templates/vlc/` | vlcrc (oscuro o claro según el modo) |
 | `templates/zathura/` | zathurarc |
@@ -360,6 +392,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `assets/fastfetch/` | `Neofet-{light,dark}.png` |
 | `templates/icons/` | `papirus-folders` y carpetas `cat-mocha-blue`/`cat-latte-blue` |
 | `bin/theme-mode` | Cambio de modo dark/light en caliente |
+| `bin/brave-theme` | Asegura «Usar GTK» en Brave (sin sudo) |
 | `bin/yt-play` | Reproduce audio o vídeo de YouTube (URL o búsqueda con fzf) |
 | `bin/yt-preview` | Miniatura del vídeo para el preview de fzf |
 | `bin/ytdlp-check` | Avisa si hay versión nueva de yt-dlp |
@@ -395,7 +428,7 @@ cd ~/dwm-setup
 for f in install.sh lib/*.sh; do bash -n "$f" || exit 1; done
 for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor; do sh -n "$f" || exit 1; done
 sh -n templates/polybar/scripts/cpu-governor.sh.in
-bash -n bin/theme-mode
+bash -n bin/theme-mode bin/brave-theme
 bash -n bin/yt-play bin/yt-preview bin/ytdlp-check bin/ytdlp-update \
   bin/ytdlp-rollback bin/music-ctl bin/ytwatch-check bin/ytwatch-update \
   bin/yt-update-notify
@@ -421,7 +454,7 @@ stat -c '%A %n' ~/.config/bspwm/bspwmrc ~/.xinitrc
 
 # ShellCheck (si está instalado)
 shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor \
-  bin/dwm-setup-cpu-governor bin/theme-mode bin/yt-play bin/yt-preview \
+  bin/dwm-setup-cpu-governor bin/theme-mode bin/brave-theme bin/yt-play bin/yt-preview \
   bin/ytdlp-check bin/ytdlp-update bin/ytdlp-rollback bin/music-ctl \
   bin/ytwatch-check bin/ytwatch-update
 
@@ -433,6 +466,7 @@ ytwatch-check
 # Modo de color (no pide sudo)
 theme-mode status
 theme-mode --no-reload light && theme-mode --no-reload dark
+brave-theme status
 
 # Diagnóstico en una sesión instalada
 desktop-doctor
@@ -484,6 +518,11 @@ desktop-doctor --camera
 - Audio: watcher auriculares > HDMI > altavoces, sonido de dunst y quirk
   ALC255 condicionado a ASUS FX504GE. La validación del quirk requiere
   reinicio; el resto se probó en vivo el 2026-10-24.
+- Brave «Usar GTK» + xsettingsd (2026-11-14, ADR-115): policy con
+  Mocha/Latte `normal_installed` como opcionales, helper `bin/brave-theme`
+  sin sudo, `xsettingsd` en `autostart` y recarga por `SIGHUP` desde
+  `theme-mode`; falta `sudo ./install.sh` y validar el cambio en caliente
+  con Brave abierto.
 - Falta validar una instalación desde cero en VM Debian 13 y subir el repo.
 - `PROGRESS.md` contiene la lista de pruebas y bloqueos.
 - Si se completa una prueba real, actualizar `PROGRESS.md` y

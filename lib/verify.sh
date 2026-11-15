@@ -7,7 +7,7 @@ verify_install() {
   local home="$TARGET_HOME"
   local path module line
 
-  for cmd in bspwm sxhkd polybar picom dunst rofi feh kitty flameshot i3lock xss-lock \
+  for cmd in bspwm sxhkd polybar picom xsettingsd dunst rofi feh kitty flameshot i3lock xss-lock \
     brightnessctl xclip xdotool thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl nvim \
     zsh lsd ranger zathura vlc ueberzug fastfetch mpv fzf chafa; do
     if cmd_exists "$cmd"; then
@@ -151,6 +151,7 @@ verify_install() {
     "$home/.local/bin/ytwatch" \
     "$home/.local/bin/ytwatch-check" \
     "$home/.local/bin/ytwatch-update" \
+    "$home/.local/bin/brave-theme" \
     "$home/.local/share/dwm-setup/render.env" \
     "$home/.config/dwm-setup/mode" \
     "$home/.config/dwm-setup/surfingkeys.js" \
@@ -162,6 +163,7 @@ verify_install() {
     "$home/.config/gtk-4.0/gtk.css" \
     "$home/.config/gtk-4.0/settings.ini" \
     "$home/.gtkrc-2.0" \
+    "$home/.config/xsettingsd/xsettingsd.conf" \
     "$home/.config/vlc/vlcrc" \
     "$home/.oh-my-zsh/oh-my-zsh.sh" \
     "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
@@ -188,7 +190,9 @@ verify_install() {
   local color_var
   for color_var in COLOR_BG COLOR_BG_DEEP COLOR_BG_DEEPEST COLOR_BG_ALT COLOR_BG_ELEV COLOR_BG_HOVER \
                    COLOR_FG COLOR_FG_MUTED COLOR_FG_DIM COLOR_BORDER COLOR_BORDER_ALT COLOR_SEL_BG \
-                   COLOR_ACCENT COLOR_ACCENT_ALT COLOR_GREEN COLOR_YELLOW \
+                   COLOR_ACCENT COLOR_ACCENT_ALT COLOR_ACCENT_STRONG \
+                   COLOR_BAR_ACCENT COLOR_FOCUS_BORDER \
+                   COLOR_GREEN COLOR_YELLOW \
                    COLOR_ORANGE COLOR_RED COLOR_CYAN COLOR_PURPLE COLOR_BLUE \
                    COLOR_TERM_BG COLOR_TERM_0 COLOR_TERM_1 COLOR_TERM_2 \
                    COLOR_TERM_3 COLOR_TERM_4 COLOR_TERM_5 COLOR_TERM_6 \
@@ -503,18 +507,66 @@ verify_install() {
       error "Brave: SurfingKeys no está forzada en las policies"
       failures=$((failures + 1))
     fi
-    if ! grep -q 'bkkmolkhemgaeaeggcmfbghljjjoofoh' "$brave_policy"; then
-      error "Brave: tema Catppuccin no está forzado en las policies"
-      failures=$((failures + 1))
+    # Los dos temas Catppuccin quedan instalados pero no forzados: son
+    # opcionales, el escritorio usa «Usar GTK» (ADR-115).
+    local theme_bad
+    theme_bad=$(python3 - "$brave_policy" <<'PYCHK' 2>/dev/null || printf 'policy ilegible\n'
+import json
+import sys
+
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+settings = data.get("ExtensionSettings", {})
+for ext_id, name in (
+    ("bkkmolkhemgaeaeggcmfbghljjjoofoh", "Mocha"),
+    ("jhjnalhegpceacdhbplhnakmkdliaddd", "Latte"),
+):
+    mode = settings.get(ext_id, {}).get("installation_mode")
+    if mode != "normal_installed":
+        print(f"{name}: installation_mode={mode!r} (se espera 'normal_installed')")
+PYCHK
+)
+    if [[ -n "$theme_bad" ]]; then
+      while IFS= read -r line; do
+        [[ -n "$line" ]] || continue
+        error "Brave: tema $line"
+        failures=$((failures + 1))
+      done <<<"$theme_bad"
     fi
   else
     error "Falta $brave_policy"
     failures=$((failures + 1))
   fi
 
-  # Página de nueva pestaña propia (policy NewTabPageLocation).
-  if [[ ! -f /usr/share/dwm-setup/newtab.html ]]; then
-    error "Falta /usr/share/dwm-setup/newtab.html (NTP de Brave)"
+  # Página de nueva pestaña propia (policy NewTabPageLocation). Vive en el
+  # home para que theme-mode la re-renderice sin sudo; /usr/share es un
+  # symlink que mantiene la ruta de la policy.
+  local newtab_user="$home/.local/share/dwm-setup/newtab.html"
+  local newtab_link=/usr/share/dwm-setup/newtab.html
+  if [[ ! -f "$newtab_user" ]]; then
+    error "Falta la NTP de Brave: $newtab_user"
+    failures=$((failures + 1))
+  else
+    local nt_bg nt_fg
+    nt_bg=$(theme_var COLOR_BG)
+    nt_fg=$(theme_var COLOR_FG)
+    if ! grep -Fq "background: $nt_bg" "$newtab_user"; then
+      error "La NTP de Brave no usa el fondo del modo activo ($nt_bg)"
+      failures=$((failures + 1))
+    fi
+    if ! grep -Fq "color: $nt_fg" "$newtab_user"; then
+      error "La NTP de Brave no usa el texto del modo activo ($nt_fg)"
+      failures=$((failures + 1))
+    fi
+    if grep -q '@COLOR_' "$newtab_user"; then
+      error "La NTP de Brave conserva placeholders @COLOR_*@ sin renderizar"
+      failures=$((failures + 1))
+    fi
+  fi
+  if [[ ! -L "$newtab_link" ]]; then
+    error "Falta el symlink $newtab_link -> $newtab_user"
+    failures=$((failures + 1))
+  elif [[ "$(readlink "$newtab_link")" != "$newtab_user" ]]; then
+    error "El symlink $newtab_link no apunta a $newtab_user"
     failures=$((failures + 1))
   fi
 
@@ -560,10 +612,50 @@ PYCHK
     fi
   fi
 
+  # Brave usa «Usar GTK» (ADR-115): sin pack de la CWS y con el esquema
+  # del sistema. xsettingsd pone el color del modo en caliente.
+  if [[ -f "$brave_prefs" ]]; then
+    local brave_theme_bad
+    brave_theme_bad=$(python3 - "$brave_prefs" <<'PYCHK' 2>/dev/null || printf 'Preferences ilegible\n'
+import json
+import sys
+
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+theme = data.get("browser", {}).get("theme", {})
+ext = data.get("extensions", {}).get("theme", {})
+checks = (
+    ("tema", ext.get("id"), ""),
+    ("system_theme", ext.get("system_theme"), 1),
+    ("esquema", theme.get("color_scheme2"), 0),
+    ("follows_system_colors", theme.get("follows_system_colors"), False),
+)
+for name, got, want in checks:
+    if got != want:
+        print(f"{name} (valor {got!r}, se espera {want!r})")
+if "pack" in ext:
+    print(f"pack presente ({ext['pack']!r}); se espera Usar GTK")
+for key in ("user_color2", "color_variant2"):
+    if key in theme:
+        print(f"{key} presente ({theme[key]!r}); se espera Usar GTK")
+PYCHK
+)
+    if [[ -n "$brave_theme_bad" ]]; then
+      while IFS= read -r line; do
+        [[ -n "$line" ]] || continue
+        error "Brave: «Usar GTK» sin aplicar: $line"
+        failures=$((failures + 1))
+      done <<<"$brave_theme_bad"
+    fi
+  fi
+
   # VA-API: wrapper con --enable-features (Brave borra el flag de Local State).
   if [[ -f "$home/.local/bin/brave-browser" ]]; then
     if ! grep -q 'VaapiVideoDecoder' "$home/.local/bin/brave-browser"; then
       error "Wrapper de Brave sin --enable-features=VaapiVideoDecoder"
+      failures=$((failures + 1))
+    fi
+    if ! grep -q 'brave-theme' "$home/.local/bin/brave-browser"; then
+      error "Wrapper de Brave no aplica el tema (brave-theme)"
       failures=$((failures + 1))
     fi
   else
@@ -733,6 +825,29 @@ PYCHK
       error "GTK3 no usa los iconos del modo activo ($THEME_ICONS)"
       failures=$((failures + 1))
     fi
+  fi
+
+  # xsettingsd publica el tema del modo por XSETTINGS; sin él, Brave y
+  # las apps GTK no cambian en caliente (ADR-115).
+  local xsettings_conf="$home/.config/xsettingsd/xsettingsd.conf"
+  if [[ -f "$xsettings_conf" ]]; then
+    if ! grep -qx "Net/ThemeName \"$THEME_GTK\"" "$xsettings_conf"; then
+      error "xsettingsd no publica el tema del modo activo ($THEME_GTK)"
+      failures=$((failures + 1))
+    fi
+    if ! grep -qx "Net/IconThemeName \"$THEME_ICONS\"" "$xsettings_conf"; then
+      error "xsettingsd no publica los iconos del modo activo ($THEME_ICONS)"
+      failures=$((failures + 1))
+    fi
+    if ! grep -qx "Gtk/ApplicationPreferDarkTheme $THEME_PREFERS_DARK" "$xsettings_conf"; then
+      error "xsettingsd no publica la preferencia dark/light del modo activo"
+      failures=$((failures + 1))
+    fi
+  fi
+  if [[ -f "$home/.config/bspwm/scripts/autostart" ]] &&
+     ! grep -q 'xsettingsd -c' "$home/.config/bspwm/scripts/autostart"; then
+    error "autostart no arranca xsettingsd"
+    failures=$((failures + 1))
   fi
 
   # theme-mode debe ser ejecutable y coherente con el modo guardado.

@@ -132,6 +132,7 @@ install_theme_store() {
     "templates/picom/picom.conf.in"
     "templates/kitty/kitty.conf.in"
     "templates/kitty/colorshemes/monochromatic.conf.in"
+    "templates/brave/newtab.html.in"
     "templates/dunst/dunstrc.in"
     "templates/rofi/config.rasi.in"
     "templates/rofi/powermenu.rasi.in"
@@ -143,6 +144,7 @@ install_theme_store() {
     "templates/gtk/gtk-4.0.settings.ini.in"
     "templates/gtk/gtk-4.0.css.in"
     "templates/gtk/gtkrc-2.0.in"
+    "templates/xsettingsd/xsettingsd.conf.in"
     "templates/vlc/vlcrc.in"
     "templates/fastfetch/config.jsonc.in"
   )

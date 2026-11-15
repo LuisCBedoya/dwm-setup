@@ -1145,3 +1145,41 @@ ytsearch50  → 4533 ms
   cambia. PNG vivos 640x640 de 8 bits, 19.764 px de anillo exactos y
   ninguno dentro del arte; `~/.cache/fastfetch/images` borrado.
   Pendiente ver `fastfetch` en kitty en ambos modos.
+- 2026-11-14: Brave sigue el modo Catppuccin (ADR-114, superseded por
+  ADR-115). Helper
+  `bin/brave-theme` probado en HOME simulado: `dark` → Mocha, `light` →
+  Latte, esquema 2/1, `follows_system_colors=false`; sin `user_color2`
+  ni `color_variant2` (color base del pack); migración desde un perfil
+  con ambos campos los borra; segunda pasada idempotente (mtime
+  intacto); modo inválido rechazado; con `pgrep` simulando Brave
+  abierto no se escribe `Preferences`. `theme-mode --no-reload` aplica
+  el helper en ambos modos y `--dry-run` pasa. Pendiente reiniciar
+  Brave y validar el toolbar oscuro base; Latte puede necesitar un
+  arranque extra tras instalarse por policy.
+- 2026-11-14: Brave «Usar GTK» + xsettingsd (ADR-115). Simulado con
+  `xsettingsd` 1.0.2 extraído del `.deb`: carga el config y `SIGHUP`
+  cambia `_XSETTINGS_SETTINGS` (serial 1→2, tema latte→mocha-black);
+  `theme-mode --no-reload` renderiza `Net/ThemeName` en ambos modos y
+  `brave-theme` migra de pack a GTK, es idempotente, devuelve 3 con
+  Brave abierto y 0 si ya está aplicado. Pendiente `sudo ./install.sh`
+  para instalar el paquete y desplegar
+  `~/.config/xsettingsd/xsettingsd.conf`; después, con Brave abierto,
+  pulsar `Super+Alt+T` y comprobar que el toolbar pasa de
+  `catppuccin-mocha-black` a `catppuccin-latte-blue` y vuelve sin
+  reiniciar. Comprobar también `xsettingsd` vivo y que
+  `theme-mode status` sigue mostrando el modo correcto.
+- 2026-11-14: NTP de Brave por re-render. Se probó
+  `prefers-color-scheme`: el toolbar de Brave cambia con xsettingsd,
+  pero el contenido web no actualiza el media query (ni con pestaña
+  nueva). Se descartó. La NTP vive en
+  `~/.local/share/dwm-setup/newtab.html` (usuario), `/usr/share/...` es
+  un symlink y `theme-mode` la re-renderiza con `COLOR_BG`/`COLOR_FG`.
+  También se quitaron los colores fijos de `gtk-3.0.css`/`gtk-4.0.css`
+  (solo estructura): con ellos, el toolbar tampoco cambiaba en caliente.
+  Probado en vivo: con `gtk.css` estructural y `xsettingsd`, el toolbar
+  de Brave pasó de `#eff1f5` a `#1a1a24` y volvió sin reiniciar. El
+  contenido web no cambió con `prefers-color-scheme` (ni con un proceso
+  nuevo), por eso la NTP se re-renderiza. NTP de usuario: light
+  `#eff1f5`, dark `#0d0d14`. Pendiente `sudo ./install.sh` para crear
+  el symlink `/usr/share` y prueba visual final; las pestañas abiertas
+  necesitan `Ctrl+R`.

@@ -1,6 +1,6 @@
 # Progreso — fase 1b (bspwm + polybar)
 
-Última actualización: 2026-11-02
+Última actualización: 2026-11-14
 
 ## Resumen
 
@@ -1843,3 +1843,93 @@ UHD 630; sin servicios ni configuración extra.
 - El recoloreado del anillo toca solo sus 19.764 píxeles exactos; el
   arte no contiene ese color. Mantener los PNG en 8 bits y borrar
   `~/.cache/fastfetch/images` tras cambiarlos.
+
+### Brave sigue el modo Catppuccin (ADR-114, superseded por ADR-115) — 2026-11-14
+
+- La policy deja de forzar Mocha: SurfingKeys sigue `force_installed` y
+  los temas Mocha/Latte pasan a `normal_installed`, de modo que el
+  inactivo no se desinstala y se puede alternar sin `sudo`.
+- `bin/brave-theme` (`apply|status`) lee el modo y la paleta, y escribe
+  `extensions.theme.id/pack`, `color_scheme2` y
+  `follows_system_colors` en el `Preferences` del perfil. Elimina
+  `user_color2` y `color_variant2` para usar el **color base del pack**.
+  Backup `Preferences.dwm-setup.bak`, escritura atómica `0600` y
+  `flock`; con Brave abierto devuelve 3 sin escribir.
+- Se descartó inyectar el acento del escritorio con `user_color2`: en
+  dark dejaba el toolbar claro sobre contenido oscuro.
+- `theme-mode` lo aplica tras `write_state` (también con `--no-reload`) y
+  la notificación avisa si Brave está abierto. El wrapper de Brave lo
+  reaplica en cada arranque porque Brave puede reescribir las prefs al
+  instalar/actualizar el tema.
+- Paletas: `THEME_BRAVE_ID` y `THEME_BRAVE_SCHEME`. `install.sh` instala
+  el helper y aplica el modo tras `install_user_configs`; `verify.sh`
+  comprueba policy, helper, wrapper y prefs, incluida la ausencia de
+  `user_color2`/`color_variant2`.
+- Pruebas en HOME simulado: `dark` → Mocha, esquema 2; `light` → Latte,
+  esquema 1; sin `user_color2` ni `color_variant2`; migración desde un
+  perfil con ambos campos los borra; idempotencia sin reescritura; modo
+  inválido rechazado; con `pgrep brave` simulado no se toca
+  `Preferences`. `--dry-run` y `bash -n` pasan.
+- Pendiente: reiniciar Brave y validar el toolbar oscuro base de Mocha;
+  la primera instalación de Latte puede requerir un arranque extra.
+
+### Brave «Usar GTK» + xsettingsd (ADR-115) — 2026-11-14
+
+- El cambio de tema de Brave deja de depender de los packs de la CWS:
+  Brave queda en **«Usar GTK»** (`extensions.theme.id=""`,
+  `extensions.theme.system_theme=1`, `browser.theme.color_scheme2=0`) y
+  `xsettingsd` publica `Net/ThemeName` con el tema del modo
+  (`catppuccin-mocha-black` / `catppuccin-latte-blue`).
+- Nuevo `templates/xsettingsd/xsettingsd.conf.in` con `Net/ThemeName`,
+  `Net/IconThemeName`, `Gtk/ApplicationPreferDarkTheme`,
+  `Gtk/CursorThemeName`, `Gtk/CursorThemeSize` y `Gtk/FontName`.
+  Registrado en el store de `lib/config.sh`, renderizado por
+  `lib/gtk.sh` y por `theme-mode`.
+- `xsettingsd` se añade a `DESKTOP_PKGS` y `autostart` lo lanza con guard
+  `pgrep`. `theme-mode` lo recarga con `SIGHUP` y lo arranca si falta
+  (solo con `DISPLAY`).
+- `bin/brave-theme` se simplifica: asegura «Usar GTK», no escribe packs ni
+  colores; devuelve 0 si ya está aplicado, 3 solo si hay cambios y Brave
+  está abierto. `lib/brave.sh` y el wrapper mantienen la instalación.
+- `lib/verify.sh` comprueba `xsettingsd`, el config renderizado, su
+  arranque desde `autostart` y las prefs GTK de Brave.
+- Paletas: se retiran `THEME_BRAVE_ID`/`THEME_BRAVE_SCHEME` (ya no se
+  usan); los temas Mocha/Latte de la CWS siguen `normal_installed` como
+  opcionales.
+- Simulado: `xsettingsd` 1.0.2 extraído del `.deb` carga el config y
+  `SIGHUP` cambia `_XSETTINGS_SETTINGS` (serial 1→2, latte→mocha-black);
+  `theme-mode --no-reload` renderiza el config en ambos modos;
+  `brave-theme` migra de pack a GTK, es idempotente y respeta Brave
+  abierto (3) o ya aplicado (0). Pasan `bash -n`, `sh -n` y
+  `./install.sh --dry-run`.
+- Pendiente: `sudo ./install.sh` para instalar `xsettingsd` y desplegar el
+  config, reiniciar Brave una vez si las prefs seguían en pack, y probar
+  `Super+Alt+T` con Brave abierto (debe repintar sin reiniciar).
+
+### NTP de Brave según el modo (sin prefers-color-scheme) — 2026-11-14
+
+- Se probó `prefers-color-scheme` en la NTP: Chromium 157 cambia el
+  toolbar con GTK, pero el contenido web no actualiza el media query ni
+  al abrir una pestaña nueva. Se descarta esa vía.
+- La NTP vive en `~/.local/share/dwm-setup/newtab.html` (usuario) y
+  `/usr/share/dwm-setup/newtab.html` es un symlink; la policy
+  `NewTabPageLocation` no cambia.
+- `theme-mode` re-renderiza la NTP con `COLOR_BG`/`COLOR_FG` del modo
+  activo, sin sudo. Las pestañas abiertas necesitan `Ctrl+R`; las nuevas
+  salen con el color correcto.
+- `install_brave_newtab` crea el fichero de usuario y el symlink;
+  `install_theme_store` copia `templates/brave/newtab.html.in` para que
+  `theme-mode` pueda renderizarla.
+- Se retiraron los overrides de color de `gtk-3.0.css`/`gtk-4.0.css`
+  (solo ajustes estructurales). Sin ellos, `xsettingsd` sí cambia el
+  toolbar de Brave en caliente; con los colores fijos, el CSS de usuario
+  se cargaba una vez y bloqueaba el cambio.
+- `verify.sh` comprueba el fichero de usuario, el symlink, los colores
+  del modo activo y la ausencia de placeholders.
+- Probado en vivo: con `gtk.css` estructural y `xsettingsd`, el toolbar
+  de Brave pasó de `#eff1f5` a `#1a1a24` y volvió sin reiniciar. El
+  contenido web no cambió con `prefers-color-scheme`, ni con un proceso
+  nuevo. La NTP de usuario renderizada dio light `#eff1f5` y dark
+  `#0d0d14`.
+- Pendiente: `sudo ./install.sh` para crear el symlink `/usr/share` y
+  prueba visual final de toolbar + NTP en Latte/Mocha.

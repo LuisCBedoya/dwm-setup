@@ -1,0 +1,282 @@
+#!/usr/bin/env bash
+# brave-theme — asegura que Brave use el tema GTK del escritorio.
+#
+# Brave queda en «Usar GTK»: extensions.theme.id vacío,
+# extensions.theme.system_theme=1 y browser.theme.color_scheme2=0 (sistema).
+# Así sigue el Net/ThemeName que publica xsettingsd y theme-mode puede
+# cambiar de modo en caliente con SIGHUP, sin reiniciar Brave.
+#
+# Uso:
+#   brave-theme apply [--mode dark|light] [--quiet]
+#   brave-theme status
+#
+# Solo escribe ~/.config/BraveSoftware/Brave-Browser/Default/Preferences.
+# No pide sudo. Si Brave está abierto y hay cambios pendientes, no toca
+# nada y devuelve 3; el wrapper lo reintenta en el siguiente arranque.
+set -Eeuo pipefail
+
+PROG="brave-theme"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup"
+MODE_FILE="$CONFIG_DIR/mode"
+PROFILE_DIR="${BRAVE_PROFILE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/BraveSoftware/Brave-Browser/Default}"
+PREFS="$PROFILE_DIR/Preferences"
+BACKUP="$PROFILE_DIR/Preferences.dwm-setup.bak"
+LOCK="$PROFILE_DIR/.brave-theme.lock"
+
+die() { printf '%s: error: %s\n' "$PROG" "$*" >&2; exit 1; }
+info() { printf '  %s\n' "$*"; }
+
+usage() {
+  cat <<'EOF'
+Uso: brave-theme [apply|status] [--mode dark|light] [--quiet]
+
+  apply     asegura «Usar GTK» y el esquema del sistema en Preferences
+  status    muestra el modo y lo que hay en Preferences (por defecto: apply)
+
+  --mode dark|light   valida el modo (el estado de GTK es el mismo en ambos)
+  --quiet             no imprime el resumen de apply
+  -h, --help          esta ayuda
+
+No requiere sudo. Con Brave abierto no se escribe nada: el wrapper aplica
+el estado GTK en el siguiente arranque.
+EOF
+}
+
+current_mode() {
+  local mode=""
+  if [[ -f "$MODE_FILE" ]]; then
+    mode=$(<"$MODE_FILE")
+  fi
+  case "$mode" in
+    dark|light) printf '%s\n' "$mode" ;;
+    *) printf 'dark\n' ;;
+  esac
+}
+
+theme_for_mode() {
+  case "$1" in
+    dark) printf 'mocha-black\n' ;;
+    light) printf 'latte\n' ;;
+    *) return 1 ;;
+  esac
+}
+
+brave_running() {
+  pgrep -x brave >/dev/null 2>&1
+}
+
+# Serializa apply entre el wrapper y theme-mode. El lock vive en el perfil.
+acquire_lock() {
+  mkdir -p -- "$PROFILE_DIR"
+  if command -v flock >/dev/null 2>&1; then
+    exec 9>"$LOCK"
+    flock -w 5 9 || die "no se pudo bloquear $LOCK"
+  fi
+}
+
+# Lee o escribe el estado GTK en Preferences. En modo check no modifica
+# nada y solo imprime unchanged|pending. En modo write imprime written.
+prefs_state() {
+  local action="$1"
+
+  python3 - "$PREFS" "$BACKUP" "$PROFILE_DIR" "$action" <<'PY'
+import copy
+import json
+import os
+import shutil
+import sys
+import tempfile
+
+prefs, backup, profile, action = sys.argv[1:5]
+
+
+def fail(message):
+    print(f"brave-theme: error: {message}", file=sys.stderr)
+    raise SystemExit(2)
+
+
+def section(parent, key):
+    value = parent.setdefault(key, {})
+    if not isinstance(value, dict):
+        fail(f"{key} no es un objeto en Preferences")
+    return value
+
+
+if os.path.isfile(prefs):
+    try:
+        with open(prefs, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except Exception as exc:
+        fail(f"{prefs}: JSON ilegible: {exc}")
+else:
+    data = {}
+
+if not isinstance(data, dict):
+    fail(f"{prefs}: la raíz no es un objeto JSON")
+
+before = copy.deepcopy(data)
+
+# Brave debe usar el tema GTK: sin pack de la CWS y con el esquema del
+# sistema (0). El modo lo decide Net/ThemeName que publica xsettingsd.
+browser = section(data, "browser")
+browser_theme = section(browser, "theme")
+browser_theme["color_scheme2"] = 0
+browser_theme["follows_system_colors"] = False
+browser_theme.pop("user_color2", None)
+browser_theme.pop("color_variant2", None)
+
+extensions = section(data, "extensions")
+ext_theme = section(extensions, "theme")
+ext_theme["id"] = ""
+ext_theme["system_theme"] = 1
+ext_theme.pop("pack", None)
+
+if data == before:
+    print("unchanged")
+    raise SystemExit(0)
+
+if action == "check":
+    print("pending")
+    raise SystemExit(0)
+
+if action != "write":
+    fail(f"acción desconocida: {action}")
+
+os.makedirs(profile, exist_ok=True)
+if os.path.isfile(prefs):
+    shutil.copy2(prefs, backup)
+    os.chmod(backup, 0o600)
+
+fd, tmp = tempfile.mkstemp(prefix=".Preferences.", dir=profile, text=True)
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.chmod(tmp, 0o600)
+    os.replace(tmp, prefs)
+finally:
+    if os.path.exists(tmp):
+        os.unlink(tmp)
+
+print("written")
+PY
+}
+
+apply_theme() {
+  local mode="$1" quiet="${2:-0}" state
+
+  # El modo se valida, pero el estado GTK es el mismo en dark y light:
+  # el color lo pone xsettingsd con Net/ThemeName.
+  theme_for_mode "$mode" >/dev/null || die "modo inválido: $mode"
+
+  state=$(prefs_state check) ||
+    die "no se pudo leer $PREFS"
+
+  case "$state" in
+    unchanged)
+      (( quiet )) || info "Brave: ya usa el tema GTK"
+      return 0
+      ;;
+    pending) ;;
+    *) die "estado inesperado de Preferences: $state" ;;
+  esac
+
+  if brave_running; then
+    (( quiet )) || info "Brave está abierto; no se toca Preferences (se aplicará al reiniciarlo)"
+    return 3
+  fi
+
+  acquire_lock
+
+  # Otra ventana pudo abrir Brave entre la comprobación y el lock.
+  if brave_running; then
+    (( quiet )) || info "Brave está abierto; no se toca Preferences (se aplicará al reiniciarlo)"
+    return 3
+  fi
+
+  state=$(prefs_state write) ||
+    die "no se pudo escribir $PREFS"
+
+  case "$state" in
+    unchanged)
+      (( quiet )) || info "Brave: ya usa el tema GTK"
+      ;;
+    written)
+      (( quiet )) || info "Brave: Usar GTK · esquema del sistema"
+      ;;
+    *) die "estado inesperado de Preferences: $state" ;;
+  esac
+}
+
+cmd_status() {
+  local mode theme
+  mode=$(current_mode)
+  theme=$(theme_for_mode "$mode") || theme="$mode"
+
+  printf '%s: %s (%s)\n' "$PROG" "$mode" "$theme"
+  if [[ -f "$PREFS" ]]; then
+    python3 - "$PREFS" <<'PY' 2>/dev/null || printf '  Preferences ilegible\n'
+import json
+import sys
+
+data = json.load(open(sys.argv[1], encoding="utf-8"))
+theme = data.get("browser", {}).get("theme", {})
+ext = data.get("extensions", {}).get("theme", {})
+scheme = theme.get("color_scheme2", "?")
+names = {0: "sistema", 1: "claro", 2: "oscuro"}
+print(f"  tema:     {ext.get('id') or '(Usar GTK)'}")
+print(f"  sistema:  {ext.get('system_theme', '?')}")
+print(f"  esquema:  {scheme} ({names.get(scheme, '?')})")
+print(f"  follows:  {theme.get('follows_system_colors', '?')}")
+if "pack" in ext:
+    print(f"  pack:     {ext['pack']}")
+if "user_color2" in theme or "color_variant2" in theme:
+    print("  color:    personalizado (user_color2/color_variant2 presentes)")
+PY
+  else
+    info "sin perfil de Brave ($PREFS)"
+  fi
+
+  if brave_running; then
+    info "Brave: abierto (apply no escribiría Preferences)"
+  else
+    info "Brave: cerrado"
+  fi
+}
+
+main() {
+  local cmd="apply" mode="" quiet=0
+
+  while (($# > 0)); do
+    case "$1" in
+      apply|status) cmd="$1" ;;
+      --mode)
+        [[ $# -ge 2 ]] || die "--mode requiere dark o light"
+        mode="$2"
+        shift
+        ;;
+      --mode=*) mode="${1#*=}" ;;
+      --quiet) quiet=1 ;;
+      -h|--help) usage; exit 0 ;;
+      *) die "opción desconocida: $1 (usa --help)" ;;
+    esac
+    shift
+  done
+
+  if [[ -z "$mode" ]]; then
+    mode=$(current_mode)
+  fi
+  case "$mode" in
+    dark|light) ;;
+    *) die "modo inválido: $mode" ;;
+  esac
+
+  case "$cmd" in
+    apply) apply_theme "$mode" "$quiet" ;;
+    status) cmd_status ;;
+  esac
+}
+
+main "$@"

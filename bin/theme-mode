@@ -143,6 +143,10 @@ render_mode() {
   render_one "gtk/gtk-4.0.settings.ini.in" "$h/.config/gtk-4.0/settings.ini" 0644
   render_one "gtk/gtk-4.0.css.in" "$h/.config/gtk-4.0/gtk.css" 0644
   render_one "gtk/gtkrc-2.0.in" "$h/.gtkrc-2.0" 0644
+  render_one "xsettingsd/xsettingsd.conf.in" \
+    "$h/.config/xsettingsd/xsettingsd.conf" 0644
+  render_one "brave/newtab.html.in" \
+    "$h/.local/share/dwm-setup/newtab.html" 0644
   render_one "vlc/vlcrc.in" "$h/.config/vlc/vlcrc" 0600
 
 }
@@ -158,6 +162,24 @@ write_state() {
     printf 'MODE=%s\n' "$mode"
     printf 'THEME=%s\n' "$THEME_NAME"
   } >"$GTK_ENV"
+}
+
+# Asegura «Usar GTK» en Brave. Es una escritura de prefs, no una recarga
+# de servicio: también corre con --no-reload. Devuelve 3 si hay cambios
+# pendientes y Brave está abierto (se aplicarán en el siguiente arranque).
+apply_brave_theme() {
+  local mode="$1"
+  local helper="$HOME_DIR/.local/bin/brave-theme"
+  local rc=0
+
+  [[ -x "$helper" ]] || return 0
+  "$helper" apply --mode "$mode" --quiet || rc=$?
+  case "$rc" in
+    0) info "Brave: «Usar GTK» asegurado" ;;
+    3) info "Brave: abierto; «Usar GTK» se aplicará al reiniciarlo" ;;
+    *) info "Brave: no se pudo asegurar «Usar GTK» (se reintentará al abrirlo)" ;;
+  esac
+  return "$rc"
 }
 
 apply_bspwm_colors() {
@@ -223,6 +245,25 @@ reload_picom() {
   return 0
 }
 
+# Publica el tema GTK del modo activo por XSETTINGS. Si xsettingsd no
+# corre, lo arranca; si corre, SIGHUP le hace releer el config. Así Brave
+# y las apps GTK cambian sin reiniciarse.
+reload_xsettings() {
+  local conf="$HOME_DIR/.config/xsettingsd/xsettingsd.conf"
+
+  command -v xsettingsd >/dev/null 2>&1 || return 1
+  [[ -f "$conf" ]] || return 1
+
+  if pgrep -x xsettingsd >/dev/null 2>&1; then
+    pkill -HUP -x xsettingsd 2>/dev/null && return 0
+  fi
+
+  [[ -n "${DISPLAY:-}" ]] || return 1
+  setsid xsettingsd -c "$conf" >/dev/null 2>&1 &
+  sleep 0.2
+  pgrep -x xsettingsd >/dev/null 2>&1
+}
+
 # Vuelve a aplicar el wallpaper del modo recién activado (dark/light).
 reload_wallpaper() {
   local script="$HOME_DIR/.config/bspwm/scripts/wallpaper.sh"
@@ -239,7 +280,7 @@ apply_gtk() {
 }
 
 notify_mode() {
-  local mode="$1" theme="$2" title label
+  local mode="$1" theme="$2" brave_rc="${3:-0}" title label
 
   command -v notify-send >/dev/null 2>&1 || return 0
   [[ "${DWM_THEME_NO_NOTIFY:-0}" == "1" ]] && return 0
@@ -255,6 +296,7 @@ notify_mode() {
     latte) label="Catppuccin Latte" ;;
     *) label="$theme" ;;
   esac
+  [[ "$brave_rc" == "3" ]] && label="$label · Brave: «Usar GTK» al reiniciarlo"
 
   notify-send -a "Tema" -i preferences-desktop-theme -t 2500 \
     "$title" "$label" 2>/dev/null || true
@@ -270,6 +312,7 @@ apply_live() {
   reload_wallpaper && done_parts+=("wallpaper")
   reload_picom && done_parts+=("picom")
   reload_kitty && done_parts+=("kitty")
+  reload_xsettings && done_parts+=("xsettingsd")
   apply_gtk
   done_parts+=("GTK")
 
@@ -328,12 +371,15 @@ main() {
   write_state "$mode"
 
   printf '%s: %s (%s)\n' "$PROG" "$mode" "$theme"
+  local brave_rc=0
+  apply_brave_theme "$mode" || brave_rc=$?
+
   if ((reload)); then
     apply_live
   else
     info "sin recargar servicios (--no-reload)"
   fi
-  notify_mode "$mode" "$theme"
+  notify_mode "$mode" "$theme" "$brave_rc"
 }
 
 main "$@"

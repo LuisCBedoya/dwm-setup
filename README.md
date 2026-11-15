@@ -31,7 +31,8 @@ Incluido:
   **lsd**. Compositor **picom** (vsync + fade sutil + sombras sutiles,
   sin blur ni transparencias; ADR-107/ADR-110): mata el rasgado al
   arrastrar y hacer scroll y la barra B se ve translúcida con su fondo
-  transparente.
+  transparente. **xsettingsd** publica el tema GTK del modo para que
+  Brave y las apps GTK cambien en caliente.
 - **Pantallas**: `display-setup.sh` detecta los monitores conectados y usa
   su **resolución preferida (EDID) y la tasa de refresco más alta**
   (120 Hz si el monitor lo permite; `DISPLAY_REFRESH=60` para forzarla).
@@ -62,7 +63,9 @@ Incluido:
 - Fuente JetBrainsMono Nerd Font, wallpaper oscuro y paleta **Catppuccin**:
   `mocha-black` (oscuro) y `latte` (claro): base `#0d0d14` / `#eff1f5`,
   texto `#cdd6f4` / `#4c4f69`, acento `#89b4fa` / `#1e66f5`.
-- **Brave** con Shields, SurfingKeys, tema Catppuccin Mocha y atajos nativos de pestañas.
+- **Brave** con Shields, SurfingKeys y **«Usar GTK»**: sigue el tema
+  Catppuccin del modo en caliente (xsettingsd), sin packs de la CWS ni
+  reinicio, y con atajos nativos de pestañas.
 - **yt-play** para audio o vídeo de YouTube/YouTube Music con búsqueda en
   fzf y miniatura; `mpv` + `yt-dlp` oficial en `~/.local/bin`.
 - **ytwatch** (opcional, `--no-ytwatch` para saltarlo): buscador TUI de
@@ -185,9 +188,9 @@ y `--debug`.
    almacenamiento, red, fuentes, firmware, microcódigo y GPU.
 5. **Fuente**: descarga JetBrainsMono Nerd Font 3.5.1, verifica SHA-256 y
    ejecuta `fc-cache`. Si falla, usa JetBrains Mono o monospace y avisa.
-6. **Configuración**: renderiza bspwm, sxhkd, polybar, dunst, rofi y kitty
-   con la paleta activa (Mocha Black por defecto), el CSS de GTK y los
-   defaults de Thunar; instala `.xinitrc`, wallpaper,
+6. **Configuración**: renderiza bspwm, sxhkd, polybar, dunst, rofi, kitty
+   y xsettingsd con la paleta activa (Mocha Black por defecto), el CSS de
+   GTK y los defaults de Thunar; instala `.xinitrc`, wallpaper,
    `~/Pictures/Screenshots`, `desktop-safe` y `desktop-doctor`.
 7. **Limpieza de restos**: retira restos de la barra anterior (`DesktopLogo`)
    con backup previo.
@@ -510,13 +513,21 @@ theme-mode dark        # Mocha Black
 theme-mode light       # Latte
 theme-mode toggle
 theme-mode status
+brave-theme status     # comprueba que Brave usa «Usar GTK»
 ```
 
 `theme-mode` re-renderiza polybar A/B, kitty, dunst, rofi, zathura, bspwm,
-GTK y VLC desde `~/.local/share/dwm-setup/`, y recarga en caliente
-polybar, dunst, los bordes de bspwm, el **wallpaper del modo** y kitty. **No
-pide sudo**: los temas ya están instalados. VLC necesita reiniciarse para
-aplicar el cambio; Brave usa el tema fijo de la Chrome Web Store.
+GTK, xsettingsd y VLC desde `~/.local/share/dwm-setup/`, y recarga en
+caliente polybar, dunst, los bordes de bspwm, el **wallpaper del modo**,
+kitty y **xsettingsd** (`SIGHUP`). **No pide sudo**: los temas ya están
+instalados. `xsettingsd` publica el `Net/ThemeName` del modo y así **Brave
+(«Usar GTK») y las apps GTK cambian al instante**, sin reiniciar. VLC
+necesita reiniciarse para aplicar el cambio.
+
+Tras instalar en una sesión ya abierta, ejecuta `theme-mode light` (o
+`theme-mode toggle`) una vez para arrancar `xsettingsd`; si Brave ya estaba
+abierto antes, reinícialo una vez para que adopte «Usar GTK». En un
+`startx` nuevo, `autostart` lo arranca antes que las apps.
 
 Los ficheros generados (`bspwmrc`, `kitty.conf`, `dunstrc`…) no se
 editan a mano: `theme-mode` y `sudo ./install.sh` los regeneran desde
@@ -548,13 +559,25 @@ El atajo es `Super+Alt+t` y muestra una notificación con el modo nuevo.
 
 ### Brave y SurfingKeys
 
-Brave es el navegador del escritorio (ADR-113). El tema Catppuccin Mocha y
-SurfingKeys se instalan por policy desde la Chrome Web Store, y los atajos
+Brave es el navegador del escritorio (ADR-113) y usa **«Usar GTK»**
+(ADR-115). El tema no lo pone un pack de la Chrome Web Store: `xsettingsd`
+publica `Net/ThemeName` con el tema GTK del modo (`catppuccin-mocha-black`
+o `catppuccin-latte-blue`), y `theme-mode` lo recarga con `SIGHUP`. Brave
+escucha ese cambio de GTK y repinta en caliente, sin reiniciar.
+`brave-theme` (sin sudo) asegura en `Preferences` el estado «Usar GTK»:
+`extensions.theme.id=""`, `extensions.theme.system_theme=1` y
+`browser.theme.color_scheme2=0` (sistema), sin `pack`, `user_color2` ni
+`color_variant2`. El wrapper `~/.local/bin/brave-browser` lo reaplica en
+cada arranque por si Brave reescribe las prefs. Con Brave abierto no se
+tocan las prefs; solo hace falta reiniciarlo si el estado GTK estaba
+pendiente. Los temas Mocha/Latte de la CWS siguen instalados
+(`normal_installed`) como opcionales, pero el escritorio no depende de
+ellos. Los atajos
 nativos (`Ctrl+N/P`, `Alt+Q/O/K`, `Alt+H/L` para los paneles y `Alt+N` /
 `Alt+Shift+N`) se escriben en `brave.accelerators` del perfil (con Brave cerrado).
 Chromium **no soporta `userChrome`/CSS de UI**:
-el aspecto es el del tema de CWS y no replica el minimalismo que tenía
-Firefox.
+el aspecto es el del tema GTK y no replica el minimalismo que tenía
+Firefox; algunos controles legacy de Chromium siguen en azul Google.
 
 La telemetría se apaga por `/etc/brave/policies/managed/dwm-setup.json`
 (P3A, stats ping, Web Discovery, Rewards, Wallet, News, Talk, VPN, Leo,
@@ -565,10 +588,13 @@ La interfaz va limpia (`lib/brave.sh` → `install_brave_minimal`): NTP sin
 reloj, estadísticas, noticias, Rewards, VPN, patrocinados ni fondos; sin
 iconos de Rewards/Wallet/Leo/Today/marcadores/sidebar/tab-search; pestañas
 verticales sin scrollbar ni botón de plegado y con la × oculta. Además la
-NTP se sustituye por `/usr/share/dwm-setup/newtab.html` (negro liso, sin
-buscador ni sitios) con la policy `NewTabPageLocation`. Chromium no
-permite CSS de UI, así que el puzzle de extensiones, el avatar y el escudo
-de Shields siguen ahí.
+NTP se sustituye por `/usr/share/dwm-setup/newtab.html`, un symlink a
+`~/.local/share/dwm-setup/newtab.html` (fondo liso del modo activo: Mocha
+Black en oscuro y Latte en claro, sin buscador ni sitios) con la policy
+`NewTabPageLocation`. `theme-mode` re-renderiza la NTP sin `sudo`; las
+pestañas ya abiertas necesitan recarga, las nuevas salen con el color
+correcto. Chromium no permite CSS de UI, así que el puzzle de extensiones,
+el avatar y el escudo de Shields siguen ahí.
 
 SurfingKeys viene `force_installed` desde las policies. Su configuración vive
 en `~/.config/dwm-setup/surfingkeys.js`; se pega **una vez** en SurfingKeys →
@@ -618,18 +644,19 @@ lib/kitty.sh               kitty.conf y paleta del terminal
 lib/zsh.sh                 zsh, Oh My Zsh y lsd
 lib/ranger.sh              ranger, zathura y VLC
 lib/gpu.sh                 configuración Intel/NVIDIA
-lib/gtk.sh                 temas GTK Catppuccin, tema derivado e iconos
+lib/gtk.sh                 temas GTK Catppuccin, iconos y xsettingsd.conf
 lib/vlc.sh                 VLC con paleta oscura
 lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/fastfetch.sh           fastfetch y logos Neofet-{light,dark}.png
 lib/music.sh               yt-dlp oficial, scripts de streaming y teclas
-lib/brave.sh               Brave: repo APT, policies, atajos y SurfingKeys
+lib/brave.sh               Brave: repo APT, policies, atajos, temas y SurfingKeys
 lib/verify.sh              Verificación estática final
 lib/theme.sh               Paletas (Mocha Black, Latte) y render
 lib/audio.sh               Quirk ALC255 condicionado por hardware
 bin/desktop-safe           Acciones de sesión
 bin/desktop-doctor         Diagnóstico y cámara (POSIX sh)
 bin/theme-mode             Cambio dark/light en caliente
+bin/brave-theme            Asegura «Usar GTK» en Brave (sin sudo)
 bin/yt-play                Audio o vídeo de YouTube (URL o búsqueda con fzf)
 bin/yt-preview             Miniatura para el preview de fzf
 bin/ytdlp-check            Aviso de versión nueva de yt-dlp
@@ -650,6 +677,7 @@ templates/lsd/             config.yml e icons.yaml
 templates/ranger/          rc.conf, rifle.conf y previews
 templates/xorg/            configuración Xorg por hardware
 templates/gtk/             settings GTK2/3/4 y CSS
+templates/xsettingsd/      xsettingsd.conf.in (tema GTK del modo)
 templates/vlc/             vlcrc (oscuro o claro según el modo)
 templates/zathura/         zathurarc.in
 templates/themes/          catppuccin-mocha-blue y catppuccin-latte-blue
@@ -681,7 +709,9 @@ docs/                      Hardware y testing
   cliente de correo ni reproductores de música locales. El streaming de
   YouTube se hace con `yt-play` y, opcionalmente, `ytwatch` (TUI).
 - `/etc/brave/policies/managed/dwm-setup.json` apaga la telemetría de Brave y
-  fuerza SurfingKeys y el tema Catppuccin Mocha desde la Chrome Web Store.
+  fuerza SurfingKeys; los temas Catppuccin Mocha y Latte quedan instalados
+  (`normal_installed`) como opcionales. Brave usa «Usar GTK» y sigue el
+  tema del modo por `xsettingsd`.
 - Firefox, OpenH264 y sus policies/autoconfig se retiran en la migración.
 - Los atajos `Super+Shift+p/v/i/a` existen en `sxhkdrc` pero las apps
   (`pcmanfm`, `codium`, `ristretto`, `lxappearance`) no se

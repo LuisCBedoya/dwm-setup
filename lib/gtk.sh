@@ -14,11 +14,13 @@ install_gtk_theme() {
     log "[dry-run] generar catppuccin-mocha-black desde catppuccin-mocha-blue"
     log "[dry-run] crear iconos Catppuccin-Mocha/Catppuccin-Latte en $ICON_THEME_ROOT"
     log "[dry-run] instalar settings GTK2/3/4 con @THEME_GTK@ y @THEME_ICONS@"
+    log "[dry-run] instalar xsettingsd.conf con el tema del modo activo"
     return 0
   fi
 
   make_user_dir "$home/.config/gtk-3.0"
   make_user_dir "$home/.config/gtk-4.0"
+  make_user_dir "$home/.config/xsettingsd"
 
   install_gtk_color_themes
   install_gtk_icon_themes
@@ -33,6 +35,8 @@ install_gtk_theme() {
     "$home/.config/gtk-3.0/gtk.css" 0644
   render_theme_template "$PROJECT_ROOT/templates/gtk/gtk-4.0.css.in" \
     "$home/.config/gtk-4.0/gtk.css" 0644
+  render_theme_template "$PROJECT_ROOT/templates/xsettingsd/xsettingsd.conf.in" \
+    "$home/.config/xsettingsd/xsettingsd.conf" 0644
 
   apply_gtk_gsettings
   ok "Temas GTK e iconos instalados"

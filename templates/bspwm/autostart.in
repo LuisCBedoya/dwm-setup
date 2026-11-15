@@ -34,6 +34,16 @@ fi
 # --- Directorios de usuario ---
 mkdir -p "$HOME/Pictures/Screenshots" 2>/dev/null || true
 
+# --- XSettings: tema e iconos GTK del modo activo ---
+# xsettingsd no se daemoniza: se lanza en segundo plano y theme-mode lo
+# recarga con SIGHUP. Sin él, Brave y las apps GTK no ven el cambio en
+# caliente aunque gsettings y settings.ini ya estén actualizados.
+if command -v xsettingsd >/dev/null 2>&1 &&
+   [ -f "$HOME/.config/xsettingsd/xsettingsd.conf" ] &&
+   ! pgrep -x xsettingsd >/dev/null 2>&1; then
+  xsettingsd -c "$HOME/.config/xsettingsd/xsettingsd.conf" &
+fi
+
 # --- picom (compositor: se arranca con la sesión) ---
 # Guard con pgrep: si el usuario ya lo arrancó, no lo duplicamos.
 if command -v picom >/dev/null 2>&1 && ! pgrep -x picom >/dev/null 2>&1; then

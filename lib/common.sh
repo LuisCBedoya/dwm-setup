@@ -321,6 +321,7 @@ backup_existing_configs() {
   backup_user_path "$home/.config/fastfetch"
   backup_user_path "$home/.local/bin/yt-dlp"
   backup_user_path "$home/.local/bin/ytwatch"
+  backup_user_path "$home/.local/bin/brave-theme"
   backup_user_path "$home/.config/ytwatch"
 
   # Perfil de Brave: los atajos nativos se reescriben al instalar.
