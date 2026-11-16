@@ -68,7 +68,8 @@ map('y', 'yy');
 
 // Change focused frame
 map('gf', 'w');
-imap('<Alt-,>', '<Esc>');
+// Alt-j sale de insert mode (antes Alt-,)
+imap('<Alt-j>', '<Esc>');
 
 // ---- Unmap -----
 // Proxy Stuff
