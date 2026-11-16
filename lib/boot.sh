@@ -6,10 +6,11 @@ install_boot_tweaks() {
   section "Ajustes de arranque"
 
   if dry_run; then
-    log "[dry-run] GRUB_TIMEOUT=2 en /etc/default/grub + update-grub"
+    log "[dry-run] GRUB_TIMEOUT=0 y GRUB_TIMEOUT_STYLE=hidden en /etc/default/grub + update-grub"
     log "[dry-run] quitar /etc/modules-load.d/nvidia.conf (nvidia bajo demanda)"
     log "[dry-run] diferir systemd-tmpfiles-clean.timer (OnBootSec=1h)"
     log "[dry-run] desactivar NetworkManager-wait-online.service"
+    log "[dry-run] enmascarar apt-daily-upgrade.timer (actualizaciones manuales)"
     return 0
   fi
 
@@ -17,9 +18,10 @@ install_boot_tweaks() {
   drop_nvidia_boot_module
   defer_tmpfiles_clean
   disable_wait_online
+  mask_apt_upgrade_timer
 }
 
-# Menú de GRUB de 2 s en vez de 5 s.
+# Menú de GRUB oculto y sin espera; Shift/Esc lo muestra si hace falta.
 set_grub_timeout() {
   local grub=/etc/default/grub
 
@@ -27,30 +29,38 @@ set_grub_timeout() {
     warn "Sin $grub: se omite GRUB_TIMEOUT"
     return 0
   fi
-  if grep -qx 'GRUB_TIMEOUT=2' "$grub"; then
-    info "GRUB_TIMEOUT ya es 2"
+  if grep -qx 'GRUB_TIMEOUT=0' "$grub" &&
+     grep -qx 'GRUB_TIMEOUT_STYLE=hidden' "$grub"; then
+    info "GRUB ya está en 0 s con menú oculto"
     return 0
   fi
 
   backup_root "$grub"
-  run_root sed -i -E 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=2/' "$grub"
+  run_root sed -i -E 's/^GRUB_TIMEOUT=.*/GRUB_TIMEOUT=0/' "$grub"
+  if grep -q '^GRUB_TIMEOUT_STYLE=' "$grub"; then
+    run_root sed -i -E 's/^GRUB_TIMEOUT_STYLE=.*/GRUB_TIMEOUT_STYLE=hidden/' "$grub"
+  else
+    run_root sed -i -E '$a GRUB_TIMEOUT_STYLE=hidden' "$grub"
+  fi
   run_root update-grub >/dev/null 2>&1 \
     || warn "update-grub falló; el cambio se aplicará al regenerar el menú"
-  ok "GRUB_TIMEOUT = 2"
+  ok "GRUB_TIMEOUT = 0 (menú oculto; Shift/Esc para verlo)"
 }
 
-# nvidia-drm deja de cargarse en el boot: prime-run lo carga bajo demanda.
+# Quita la carga temprana de nvidia vía modules-load.d. El driver también
+# puede cargarse por udev; la carga realmente bajo demanda (blacklist +
+# helper) está pendiente de validar con modprobe -r/prime-run.
 drop_nvidia_boot_module() {
   local mod=/etc/modules-load.d/nvidia.conf
 
   if [[ ! -f "$mod" ]]; then
-    info "nvidia-drm no se carga en el boot"
+    info "nvidia no está en modules-load.d"
     return 0
   fi
 
   backup_root "$mod"
   run_root rm -f "$mod"
-  ok "nvidia-drm fuera del boot (prime-run lo carga al usarlo)"
+  ok "nvidia fuera de modules-load.d (carga temprana eliminada)"
 }
 
 # La limpieza de /tmp no corre en el arranque, sino una hora después.
@@ -89,4 +99,27 @@ disable_wait_online() {
   run_root systemctl disable "$unit" >/dev/null 2>&1 \
     || warn "No se pudo desactivar $unit"
   ok "NetworkManager-wait-online desactivado"
+}
+
+# Debian instala apt-daily-upgrade.timer para upgrades automáticos. El
+# usuario actualiza a mano; se enmascara ese timer, no el de metadatos
+# (apt-daily.timer), que mantiene fresca la lista del módulo updates.
+# `mask` sobrevive a un `apt upgrade`; `disable` podría reactivarse.
+mask_apt_upgrade_timer() {
+  local unit=apt-daily-upgrade.timer
+  local state
+
+  if ! systemctl cat "$unit" >/dev/null 2>&1; then
+    info "Sin $unit; se omite"
+    return 0
+  fi
+  state=$(systemctl is-enabled "$unit" 2>/dev/null || true)
+  if [[ "$state" == "masked" ]]; then
+    info "$unit ya está enmascarado"
+    return 0
+  fi
+
+  run_root systemctl mask --now "$unit" >/dev/null 2>&1 \
+    || warn "No se pudo enmascarar $unit"
+  ok "$unit enmascarado (actualizaciones manuales)"
 }

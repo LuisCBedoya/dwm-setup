@@ -752,11 +752,9 @@ protect_build_toolchain() {
   if [[ "$EUID" -eq 0 ]]; then
     apt-mark manual "${installed[@]}" >/dev/null 2>&1 ||
       warn "No se pudo marcar la cadena de compilación como manual"
-  elif sudo -n true 2>/dev/null; then
-    sudo apt-mark manual "${installed[@]}" >/dev/null 2>&1 ||
-      warn "No se pudo marcar la cadena de compilación como manual"
   else
-    warn "Sin sudo para proteger la cadena de compilación; se omite apt-mark"
+    sudo apt-mark manual "${installed[@]}" >/dev/null 2>&1 ||
+      warn "No se pudo marcar la cadena de compilación como manual (¿sudo cancelado?)"
   fi
 }
 
@@ -768,6 +766,7 @@ cleanup_packages() {
   if dry_run; then
     log "[dry-run] apt-mark manual (cadena de compilación)"
     print_cmd env DEBIAN_FRONTEND=noninteractive apt-get -y autoremove
+    log "[dry-run] apt-get clean (caché de APT)"
     return 0
   fi
 
@@ -793,10 +792,6 @@ cleanup_packages() {
       rc=$?
     fi
   else
-    if ! sudo -n true 2>/dev/null; then
-      warn "Sin sudo para autoremove; se omite la limpieza"
-      return 0
-    fi
     if out=$(sudo env DEBIAN_FRONTEND=noninteractive apt-get -y autoremove 2>&1); then
       rc=0
     else
@@ -813,4 +808,19 @@ cleanup_packages() {
   printf '%s\n' "$out" | grep -E '^(Se eliminarán|Los siguientes paquetes|Removing|The following packages will be REMOVED)' -A20 |
     head -20 || true
   ok "dependencias innecesarias eliminadas"
+
+  # Liberar la caché de .deb: tras una instalación puede ocupar varios GB.
+  if [[ "$EUID" -eq 0 ]]; then
+    if DEBIAN_FRONTEND=noninteractive apt-get clean >/dev/null 2>&1; then
+      ok "caché de APT limpia"
+    else
+      warn "apt-get clean falló; revisa /var/cache/apt"
+    fi
+  else
+    if sudo apt-get clean >/dev/null 2>&1; then
+      ok "caché de APT limpia"
+    else
+      warn "apt-get clean falló o se canceló sudo; revisa /var/cache/apt"
+    fi
+  fi
 }

@@ -397,7 +397,7 @@ Home:                   $TARGET_HOME
 Log:                    $LOG_FILE
 Variantes polybar:      ~/.config/polybar/polybar-variant actual|referencia
 Modo de color:          theme-mode dark|light|toggle|status
-Compositor:             picom (vsync + fade sutil; sin transparencias/sombras)
+Compositor:             picom (vsync + fade sutil; sombras sutiles, sin transparencias)
 Gobernador CPU:         módulo polybar governor (clic alterna; performance al boot)
 Firewall:               UFW activo · módulo polybar (SSH 22/tcp permitido)
 Bluetooth:              módulo polybar · apagado por defecto · menú y audio
@@ -444,7 +444,7 @@ Notas:
   - No hay auto-login: la sesión se inicia a mano con startx.
   - El grupo video/audio/render requiere cerrar sesión y volver a entrar.
   - Los USB se montan solos y solo notifican; no se abre ninguna app.
-  - No se instala ningún IDE, navegador ni reproductor de música.
+  - No se instala IDE ni reproductor de música local; Brave es el navegador.
 EOF
   if [[ "$REPO_MODIFIED" -eq 1 ]]; then
     printf '  - Componentes APT añadidos; backup de fuentes: %s\n' "$ROOT_BACKUP_DIR"
@@ -484,8 +484,16 @@ main() {
     init_logging
   fi
 
-  # Cargar la paleta seleccionada (mocha-black por defecto) antes de mostrar el plan.
-  load_theme "${THEME:-$DEFAULT_THEME}"
+  # Si no se pidió --theme, conservar el modo guardado (dark/light) para
+  # que una reinstalación no cambie el escritorio ni falle la verificación.
+  if [[ -z "${THEME:-}" ]]; then
+    case "$(cat "$TARGET_HOME/.config/dwm-setup/mode" 2>/dev/null || true)" in
+      light) THEME=latte ;;
+      dark) THEME=mocha-black ;;
+      *) THEME="$DEFAULT_THEME" ;;
+    esac
+  fi
+  load_theme "$THEME"
 
   show_banner
   print_detection

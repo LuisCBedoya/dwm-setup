@@ -80,9 +80,13 @@ Incluido:
   No toca APT ni el módulo `updates` de la barra.
 - `vm.swappiness = 10` por `/etc/sysctl.d/99-dwm-setup-swappiness.conf`
   (23 GB de RAM: menos swap y SSD más tranquilo).
-- Arranque más corto (`lib/boot.sh`): `GRUB_TIMEOUT=2`, nvidia fuera del
-  boot (se carga con `prime-run`), limpieza de `/tmp` diferida 1 h y
-  `NetworkManager-wait-online` desactivado.
+- Arranque más corto (`lib/boot.sh`): `GRUB_TIMEOUT=0` +
+  `GRUB_TIMEOUT_STYLE=hidden` (Shift/Esc muestra el menú), nvidia fuera
+  de `modules-load.d`, limpieza de `/tmp` diferida 1 h,
+  `NetworkManager-wait-online` desactivado y `apt-daily-upgrade.timer`
+  enmascarado (actualizaciones manuales; `apt-daily.timer` sigue para
+  los metadatos del módulo `updates`). El instalador ejecuta
+  `apt-get clean` al final para no dejar GB en `/var/cache/apt`.
 - Límite de carga de la batería al **80 %** (`lib/power.sh`): unidad
   `battery-charge-threshold.service` + helper
   `dwm-setup-battery-limit`; solo se instala si el hardware expone
@@ -154,7 +158,9 @@ startx
 
 El instalador detecta usuario y home. Si se ejecuta como usuario normal,
 pide `sudo -v` una vez y usa `sudo` para las operaciones de sistema.
-`sudo ./install.sh` también funciona usando `SUDO_USER`.
+`sudo ./install.sh` también funciona usando `SUDO_USER`. Si el timestamp
+de `sudo` caduca durante una instalación larga, vuelve a pedir la
+contraseña; nunca se almacena.
 
 ## Opciones
 
@@ -163,8 +169,11 @@ pide `sudo -v` una vez y usa `sudo` para las operaciones de sistema.
 | `./install.sh` | Instalación guiada |
 | `./install.sh --dry-run` | Muestra el plan sin modificar nada |
 | `./install.sh --yes` | No pide confirmación; no modifica repositorios APT |
-| `./install.sh --theme mocha-black` | Catppuccin Mocha Black (por defecto) |
+| `./install.sh --theme mocha-black` | Catppuccin Mocha Black (por defecto en instalación limpia) |
 | `./install.sh --theme latte` | Catppuccin Latte (claro) |
+
+Si ya existe `~/.config/dwm-setup/mode`, el instalador conserva el modo
+guardado (`dark`/`light`) y no lo cambia; `--theme` lo fuerza.
 | `./install.sh --help` | Ayuda |
 | `./install.sh --version` | Versión |
 

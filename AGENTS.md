@@ -180,7 +180,11 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `~/.local/share/dwm-setup` (plantillas y paletas instaladas) y recargando
     polybar, dunst, bspwm, kitty y `xsettingsd`. No debe pedir sudo. Si se
     añade una plantilla con color, hay que incluirla en el store de
-    `lib/config.sh` y en `bin/theme-mode`. kitty se recolorea con
+    `lib/config.sh` y en `bin/theme-mode`. En una reinstalación,
+    `install.sh` conserva `~/.config/dwm-setup/mode` si no se pasa
+    `--theme` (`light`→Latte, `dark`→Mocha Black); así no cambia el
+    escritorio ni falla `verify.sh` por paleta. `--theme` lo fuerza.
+    kitty se recolorea con
     `kitty @ set-colors --all --configured <colorsheme>`, que exige
     `allow_remote_control socket-only` y `listen_on unix:kitty-{kitty_pid}`
     en `kitty.conf`; sin ese socket, kitty solo cambia al reiniciarse.
@@ -294,9 +298,10 @@ La fase 1 termina en el escritorio. No implementar todavía:
     esquinas cuadradas y borde propio, y picom no debe redondearlo ni
     sombrearlo. Los menús y popups (`window_type = 'menu'`,
     `'popup_menu'`, `'dropdown_menu'`, `'tooltip'`) también se excluyen
-    de `shadow-exclude`: ya dibujan su propia sombra y, al ser ARGB con
-    márgenes transparentes, la sombra de picom se veía como un segundo
-    recuadro redondeado (menú contextual de Brave). picom usa libconfig:
+    de `shadow-exclude` y de `rounded-corners-exclude`: ya dibujan su
+    propia sombra y, al ser ARGB con márgenes transparentes, la sombra
+    de picom se veía como un segundo recuadro redondeado (menú
+    contextual de Brave). picom usa libconfig:
     comentarios `#`, no `;`. Si se añade color a alguna plantilla nueva
     de picom, entra al store (regla 20b); hoy no tiene.
 
@@ -357,11 +362,17 @@ La fase 1 termina en el escritorio. No implementar todavía:
     ni el módulo `updates` de polybar. El doctor global con avisos
     dunst de todo el sistema es backlog, no fase actual. `lib/sysctl.sh`
     instala `vm.swappiness=10` vía `/etc/sysctl.d/` (23 GB de RAM).
-    `lib/boot.sh` acorta el arranque: `GRUB_TIMEOUT=2`, quita
-    `/etc/modules-load.d/nvidia.conf` (nvidia-drm se carga con
-    `prime-run`), difiere `systemd-tmpfiles-clean.timer` (`OnBootSec=1h`)
-    y desactiva `NetworkManager-wait-online`. Medido antes: 22,4 s de
-    boot (GRUB 8,6 + modules-load 6,3 por nvidia + tmpfiles 4,8).
+    `lib/boot.sh` acorta el arranque: `GRUB_TIMEOUT=0` y
+    `GRUB_TIMEOUT_STYLE=hidden`, quita `/etc/modules-load.d/nvidia.conf`,
+    difiere `systemd-tmpfiles-clean.timer` (`OnBootSec=1h`), desactiva
+    `NetworkManager-wait-online` y enmascara
+    `apt-daily-upgrade.timer` (actualizaciones manuales;
+    `apt-daily.timer` sigue para metadatos).
+    `cleanup_packages` hace `apt-get clean`
+    al final. El driver NVIDIA puede seguir cargándose por udev; la
+    carga bajo demanda real (blacklist + helper) queda pendiente de la
+    prueba con `modprobe -r`/`prime-run`. Medido antes: 22,4 s de boot
+    (GRUB 8,6 + modules-load 6,3 por nvidia + tmpfiles 4,8).
 
 28. **UFW y Bluetooth.** UFW se instala activo con `deny incoming`,
     `allow outgoing` y `allow 22/tcp` para no cambiar SSH. El módulo
@@ -478,7 +489,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/ytwatch-update` | Actualiza ytwatch (checksums.txt) o ueberzugpp (`--ueberzugpp`) |
 | `bin/yt-update-notify` | Wrapper del timer: agrupa los dos checkers en un toast dunst |
 | `lib/yt-notify.sh` | Instala el timer de usuario de avisos (unidades + enable) |
-| `lib/boot.sh` | Arranque: GRUB 2 s, nvidia fuera del boot, tmpfiles diferido, sin wait-online |
+| `lib/boot.sh` | Arranque: GRUB 0 s, nvidia fuera del boot, tmpfiles diferido, sin wait-online ni apt-daily-upgrade |
 | `lib/power.sh` | Límite de carga de batería (80 %) vía sysfs + unidad systemd |
 | `lib/fans.sh` | Modo del ventilador: helper root y sudoers acotado |
 | `lib/sysctl.sh` | Instala `/etc/sysctl.d/99-dwm-setup-swappiness.conf` |

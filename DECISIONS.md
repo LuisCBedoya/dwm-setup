@@ -2649,11 +2649,14 @@ decisión nueva para cambiarlo.
    su propia sombra; sin la exclusión, la sombra de picom se veía a
    través de sus márgenes ARGB como un segundo recuadro redondeado (el
    menú contextual de Brave).
+3. `rounded-corners-exclude` deja fuera los mismos menús/popups para
+   que picom no les aplique esquinas redondeadas.
 3. Se mantienen `inactive/active/frame-opacity = 1` y la ausencia de
    blur: **sin transparencias**; la translucidez de la barra B sigue
    siendo su fondo `#00000000` (no un alpha de picom).
-4. `verify.sh` exige `shadow = true`, `shadow-opacity = 0.35` y la
-   ausencia de `blur-background = true`.
+4. `verify.sh` exige `shadow = true`, `shadow-opacity = 0.35`, la
+   ausencia de `blur-background = true` y que menús/popups estén
+   excluidos de `shadow-exclude` y `rounded-corners-exclude`.
 
 **Consecuencias:**
 - Coste de composición despreciable en esta Intel; vsync y fade
@@ -3018,3 +3021,75 @@ estaba a 80–91 °C.
   daemon `dwm-setup-fan-auto`.
 - Los vídeos ya abiertos en ytwatch conservan el mpv antiguo hasta
   reiniciar ytwatch; los nuevos usan la configuración.
+
+## ADR-120 — GRUB sin menú, caché de APT limpia y dGPU bajo demanda
+
+**Contexto:** el arranque tarda 5,8 s en loader/GRUB; `/var/cache/apt`
+acumula 3,2 GB y 1056 `.deb`; el kernel 6.12.116 sigue instalado aunque
+se arranca con 6.12.117. La dGPU NVIDIA está en P0 (1493/3504 MHz,
+51 °C) sin procesos, mientras la pantalla y `prime-run` funcionan con la
+iGPU; el driver se carga al arranque.
+
+**Decisión:**
+1. `lib/boot.sh` fija `GRUB_TIMEOUT=0` y `GRUB_TIMEOUT_STYLE=hidden`;
+   Shift/Esc sigue mostrando el menú.
+2. `cleanup_packages` ejecuta `apt-get clean` al terminar la instalación.
+3. El kernel/headers 6.12.116 se purgan a mano; el script
+   `/tmp/opencode/apply-optimizations.sh` lo hace en la sesión viva.
+4. La dGPU bajo demanda **no se implementa**: el test de `modprobe -r`
+   demostró que `nvidia-smi` recarga automáticamente los módulos vía
+   `nvidia-modprobe` (setuid), por lo que no es fiable para comprobar
+   el apagado. Tras el test la GPU idlea en **P8/139 MHz**, que es el
+   mejor estado posible sin tocar ACPI/bbswitch (riesgo alto).
+   El driver se deja cargado idelando en P8.
+5. No se cambia el governor (performance en AC), el ventilador ni Brave.
+
+**Consecuencias:**
+- Menos espera en GRUB y varios GB libres en `/var`.
+- El menú de rescate requiere Shift/Esc al arrancar.
+- La dGPU solo se apaga con `modprobe -r`; tras el test queda cargada
+  idelando en P8/139 MHz hasta un reinicio o una descarga manual. No se
+  usa blacklist ni bbswitch (riesgo alto).
+
+## ADR-121 — Actualizaciones manuales: sin `apt-daily-upgrade.timer`
+
+**Contexto:** el usuario quiere actualizar a mano y no instalar
+`unattended-upgrades`. Debian deja `apt-daily-upgrade.timer` activo;
+con `Persistent=true` catch-up, su servicio corrió **1,07 s** en el
+arranque (espera de red incluida) aunque no hubiera upgrades que
+aplicar. El módulo `updates` de polybar depende de
+`/var/lib/apt/lists`, que actualiza `apt-daily.timer` (solo metadatos).
+
+**Decisión:**
+1. `lib/boot.sh` enmascara `apt-daily-upgrade.timer`
+   (`systemctl mask --now`), no el servicio suelto. `mask` sobrevive a
+   un `apt upgrade`; `disable` podría reactivarse.
+2. `apt-daily.timer` se mantiene: solo hace `apt-get update` de
+   metadatos y mantiene fresco el contador de la barra.
+3. Los upgrades se ejecutan siempre a mano (`sudo apt upgrade`).
+
+**Consecuencias:**
+- ~1,1 s menos de arranque y ningún upgrade automático.
+- La barra sigue avisando de paquetes nuevos cuando cambian las listas.
+- Si se quiere cero actividad de red automática, habría que desactivar
+  también `apt-daily.timer` y asumir listas desactualizadas hasta un
+  `apt update` manual.
+
+## ADR-122 — Reinstalar conserva el modo de color
+
+**Contexto:** el instalador usaba siempre `mocha-black` por defecto.
+En una reinstalación con el modo guardado en `light` (Latte), renderizó
+las configuraciones con la paleta clara pero `verify.sh` comparó contra
+`mocha-black`: 114 errores de color y el instalador abortó antes de la
+limpieza final.
+
+**Decisión:** si no se pasa `--theme`, `install.sh` lee
+`~/.config/dwm-setup/mode` antes de `load_theme`:
+`light` → `latte`, `dark` → `mocha-black`; si no existe (instalación
+limpia), usa `mocha-black`. `--theme` sigue forzando el tema.
+
+**Consecuencias:**
+- Reinstalar no cambia el escritorio de claro a oscuro ni falla la
+  verificación por paleta.
+- Una instalación limpia sigue entrando en Mocha Black.
+- Para cambiar de modo se usa `theme-mode` o `./install.sh --theme`.

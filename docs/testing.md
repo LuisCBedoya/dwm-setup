@@ -1276,3 +1276,27 @@ ytsearch50  → 4533 ms
   0,33–0,42 s y total 0,56–0,87 s; portada en pestaña fría ~6 s por
   JavaScript/miniaturas. Pendiente: reiniciar ytwatch para que el vídeo
   ya abierto use el mpv nuevo (los siguientes ya lo usan).
+- 2026-11-15: arranque y limpieza. `lib/boot.sh` pasa a
+  `GRUB_TIMEOUT=0` + `GRUB_TIMEOUT_STYLE=hidden` (Shift/Esc para el
+  menú) y `cleanup_packages` hace `apt-get clean`; el dry-run los
+  muestra y termina con rc=0. En vivo quedan pendientes porque `sudo
+  -n` no está disponible: `/tmp/opencode/apply-optimizations.sh`
+  limpia `/var/cache/apt` (3,2 GB), purga 6.12.116/headers y actualiza
+  GRUB. La dGPU (P0, 1493/3504 MHz, 51 °C, sin procesos, `prime-run`
+  OK) se prueba con `/tmp/opencode/nvidia-ondemand-test.sh`; si
+  `modprobe -r` la apaga y `prime-run` la recarga, se implementa la
+  carga bajo demanda. Governor, fan y Brave no se tocan.
+- 2026-11-16: actualizaciones manuales y ventilador. `lib/boot.sh`
+  enmascara `apt-daily-upgrade.timer` (el servicio corría 1,07 s en el
+  boot); `apt-daily.timer` sigue para metadatos. `lib/verify.sh` exige
+  GRUB 0/hidden y el timer enmascarado. La prueba de overboost mostró
+  que el ventilador funciona (paquete 79 → 62–66 °C), aunque el EC
+  reporta `cpu_fan=0`/`pwm1=0 %`. Dry-run rc=0; falta aplicar el timer
+  en vivo con sudo.
+- 2026-11-16 14:49: instalación completa real en el ASUS FX504GE con
+  `sudo -A ./install.sh --yes` (contraseña vía rofi askpass), modo
+  `light`/Latte. `install.sh` conservó el modo guardado; `run_root`
+  volvió a pedir sudo solo si hacía falta y la limpieza final no se
+  saltó. Resultado: **verificación estática correcta**, `apt-get clean`
+  OK, `apt-daily-upgrade.timer=masked/inactive`, `apt-daily.timer`
+  activo, GRUB 0/hidden y picom con menús excluidos. Código 0.

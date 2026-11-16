@@ -27,12 +27,17 @@ shadow-exclude = [
   "class_i = 'rofi'"
 ];
 # Esquinas redondeadas (solo ventanas normales); dock/notificaciones/
-# escritorio quedan fuera para no dejar huecos ni marcos descuadrados.
+# escritorio y menús/popups quedan fuera para no dejar huecos ni marcos
+# descuadrados (p. ej. el menú contextual de Brave).
 corner-radius = 10;
 rounded-corners-exclude = [
   "window_type = 'dock'",
   "window_type = 'notification'",
   "window_type = 'desktop'",
+  "window_type = 'menu'",
+  "window_type = 'popup_menu'",
+  "window_type = 'dropdown_menu'",
+  "window_type = 'tooltip'",
   "class_g = 'Rofi'",
   "class_i = 'rofi'"
 ];

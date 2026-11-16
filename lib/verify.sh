@@ -353,6 +353,13 @@ verify_install() {
       error "picom.conf no excluye los menús de la sombra (doble recuadro en Brave)"
       failures=$((failures + 1))
     fi
+    for rounded_menu in "window_type = 'menu'" "window_type = 'popup_menu'" \
+                        "window_type = 'dropdown_menu'" "window_type = 'tooltip'"; do
+      if ! grep -q "$rounded_menu" "$home/.config/picom/picom.conf"; then
+        error "picom.conf no excluye $rounded_menu del redondeo (doble recuadro en Brave)"
+        failures=$((failures + 1))
+      fi
+    done
   fi
 
   if ! grep -q '^hwdec=vaapi' "$home/.config/mpv/mpv.conf" 2>/dev/null; then
@@ -719,8 +726,12 @@ PYCHK
 
   # Arranque: GRUB, módulos y timers (lib/boot.sh).
   if [[ -f /etc/default/grub ]]; then
-    if ! grep -qx 'GRUB_TIMEOUT=2' /etc/default/grub; then
-      error "GRUB_TIMEOUT no es 2 en /etc/default/grub"
+    if ! grep -qx 'GRUB_TIMEOUT=0' /etc/default/grub; then
+      error "GRUB_TIMEOUT no es 0 en /etc/default/grub"
+      failures=$((failures + 1))
+    fi
+    if ! grep -qx 'GRUB_TIMEOUT_STYLE=hidden' /etc/default/grub; then
+      error "GRUB_TIMEOUT_STYLE no es hidden en /etc/default/grub"
       failures=$((failures + 1))
     fi
   fi
@@ -734,6 +745,10 @@ PYCHK
   fi
   if systemctl is-enabled --quiet NetworkManager-wait-online.service 2>/dev/null; then
     error "NetworkManager-wait-online sigue habilitado"
+    failures=$((failures + 1))
+  fi
+  if [[ "$(systemctl is-enabled apt-daily-upgrade.timer 2>/dev/null || true)" != "masked" ]]; then
+    error "apt-daily-upgrade.timer no está enmascarado (actualizaciones manuales)"
     failures=$((failures + 1))
   fi
 

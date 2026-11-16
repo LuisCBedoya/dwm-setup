@@ -2075,3 +2075,82 @@ UHD 630; sin servicios ni configuración extra.
   Video Decode, WebGL y WebGPU en hardware; GPU1 Intel UHD 630
   `*ACTIVE*`, Optimus `true`. YouTube TTFB 0,33–0,42 s; primera carga en
   frío de la portada ~6 s (JavaScript/miniaturas).
+
+### Arranque 0 s, limpieza de APT y dGPU — 2026-11-15
+
+- `lib/boot.sh`: `GRUB_TIMEOUT=0` y `GRUB_TIMEOUT_STYLE=hidden`; el
+  menú se sigue abriendo con Shift/Esc. Se mantiene la eliminación de
+  `modules-load.d/nvidia.conf`, el tmpfiles diferido y
+  `NetworkManager-wait-online` desactivado.
+- `lib/packages.sh`: `cleanup_packages` ejecuta `apt-get clean` al final
+  (la caché de APT tenía 3,2 GB y 1056 `.deb`).
+- El kernel antiguo 6.12.116 y sus headers se pueden purgar aparte; el
+  sistema está arrancado con 6.12.117.
+- Los cambios en vivo (clean, purge y `update-grub`) están en
+  `/tmp/opencode/apply-optimizations.sh` porque el agente no tiene sudo
+  sin contraseña; hay que ejecutarlo en la terminal.
+- La dGPU está en P0 a 1493/3504 MHz y 51 °C sin procesos; `prime-run`
+  sí funciona. La prueba de descarga/recarga está en
+  `/tmp/opencode/nvidia-ondemand-test.sh`; si apaga la GPU y `prime-run`
+  vuelve a funcionar, se implementa blacklist + helper.
+- Sin cambios en governor, ventilador ni Brave.
+
+### Menú de Brave sin doble recuadro (picom) — 2026-11-16
+
+- `templates/picom/picom.conf.in` (repo y store): `shadow-exclude`,
+  `rounded-corners-exclude` y `fade-exclude` dejan fuera
+  `menu`, `popup_menu`, `dropdown_menu` y `tooltip`; los menús dibujan
+  su propia sombra (menú contextual de Brave).
+- `lib/verify.sh`: comprueba que los menús/popups estén excluidos de
+  sombra, redondeo y fade.
+- `AGENTS.md` regla 25 y `DECISIONS.md` ADR-110 actualizados.
+- `theme-mode light` re-renderizó y reinició picom; menú de Brave
+  verificado limpio (solo marco nativo de Chromium, no doble recuadro).
+- `bash -n` OK, `./install.sh --dry-run` rc=0.
+
+### Estado de la dGPU tras el test de descarga — 2026-11-16
+
+- Tras `modprobe -r`/`modprobe nvidia` el driver recarga y la GPU idlea
+  en **P8/139 MHz** (antes se veía P0 por el autoload de `nvidia-smi`).
+- `nvidia-smi` recarga los módulos vía `nvidia-modprobe` (setuid), así
+  que no es fiable para comprobar apagado de GPU.
+- No se implementa blacklist ni bbswitch (riesgo alto); el driver se
+  deja cargado idelando en P8.
+
+### Actualizaciones manuales y prueba de ventilador — 2026-11-16
+
+- `lib/boot.sh` enmascara `apt-daily-upgrade.timer`
+  (`systemctl mask --now`); `apt-daily.timer` se mantiene para los
+  metadatos del módulo `updates`. `unattended-upgrades` no está
+  instalado y los upgrades siguen siendo manuales.
+- `lib/verify.sh` exige `GRUB_TIMEOUT=0`, `GRUB_TIMEOUT_STYLE=hidden` y
+  `apt-daily-upgrade.timer` enmascarado; se corrigió el check que aún
+  pedía `GRUB_TIMEOUT=2`.
+- Prueba de overboost: el daemon `fan-auto` ya había puesto
+  `fan_boost_mode=1` al alcanzar 80 °C; con overboost el paquete bajó de
+  **79 °C a 62–66 °C** en ~45 s. `cpu_fan=0 RPM`/`pwm1=0 %` es un fallo
+  de reporte del EC; el ventilador funciona. Estado restaurado a
+  `auto`/`normal`.
+- `./install.sh --dry-run` rc=0 y muestra la desactivación del timer.
+- Pendiente en vivo: `sudo systemctl mask --now apt-daily-upgrade.timer`
+  o `sudo ./install.sh` (que ya lo hace y lo verifica).
+
+### Instalación completa automática — 2026-11-16 14:49
+
+- `install.sh` ya no depende de `sudo -n`: si el timestamp caduca,
+  `run_root` vuelve a pedir la contraseña; la limpieza final
+  (`apt-mark`, `autoremove`, `apt-get clean`) también pregunta en vez de
+  saltarse el paso.
+- `apt-daily-upgrade.timer` quedó **enmascarado** (`mask --now`), no solo
+  desactivado; `apt-daily.timer` sigue activo para metadatos.
+- **Fix de tema:** si no se pasa `--theme`, el instalador lee
+  `~/.config/dwm-setup/mode` y conserva light/dark. Antes usaba siempre
+  mocha-black y una reinstalación en modo light fallaba con 114 colores
+  fuera de paleta.
+- Prueba real: `sudo -A ./install.sh --yes` (contraseña por rofi) en
+  modo **latte/light**. Resultado: **verificación estática correcta**,
+  autoremove sin huérfanas, `apt-get clean` OK y resumen final. Código 0.
+- Estado final verificado: `apt-daily-upgrade.timer=masked/inactive`,
+  `apt-daily.timer=enabled/active`, `mode=light`, GRUB 0/hidden,
+  `NetworkManager-wait-online=disabled`, picom con exclusión de menús.
+- Pendiente: reiniciar para i915 FBC/quirk ALC255 y probar la sesión.
