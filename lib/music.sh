@@ -10,6 +10,7 @@ install_music() {
   if dry_run; then
     log "[dry-run] instalar $MUSIC_BIN_ROOT/{yt-play,yt-preview,ytdlp-check,ytdlp-update,ytdlp-rollback,music-ctl}"
     log "[dry-run] descargar yt-dlp oficial en ~/.local/bin/yt-dlp"
+    log "[dry-run] instalar ~/.config/mpv/mpv.conf y ~/.local/bin/mpv (VA-API/iGPU)"
     return 0
   fi
 
@@ -19,9 +20,31 @@ install_music() {
   done
 
   install_ytdlp_binary
+  install_mpv_config
 
   ok "Streaming listo: yt-play, yt-preview, ytdlp-check, ytdlp-update, ytdlp-rollback, music-ctl"
   info "Uso: yt-play [--audio|--video] <url | búsqueda>  ·  teclas multimedia controlan mpv"
+}
+
+# mpv: decodificación VA-API en la iGPU Intel y salida EGL/Mesa. El
+# wrapper respeta prime-run para no romper el offload a la dGPU.
+install_mpv_config() {
+  local home="$TARGET_HOME"
+  local conf="$home/.config/mpv/mpv.conf"
+  local wrapper="$home/.local/bin/mpv"
+
+  if dry_run; then
+    log "[dry-run] instalar $conf y $wrapper (mpv VA-API en la iGPU)"
+    return 0
+  fi
+
+  make_user_dir "$home/.config/mpv"
+  make_user_dir "$home/.local/bin"
+  backup_user_path "$conf"
+  backup_user_path "$wrapper"
+  install_template_user 0644 "$PROJECT_ROOT/templates/mpv/mpv.conf" "$conf"
+  install_template_user 0755 "$PROJECT_ROOT/templates/mpv/mpv-wrapper.sh" "$wrapper"
+  ok "mpv: VA-API en la iGPU Intel (prime-run sigue usando la dGPU)"
 }
 
 # Instala el binario oficial de yt-dlp (autoactualizable, sin sudo).

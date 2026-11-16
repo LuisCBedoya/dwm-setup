@@ -338,7 +338,10 @@ La fase 1 termina en el escritorio. No implementar todavía:
     sudo) y `ueberzugpp` 2.9.10 por `.deb` directo del proyecto (nunca
     añadir el repo OBS a APT; solo `dpkg -i` + `apt-get -f`). ytwatch
     usa el yt-dlp oficial y mpv; `yt-play`, `ytdlp-{check,update,
-    rollback}` y las notificaciones dunst NO se retiran. La config va
+    rollback}` y las notificaciones dunst NO se retiran. mpv se instala
+    con VA-API en la iGPU (`templates/mpv/`): `hwdec=vaapi`, salida
+    EGL/Mesa y wrapper `~/.local/bin/mpv` que fuerza la iGPU salvo con
+    `prime-run`; la dGPU sigue disponible para offload. La config va
     de `templates/ytwatch/config.toml.in` (tema `terminal`, sin hex:
     no entra en el store 20b), browser es `brave-browser` y
     `audio_only = false` (vídeo por defecto; `a` conmuta a audio en el
@@ -431,7 +434,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
 | `lib/config.sh` | Configs de usuario, wallpaper y binarios de sesión |
 | `lib/fastfetch.sh` | fastfetch: config y logos `Neofet-{light,dark}.png` |
-| `lib/music.sh` | yt-dlp oficial, scripts de streaming y teclas |
+| `lib/music.sh` | yt-dlp oficial, scripts de streaming, mpv VA-API/iGPU y teclas |
 | `lib/ytwatch.sh` | ytwatch (binario GitHub) y ueberzugpp (.deb OBS) con SHA-256 |
 | `lib/brave.sh` | Brave: repo APT, policies, atajos y SurfingKeys |
 | `lib/verify.sh` | Verificación estática final |
@@ -443,7 +446,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/dwm-setup-ufw` | Helper root acotado del módulo UFW (`status/enable/disable/reload/rules`) |
 | `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults y workspace.sh, ADR-112) |
 | `templates/sxhkd/` | sxhkdrc |
-| `templates/polybar/` | config.ini, modules/ (governor, ufw, bluetooth), scripts/ y variants/ |
+| `templates/polybar/` | config.ini, modules/ (governor, ufw, bluetooth), scripts/ (incl. temp-status) y variants/ |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
 | `templates/rofi/` | powermenu.rasi y config.rasi |
 | `templates/kitty/` | kitty.conf y colorshemes/ |
@@ -480,6 +483,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/fans.sh` | Modo del ventilador: helper root y sudoers acotado |
 | `lib/sysctl.sh` | Instala `/etc/sysctl.d/99-dwm-setup-swappiness.conf` |
 | `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview kitty) |
+| `templates/mpv/` | `mpv.conf` (VA-API) y wrapper `mpv` que fuerza la iGPU salvo `prime-run` |
 | `templates/sysctl/` | `99-dwm-setup-swappiness.conf` (vm.swappiness=10) |
 | `templates/wireplumber/` | `50-dwm-setup.conf` (autoswitch A2DP/HFP) |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
@@ -513,7 +517,9 @@ bash -n bin/yt-play bin/yt-preview bin/ytdlp-check bin/ytdlp-update \
 bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
 sh -n templates/bspwm/scripts/workspace.sh.in \
   templates/bspwm/scripts/audio-watch.sh.in \
-  templates/bspwm/scripts/audio-switch.sh.in
+  templates/bspwm/scripts/audio-switch.sh.in \
+  templates/polybar/scripts/temp-status.sh.in \
+  templates/mpv/mpv-wrapper.sh
 
 # Gobernador: lista oficial y sudoers renderizado (sin tocar el sistema)
 sh -n bin/dwm-setup-cpu-governor bin/dwm-setup-ufw
@@ -611,6 +617,12 @@ desktop-doctor --camera
   FX504GE. La validación del quirk requiere reinicio; el resto se probó
   en vivo el 2026-10-24. Pendiente la prueba del micrófono con los GM2
   Pro (HFP al grabar) y la reconexión (`Bonded`).
+- mpv y temperatura (2026-11-15, ADR-119): `templates/mpv/` instala
+  `mpv.conf` con `hwdec=vaapi` en la iGPU y un wrapper que respeta
+  `prime-run`; `scripts/temp-status.sh` lee `coretemp` para la barra.
+  Medido: 45,5 % → 17–18 % de CPU y 0 en la dGPU en un 720p. Brave
+  confirma Video Decode hardware. El governor sigue `performance` en AC.
+  Pendiente reiniciar ytwatch para el vídeo ya abierto.
 - Brave «Usar GTK» + xsettingsd (2026-11-14, ADR-115): policy con
   Mocha/Latte `normal_installed` como opcionales, helper `bin/brave-theme`
   sin sudo, `xsettingsd` en `autostart` y recarga por `SIGHUP` desde

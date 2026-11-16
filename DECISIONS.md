@@ -2985,3 +2985,36 @@ defecto llegaba a ser el monitor de HDMI.
 de rofi de cada tecla. `keybindings_rofi.sh` sigue leyendo el `sxhkdrc` y
 muestra el orden nuevo. Documentado en README, AGENTS, testing y
 PROGRESS.
+
+## ADR-119 — mpv con VA-API en la iGPU (y temperatura del paquete)
+
+**Contexto:** mpv (yt-play/ytwatch) decodificaba por software y usaba la
+dGPU NVIDIA para la salida Vulkan: 45,5 % de CPU y 105 MiB en la dGPU en
+un 720p H.264. La iGPU UHD 630 tiene VA-API iHD con H.264/HEVC/VP9. El
+módulo `temp` leía `thermal-zone=0` (acpitz, 66 °C) mientras el paquete
+estaba a 80–91 °C.
+
+**Decisión:**
+1. `~/.config/mpv/mpv.conf` con `hwdec=vaapi`, `vo=gpu`,
+   `gpu-api=opengl` y `gpu-context=x11egl`.
+2. Wrapper `~/.local/bin/mpv` que exporta
+   `__EGL_VENDOR_LIBRARY_FILENAMES=50_mesa.json` salvo que se detecte
+   `prime-run` (`__NV_PRIME_RENDER_OFFLOAD`, `VK_LAYER_NV_optimus`,
+   `DRI_PRIME` o `__GLX_VENDOR_LIBRARY_NAME`); la dGPU sigue para
+   offload.
+3. `lib/music.sh` instala el conf y el wrapper desde `templates/mpv/`;
+   `verify.sh` exige `hwdec=vaapi`.
+4. El módulo `temp` pasa a `custom/script` con
+   `scripts/temp-status.sh`, que busca el hwmon `coretemp` y muestra
+   `temp1_input` (paquete) en vez de la zona ACPI.
+5. No se toca el perfil de energía: AC sigue en `performance`, a
+   petición del usuario, para no ralentizar navegador ni terminal.
+
+**Consecuencias:**
+- mpv baja de 45,5 % a 17–18 % de CPU, no usa la dGPU y calienta menos;
+  la calidad y el OSD de ytwatch se mantienen.
+- `prime-run mpv` sigue usando la NVIDIA.
+- La barra muestra la temperatura real del paquete, coherente con el
+  daemon `dwm-setup-fan-auto`.
+- Los vídeos ya abiertos en ytwatch conservan el mpv antiguo hasta
+  reiniciar ytwatch; los nuevos usan la configuración.

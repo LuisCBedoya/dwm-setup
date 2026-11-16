@@ -286,6 +286,11 @@ Comandos manuales:
 ~/.config/bspwm/scripts/audio-switch.sh analog
 ```
 
+`yt-play` y `ytwatch` reproducen con mpv en la iGPU Intel: `mpv.conf`
+activa `hwdec=vaapi` y salida EGL/Mesa, y el wrapper `~/.local/bin/mpv`
+fuerza Mesa/Intel salvo que se lance con `prime-run`; la dGPU NVIDIA
+sigue disponible para offload.
+
 Si el jack combo de 3.5 mm no expone el micrófono del headset, el watcher
 usa el micrófono interno. En el **ASUS FX504GE con ALC255** el instalador
 detecta el modelo y ofrece el fixup `alc255-asus`; en otros PCs no toca el
@@ -395,7 +400,9 @@ existentes `Ctrl+Tab`,
 `Super` es la tecla Windows. La barra muestra 15 módulos (16 si hay
 backlight): logo StumbleUpon, escritorios dinámicos, pomodoro, temperatura, RAM,
 CPU, red, Bluetooth, UFW, servicios, volumen, batería, fecha,
-actualizaciones y bandeja del sistema. La red muestra un solo `󰖩 connected` o
+actualizaciones y bandeja del sistema. La temperatura es la del paquete
+real (`coretemp`, `Package id 0`), no la zona ACPI. La red muestra un
+solo `󰖩 connected` o
 `󰈀 connected`; Ethernet tiene prioridad si el cable está conectado. Si no
 hay conexión, muestra `󰖩 NoC` y sigue siendo clicable. Al hacer clic en el módulo se abre un menú
 WiFi para elegir y conectar una red. Las actualizaciones muestran calavera +

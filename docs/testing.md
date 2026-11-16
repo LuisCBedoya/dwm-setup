@@ -1260,3 +1260,19 @@ ytsearch50  → 4533 ms
   propia del menú; también se comprobó con picom parado como control.
   Aplicado a la sesión viva reiniciando picom; pendiente la captura
   final con Brave abierto.
+- 2026-11-15: mpv en la iGPU y temperatura del paquete. Con un vídeo
+  720p H.264 local, mpv por defecto usó 45,5 % de CPU, decodificación
+  software y 105 MiB en la NVIDIA; con `hwdec=vaapi` + EGL/Mesa (Intel)
+  bajó a 17–18 % de CPU y 0 en la dGPU; con Vulkan Intel, 22 %. Se
+  instaló `mpv.conf` (`hwdec=vaapi`, `vo=gpu`, `gpu-api=opengl`,
+  `gpu-context=x11egl`) y el wrapper `~/.local/bin/mpv` con
+  `__EGL_VENDOR_LIBRARY_FILENAMES=50_mesa.json`, que respeta
+  `prime-run`. El módulo `temp` pasó de `thermal-zone=0` (acpitz) a un
+  script que lee `coretemp/temp1_input`; en vivo la barra pasó de 66 °C
+  ACPI a 67–84 °C del paquete real (según carga). `brave://gpu` con el
+  perfil real: Canvas/Compositing/Rasterization/Video Decode/WebGL/
+  WebGPU hardware accelerated; GPU1 Intel *ACTIVE*, Optimus true;
+  `--enable-features=VaapiVideoDecoder` presente. Red: YouTube TTFB
+  0,33–0,42 s y total 0,56–0,87 s; portada en pestaña fría ~6 s por
+  JavaScript/miniaturas. Pendiente: reiniciar ytwatch para que el vídeo
+  ya abierto use el mpv nuevo (los siguientes ya lo usan).

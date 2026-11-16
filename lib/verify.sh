@@ -89,6 +89,7 @@ verify_install() {
     "$home/.config/polybar/modules/fan.ini" \
     "$home/.config/polybar/scripts/cpu-governor.sh" \
     "$home/.config/polybar/scripts/fan-mode.sh" \
+    "$home/.config/polybar/scripts/temp-status.sh" \
     "$home/.config/polybar/modules/network.ini" \
     "$home/.config/polybar/modules/bluetooth.ini" \
     "$home/.config/polybar/modules/ufw.ini" \
@@ -173,6 +174,8 @@ verify_install() {
     "/usr/local/bin/ytdlp-update" \
     "/usr/local/bin/ytdlp-rollback" \
     "/usr/local/bin/music-ctl" \
+    "$home/.config/mpv/mpv.conf" \
+    "$home/.local/bin/mpv" \
     "$home/.local/bin/dwm-setup-fan-auto" \
     "$home/.local/bin/dwm-setup-power-auto" \
     "$home/.config/dwm-setup/fan-mode" \
@@ -350,6 +353,11 @@ verify_install() {
       error "picom.conf no excluye los menús de la sombra (doble recuadro en Brave)"
       failures=$((failures + 1))
     fi
+  fi
+
+  if ! grep -q '^hwdec=vaapi' "$home/.config/mpv/mpv.conf" 2>/dev/null; then
+    error "mpv.conf no activa VA-API (hwdec=vaapi) en la iGPU"
+    failures=$((failures + 1))
   fi
 
   # ytwatch: buscador TUI solo si el bloque está habilitado (--no-ytwatch lo salta).

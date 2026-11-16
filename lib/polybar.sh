@@ -97,7 +97,7 @@ render_polybar_templates() {
       "$home/.config/polybar/$m" 0644 "${common_vars[@]}"
   done
 
-  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/network-menu.sh" "scripts/bluetooth-status.sh" "scripts/bluetooth-menu.sh" "scripts/ufw-status.sh" "scripts/ufw-menu.sh" "scripts/services.sh" "scripts/volume.sh" "scripts/monocle-count.sh" "scripts/cpu-governor.sh" "scripts/fan-mode.sh")
+  local scripts=("scripts/updates-apt.sh" "scripts/polypomo" "scripts/network-status.sh" "scripts/network-menu.sh" "scripts/bluetooth-status.sh" "scripts/bluetooth-menu.sh" "scripts/ufw-status.sh" "scripts/ufw-menu.sh" "scripts/services.sh" "scripts/volume.sh" "scripts/monocle-count.sh" "scripts/cpu-governor.sh" "scripts/fan-mode.sh" "scripts/temp-status.sh")
   local s
   for s in "${scripts[@]}"; do
     render_theme_template "$PROJECT_ROOT/templates/polybar/$s.in" \

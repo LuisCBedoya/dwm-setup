@@ -1,18 +1,8 @@
-; temp — temperatura CPU con rampa de iconos
+; temp — temperatura del paquete CPU (coretemp)
 [module/temp]
-type = internal/temperature
-thermal-zone = 0
-warn-temperature = 75
-format = <ramp><label>
+type = custom/script
+exec = @HOME@/.config/polybar/scripts/temp-status.sh
+interval = 2
+format = <label>
 format-padding = 2
 format-foreground = ${colors.foreground}
-label = %temperature-c%
-label-font = 1
-format-warn = <ramp><label-warn>
-format-warn-padding = 2
-format-warn-foreground = ${colors.foreground}
-label-warn = %temperature-c%
-ramp-0 = "%{T1}%{T-}"
-ramp-1 = "%{T1}%{T-}"
-ramp-2 = "%{T1}%{T-}"
-ramp-foreground = ${colors.foreground}

@@ -1,0 +1,29 @@
+#!/bin/sh
+# temp-status.sh — temperatura del paquete CPU (coretemp) para polybar.
+#
+# Polybar no permite elegir el hwmon de coretemp por nombre, y la zona
+# ACPI (thermal_zone0) muestra una temperatura distinta a la del paquete.
+# Este script busca el hwmon "coretemp" y usa temp1_input (Package id 0).
+set -u
+
+temp=0
+for h in /sys/class/hwmon/hwmon*; do
+  [ -r "$h/name" ] || continue
+  [ "$(cat "$h/name" 2>/dev/null)" = coretemp ] || continue
+  v=$(cat "$h/temp1_input" 2>/dev/null || true)
+  case "$v" in ''|*[!0-9]*) continue ;; esac
+  temp=$((v / 1000))
+  break
+done
+
+[ "$temp" -gt 0 ] || exit 0
+
+if [ "$temp" -ge 85 ]; then
+  icon=''
+elif [ "$temp" -ge 75 ]; then
+  icon=''
+else
+  icon=''
+fi
+
+printf '%%{T1}%s %s°C%%{T-}\n' "$icon" "$temp"

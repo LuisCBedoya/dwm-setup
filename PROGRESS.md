@@ -2052,3 +2052,26 @@ UHD 630; sin servicios ni configuración extra.
   SIGUSR1 y probado con XTest: cada tecla lanza el modo correcto.
   `keybindings_rofi.sh` lo refleja sin cambios porque lee el propio
   `sxhkdrc`.
+
+### mpv en la iGPU y temperatura real — 2026-11-15
+
+- mpv/yt-play/ytwatch: `~/.config/mpv/mpv.conf` con `hwdec=vaapi`,
+  `vo=gpu`, `gpu-api=opengl` y `gpu-context=x11egl`; wrapper
+  `~/.local/bin/mpv` que fuerza Mesa/Intel salvo con `prime-run`.
+  Medido con un 720p H.264: por defecto 45,5 % de CPU y 105 MiB en la
+  dGPU (software + Vulkan NVIDIA); con Intel EGL + VA-API 17–18 % de CPU
+  y 0 en la dGPU; con Intel Vulkan 22 %. Se elige EGL/Mesa.
+  `lib/music.sh` instala el conf y el wrapper desde `templates/mpv/`;
+  `lib/verify.sh` comprueba `hwdec=vaapi`.
+- `temp`: el módulo usaba `thermal-zone = 0` (acpitz, ~66 °C) mientras el
+  paquete real estaba a 80–91 °C. El nuevo `scripts/temp-status.sh` busca
+  el hwmon `coretemp` y usa `temp1_input` (Package id 0); el módulo pasa a
+  `custom/script` cada 2 s. Aplicado en vivo reiniciando polybar; la barra
+  ya muestra el paquete.
+- No se cambia el governor: AC sigue en `performance` por petición del
+  usuario (el navegador y la terminal no deben ralentizarse). La mejora
+  viene de mpv en la iGPU.
+- Brave comprobado en `brave://gpu`: Canvas, Compositing, Rasterization,
+  Video Decode, WebGL y WebGPU en hardware; GPU1 Intel UHD 630
+  `*ACTIVE*`, Optimus `true`. YouTube TTFB 0,33–0,42 s; primera carga en
+  frío de la portada ~6 s (JavaScript/miniaturas).
