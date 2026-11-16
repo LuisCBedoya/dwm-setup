@@ -140,7 +140,6 @@ install_theme_store() {
     "templates/rofi/powermenu.rasi.in"
     "templates/zathura/zathurarc.in"
     "templates/bspwm/bspwmrc.in"
-    "templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
     "templates/gtk/gtk-3.0.settings.ini.in"
     "templates/gtk/gtk-3.0.css.in"
     "templates/gtk/gtk-4.0.settings.ini.in"

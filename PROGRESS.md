@@ -2154,3 +2154,34 @@ UHD 630; sin servicios ni configuración extra.
   `apt-daily.timer=enabled/active`, `mode=light`, GRUB 0/hidden,
   `NetworkManager-wait-online=disabled`, picom con exclusión de menús.
 - Pendiente: reiniciar para i915 FBC/quirk ALC255 y probar la sesión.
+
+### Bloqueo con wallpaper desenfocado por modo — 2026-11-16
+
+- `desktop-safe lock` llama a `i3lock-fancy.sh`; si el script falla,
+  mantiene el respaldo de color de la paleta.
+- `i3lock-fancy.sh` elige `local-light.png`/`local-dark.png` (o
+  `wallpaper-alt.png`/`wallpaper.png`) según el estado/modo actual, aplica
+  `convert -blur 0x18` y cachea en
+  `~/.cache/dwm-setup/lockscreen-<modo>-0x18.png`.
+- Sin `scrot` por bloqueo: el blur se genera una vez por modo/wallpaper y
+  luego solo se carga con `i3lock -i` normal. No hay overlay, avatar,
+  campo ni botones.
+- Prueba con `i3lock` falso: light y dark generan su cache (239/234 KB) y
+  se invoca `i3lock -i <cache>`; la primera generación light midió
+  **1,24 s** y las siguientes son instantáneas.
+- `verify.sh` exige `convert` y que `i3lock-fancy.sh` use `i3lock -i`.
+- Pendiente: probar visualmente `Super+Shift+L` y el bloqueo al suspender.
+
+### Fix: theme-mode ya no pisa el locker — 2026-11-16
+
+- Causa: `bin/theme-mode` re-renderizaba `i3lock-fancy.sh` desde el
+  store viejo (`~/.local/share/dwm-setup`), que seguía teniendo la
+  versión de color sólido. Al hacer `Super+Alt+t` volvía el color.
+- Se quitó el `render_one` de `i3lock-fancy` en `bin/theme-mode` y la
+  entrada de `install_theme_store` en `lib/config.sh`; se borró la copia
+  vieja del store.
+- Script vivo restaurado desde la plantilla nueva (`i3lock -i`).
+- Prueba: `theme-mode --no-reload light` dejó el **mismo mtime** en
+  `~/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh` y el script
+  sigue con `i3lock -i`.
+- Pendiente: probar `Super+Alt+t` + `Super+Shift+L` en la sesión.

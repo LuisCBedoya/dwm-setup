@@ -180,7 +180,10 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `~/.local/share/dwm-setup` (plantillas y paletas instaladas) y recargando
     polybar, dunst, bspwm, kitty y `xsettingsd`. No debe pedir sudo. Si se
     añade una plantilla con color, hay que incluirla en el store de
-    `lib/config.sh` y en `bin/theme-mode`. En una reinstalación,
+    `lib/config.sh` y en `bin/theme-mode`. `i3lock-fancy.sh` es la
+    excepción: no tiene colores de tema, no va al store ni a
+    `theme-mode`; el instalador lo renderiza y elige el wallpaper en el
+    bloqueo. En una reinstalación,
     `install.sh` conserva `~/.config/dwm-setup/mode` si no se pasa
     `--theme` (`light`→Latte, `dark`→Mocha Black); así no cambia el
     escritorio ni falla `verify.sh` por paleta. `--theme` lo fuerza.
@@ -277,7 +280,15 @@ La fase 1 termina en el escritorio. No implementar todavía:
 24. **Pantalla siempre encendida.** `autostart` ejecuta `xset s off` y
     `xset -dpms`; no hay bloqueo por inactividad. No reintroducir blanking,
     DPMS ni `xset dpms force off` en scripts de sesión. El bloqueo manual
-    (`Super+Shift+L`) y el de suspensión siguen activos. Las notificaciones
+    (`Super+Shift+L`) y el de suspensión siguen activos. `desktop-safe
+    lock` llama a `i3lock-fancy.sh`, que elige el wallpaper del
+    modo/estado (`local-light.png`/`local-dark.png` o los assets), lo
+    desenfoca una vez con ImageMagick (`-blur 0x18`) y lo cachea en
+    `~/.cache/dwm-setup/lockscreen-<modo>-0x18.png`; luego usa `i3lock
+    -i`, sin captura por bloqueo. `theme-mode` no lo re-renderiza; se
+    instala desde `templates/` y elige el wallpaper en el bloqueo. Si el
+    wallpaper o `convert` fallan,
+    cae al color de la paleta. Las notificaciones
     de dunst **deben verse también con una ventana a pantalla completa**:
     no poner `fullscreen = delay` ni `pushback` en `dunstrc` (el valor por
     defecto, `show`, es el deseado).

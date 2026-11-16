@@ -7,9 +7,9 @@ verify_install() {
   local home="$TARGET_HOME"
   local path module line
 
-  for cmd in bspwm sxhkd polybar picom xsettingsd ufw bluetoothctl dunst rofi feh kitty flameshot i3lock xss-lock \
-    brightnessctl xclip xdotool thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl nvim \
-    zsh lsd ranger zathura vlc ueberzug fastfetch mpv fzf chafa; do
+  for cmd in bspwm sxhkd polybar picom xsettingsd ufw bluetoothctl dunst rofi feh kitty flameshot i3lock \
+    xss-lock convert brightnessctl xclip xdotool thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay \
+    xwallpaper playerctl nvim zsh lsd ranger zathura vlc ueberzug fastfetch mpv fzf chafa; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
@@ -250,6 +250,15 @@ verify_install() {
     "$home/.config/gtk-4.0/gtk.css"
     "$home/.config/zathura/zathurarc"
   )
+
+  # Bloqueo: imagen del wallpaper del modo desenfocada, sin captura por bloqueo.
+  if [[ ! -x "$home/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh" ]]; then
+    error "Falta i3lock-fancy.sh ejecutable (bloqueo con blur)"
+    failures=$((failures + 1))
+  elif ! grep -q 'i3lock -i' "$home/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh"; then
+    error "i3lock-fancy.sh no usa i3lock -i (bloqueo con blur estático)"
+    failures=$((failures + 1))
+  fi
 
   local themed_file raw_hex hex known known_hex
   for themed_file in "${themed_files[@]}"; do

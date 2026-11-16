@@ -8,7 +8,13 @@ action="${1:-lock}"
 
 case "$action" in
   lock)
-    # Color de fondo desde la paleta activa; si el store no existe, Mocha Black.
+    # Bloqueo normal: wallpaper del modo desenfocado (i3lock-fancy).
+    lock_script="${XDG_CONFIG_HOME:-$HOME/.config}/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh"
+    if [ -x "$lock_script" ] && "$lock_script"; then
+      exit 0
+    fi
+
+    # Respaldo: color de fondo desde la paleta activa; si no, Mocha Black.
     bg="#0d0d14"
     store="${XDG_DATA_HOME:-$HOME/.local/share}/dwm-setup"
     mode_file="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup/mode"

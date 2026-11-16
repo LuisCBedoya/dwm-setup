@@ -3093,3 +3093,34 @@ limpia), usa `mocha-black`. `--theme` sigue forzando el tema.
   verificación por paleta.
 - Una instalación limpia sigue entrando en Mocha Black.
 - Para cambiar de modo se usa `theme-mode` o `./install.sh --theme`.
+
+## ADR-123 — Bloqueo con el wallpaper del modo desenfocado
+
+**Contexto:** el bloqueo usaba un color sólido de la paleta. El usuario
+quería ver el wallpaper del modo actual (`light`/`dark`) desenfocado, sin
+avatar, campo, iconos ni controles multimedia, y con `i3lock` normal. La
+captura de pantalla en cada bloqueo añadía ~1 s y podía capturar contenido
+sensible.
+
+**Decisión:**
+1. `desktop-safe lock` llama a `i3lock-fancy.sh` si existe; si falla,
+   conserva el respaldo de color de la paleta.
+2. `i3lock-fancy.sh` elige `local-light.png`/`local-dark.png` (o
+   `wallpaper-alt.png`/`wallpaper.png`) según el estado/modo, aplica
+   `convert -blur 0x18` y cachea en
+   `~/.cache/dwm-setup/lockscreen-<modo>-0x18.png`.
+3. El cache se regenera solo si falta o si el wallpaper es más nuevo.
+4. `i3lock` se ejecuta normal (`-i cache -n -e -f`), sin overlay ni
+   decoración.
+5. `verify.sh` exige `convert` y que el script use `i3lock -i`.
+6. `i3lock-fancy.sh` no entra en el store ni en `theme-mode`: no tiene
+   colores de tema y elige el wallpaper en el bloqueo. El instalador lo
+   renderiza desde `templates/`; `theme-mode` no lo pisa.
+
+**Consecuencias:**
+- El blur se paga una vez por modo/wallpaper (~1,24 s medido); después el
+  bloqueo es instantáneo.
+- No se captura la pantalla en cada bloqueo ni se guarda una captura sin
+  desenfocar.
+- El bloqueo manual y el de suspensión usan el mismo camino.
+- Cambiar de tema (`Super+Alt+t`) no revierte el locker al color sólido.

@@ -47,7 +47,10 @@ Incluido:
   Latte) e iconos **Papirus** con carpetas Catppuccin.
 - Asociaciones de archivo: PDF/EPUB/CB → **zathura**, imágenes → **feh**,
   vídeo → **VLC** (`xdg-mime`, sin pasar por el navegador).
-- Bloqueo con **i3lock** + **xss-lock**.
+- Bloqueo con **i3lock** + **xss-lock**. El bloqueo manual y el de
+  suspensión usan el wallpaper del modo (`light`/`dark`) desenfocado
+  (`i3lock -i`, `-blur 0x18`) y cacheado; no se captura la pantalla en
+  cada bloqueo.
 - Pantalla siempre encendida: sin salvapantallas ni DPMS por inactividad.
   El bloqueo manual (`Super+Shift+L`) y el de suspensión siguen activos.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).

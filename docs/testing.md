@@ -1300,3 +1300,19 @@ ytsearch50  → 4533 ms
   saltó. Resultado: **verificación estática correcta**, `apt-get clean`
   OK, `apt-daily-upgrade.timer=masked/inactive`, `apt-daily.timer`
   activo, GRUB 0/hidden y picom con menús excluidos. Código 0.
+- 2026-11-16: bloqueo con wallpaper desenfocado. `desktop-safe lock`
+  llama a `i3lock-fancy.sh`, que elige el wallpaper light/dark, aplica
+  `convert -blur 0x18` una vez y cachea en
+  `~/.cache/dwm-setup/lockscreen-<modo>-0x18.png`; luego usa `i3lock -i`
+  normal. Prueba con `i3lock` falso: light y dark generan cache
+  (239/234 KB) y la llamada correcta; la primera generación light tardó
+  1,24 s y las siguientes son instantáneas. Sin captura por bloqueo.
+  Pendiente la prueba visual con `Super+Shift+L` y suspensión.
+- 2026-11-16: `theme-mode` pisaba el locker. `bin/theme-mode` renderizaba
+  `i3lock-fancy.sh` desde el store viejo (color sólido) y
+  `Super+Alt+t` revertía el blur. Se sacó el locker del render de
+  `theme-mode` y de `install_theme_store`, se borró la copia vieja del
+  store y se restauró el script vivo desde la plantilla. Prueba:
+  `theme-mode --no-reload light` no cambió el mtime del script y sigue
+  usando `i3lock -i`. Pendiente la prueba visual de `Super+Alt+t` +
+  `Super+Shift+L`.

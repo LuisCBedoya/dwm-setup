@@ -140,8 +140,6 @@ render_mode() {
   render_one "zathura/zathurarc.in" "$h/.config/zathura/zathurarc" 0644
   render_one "fastfetch/config.jsonc.in" "$h/.config/fastfetch/config.jsonc" 0644
   render_one "bspwm/bspwmrc.in" "$h/.config/bspwm/bspwmrc" 0755
-  render_one "bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in" \
-    "$h/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh" 0755
   render_one "gtk/gtk-3.0.settings.ini.in" "$h/.config/gtk-3.0/settings.ini" 0644
   render_one "gtk/gtk-3.0.css.in" "$h/.config/gtk-3.0/gtk.css" 0644
   render_one "gtk/gtk-4.0.settings.ini.in" "$h/.config/gtk-4.0/settings.ini" 0644

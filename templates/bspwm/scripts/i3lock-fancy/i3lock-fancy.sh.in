@@ -1,12 +1,60 @@
 #!/bin/sh
-# i3lock-fancy — locker simple con color de fondo (sin imagemagick)
-# Requiere: i3lock
+# i3lock-fancy — bloqueo con el wallpaper del modo (light/dark) desenfocado.
+# No captura la pantalla en cada bloqueo: cachea el blur por modo/wallpaper.
+set -u
 
-# Color de fondo desde la paleta activa
-BG="@COLOR_BG@"
+MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup/mode"
+STATE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/bspwm/wallpaper"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup"
+BLUR="${DWM_LOCK_BLUR:-0x18}"
 
-# Tomar captura, pixelar, añadir color
-scrot -z -o /tmp/lockscreen.png 2>/dev/null || true
+# Si ya hay un i3lock activo, no lanzar otro.
+if command -v pgrep >/dev/null 2>&1 && pgrep -x i3lock >/dev/null 2>&1; then
+  exit 0
+fi
 
-# Usar i3lock con color sólido (más simple y rápido)
-i3lock -c "${BG#\#}" -n -e -f
+# Wallpaper actual: estado light/dark; si no, el modo de color.
+current=""
+[ -r "$STATE_FILE" ] && current=$(cat "$STATE_FILE" 2>/dev/null || true)
+case "$current" in
+  light|dark) ;;
+  *)
+    current=$(cat "$MODE_FILE" 2>/dev/null || printf 'dark')
+    ;;
+esac
+case "$current" in
+  light) mode=light ;;
+  *) mode=dark ;;
+esac
+
+LIGHT="$HOME/.local/share/wallpapers/local-light.png"
+ALT="$HOME/.local/share/wallpapers/wallpaper-alt.png"
+DARK="$HOME/.local/share/wallpapers/local-dark.png"
+PRIMARY="$HOME/.local/share/wallpapers/wallpaper.png"
+
+if [ "$mode" = light ]; then
+  image="$LIGHT"
+  [ -r "$image" ] || image="$ALT"
+else
+  image="$DARK"
+  [ -r "$image" ] || image="$PRIMARY"
+fi
+[ -r "$image" ] || exit 1
+
+mkdir -p "$CACHE_DIR" 2>/dev/null || exit 1
+cache="$CACHE_DIR/lockscreen-${mode}-${BLUR}.png"
+
+# Regenerar solo si falta o si el wallpaper es más nuevo.
+if [ ! -s "$cache" ] || [ "$image" -nt "$cache" ]; then
+  command -v convert >/dev/null 2>&1 || exit 1
+  tmp="$cache.tmp.$$"
+  if convert "$image" -resize 1920x1080^ -gravity center -extent 1920x1080 \
+       -blur "$BLUR" "$tmp" 2>/dev/null && [ -s "$tmp" ]; then
+    mv -f "$tmp" "$cache" 2>/dev/null || { rm -f "$tmp"; exit 1; }
+  else
+    rm -f "$tmp"
+    exit 1
+  fi
+fi
+
+exec i3lock -i "$cache" -n -e -f
