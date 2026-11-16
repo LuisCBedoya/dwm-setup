@@ -1,0 +1,98 @@
+#!/bin/sh
+# ufw-menu.sh — menú UFW desde el módulo polybar.
+# Usa el helper root acotado (sudo -n); no pide contraseña ni ejecuta
+# argumentos arbitrarios de ufw.
+
+LC_ALL=C
+export LC_ALL
+
+UFW_HELPER=${UFW_HELPER:-/usr/local/bin/dwm-setup-ufw}
+NOTIFY_SEND=${NOTIFY_SEND:-notify-send}
+
+notify() {
+  command -v "$NOTIFY_SEND" >/dev/null 2>&1 || return 0
+  "$NOTIFY_SEND" "$@" >/dev/null 2>&1 || true
+}
+
+menu() {
+  prompt=$1
+  if command -v rofi >/dev/null 2>&1; then
+    rofi -dmenu -i -no-custom -theme-str 'listview { columns: 1; }' -p "$prompt"
+  elif command -v dmenu >/dev/null 2>&1; then
+    dmenu -i -p "$prompt"
+  else
+    notify -u critical "UFW" "Falta rofi o dmenu"
+    return 1
+  fi
+}
+
+show_text() {
+  title=$1
+  text=$2
+  if command -v rofi >/dev/null 2>&1; then
+    printf '%s\n' "$text" | rofi -dmenu -i -no-custom -p "$title"
+  else
+    notify "UFW" "$text"
+  fi
+}
+
+if ! command -v sudo >/dev/null 2>&1; then
+  notify -u critical "UFW" "sudo no está disponible"
+  exit 1
+fi
+
+if [ ! -x "$UFW_HELPER" ]; then
+  notify -u critical "UFW" "Falta $UFW_HELPER"
+  exit 1
+fi
+
+state=$(sudo -n "$UFW_HELPER" status 2>/dev/null | sed -n '1p') || state=unknown
+case "$state" in
+  active) toggle="Desactivar" ;;
+  *) toggle="Activar" ;;
+esac
+
+choice=$(printf '%s\n' \
+  "Estado" \
+  "Ver reglas" \
+  "$toggle" \
+  "Recargar" | menu "UFW")
+[ -n "$choice" ] || exit 0
+
+case "$choice" in
+  "Estado")
+    text=$(sudo -n "$UFW_HELPER" status 2>&1) || {
+      notify -u critical "UFW" "No se pudo leer el estado"
+      exit 1
+    }
+    show_text "Estado UFW" "$text"
+    ;;
+  "Ver reglas")
+    text=$(sudo -n "$UFW_HELPER" rules 2>&1) || {
+      notify -u critical "UFW" "No se pudieron leer las reglas"
+      exit 1
+    }
+    show_text "Reglas UFW" "$text"
+    ;;
+  "Activar")
+    if sudo -n "$UFW_HELPER" enable >/dev/null 2>&1; then
+      notify "UFW" "Firewall activado (SSH permitido)"
+    else
+      notify -u critical "UFW" "No se pudo activar"
+    fi
+    ;;
+  "Desactivar")
+    if sudo -n "$UFW_HELPER" disable >/dev/null 2>&1; then
+      notify "UFW" "Firewall desactivado"
+    else
+      notify -u critical "UFW" "No se pudo desactivar"
+    fi
+    ;;
+  "Recargar")
+    if sudo -n "$UFW_HELPER" reload >/dev/null 2>&1; then
+      notify "UFW" "Reglas recargadas"
+    else
+      notify -u critical "UFW" "No se pudieron recargar las reglas"
+    fi
+    ;;
+esac

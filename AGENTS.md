@@ -13,12 +13,15 @@ con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
 y almacenamiento extraíble con notificación. La CPU arranca en
 `performance` y se alterna desde la barra (módulo `governor`, ADR-108).
 **Brave** usa **«Usar GTK»** y sigue el tema Catppuccin del modo en
-caliente mediante `xsettingsd` (ADR-115).
+caliente mediante `xsettingsd` (ADR-115). **Bluetooth** está incluido
+como módulo polybar y menú de dispositivos (bluez ya estaba instalado);
+**UFW** se instala activo con `allow 22/tcp` y módulo de estado/control.
 
-La barra final es la de la config viva: **13 módulos** (**14 con backlight**),
+La barra final es la de la config viva: **15 módulos** (**16 con backlight**),
 logo StumbleUpon
 (`U+F1A4`), escritorios dinámicos (solo los existentes), actualizaciones al inicio de la derecha, fecha al final,
-red unificada (`󰖩/󰈀 connected`, Ethernet prioritario, `󰖩 NoC` sin conexión), servicios systemd, gobernador
+red unificada (`󰖩/󰈀 connected`, Ethernet prioritario, `󰖩 NoC` sin conexión), Bluetooth
+(`󰂯 off`/`on`, `󰂱 conectado`), UFW (`󰒃 on/off` + reglas), servicios systemd, gobernador
 de CPU (`󱃋 performance` con acento, `󰾆 powersave`; clic alterna + toast), volumen,
 batería y fecha; sin `dots`. Sin `xkeyboard`, `wlan`/`eth` separados ni
 fuente `DesktopLogo`.
@@ -29,11 +32,11 @@ nuevo marginal): `cpu` cierra en `%{O2}`, `governor` añade `%{O5}` y
 `pipewire` lleva `format-padding 2` en ambas variantes (en la B,
 `memory` padding 1).
 
-Hay una **variante B "referencia"** instalada aparte: 15 módulos (16 con
+Hay una **variante B "referencia"** instalada aparte: 17 módulos (18 con
 backlight), escritorios dinámicos como círculos al centro; a la izquierda `date`, `day`,
 gobernador, `updates`,
 pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU,
-red, volumen y batería. Barra de 30 px con fondo del modo activo, fuentes 10/13 y flechas del color del
+red, Bluetooth, UFW, volumen y batería. Barra de 30 px con fondo del modo activo, fuentes 10/13 y flechas del color del
 bloque; temperatura conserva fondo en warning. Se cambia con
 `~/.config/polybar/polybar-variant referencia` o `... actual`.
 
@@ -44,7 +47,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 - Correo, Teams.
 - Reproductores de música locales (cmus/mpd) y widgets de música. `mpv` y
   `yt-dlp` sí se usan para streaming de YouTube; VLC para vídeo local.
-- Bluetooth, htop, ripgrep, nvitop/nvtop.
+- htop, ripgrep, nvitop/nvtop.
 - XFCE, LightDM, Thunar como entorno completo (Thunar sí se instala como
   gestor de archivos puntual).
 
@@ -103,7 +106,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `#!/bin/sh` POSIX; `desktop-doctor` y `desktop-safe` deben pasar `sh -n`.
 18. **Atajos:** `templates/sxhkd/sxhkdrc.in` sigue el mapa de i3 del usuario
     (`Super+Return`, `Super+Shift+s` scrot región+portapapeles,
-    `Super+Shift+d` rofi run, `Super+Shift+p/b/v/i/a`, `Alt+Tab`, etc.). Las
+    `Super+Shift+d` rofi drun y `Super+d` rofi run, `Super+Shift+p/b/v/i/a`,
+    `Alt+Tab`, etc.). Las
     apps que no están en fase 1 se dejan como bindings no-op. `Super+r`
     abre el modo resize: `resize-mode.sh` arranca un sxhkd hijo que captura
     solo `h/j/k/l` y `Escape`; `Escape` o 6 s sin teclas lo cierran.
@@ -130,16 +134,27 @@ La fase 1 termina en el escritorio. No implementar todavía:
     usuario; el navegador usa `Ctrl+PageUp/PageDown`), además de
     `Super+Ctrl+(Shift+)Tab` y `Super+bracket{left,right}`. No cambiar
     este mapa sin una decisión nueva.
-19. **Audio portable.** El watcher elige auriculares > HDMI > altavoces
-    detectando tarjetas/perfiles/puertos con `pactl`; no hardcodear
-    `alsa_card.*`, nombres de monitor ni perfiles salvo como fallback
-    documentado. Si el sink o source predeterminado es USB/Bluetooth, no se
-    pisa. El quirk `alc255-asus` solo se aplica en ASUS FX504GE con códec
-    ALC255; en otro hardware se omite. `--headset-quirk` fuerza y
-    `--no-headset-quirk` desactiva. El sonido de dunst usa
-    `sound-theme-freedesktop` y `paplay`/`pw-play`; `stack_duplicates = false`
-    hace que cada mensaje suene, `gap_size = 6` los separa y `flock` serializa
-    sonidos simultáneos. Las capturas de región usan
+19. **Audio portable.** El watcher elige, por este orden, auriculares de
+    cable > USB (dongle inalámbrico/DAC/headset) > Bluetooth > HDMI >
+    altavoces internos, detectando tarjetas/perfiles/puertos con `pactl`;
+    no hardcodear `alsa_card.*`, nombres de monitor ni perfiles salvo como
+    fallback documentado. El micrófono sigue al dispositivo: jack > USB >
+    Bluetooth > interno. `audio-watch.sh` solo reaplica la política cuando
+    cambia la firma del hardware, así respeta una elección manual en
+    `pavucontrol` hasta el siguiente cambio. El modo Bluetooth pone el
+    sink `bluez_output.*` y el source loopback `bluez_input.*`; con
+    `bluetooth.autoswitch-to-headset-profile = true`
+    (`~/.config/wireplumber/wireplumber.conf.d/50-dwm-setup.conf`) HFP se
+    activa solo mientras una app graba y vuelve a A2DP al terminar. En
+    HDMI se usa `output:hdmi-stereo+input:analog-stereo` para conservar el
+    micro interno. No arrastrar el volumen de un sink a otro; solo se
+    conserva al cambiar de puerto dentro del mismo sink. El quirk
+    `alc255-asus` solo se aplica en ASUS FX504GE con códec ALC255; en otro
+    hardware se omite. `--headset-quirk` fuerza y `--no-headset-quirk`
+    desactiva. El sonido de dunst usa `sound-theme-freedesktop` y
+    `paplay`/`pw-play`; `stack_duplicates = false` hace que cada mensaje
+    suene, `gap_size = 6` los separa y `flock` serializa sonidos
+    simultáneos. Las capturas de región usan
     `scrot -s --line mode=edge,color=#FF00FF,width=2,opacity=255` y un
     `xrefresh` posterior para borrar el rectángulo residual; el magenta se
     ve sobre fondo blanco. La notificación usa como icono
@@ -269,13 +284,21 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `backend glx`, `vsync true`, `use-damage`, fade sutil (delta 5,
     pasos 0.035) que excluye dock/notificaciones/desktop, `shadow true`
     sutil (radius 10, opacity 0.35, offsets -8/-8, sin sombra en
-    dock/desktop) y todas las opacidades a 1. **No añadir blur ni
-    transparencias de picom** (romperían la decisión tomada en vivo);
-    la translucidez de la barra B es el fondo `#00000000` de
+    dock/desktop/menús/popups) y todas las opacidades a 1. **No añadir
+    blur ni transparencias de picom** (romperían la decisión tomada en
+    vivo); la translucidez de la barra B es el fondo `#00000000` de
     polybar, no un alpha de picom. `unredir-if-possible` deja pasar el
-    vídeo a pantalla completa. picom usa libconfig: comentarios `#`, no
-    `;`. Si se añade color a alguna plantilla nueva de picom, entra al
-    store (regla 20b); hoy no tiene.
+    vídeo a pantalla completa. Rofi queda excluido de
+    `shadow-exclude`, `rounded-corners-exclude` y `fade-exclude`
+    (`class_g = 'Rofi'`/`class_i = 'rofi'`): el sidebar de rofi tiene
+    esquinas cuadradas y borde propio, y picom no debe redondearlo ni
+    sombrearlo. Los menús y popups (`window_type = 'menu'`,
+    `'popup_menu'`, `'dropdown_menu'`, `'tooltip'`) también se excluyen
+    de `shadow-exclude`: ya dibujan su propia sombra y, al ser ARGB con
+    márgenes transparentes, la sombra de picom se veía como un segundo
+    recuadro redondeado (menú contextual de Brave). picom usa libconfig:
+    comentarios `#`, no `;`. Si se añade color a alguna plantilla nueva
+    de picom, entra al store (regla 20b); hoy no tiene.
 
 26. **Gobernador de CPU (ADR-108).** El módulo `governor` va en la A
     justo tras `cpu` en `modules-right` y en la B en `modules-left`
@@ -337,6 +360,52 @@ La fase 1 termina en el escritorio. No implementar todavía:
     y desactiva `NetworkManager-wait-online`. Medido antes: 22,4 s de
     boot (GRUB 8,6 + modules-load 6,3 por nvidia + tmpfiles 4,8).
 
+28. **UFW y Bluetooth.** UFW se instala activo con `deny incoming`,
+    `allow outgoing` y `allow 22/tcp` para no cambiar SSH. El módulo
+    `ufw` va tras `bluetooth`/`network` en `modules-right` de A y B;
+    muestra `on/off` + número de reglas y su menú permite estado,
+    reglas, activar, desactivar y recargar. Solo escribe por root con
+    `/usr/local/bin/dwm-setup-ufw` y `/etc/sudoers.d/dwm-setup-ufw`
+    (`NOPASSWD` para ese binario exacto, validado con `visudo -cf`);
+    no ampliar el sudoers ni aceptar argumentos arbitrarios. El helper
+    y `verify.sh` leen el estado real con `ufw status` (`LC_ALL=C`) y
+    `install_ufw` hace `systemctl enable --now ufw`; `systemctl` queda
+    solo como fallback. Bluetooth arranca apagado por defecto
+    (`AutoEnable=false` en `/etc/bluetooth/main.conf`) pero
+    `bluetooth.service` sigue activo para que el módulo pueda encenderlo.
+    Usa `bluetoothctl` sin root: estado `off`/`on`/`󰂱 nombre` y menú
+    para apagar/encender, conectar/desconectar emparejados, escanear,
+    emparejar (`bluetoothctl --agent NoInputNoOutput --timeout 20 pair`,
+    `trust`, `connect`) y seleccionar el sink `bluez_output.*` al
+    conectar. Al encender el adaptador intenta `connect` de los
+    dispositivos `Trusted` con `Icon: audio*` (no teclados ni ratones).
+    Antes de conectar se verifica `Paired: yes` y después
+    `Connected: yes`, con reintentos (~3 s) porque BlueZ puede tardar en
+    reflejarlo; los errores reales se muestran en la notificación
+    y en `~/.local/state/dwm-setup/bluetooth.log`. El menú incluye
+    `Perfil de audio`: automático (A2DP y micro al grabar), A2DP SBC-XQ
+    o HFP/HSP forzado; en todos fija el source loopback
+    `bluez_input.*` por defecto. El estado del módulo trunca el nombre a
+    28 caracteres. El audio Bluetooth requiere `libspa-0.2-bluetooth` y
+    `rtkit` (AUDIO_PKGS); el instalador habilita `rtkit-daemon` y
+    reinicia `wireplumber`. El `audio-watch.sh` selecciona el sink
+    Bluetooth y su micrófono según la política de la regla 19; no lo
+    pisa al revés. Los scripts de estado (`ufw-status`,
+    `bluetooth-status`) llevan colores de paleta y entran en el store
+    de `theme-mode` (regla 20b); los menús no.
+
+29. **Rofi en sidebar izquierdo.** Todos los rofi (`drun`, `run`,
+    menús de red/Bluetooth/UFW/servicios, atajos y capturas) salen como
+    panel vertical pegado a la izquierda, a altura completa:
+    `location: west`, `anchor: west`, `width: 360px`, `height: 100%`,
+    `border: 2px`, `border-radius: 0` (todo cuadrado),
+    `mainbox { expand: true; }` y
+    `listview { columns: 1; lines: 0; dynamic: false; }`.
+    `config.rasi` cubre los menús por defecto; `powermenu.rasi` cubre
+    atajos y capturas. No pasar `-width` desde los scripts (rompe el
+    panel). El fondo de `window` y los elementos transparentes son
+    necesarios para que el borde siga las esquinas.
+
 ## Estructura relevante
 
 | Archivo | Responsabilidad |
@@ -349,6 +418,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/sxhkd.sh` | sxhkdrc |
 | `lib/polybar.sh` | config.ini, módulos, scripts y launch.sh |
 | `lib/cpu.sh` | Gobernador de CPU: helper root, sudoers y unidad systemd |
+| `lib/ufw.sh` | Firewall UFW: helper root, sudoers y reglas base |
+| `lib/bluetooth.sh` | Bluetooth apagado por defecto (`AutoEnable=false`) |
 | `lib/picom.sh` | picom: config del compositor (glx + vsync + fade) |
 | `lib/dunst.sh` | dunstrc |
 | `lib/rofi.sh` | powermenu.rasi |
@@ -365,13 +436,14 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/brave.sh` | Brave: repo APT, policies, atajos y SurfingKeys |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paletas (Mocha Black, Latte), par de modos y render |
-| `lib/audio.sh` | Quirk ALC255 condicionado por DMI/códec |
+| `lib/audio.sh` | Quirk ALC255 y autoswitch A2DP/HFP de WirePlumber |
 | `bin/desktop-safe` | Acciones de sesión (lock/suspend/logout/poweroff) |
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
 | `bin/dwm-setup-cpu-governor` | Helper root del módulo governor: valida y escribe `scaling_governor` |
+| `bin/dwm-setup-ufw` | Helper root acotado del módulo UFW (`status/enable/disable/reload/rules`) |
 | `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults y workspace.sh, ADR-112) |
 | `templates/sxhkd/` | sxhkdrc |
-| `templates/polybar/` | config.ini, modules/ (incl. governor), scripts/ (cpu-governor.sh) y variants/ |
+| `templates/polybar/` | config.ini, modules/ (governor, ufw, bluetooth), scripts/ y variants/ |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
 | `templates/rofi/` | powermenu.rasi y config.rasi |
 | `templates/kitty/` | kitty.conf y colorshemes/ |
@@ -380,7 +452,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/ranger/` | rc.conf, rifle.conf y previews |
 | `templates/xorg/` | 20-modesetting.conf |
 | `templates/picom/` | picom.conf.in (libconfig: comentarios `#`) |
-| `templates/sudoers/` | Fragmento de sudoers del gobernador (`@USER@`) |
+| `templates/sudoers/` | Fragmentos de sudoers del gobernador y UFW (`@USER@`) |
 | `templates/systemd/` | `dwm-setup-cpu-governor.service` (performance al boot) |
 | `templates/gtk/` | settings GTK2/3/4 y CSS |
 | `templates/xsettingsd/` | `xsettingsd.conf.in` (tema GTK del modo) |
@@ -409,6 +481,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/sysctl.sh` | Instala `/etc/sysctl.d/99-dwm-setup-swappiness.conf` |
 | `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview kitty) |
 | `templates/sysctl/` | `99-dwm-setup-swappiness.conf` (vm.swappiness=10) |
+| `templates/wireplumber/` | `50-dwm-setup.conf` (autoswitch A2DP/HFP) |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
 | `templates/nvidia/prime-run` | Wrapper de offload por app a la dGPU NVIDIA (ADR-111) |
 | `templates/colors/` | `palette-mocha-black.sh`, `palette-latte.sh` y helpers |
@@ -426,19 +499,28 @@ cd ~/dwm-setup
 
 # Sintaxis
 for f in install.sh lib/*.sh; do bash -n "$f" || exit 1; done
-for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor; do sh -n "$f" || exit 1; done
+for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor \
+  bin/dwm-setup-ufw; do sh -n "$f" || exit 1; done
 sh -n templates/polybar/scripts/cpu-governor.sh.in
+sh -n templates/polybar/scripts/ufw-status.sh.in \
+  templates/polybar/scripts/ufw-menu.sh.in \
+  templates/polybar/scripts/bluetooth-status.sh.in \
+  templates/polybar/scripts/bluetooth-menu.sh.in
 bash -n bin/theme-mode bin/brave-theme
 bash -n bin/yt-play bin/yt-preview bin/ytdlp-check bin/ytdlp-update \
   bin/ytdlp-rollback bin/music-ctl bin/ytwatch-check bin/ytwatch-update \
   bin/yt-update-notify
 bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
-sh -n templates/bspwm/scripts/workspace.sh.in
+sh -n templates/bspwm/scripts/workspace.sh.in \
+  templates/bspwm/scripts/audio-watch.sh.in \
+  templates/bspwm/scripts/audio-switch.sh.in
 
 # Gobernador: lista oficial y sudoers renderizado (sin tocar el sistema)
-sh -n bin/dwm-setup-cpu-governor
+sh -n bin/dwm-setup-cpu-governor bin/dwm-setup-ufw
 sed "s/@USER@/$(id -un)/g" templates/sudoers/dwm-setup-cpu-governor.in > /tmp/opencode/sudoers-render
 visudo -cf /tmp/opencode/sudoers-render
+sed "s/@USER@/$(id -un)/g" templates/sudoers/dwm-setup-ufw.in > /tmp/opencode/sudoers-ufw-render
+visudo -cf /tmp/opencode/sudoers-ufw-render
 systemd-analyze verify templates/systemd/dwm-setup-cpu-governor.service
 # (el aviso "Command ... is not executable" es normal: falta hasta sudo ./install.sh)
 
@@ -454,7 +536,7 @@ stat -c '%A %n' ~/.config/bspwm/bspwmrc ~/.xinitrc
 
 # ShellCheck (si está instalado)
 shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor \
-  bin/dwm-setup-cpu-governor bin/theme-mode bin/brave-theme bin/yt-play bin/yt-preview \
+  bin/dwm-setup-cpu-governor bin/dwm-setup-ufw bin/theme-mode bin/brave-theme bin/yt-play bin/yt-preview \
   bin/ytdlp-check bin/ytdlp-update bin/ytdlp-rollback bin/music-ctl \
   bin/ytwatch-check bin/ytwatch-update
 
@@ -467,6 +549,12 @@ ytwatch-check
 theme-mode status
 theme-mode --no-reload light && theme-mode --no-reload dark
 brave-theme status
+
+# Audio: política automática y autoswitch A2DP/HFP
+~/.config/bspwm/scripts/audio-switch.sh auto
+pactl get-default-sink
+pactl get-default-source
+wpctl settings bluetooth.autoswitch-to-headset-profile   # Value: true
 
 # Diagnóstico en una sesión instalada
 desktop-doctor
@@ -481,8 +569,8 @@ desktop-doctor --camera
   `bash -n`, `--dry-run` con ambas paletas y `theme-mode --no-reload` en un
   HOME simulado. Pendiente probar el cambio de modo en la sesión viva
   (la instalación ya está aplicada).
-- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 13 /
-  B 15 módulos), dunst, lxpolkit, udiskie, xss-lock y picom activos;
+- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 15 /
+  B 17 módulos), dunst, lxpolkit, udiskie, xss-lock y picom activos;
   `startx` manual. picom es el compositor de la sesión (ADR-107) y la
   barra B usa su fondo transparente frente al compositor.
 - Pantalla siempre encendida (2026-11-02): `autostart` aplica `xset s off`
@@ -515,14 +603,24 @@ desktop-doctor --camera
   manual y `apt-get -y autoremove` corre al final, después de verificar.
 - Se corrigieron backups previos, ownership, `bspwmrc` 0755,
   `desktop-doctor`, batería baja y polkit.
-- Audio: watcher auriculares > HDMI > altavoces, sonido de dunst y quirk
-  ALC255 condicionado a ASUS FX504GE. La validación del quirk requiere
-  reinicio; el resto se probó en vivo el 2026-10-24.
+- Audio: watcher jack > USB > Bluetooth > HDMI > altavoces internos
+  (2026-11-15, ADR-117), micro del dispositivo y autoswitch A2DP/HFP de
+  WirePlumber. En vivo se corrigió que con HDMI el source por defecto era
+  el monitor: ahora el perfil es duplex y el micro interno graba
+  (`parecord`). Sonido de dunst y quirk ALC255 condicionado a ASUS
+  FX504GE. La validación del quirk requiere reinicio; el resto se probó
+  en vivo el 2026-10-24. Pendiente la prueba del micrófono con los GM2
+  Pro (HFP al grabar) y la reconexión (`Bonded`).
 - Brave «Usar GTK» + xsettingsd (2026-11-14, ADR-115): policy con
   Mocha/Latte `normal_installed` como opcionales, helper `bin/brave-theme`
   sin sudo, `xsettingsd` en `autostart` y recarga por `SIGHUP` desde
   `theme-mode`; falta `sudo ./install.sh` y validar el cambio en caliente
   con Brave abierto.
+- UFW + Bluetooth (2026-11-14): módulos `ufw` y `bluetooth` en A/B,
+  helper UFW con sudoers acotado, menú Bluetooth y sink de audio.
+  Bluetooth arranca apagado (`AutoEnable=false`) y el servicio sigue
+  activo. Simulado y `--dry-run` OK; pendiente `sudo ./install.sh` y
+  prueba en vivo de SSH/DHCP, auriculares y barra A/B.
 - Falta validar una instalación desde cero en VM Debian 13 y subir el repo.
 - `PROGRESS.md` contiene la lista de pruebas y bloqueos.
 - Si se completa una prueba real, actualizar `PROGRESS.md` y

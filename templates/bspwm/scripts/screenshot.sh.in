@@ -13,7 +13,7 @@ choice=$(printf '%s\n' \
   "  Área seleccionada (clipboard)" \
   "  Ventana activa (clipboard)" \
   | rofi -dmenu -i -p "Captura" \
-      -theme @HOME@/.config/rofi/powermenu.rasi -width 320)
+      -theme @HOME@/.config/rofi/powermenu.rasi)
 
 case "$choice" in
   *"Pantalla completa (clipboard)"*)

@@ -1,0 +1,46 @@
+#!/bin/sh
+# ufw-status.sh — estado de UFW para polybar.
+# Muestra on/off y el número de reglas. El estado se lee del helper root
+# acotado; si no está, cae a systemctl sin pedir contraseña.
+
+LC_ALL=C
+export LC_ALL
+
+UFW_HELPER=${UFW_HELPER:-/usr/local/bin/dwm-setup-ufw}
+UFW_BIN=${UFW_BIN:-/usr/sbin/ufw}
+
+[ -x "$UFW_BIN" ] || exit 0
+
+state=inactive
+count=
+
+if command -v systemctl >/dev/null 2>&1 &&
+   systemctl is-active --quiet ufw 2>/dev/null; then
+  state=active
+fi
+
+if [ -x "$UFW_HELPER" ] && command -v sudo >/dev/null 2>&1; then
+  out=$(sudo -n "$UFW_HELPER" status 2>/dev/null) || out=
+  if [ -n "$out" ]; then
+    state=$(printf '%s\n' "$out" | sed -n '1p')
+    count=$(printf '%s\n' "$out" | sed -n '2p')
+  fi
+fi
+
+case "$count" in
+  ''|*[!0-9]*) count= ;;
+esac
+
+if [ "$state" = "active" ]; then
+  color='@COLOR_GREEN@'
+  text='on'
+else
+  color='@COLOR_FG_DIM@'
+  text='off'
+fi
+
+if [ -n "$count" ]; then
+  printf '%%{F%s}󰒃 %s %s%%{F-}\n' "$color" "$text" "$count"
+else
+  printf '%%{F%s}󰒃 %s%%{F-}\n' "$color" "$text"
+fi

@@ -1,0 +1,86 @@
+#!/bin/sh
+# dwm-setup-ufw — helper root del módulo polybar "ufw".
+#
+# Uso: dwm-setup-ufw <status|enable|disable|reload|rules>
+#
+# Solo expone operaciones acotadas sobre UFW. Está pensado para ejecutarse
+# vía sudo con el fragmento de sudoers de dwm-setup (NOPASSWD limitado a
+# este binario exacto). No acepta argumentos arbitrarios ni permite añadir
+# reglas desde el menú.
+#
+# Códigos de salida:
+#   0  OK
+#   64 uso incorrecto
+#   69 ufw no está instalado
+
+set -u
+
+LC_ALL=C
+export LC_ALL
+
+PROG=${0##*/}
+UFW=${DWM_SETUP_UFW:-/usr/sbin/ufw}
+SYSTEMCTL=${DWM_SETUP_SYSTEMCTL:-/usr/bin/systemctl}
+
+usage() {
+  printf 'Uso: %s status|enable|disable|reload|rules\n' "$PROG"
+  printf '  status   imprime active|inactive y el número de reglas\n'
+  printf '  enable   asegura 22/tcp y activa UFW\n'
+  printf '  disable  desactiva UFW\n'
+  printf '  reload   recarga las reglas\n'
+  printf '  rules    lista las reglas actuales\n'
+}
+
+if [ $# -ne 1 ]; then
+  usage >&2
+  exit 64
+fi
+
+if [ ! -x "$UFW" ]; then
+  printf '%s: error: ufw no está instalado (%s)\n' "$PROG" "$UFW" >&2
+  exit 69
+fi
+
+state() {
+  if "$UFW" status 2>/dev/null | grep -q '^Status: active'; then
+    printf 'active\n'
+  elif "$SYSTEMCTL" is-active --quiet ufw 2>/dev/null; then
+    printf 'active\n'
+  else
+    printf 'inactive\n'
+  fi
+}
+
+count_rules() {
+  "$UFW" show added 2>/dev/null | grep -c '^ufw ' 2>/dev/null || true
+}
+
+case "$1" in
+  status)
+    state
+    count_rules
+    ;;
+  enable)
+    # No cambiar SSH: la regla 22/tcp se asegura antes de activar.
+    "$UFW" allow 22/tcp >/dev/null 2>&1 || true
+    "$UFW" --force enable
+    "$SYSTEMCTL" enable --now ufw >/dev/null 2>&1 || true
+    ;;
+  disable)
+    "$UFW" --force disable
+    ;;
+  reload)
+    "$UFW" reload
+    ;;
+  rules)
+    if [ "$(state)" = "active" ]; then
+      "$UFW" status numbered
+    else
+      "$UFW" show added
+    fi
+    ;;
+  *)
+    usage >&2
+    exit 64
+    ;;
+esac

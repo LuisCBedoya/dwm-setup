@@ -1,7 +1,10 @@
 #!/bin/sh
-# audio-watch.sh — vigila HDMI y el jack de auriculares.
-# Prioridad: auriculares > HDMI > altavoces.
-# Si el usuario tiene un sink USB/Bluetooth seleccionado, no lo toca.
+# audio-watch.sh — política automática de audio.
+# Prioridad: jack > USB > Bluetooth > HDMI > altavoces internos.
+#
+# Solo reaplica la política cuando cambia el hardware conectado (o al
+# arrancar). Así una selección manual en pavucontrol se respeta hasta el
+# siguiente cambio de hardware.
 
 set -u
 
@@ -23,35 +26,74 @@ while ! pactl info >/dev/null 2>&1; do
   sleep 0.5
 done
 
-state() {
-  cards=$(pactl list short cards 2>/dev/null || true)
-  [ -n "$cards" ] || { printf 'skip\n'; return; }
+first_sink() {
+  pactl list short sinks 2>/dev/null | awk -v pat="$1" '$2 ~ pat {print $2; exit}'
+}
 
-  default=$(pactl get-default-sink 2>/dev/null || true)
-  case "$default" in
-    *usb*|*bluez*|*bluetooth*) printf 'skip\n'; return ;;
+first_source() {
+  pactl list short sources 2>/dev/null | awk -v pat="$1" '$2 ~ pat {print $2; exit}'
+}
+
+headphones_available() {
+  pactl list cards 2>/dev/null | grep -qE 'analog-output-headphones:.*, available\)'
+}
+
+hdmi_available() {
+  pactl list cards 2>/dev/null | grep -qE 'hdmi-output-[0-9]+:.*, available\)'
+}
+
+# Rellena las variables globales y deja en $sig una firma del hardware.
+update_signature() {
+  hp=0
+  hdmi=0
+  headphones_available && hp=1
+  hdmi_available && hdmi=1
+  usb_sink=$(first_sink '^alsa_output\.usb-')
+  usb_src=$(first_source '^alsa_input\.usb-')
+  bt_sink=$(first_sink '^bluez_output\.')
+  bt_src=$(first_source '^bluez_input\.')
+  # Un monitor nunca es un micrófono válido: si WirePlumber reinicia y
+  # deja el monitor de HDMI como source, hay que reaplicar la política.
+  defsrc=$(pactl get-default-source 2>/dev/null || true)
+  case "$defsrc" in
+    *.monitor) mon=1 ;;
+    *) mon=0 ;;
   esac
+  sig="hp=$hp usb=$usb_sink usb_src=$usb_src bt=$bt_sink bt_src=$bt_src hdmi=$hdmi mon=$mon"
+}
 
-  if pactl list cards 2>/dev/null | grep -qE 'analog-output-headphones:.*, available\)'; then
+choose_mode() {
+  if [ "$hp" = "1" ]; then
     printf 'headphones\n'
-    return
-  fi
-  if pactl list cards 2>/dev/null | grep -qE 'hdmi-output-[0-9]+:.*, available\)'; then
+  elif [ -n "$usb_sink" ]; then
+    printf 'usb\n'
+  elif [ -n "$bt_sink" ]; then
+    printf 'bluetooth\n'
+  elif [ "$hdmi" = "1" ]; then
     printf 'hdmi\n'
-    return
+  else
+    printf 'analog\n'
   fi
-  printf 'analog\n'
 }
 
 last=""
+pending=""
 while :; do
-  current=$(state)
-  if [ "$current" = "skip" ]; then
-    last=""
-  elif [ "$current" != "$last" ]; then
-    if "$switch" "$current"; then
-      last="$current"
+  update_signature
+  if [ "$sig" != "$last" ]; then
+    # Exigir dos lecturas seguidas iguales evita reaccionar a un hueco
+    # transitorio (p. ej. el cambio de perfil A2DP -> HFP recrea el nodo).
+    if [ "$sig" = "$pending" ]; then
+      mode=$(choose_mode)
+      if "$switch" "$mode"; then
+        last="$sig"
+      fi
+      pending=""
+    else
+      pending="$sig"
     fi
+  else
+    pending=""
   fi
   sleep 2
 done

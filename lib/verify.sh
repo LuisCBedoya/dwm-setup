@@ -7,7 +7,7 @@ verify_install() {
   local home="$TARGET_HOME"
   local path module line
 
-  for cmd in bspwm sxhkd polybar picom xsettingsd dunst rofi feh kitty flameshot i3lock xss-lock \
+  for cmd in bspwm sxhkd polybar picom xsettingsd ufw bluetoothctl dunst rofi feh kitty flameshot i3lock xss-lock \
     brightnessctl xclip xdotool thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay xwallpaper playerctl nvim \
     zsh lsd ranger zathura vlc ueberzug fastfetch mpv fzf chafa; do
     if cmd_exists "$cmd"; then
@@ -34,6 +34,26 @@ verify_install() {
     debug "ok: dmenu"
   else
     info "dmenu no instalado; services.sh usará rofi -dmenu"
+  fi
+
+  if ! dpkg-query -W -f='${Status}' libspa-0.2-bluetooth 2>/dev/null |
+       grep -q 'install ok installed'; then
+    error "Falta libspa-0.2-bluetooth; PipeWire no soportará audio Bluetooth"
+    failures=$((failures + 1))
+  fi
+  if ! dpkg-query -W -f='${Status}' rtkit 2>/dev/null |
+       grep -q 'install ok installed'; then
+    error "Falta rtkit; WirePlumber no tendrá prioridad de tiempo real"
+    failures=$((failures + 1))
+  fi
+
+  local wp_audio="$home/.config/wireplumber/wireplumber.conf.d/50-dwm-setup.conf"
+  if [[ ! -f "$wp_audio" ]]; then
+    error "Falta $wp_audio (autoswitch A2DP/HFP del micrófono Bluetooth)"
+    failures=$((failures + 1))
+  elif ! grep -q 'bluetooth.autoswitch-to-headset-profile = true' "$wp_audio"; then
+    error "WirePlumber no tiene activado el autoswitch de perfil Bluetooth"
+    failures=$((failures + 1))
   fi
 
   if [[ "$(getent passwd "$TARGET_USER" 2>/dev/null | cut -d: -f7)" == "/usr/bin/zsh" ]]; then
@@ -70,6 +90,8 @@ verify_install() {
     "$home/.config/polybar/scripts/cpu-governor.sh" \
     "$home/.config/polybar/scripts/fan-mode.sh" \
     "$home/.config/polybar/modules/network.ini" \
+    "$home/.config/polybar/modules/bluetooth.ini" \
+    "$home/.config/polybar/modules/ufw.ini" \
     "$home/.config/polybar/modules/services.ini" \
     "$home/.config/polybar/modules/battery.ini" \
     "$home/.config/polybar/modules/pipewire.ini" \
@@ -79,6 +101,10 @@ verify_install() {
     "$home/.config/polybar/scripts/polypomo" \
     "$home/.config/polybar/scripts/network-status.sh" \
     "$home/.config/polybar/scripts/network-menu.sh" \
+    "$home/.config/polybar/scripts/bluetooth-status.sh" \
+    "$home/.config/polybar/scripts/bluetooth-menu.sh" \
+    "$home/.config/polybar/scripts/ufw-status.sh" \
+    "$home/.config/polybar/scripts/ufw-menu.sh" \
     "$home/.config/polybar/scripts/services.sh" \
     "$home/.config/polybar/scripts/volume.sh" \
     "$home/.config/polybar/scripts/monocle-count.sh" \
@@ -102,6 +128,8 @@ verify_install() {
     "$home/.config/polybar/variants/reference/modules/temp.ini" \
     "$home/.config/polybar/variants/reference/modules/pipewire.ini" \
     "$home/.config/polybar/variants/reference/modules/network.ini" \
+    "$home/.config/polybar/variants/reference/modules/bluetooth.ini" \
+    "$home/.config/polybar/variants/reference/modules/ufw.ini" \
     "$home/.config/polybar/variants/reference/modules/services.ini" \
     "$home/.config/polybar/variants/reference/modules/memory.ini" \
     "$home/.config/polybar/variants/reference/modules/cpu.ini" \
@@ -176,6 +204,8 @@ verify_install() {
     "$home/Pictures/Screenshots" \
     "/usr/local/bin/desktop-safe" \
     "/usr/local/bin/desktop-doctor" \
+    "/usr/local/bin/dwm-setup-ufw" \
+    "/etc/sudoers.d/dwm-setup-ufw" \
     "/etc/brave/policies/managed/dwm-setup.json"; do
     if [[ -e "$path" ]]; then
       debug "ok: $path"
@@ -308,6 +338,16 @@ verify_install() {
     fi
     if grep -qE '^blur-background[[:space:]]*=[[:space:]]*true;' "$home/.config/picom/picom.conf"; then
       error "picom.conf activa blur (no permitido: sin blur ni transparencias)"
+      failures=$((failures + 1))
+    fi
+    local rofi_excl
+    rofi_excl=$(grep -c "class_g = 'Rofi'" "$home/.config/picom/picom.conf" 2>/dev/null || true)
+    if ((rofi_excl < 3)); then
+      error "picom.conf no excluye rofi de sombra/redondeo/fade (class_g = 'Rofi')"
+      failures=$((failures + 1))
+    fi
+    if ! grep -q "window_type = 'menu'" "$home/.config/picom/picom.conf"; then
+      error "picom.conf no excluye los menús de la sombra (doble recuadro en Brave)"
       failures=$((failures + 1))
     fi
   fi
@@ -890,6 +930,12 @@ PYCHK
       error "La barra A no incluye el módulo tray"
       failures=$((failures + 1))
     fi
+    for module in bluetooth ufw; do
+      if ! grep -qE "^modules-right = .*\\b$module\\b" "$home/.config/polybar/config.ini"; then
+        error "La barra A no incluye el módulo $module"
+        failures=$((failures + 1))
+      fi
+    done
   fi
 
   # Módulos de la variante referencia
@@ -913,6 +959,50 @@ PYCHK
       error "La barra B no incluye el módulo tray"
       failures=$((failures + 1))
     fi
+    for module in bluetooth ufw; do
+      if ! grep -qE "^modules-right = .*\\b$module\\b" "$variant_config"; then
+        error "La barra B no incluye el módulo $module"
+        failures=$((failures + 1))
+      fi
+    done
+  fi
+
+  # Bluetooth: servicio activo para que el módulo pueda encenderlo, pero
+  # adaptador apagado por defecto (AutoEnable=false).
+  if ! grep -qE '^[[:space:]]*AutoEnable=false' /etc/bluetooth/main.conf 2>/dev/null; then
+    error "Bluetooth no tiene AutoEnable=false en /etc/bluetooth/main.conf"
+    failures=$((failures + 1))
+  fi
+  if ! systemctl is-enabled --quiet bluetooth 2>/dev/null; then
+    error "bluetooth.service no está habilitado al arranque"
+    failures=$((failures + 1))
+  fi
+  if ! systemctl is-active --quiet bluetooth 2>/dev/null; then
+    error "bluetooth.service no está activo"
+    failures=$((failures + 1))
+  fi
+
+  # UFW: helper, sudoers, servicio activo y reglas aplicadas. ufw --force
+  # enable puede aplicar reglas sin dejar la unidad activa; se acepta
+  # cualquiera de las dos señales como estado real.
+  if [[ ! -x /usr/local/bin/dwm-setup-ufw ]]; then
+    error "Falta el helper ejecutable /usr/local/bin/dwm-setup-ufw"
+    failures=$((failures + 1))
+  fi
+  local ufw_running=0
+  if systemctl is-active --quiet ufw 2>/dev/null; then
+    ufw_running=1
+  elif run_root env LC_ALL=C /usr/sbin/ufw status 2>/dev/null |
+       grep -q '^Status: active'; then
+    ufw_running=1
+  fi
+  if ((ufw_running == 0)); then
+    error "UFW no está activo (ni servicio ni reglas)"
+    failures=$((failures + 1))
+  fi
+  if ! systemctl is-enabled --quiet ufw 2>/dev/null; then
+    error "UFW no está habilitado al arranque"
+    failures=$((failures + 1))
   fi
 
   # Placeholders sin renderizar en todas las configuraciones instaladas.

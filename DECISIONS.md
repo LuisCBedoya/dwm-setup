@@ -2643,8 +2643,12 @@ decisión nueva para cambiarlo.
 **Decisión:**
 1. `shadow = true` con `shadow-radius = 10`, `shadow-opacity = 0.35`
    y offsets `-8/-8`: sutiles, acordes a la estética plana del resto.
-2. `shadow-exclude` deja fuera `window_type = 'dock'` (barra polybar) y
-   `window_type = 'desktop'`, para no pintar bandas oscuras en bordes.
+2. `shadow-exclude` deja fuera `window_type = 'dock'` (barra polybar),
+   `window_type = 'desktop'` y los menús/popups (`'menu'`,
+   `'popup_menu'`, `'dropdown_menu'`, `'tooltip'`). Los menús ya dibujan
+   su propia sombra; sin la exclusión, la sombra de picom se veía a
+   través de sus márgenes ARGB como un segundo recuadro redondeado (el
+   menú contextual de Brave).
 3. Se mantienen `inactive/active/frame-opacity = 1` y la ausencia de
    blur: **sin transparencias**; la translucidez de la barra B sigue
    siendo su fondo `#00000000` (no un alpha de picom).
@@ -2888,3 +2892,96 @@ cambio en caliente.
   vez; después el cambio es en caliente.
 - Depende de que `xsettingsd` esté vivo en la sesión; `autostart` lo
   arranca y `theme-mode` lo relanza si falta.
+
+## ADR-116 — UFW y Bluetooth como módulos de polybar
+
+**Contexto:** el usuario quería un firewall gestionable desde la barra y
+un menú Bluetooth para elegir auriculares u otros dispositivos. UFW se
+prefiere a nftables por su menú y su estado simple; Bluetooth ya estaba
+instalado (`bluez`/`bluetoothctl`) y no necesita root para conectar
+dispositivos del usuario.
+
+**Decisión:**
+1. `ufw` entra en `NETWORK_PKGS` y se configura activo con
+   `deny incoming`, `allow outgoing` y `allow 22/tcp` para no cambiar
+   SSH. El instalador crea el helper `/usr/local/bin/dwm-setup-ufw`
+   (`status|enable|disable|reload|rules`) y el fragmento
+   `/etc/sudoers.d/dwm-setup-ufw` con `NOPASSWD` solo para ese binario,
+   validado con `visudo -cf`.
+2. Los módulos `ufw` y `bluetooth` van en A y B junto a `network`.
+   UFW muestra `on/off` + número de reglas y su menú permite estado,
+   reglas, activar, desactivar y recargar. Bluetooth muestra
+   `off`/`on`/`󰂱 nombre` (y batería si existe) y su menú permite
+   encender/apagar, conectar/desconectar emparejados, escanear,
+   emparejar (`pair`, `trust`, `connect`) y elegir el sink
+   `bluez_output.*` al conectar.
+3. Los scripts de estado llevan colores de paleta y entran en el store
+   de `theme-mode`; los menús no. Los conteos pasan a A 15 (16 con
+   backlight) y B 17 (18 con backlight).
+4. SSH se deja como estaba: contraseña, puerto 22 y acceso actual. UFW
+   no añade restricciones por origen.
+
+**Consecuencias:**
+- El firewall se ve y se controla desde la barra sin abrir terminal.
+- El helper limita la superficie de root: no acepta argumentos
+  arbitrarios de `ufw`.
+- Bluetooth se gestiona sin root; el pareo con PIN puede requerir
+  `bluetoothctl` en terminal, pero los auriculares suelen usar Just
+  Works.
+- Al conectar audio se selecciona el sink `bluez_output.*`; el watcher
+  de audio no lo pisa.
+
+## ADR-117 — Audio automático por dispositivo (micrófono Bluetooth incluido)
+
+**Contexto:** el watcher anterior solo cubría jack, HDMI y altavoces, y se
+apartaba cuando el sink por defecto era USB o Bluetooth. Eso dejaba dos
+huecos: al reconectar los auriculares Bluetooth la salida no siempre se
+reajustaba, y el micrófono del headset solo se activaba cambiando el
+perfil a mano. Además, con HDMI el perfil `output:hdmi-stereo` eliminaba
+la entrada analógica y con ella el micrófono interno; el source por
+defecto llegaba a ser el monitor de HDMI.
+
+**Decisión:**
+1. `audio-watch.sh` calcula una firma del hardware (`hp`, `usb`,
+   `bt`, `bt_src`, `hdmi`) y solo aplica la política cuando cambia, o al
+   arrancar. Así respeta una selección manual en `pavucontrol` hasta el
+   siguiente cambio de hardware.
+2. Prioridad: jack > USB (dongle inalámbrico/DAC/headset) > Bluetooth >
+   HDMI > altavoces internos. El micrófono sigue al dispositivo: jack >
+   USB > Bluetooth > interno.
+3. `audio-switch.sh` añade los modos `usb` y `bluetooth`. En Bluetooth
+   usa el sink `bluez_output.*` y el source loopback `bluez_input.*`.
+   En HDMI usa `output:hdmi-stereo+input:analog-stereo` cuando está
+   disponible para conservar el micro interno.
+4. El volumen solo se conserva al cambiar de puerto dentro del mismo
+   sink; no se arrastra el volumen de HDMI al Bluetooth.
+5. `~/.config/wireplumber/wireplumber.conf.d/50-dwm-setup.conf` fija
+   `bluetooth.autoswitch-to-headset-profile = true`: HFP/HSP se activa
+   solo mientras una aplicación graba y vuelve a A2DP al terminar.
+6. El menú `Perfil de audio` pasa a automático (A2DP + micro al grabar),
+   A2DP SBC-XQ o HFP/HSP forzado.
+
+**Consecuencias:**
+- Conectar/desconectar jack, USB, Bluetooth o HDMI reajusta salida y
+  micrófono sin intervención.
+- El micrófono Bluetooth funciona sin cambiar de perfil a mano, a costa
+  de bajar a HFP (mono, menor calidad) mientras dura la grabación.
+- El micrófono interno sigue disponible con HDMI conectado.
+- Una elección manual de sink/source se mantiene hasta el siguiente
+  cambio de hardware.
+
+## ADR-118 — Intercambio de Super+d y Super+Shift+d
+
+**Contexto:** el usuario prefiere que el lanzador principal
+(`rofi -show drun`) se abra con `Super+Shift+d`, y el lanzador de comandos
+(`rofi -show run`) con `Super+d`.
+
+**Decisión:** intercambiar los comandos de ambos atajos en
+`templates/sxhkd/sxhkdrc.in`:
+- `Super+d` → `rofi -show run`
+- `Super+Shift+d` → `rofi -show drun`
+
+**Consecuencias:** el mapa general de i3 se mantiene; solo cambia el modo
+de rofi de cada tecla. `keybindings_rofi.sh` sigue leyendo el `sxhkdrc` y
+muestra el orden nuevo. Documentado en README, AGENTS, testing y
+PROGRESS.

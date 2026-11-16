@@ -9,7 +9,6 @@
 configuration {
 	show-icons: true;
 	icon-theme: "Papirus";
-	location: 0;
 	font: "Hack Regular 9";
 	display-drun: "[Search]";
 	/* custom rofi keybindings */
@@ -20,14 +19,21 @@ configuration {
 }
 
 window {
-	width: 35%;
+	width: 360px;
+	height: 100%;
+	location: west;
+	anchor: west;
+	x-offset: 0;
+	y-offset: 0;
 	transparency: "real";
 	orientation: vertical;
 	border: 2px;
 	border-color: @COLOR_ACCENT@;
+	border-radius: 0;
 }
 
 mainbox {
+	expand: true;
 	children: [inputbar, listview];
 }
 
@@ -58,12 +64,13 @@ element-icon {
 
 listview {
 	columns: 1;
-	lines: 9;
-	padding: 8 0;
-	fixed-height: true;
+	lines: 0;
+	dynamic: false;
+	fixed-height: false;
 	fixed-columns: true;
-	fixed-lines: true;
-	border: 0 10 6 10;
+	fixed-lines: false;
+	border: 0;
+	padding: 8 10 6 10;
 }
 
 // INPUT BAR

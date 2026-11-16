@@ -7,10 +7,10 @@ super + Return
     @TERM@
 
 super + d
-    @MENU@
+    rofi -show run
 
 super + shift + d
-    rofi -show run
+    @MENU@
 
 super + shift + b
     @BROWSER@

@@ -17,4 +17,4 @@ awk '
     desc=""
   }
   !/^[^#]/ && !/^#/ { desc="" }
-' "$sxhkd_keys" | rofi -dmenu -i -p "Atajos" -theme @HOME@/.config/rofi/powermenu.rasi -width 800
+' "$sxhkd_keys" | rofi -dmenu -i -p "Atajos" -theme @HOME@/.config/rofi/powermenu.rasi

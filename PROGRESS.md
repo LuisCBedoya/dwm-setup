@@ -1933,3 +1933,122 @@ UHD 630; sin servicios ni configuración extra.
   `#0d0d14`.
 - Pendiente: `sudo ./install.sh` para crear el symlink `/usr/share` y
   prueba visual final de toolbar + NTP en Latte/Mocha.
+
+### UFW y Bluetooth en polybar — 2026-11-14
+
+- UFW se instala en `NETWORK_PKGS`, con helper root acotado
+  `/usr/local/bin/dwm-setup-ufw` (`status|enable|disable|reload|rules`)
+  y sudoers `NOPASSWD` solo para ese binario. Reglas base:
+  `deny incoming`, `allow outgoing`, `allow 22/tcp`; se activa al
+  instalar. SSH no se toca.
+- Módulo `ufw` en A y B: `on/off` + número de reglas, verde/dim, menú
+  rofi con estado, reglas, activar, desactivar y recargar.
+- Módulo `bluetooth` en A y B: `off`/`on`/`󰂱 nombre` (y batería si
+  existe), menú con encender/apagar, emparejados, escanear, parear,
+  trust/connect y selección del sink `bluez_output.*`.
+- Conteos: A 15 (16 con backlight), B 17 (18 con backlight).
+- Simulado: helper UFW con fakes (status/rules/enable/disable), estados
+  de UFW y Bluetooth renderizados, y menú Bluetooth conectando un
+  dispositivo y seleccionando el sink. `visudo -cf` del sudoers UFW OK.
+  Pasan `bash -n`, `sh -n` y `./install.sh --dry-run`.
+- Corregido falso negativo de UFW: `ufw --force enable` puede aplicar
+  reglas sin dejar `ufw.service` activo. Ahora `install_ufw` hace
+  `systemctl enable --now ufw` y comprueba `systemctl is-active` +
+  `ufw status`; el helper y `verify.sh` usan `ufw status` como fuente de
+  verdad (con `LC_ALL=C`) y conservan `systemctl` como fallback.
+- Bluetooth queda apagado por defecto: `lib/bluetooth.sh` pone
+  `AutoEnable=false` en `/etc/bluetooth/main.conf` (con backup) y
+  reinicia el servicio; `bluetooth.service` sigue activo para que el
+  módulo pueda encenderlo. El módulo visible muestra `󰂯 off` hasta que
+  se enciende desde el menú.
+- Audio Bluetooth: `libspa-0.2-bluetooth` añadido a `AUDIO_PKGS`
+  (WirePlumber avisaba de plugin BlueZ ausente). `restart_bluetooth_audio`
+  reinicia `wireplumber` tras instalar.
+- Pareo fallido de los GM2 Pro: el dispositivo quedó `Paired: no` y el
+  menú solo decía "No se pudo conectar". Ahora el menú usa
+  `bluetoothctl --agent NoInputNoOutput --timeout 20 pair`, verifica
+  `Paired: yes` antes de `trust`/`connect` con reintentos (~3 s; BlueZ
+  puede tardar en reflejarlo), comprueba `Connected: yes` también con
+  reintentos, muestra el error real y lo guarda en
+  `~/.local/state/dwm-setup/bluetooth.log`. Si no aparece el sink,
+  avisa de revisar `libspa-0.2-bluetooth`.
+- Añadido `rtkit` a `AUDIO_PKGS` (WirePlumber pedía prioridad RT),
+  habilitado `rtkit-daemon` y reinicio de `wireplumber` tras instalar.
+  El módulo Bluetooth trunca el nombre a 28 caracteres y el menú añade
+  `Perfil de audio`: automático (A2DP y micro al grabar), A2DP SBC-XQ o
+  HFP/HSP forzado, fijando el loopback `bluez_input.*` como source.
+- Audio automático por dispositivo (2026-11-15): `audio-watch.sh` usa
+  una firma del hardware y aplica jack > USB > Bluetooth > HDMI >
+  altavoces internos solo cuando cambia (respeta una elección manual en
+  `pavucontrol`). `audio-switch.sh` añade los modos `usb` y `bluetooth`,
+  elige el source loopback `bluez_input.*` y usa
+  `output:hdmi-stereo+input:analog-stereo` para no perder el micro
+  interno con HDMI. El volumen ya no se arrastra entre sinks distintos.
+  `~/.config/wireplumber/wireplumber.conf.d/50-dwm-setup.conf` fija
+  `bluetooth.autoswitch-to-headset-profile`; HFP se activa al grabar y
+  vuelve a A2DP. El menú reconecta al encender el adaptador los
+  dispositivos `Trusted` con `Icon: audio*` (no teclados/ratones), y el
+  watcher aplica el sink y el micro. Probado con fakes (HDMI, Bluetooth,
+  jack, USB, prioridad y watcher) y en vivo con HDMI: el source por
+  defecto pasó de `hdmi-stereo.monitor` a `alsa_input...analog-stereo`,
+  `parecord` grabó 3 s sin errores y, al forzar de nuevo el monitor como
+  source, el watcher lo corrigió solo. Pendiente la prueba real con los
+  GM2 Pro.
+- Pendiente: `sudo ./install.sh` para instalar UFW, helper, sudoers y
+  módulos, y probar en vivo SSH, DHCP/Wi-Fi, auriculares y barra A/B.
+
+### Rofi: esquinas y bordes — 2026-11-14
+
+- `config.rasi`: `window` con `border-radius: 12`; el `listview` deja de
+  usar `border: 0 10 6 10` como espaciado y pasa a `border: 0` +
+  `padding: 8 10 6 10`, para que no haya un rectángulo interior que no
+  siga las esquinas.
+- `powermenu.rasi`: `window` recibe `background-color: @COLOR_BG@` (el
+  `* { background: ... }` era solo una variable) y sube a
+  `border-radius: 12`; `mainbox`, `listview`, `element`, `element-text`
+  y `element-icon` quedan transparentes para que no aparezcan bloques
+  blancos dentro del borde redondeado. El borde ya rodea una superficie
+  rellena.
+- Verificado visualmente en Xorg: drun y powermenu con esquinas
+  redondeadas y borde continuo; `-dump-theme` correcto en ambos.
+- Picom ya no toca rofi: se añadió `class_g = 'Rofi'`/`class_i = 'rofi'`
+  a `shadow-exclude`, `rounded-corners-exclude` y `fade-exclude` de
+  `picom.conf`. El sidebar de rofi queda cuadrado y sin sombra/fade
+  aunque picom mantenga `corner-radius = 10` para el resto.
+- Rofi pasa a panel lateral izquierdo a altura completa (360x1080 en
+  la sesión viva): `config.rasi` y `powermenu.rasi` usan
+  `location: west`, `anchor: west`, `width: 360px`, `height: 100%`,
+  `border: 2px`, `border-radius: 0`, `mainbox expand` y
+  `listview lines: 0`. Se quitaron los `-width 800/320` de los scripts
+  de atajos y capturas. Probado visualmente: drun y powermenu en
+  360x1080, con borde visible y esquinas cuadradas.
+- Pendiente: comprobación visual en claro/oscuro; si rofi 1.7.5 siguiera
+  pintando el borde cuadrado, mover el borde a `mainbox` y dejar
+  `window { border: 0; }`.
+
+### Menú contextual de Brave: sombra duplicada de picom — 2026-11-15
+
+- Síntoma: al hacer clic derecho en Brave aparecía el menú normal y, por
+  debajo, un segundo recuadro redondeado gris.
+- Causa: el popup es `_NET_WM_WINDOW_TYPE_MENU`, override-redirect, ARGB
+  (depth 32) y 475x330 con márgenes transparentes. Chromium dibuja su
+  propia sombra y picom añadía otra (`shadow-radius 10`, `opacity 0.35`),
+  visible a través de esos márgenes.
+- Fix: `window_type = 'menu'`, `'popup_menu'`, `'dropdown_menu'` y
+  `'tooltip'` en `shadow-exclude` de `templates/picom/picom.conf.in`.
+  No se toca `corner-radius`: el redondeo no era el problema.
+- Verificado en vivo con una config temporal (menú limpio, sombra propia
+  de Chromium) y con picom parado como control. `verify.sh` comprueba que
+  la exclusión sigue presente. Aplicado a la sesión viva reiniciando
+  picom; Brave se cerró antes de la captura final, así que queda
+  confirmarlo visualmente la próxima vez que se abra.
+
+### Intercambio Super+d / Super+Shift+d — 2026-11-15
+
+- A petición del usuario, `Super+Shift+d` abre ahora `rofi -show drun`
+  (lanzador de aplicaciones) y `Super+d` abre `rofi -show run`
+  (comandos); antes era al revés. Cambiado en
+  `templates/sxhkd/sxhkdrc.in` y aplicado en vivo; `sxhkd` recargado con
+  SIGUSR1 y probado con XTest: cada tecla lanza el modo correcto.
+  `keybindings_rofi.sh` lo refleja sin cambios porque lee el propio
+  `sxhkdrc`.

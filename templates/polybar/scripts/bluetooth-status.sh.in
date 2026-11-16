@@ -1,0 +1,50 @@
+#!/bin/sh
+# bluetooth-status.sh — estado de Bluetooth para polybar.
+# Apagado, encendido o conectado con nombre (y batería si el dispositivo
+# la informa).
+
+LC_ALL=C
+export LC_ALL
+
+BT=${BLUETOOTHCTL:-bluetoothctl}
+
+command -v "$BT" >/dev/null 2>&1 || exit 0
+
+show=$("$BT" show 2>/dev/null) || show=
+case "$show" in
+  *"Powered: yes"*) powered=1 ;;
+  *) powered=0 ;;
+esac
+
+if [ "$powered" -eq 0 ]; then
+  printf '%%{F@COLOR_FG_DIM@}󰂯 off%%{F-}\n'
+  exit 0
+fi
+
+line=$("$BT" devices Connected 2>/dev/null | head -1)
+
+# Fallback para versiones que no listan Connected directamente.
+if [ -z "$line" ]; then
+  for mac in $("$BT" devices Paired 2>/dev/null | awk '{print $2}'); do
+    if "$BT" info "$mac" 2>/dev/null | grep -q 'Connected: yes'; then
+      name=$("$BT" info "$mac" 2>/dev/null |
+        sed -n 's/^[[:space:]]*Name:[[:space:]]*//p' | head -1)
+      [ -n "$name" ] || name=$mac
+      line="Device $mac $name"
+      break
+    fi
+  done
+fi
+
+if [ -n "$line" ]; then
+  mac=$(printf '%s\n' "$line" | awk '{print $2}')
+  name=$(printf '%s\n' "$line" | cut -d' ' -f3-)
+  [ -n "$name" ] || name=$mac
+  name=$(printf '%s' "$name" | cut -c1-28)
+  battery=$("$BT" info "$mac" 2>/dev/null |
+    sed -n 's/.*Battery Percentage:.*(\([0-9][0-9]*\)).*/\1/p' | head -1)
+  [ -n "$battery" ] && name="$name ${battery}%"
+  printf '%%{F@COLOR_GREEN@}󰂱 %s%%{F-}\n' "$name"
+else
+  printf '%%{F@COLOR_FG@}󰂯 on%%{F-}\n'
+fi

@@ -1,0 +1,387 @@
+#!/bin/sh
+# bluetooth-menu.sh — menú Bluetooth desde el módulo polybar.
+# Permite encender/apagar, conectar/desconectar dispositivos emparejados,
+# escanear y emparejar nuevos, y seleccionar el sink de audio al conectar.
+
+LC_ALL=C
+export LC_ALL
+
+BT=${BLUETOOTHCTL:-bluetoothctl}
+PACTL=${PACTL:-pactl}
+NOTIFY_SEND=${NOTIFY_SEND:-notify-send}
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dwm-setup"
+LOG_FILE="$LOG_DIR/bluetooth.log"
+
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+
+notify() {
+  command -v "$NOTIFY_SEND" >/dev/null 2>&1 || return 0
+  "$NOTIFY_SEND" "$@" >/dev/null 2>&1 || true
+}
+
+log_bt() {
+  printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" \
+    >>"$LOG_FILE" 2>/dev/null || true
+}
+
+short_output() {
+  if [ -n "$1" ]; then
+    printf '%s' "$1" | tr '\n' ' ' | cut -c1-160
+  else
+    printf 'sin salida de bluetoothctl'
+  fi
+}
+
+# BlueZ puede tardar unos cientos de ms en reflejar Paired/Connected en
+# `info` después de que el comando haya terminado.
+wait_for_property() {
+  mac=$1
+  property=$2
+  tries=${3:-10}
+  n=0
+  while [ "$n" -lt "$tries" ]; do
+    if "$BT" info "$mac" 2>/dev/null | grep -q "$property"; then
+      return 0
+    fi
+    sleep 0.3
+    n=$((n + 1))
+  done
+  return 1
+}
+
+menu() {
+  prompt=$1
+  if command -v rofi >/dev/null 2>&1; then
+    rofi -dmenu -i -no-custom -theme-str 'listview { columns: 1; }' -p "$prompt"
+  elif command -v dmenu >/dev/null 2>&1; then
+    dmenu -i -p "$prompt"
+  else
+    notify -u critical "Bluetooth" "Falta rofi o dmenu"
+    return 1
+  fi
+}
+
+show_text() {
+  title=$1
+  text=$2
+  [ -n "$text" ] || text="Sin datos"
+  if command -v rofi >/dev/null 2>&1; then
+    printf '%s\n' "$text" | rofi -dmenu -i -no-custom -p "$title"
+  else
+    notify "Bluetooth" "$text"
+  fi
+}
+
+find_bluez_card() {
+  mac_us=$(printf '%s' "$1" | tr ':' '_')
+  "$PACTL" list short cards 2>/dev/null |
+    awk -v m="$mac_us" 'tolower($2) ~ "bluez_card." tolower(m) {print $2; exit}'
+}
+
+find_bluez_source() {
+  mac=$1
+  [ -n "$mac" ] || return 1
+  # Preferir el loopback estable (bluez_input.<mac>) frente al source
+  # interno de SCO/HFP (bluez_input_internal.*).
+  "$PACTL" list short sources 2>/dev/null | awk -v mac="$mac" '
+    {
+      name = $2
+      norm = name
+      m = mac
+      gsub(/[^0-9A-Za-z]/, "", norm)
+      gsub(/[^0-9A-Za-z]/, "", m)
+      if (name ~ /^bluez_input\./ && index(norm, m) > 0) {
+        print name
+        exit
+      }
+    }'
+}
+
+audio_profile_menu() {
+  command -v "$PACTL" >/dev/null 2>&1 || {
+    notify -u critical "Bluetooth" "pactl no está disponible"
+    return 1
+  }
+
+  mac=$("$BT" devices Connected 2>/dev/null | awk 'NR == 1 {print $2}')
+  if [ -z "$mac" ]; then
+    notify "Bluetooth" "No hay dispositivo conectado"
+    return 0
+  fi
+
+  card=$(find_bluez_card "$mac")
+  if [ -z "$card" ]; then
+    notify -u critical "Bluetooth" "No se encontró la tarjeta Bluetooth"
+    return 1
+  fi
+
+  profile_choice=$(printf '%s\n' \
+    "Automático (A2DP + micro al grabar)" \
+    "A2DP SBC-XQ (más bitrate)" \
+    "HFP/HSP forzado (micro permanente)" | menu "Perfil de audio")
+  [ -n "$profile_choice" ] || return 0
+
+  case "$profile_choice" in
+    "Automático (A2DP + micro al grabar)")
+      profile=a2dp-sink
+      label="Automático (A2DP + micro al grabar)"
+      ;;
+    "A2DP SBC-XQ (más bitrate)")
+      profile=a2dp-sink-sbc_xq
+      label="A2DP SBC-XQ"
+      ;;
+    "HFP/HSP forzado (micro permanente)")
+      profile=headset-head-unit
+      label="HFP/HSP forzado"
+      ;;
+    *) return 0 ;;
+  esac
+
+  if ! "$PACTL" set-card-profile "$card" "$profile" >/dev/null 2>&1; then
+    notify -u critical "Bluetooth" "No se pudo aplicar el perfil $profile"
+    return 1
+  fi
+  log_bt "profile $mac: $profile"
+  notify "Bluetooth" "Perfil: $label"
+
+  # En A2DP el source es el loopback de BlueZ: cuando una app grabe,
+  # WirePlumber cambiará solo a HFP y volverá a A2DP al terminar.
+  select_audio_sink "$mac"
+  source=$(find_bluez_source "$mac")
+  if [ -n "$source" ]; then
+    "$PACTL" set-default-source "$source" >/dev/null 2>&1 &&
+      notify "Bluetooth" "Micrófono: $source"
+  fi
+}
+
+select_audio_sink() {
+  mac=$1
+  mac_us=$(printf '%s' "$mac" | tr ':' '_')
+  command -v "$PACTL" >/dev/null 2>&1 || return 0
+
+  n=0
+  while [ "$n" -lt 4 ]; do
+    sink=$("$PACTL" list short sinks 2>/dev/null |
+      awk -v m="$mac_us" 'tolower($2) ~ "bluez_output." tolower(m) {print $2; exit}')
+    if [ -n "$sink" ]; then
+      "$PACTL" set-default-sink "$sink" >/dev/null 2>&1 || return 0
+      for input in $("$PACTL" list short sink-inputs 2>/dev/null | awk '{print $1}'); do
+        "$PACTL" move-sink-input "$input" "$sink" >/dev/null 2>&1 || true
+      done
+      notify "Bluetooth" "Audio: $sink"
+      return 0
+    fi
+    sleep 1
+    n=$((n + 1))
+  done
+  notify -u normal "Bluetooth" \
+    "Conectado, pero sin sink de audio. Revisa libspa-0.2-bluetooth."
+  return 0
+}
+
+list_devices() {
+  mode=$1
+  if [ "$mode" = "paired" ]; then
+    raw=$("$BT" devices Paired 2>/dev/null)
+  else
+    raw=$("$BT" devices 2>/dev/null)
+  fi
+
+  [ -n "$raw" ] || return 1
+
+  : >"$map"
+  i=0
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    mac=$(printf '%s\n' "$line" | awk '{print $2}')
+    name=$(printf '%s\n' "$line" | cut -d' ' -f3-)
+    [ -n "$mac" ] || continue
+    [ -n "$name" ] || name=$mac
+
+    info=$("$BT" info "$mac" 2>/dev/null)
+    case "$info" in
+      *"Paired: yes"*) paired=yes ;;
+      *) paired=no ;;
+    esac
+    case "$info" in
+      *"Connected: yes"*) connected=yes ;;
+      *) connected=no ;;
+    esac
+
+    if [ "$connected" = "yes" ]; then
+      mark="[conectado]"
+    elif [ "$paired" = "no" ]; then
+      mark="[nuevo]"
+    else
+      mark=""
+    fi
+
+    i=$((i + 1))
+    printf '%d  %s %s (%s)\n' "$i" "$mark" "$name" "$mac"
+    printf '%d\t%s\t%s\t%s\t%s\n' "$i" "$mac" "$name" "$paired" "$connected" >>"$map"
+  done <<EOF
+$raw
+EOF
+
+  [ "$i" -gt 0 ]
+}
+
+connect_device() {
+  mac=$1
+  paired=$2
+  connected=$3
+  out=
+  pair_rc=0
+  pair_ok=0
+
+  if [ "$connected" = "yes" ]; then
+    out=$("$BT" disconnect "$mac" 2>&1) || {
+      log_bt "disconnect $mac: $(short_output "$out")"
+      notify -u critical "Bluetooth" "No se pudo desconectar"
+      return 1
+    }
+    log_bt "disconnect $mac: $(short_output "$out")"
+    notify "Bluetooth" "Desconectado"
+    return 0
+  fi
+
+  if [ "$paired" != "yes" ]; then
+    # NoInputNoOutput cubre Just Works; los auriculares suelen usar este
+    # modo. La salida se guarda para poder mostrar el error real.
+    out=$("$BT" --agent NoInputNoOutput --timeout 20 pair "$mac" 2>&1) || pair_rc=$?
+    log_bt "pair $mac (rc=$pair_rc): $(short_output "$out")"
+
+    case "$out" in
+      *"Paired: yes"*|*"Pairing successful"*) pair_ok=1 ;;
+    esac
+    if [ "$pair_ok" -eq 0 ] && wait_for_property "$mac" 'Paired: yes' 10; then
+      pair_ok=1
+    fi
+    if [ "$pair_ok" -eq 0 ] && [ "$pair_rc" -eq 0 ]; then
+      pair_ok=1
+    fi
+
+    if [ "$pair_ok" -eq 0 ]; then
+      notify -u critical "Bluetooth" \
+        "No se pudo emparejar. Pon el dispositivo en modo emparejamiento. $(short_output "$out")"
+      return 1
+    fi
+  fi
+
+  "$BT" trust "$mac" >/dev/null 2>&1 || true
+  out=$("$BT" connect "$mac" 2>&1) || true
+  log_bt "connect $mac: $(short_output "$out")"
+
+  if "$BT" info "$mac" 2>/dev/null | grep -q 'Connected: yes' ||
+     wait_for_property "$mac" 'Connected: yes' 10; then
+    notify "Bluetooth" "Conectado"
+    select_audio_sink "$mac"
+  else
+    notify -u critical "Bluetooth" \
+      "No se pudo conectar: $(short_output "$out")"
+  fi
+}
+
+if ! command -v "$BT" >/dev/null 2>&1; then
+  notify -u critical "Bluetooth" "bluetoothctl no está disponible"
+  exit 1
+fi
+
+powered=$("$BT" show 2>/dev/null | awk -F': ' '/Powered:/{print $2; exit}')
+[ "$powered" = "yes" ] || powered=no
+
+if [ "$powered" = "yes" ]; then
+  toggle="Apagar Bluetooth"
+else
+  toggle="Encender Bluetooth"
+fi
+
+# Al encender el adaptador, intenta reconectar los dispositivos de audio
+# ya emparejados y de confianza (auriculares, altavoces, headsets).
+connect_trusted_audio() {
+  "$BT" devices Trusted 2>/dev/null | while read -r _ mac name; do
+    [ -n "$mac" ] || continue
+    info=$("$BT" info "$mac" 2>/dev/null) || continue
+    case "$info" in
+      *"Icon: audio"*) ;;
+      *) continue ;;
+    esac
+    case "$info" in
+      *"Connected: yes"*) continue ;;
+    esac
+    if "$BT" connect "$mac" >/dev/null 2>&1; then
+      log_bt "autoconnect $mac"
+      notify "Bluetooth" "Conectado: ${name:-$mac}"
+    fi
+  done
+}
+
+choice=$(printf '%s\n' \
+  "$toggle" \
+  "Dispositivos emparejados" \
+  "Escanear dispositivos" \
+  "Perfil de audio" \
+  "Estado" | menu "Bluetooth")
+[ -n "$choice" ] || exit 0
+
+case "$choice" in
+  "Encender Bluetooth")
+    if "$BT" power on >/dev/null 2>&1; then
+      notify "Bluetooth" "Bluetooth encendido"
+      connect_trusted_audio
+    else
+      notify -u critical "Bluetooth" "No se pudo encender (¿rfkill?)"
+    fi
+    ;;
+  "Apagar Bluetooth")
+    if "$BT" power off >/dev/null 2>&1; then
+      notify "Bluetooth" "Bluetooth apagado"
+    else
+      notify -u critical "Bluetooth" "No se pudo apagar"
+    fi
+    ;;
+  "Perfil de audio")
+    audio_profile_menu
+    ;;
+  "Estado")
+    text=$("$BT" show 2>/dev/null |
+      grep -E 'Controller|Name:|Powered|Discoverable|Pairable|Discovering')
+    show_text "Estado Bluetooth" "$text"
+    ;;
+  "Dispositivos emparejados" | "Escanear dispositivos")
+    map=$(mktemp) || {
+      notify -u critical "Bluetooth" "No se pudo crear el archivo temporal"
+      exit 1
+    }
+    trap 'rm -f "$map"' EXIT HUP INT TERM
+
+    mode=paired
+    if [ "$choice" = "Escanear dispositivos" ]; then
+      notify "Bluetooth" "Escaneando 10 s..."
+      "$BT" --timeout 10 scan on >/dev/null 2>&1 || true
+      mode=all
+    fi
+
+    entries=$(list_devices "$mode") || {
+      if [ "$mode" = "paired" ]; then
+        notify "Bluetooth" "No hay dispositivos emparejados"
+      else
+        notify "Bluetooth" "No se encontraron dispositivos"
+      fi
+      exit 0
+    }
+
+    selected=$(printf '%s\n' "$entries" | menu "Bluetooth")
+    [ -n "$selected" ] || exit 0
+    index=$(printf '%s\n' "$selected" | awk '{print $1}')
+    [ -n "$index" ] || exit 0
+
+    selected_data=$(awk -F '\t' -v n="$index" '$1 == n {print; exit}' "$map")
+    [ -n "$selected_data" ] || exit 0
+    mac=$(printf '%s\n' "$selected_data" | cut -f2)
+    paired=$(printf '%s\n' "$selected_data" | cut -f4)
+    connected=$(printf '%s\n' "$selected_data" | cut -f5)
+    [ -n "$mac" ] || exit 0
+    connect_device "$mac" "$paired" "$connected"
+    ;;
+esac

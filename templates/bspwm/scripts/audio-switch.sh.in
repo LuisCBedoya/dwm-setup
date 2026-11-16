@@ -1,15 +1,16 @@
 #!/bin/sh
-# audio-switch.sh — cambia la salida de audio según el hardware disponible.
-# Uso: audio-switch.sh [auto|headphones|hdmi|analog]
+# audio-switch.sh — cambia la salida y la entrada de audio según el hardware.
+# Uso: audio-switch.sh [auto|headphones|usb|bluetooth|hdmi|analog]
 #
-# Prioridad del watcher: auriculares > HDMI > altavoces.
-# No toca el sink/source si el usuario tiene seleccionado USB/Bluetooth.
+# Prioridad: jack > USB > Bluetooth > HDMI > altavoces internos.
+# El micrófono sigue al dispositivo: jack > USB > Bluetooth > interno.
 
 set -u
 
 mode="${1:-auto}"
 VOL=50
 MUTE=false
+SAVED_VOLUME=0
 
 log() { printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
 
@@ -18,6 +19,7 @@ have_pactl() {
 }
 
 save_volume() {
+  SAVED_VOLUME=1
   if command -v pamixer >/dev/null 2>&1; then
     VOL=$(pamixer --get-volume 2>/dev/null || echo 50)
     MUTE=$(pamixer --get-mute 2>/dev/null || echo false)
@@ -25,6 +27,7 @@ save_volume() {
 }
 
 restore_volume() {
+  [ "$SAVED_VOLUME" = "1" ] || return 0
   command -v pamixer >/dev/null 2>&1 || return 0
   pamixer --allow-boost --set-volume "$VOL" >/dev/null 2>&1 || true
   if [ "$MUTE" = "true" ]; then
@@ -34,21 +37,85 @@ restore_volume() {
   fi
 }
 
-find_sink() {
+first_sink() {
   pactl list short sinks 2>/dev/null | awk -v pat="$1" '$2 ~ pat {print $2; exit}'
 }
 
-find_source() {
-  pactl list short sources 2>/dev/null | awk '$2 ~ /analog/ && $2 !~ /monitor/ {print $2; exit}'
+first_source() {
+  pactl list short sources 2>/dev/null | awk -v pat="$1" '$2 ~ pat {print $2; exit}'
 }
 
 wait_for_sink() {
   pat="$1"
+  tries="${2:-30}"
   i=0
-  while [ "$i" -lt 20 ]; do
-    sink=$(find_sink "$pat")
+  while [ "$i" -lt "$tries" ]; do
+    sink=$(first_sink "$pat")
     if [ -n "$sink" ]; then
       printf '%s\n' "$sink"
+      return 0
+    fi
+    sleep 0.1
+    i=$((i + 1))
+  done
+  return 1
+}
+
+find_analog_source() {
+  pactl list short sources 2>/dev/null |
+    awk '$2 ~ /analog/ && $2 !~ /monitor/ {print $2; exit}'
+}
+
+wait_for_analog_source() {
+  tries="${1:-20}"
+  i=0
+  while [ "$i" -lt "$tries" ]; do
+    src=$(find_analog_source)
+    if [ -n "$src" ]; then
+      printf '%s\n' "$src"
+      return 0
+    fi
+    sleep 0.1
+    i=$((i + 1))
+  done
+  return 1
+}
+
+find_usb_source() {
+  first_source '^alsa_input\.usb-'
+}
+
+bt_mac_from_sink() {
+  printf '%s' "$1" | sed -e 's/^bluez_output\.//' -e 's/\.[0-9][0-9]*$//'
+}
+
+# Busca el source loopback de BlueZ (bluez_input.<mac>). Ese nodo es
+# estable entre A2DP y HFP y es el que dispara el autoswitch de perfil
+# de WirePlumber cuando una aplicación graba.
+find_bt_source() {
+  [ -n "${1:-}" ] || return 1
+  pactl list short sources 2>/dev/null | awk -v mac="$1" '
+    {
+      name = $2
+      norm = name
+      m = mac
+      gsub(/[^0-9A-Za-z]/, "", norm)
+      gsub(/[^0-9A-Za-z]/, "", m)
+      if (name ~ /^bluez_input\./ && index(norm, m) > 0) {
+        print name
+        exit
+      }
+    }'
+}
+
+wait_for_bt_source() {
+  mac="$1"
+  tries="${2:-30}"
+  i=0
+  while [ "$i" -lt "$tries" ]; do
+    src=$(find_bt_source "$mac" 2>/dev/null || true)
+    if [ -n "$src" ]; then
+      printf '%s\n' "$src"
       return 0
     fi
     sleep 0.1
@@ -100,12 +167,6 @@ set_source_port() {
   shift
   [ -n "$source" ] || return 0
 
-  # Si el usuario tiene un micro USB/Bluetooth seleccionado, no lo pisamos.
-  current=$(pactl get-default-source 2>/dev/null || true)
-  case "$current" in
-    *usb*|*bluez*|*bluetooth*) return 0 ;;
-  esac
-
   for port in "$@"; do
     if pactl set-source-port "$source" "$port" >/dev/null 2>&1; then
       pactl set-default-source "$source" >/dev/null 2>&1 || true
@@ -117,20 +178,62 @@ set_source_port() {
   move_source_streams "$source"
 }
 
+switch_bluetooth() {
+  sink=$(wait_for_sink '^bluez_output\.' 30) || return 1
+  pactl set-default-sink "$sink" >/dev/null 2>&1 || return 1
+  move_streams "$sink"
+
+  mac=$(bt_mac_from_sink "$sink")
+  src=$(wait_for_bt_source "$mac" 30) || true
+  if [ -n "$src" ]; then
+    pactl set-default-source "$src" >/dev/null 2>&1 || true
+    move_source_streams "$src"
+    log "audio: bluetooth ($sink, micrófono $src)"
+  else
+    log "audio: bluetooth ($sink, sin source de micrófono)"
+  fi
+  return 0
+}
+
+switch_usb() {
+  sink=$(wait_for_sink '^alsa_output\.usb-' 30) || return 1
+  pactl set-default-sink "$sink" >/dev/null 2>&1 || return 1
+  move_streams "$sink"
+
+  src=$(find_usb_source)
+  if [ -n "$src" ]; then
+    pactl set-default-source "$src" >/dev/null 2>&1 || true
+    move_source_streams "$src"
+    log "audio: USB ($sink, micrófono $src)"
+  else
+    src=$(wait_for_analog_source 20) || true
+    if [ -n "$src" ]; then
+      set_source_port "$src" analog-input-mic
+    fi
+    log "audio: USB ($sink, micrófono interno)"
+  fi
+  return 0
+}
+
 switch_hdmi() {
   card=$(hdmi_card)
   [ -n "$card" ] || return 1
 
-  save_volume
-  if ! pactl set-card-profile "$card" output:hdmi-stereo >/dev/null 2>&1; then
-    # En algunos equipos el perfil solo existe con entrada analógica.
-    pactl set-card-profile "$card" output:hdmi-stereo+input:analog-stereo >/dev/null 2>&1 || return 1
+  # Mantener la entrada analógica en el perfil conserva el micrófono
+  # interno aunque la salida sea HDMI.
+  if ! pactl set-card-profile "$card" output:hdmi-stereo+input:analog-stereo >/dev/null 2>&1; then
+    pactl set-card-profile "$card" output:hdmi-stereo >/dev/null 2>&1 || return 1
   fi
 
-  sink=$(wait_for_sink hdmi) || return 1
+  sink=$(wait_for_sink 'hdmi' 30) || return 1
   pactl set-default-sink "$sink" >/dev/null 2>&1 || return 1
   move_streams "$sink"
-  restore_volume
+
+  src=$(wait_for_analog_source 20) || true
+  if [ -n "$src" ]; then
+    set_source_port "$src" analog-input-mic
+  fi
+
   log "audio: HDMI ($sink)"
   return 0
 }
@@ -140,12 +243,19 @@ switch_analog() {
   card=$(analog_card)
   [ -n "$card" ] || return 1
 
-  save_volume
+  # Solo conservamos el volumen si ya estábamos en el sink analógico;
+  # no arrastramos el volumen de HDMI/Bluetooth a otro dispositivo.
+  saved=0
+  current=$(pactl get-default-sink 2>/dev/null || true)
+  case "$current" in
+    *analog*) save_volume; saved=1 ;;
+  esac
+
   if ! pactl set-card-profile "$card" output:analog-stereo+input:analog-stereo >/dev/null 2>&1; then
     pactl set-card-profile "$card" output:analog-stereo >/dev/null 2>&1 || return 1
   fi
 
-  sink=$(wait_for_sink analog) || return 1
+  sink=$(wait_for_sink 'analog' 30) || return 1
   if [ "$target" = "headphones" ]; then
     pactl set-sink-port "$sink" analog-output-headphones >/dev/null 2>&1 || true
   else
@@ -154,9 +264,11 @@ switch_analog() {
 
   pactl set-default-sink "$sink" >/dev/null 2>&1 || return 1
   move_streams "$sink"
-  restore_volume
+  if [ "$saved" = "1" ]; then
+    restore_volume
+  fi
 
-  source=$(find_source)
+  source=$(wait_for_analog_source 20) || true
   if [ -n "$source" ]; then
     if [ "$target" = "headphones" ]; then
       set_source_port "$source" analog-input-headset-mic analog-input-mic
@@ -174,6 +286,10 @@ have_pactl || exit 0
 if [ "$mode" = "auto" ]; then
   if headphones_available; then
     mode=headphones
+  elif [ -n "$(first_sink '^alsa_output\.usb-')" ]; then
+    mode=usb
+  elif [ -n "$(first_sink '^bluez_output\.')" ]; then
+    mode=bluetooth
   elif hdmi_available; then
     mode=hdmi
   else
@@ -184,6 +300,8 @@ fi
 case "$mode" in
   headphones) switch_analog headphones ;;
   analog) switch_analog analog ;;
+  usb) switch_usb ;;
+  bluetooth) switch_bluetooth ;;
   hdmi) switch_hdmi ;;
   *) log "modo desconocido: $mode"; exit 1 ;;
 esac

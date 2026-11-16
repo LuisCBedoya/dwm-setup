@@ -129,6 +129,8 @@ install_theme_store() {
     "templates/polybar/variants/reference/config.ini.in"
     "templates/polybar/scripts/cpu-governor.sh.in"
     "templates/polybar/scripts/fan-mode.sh.in"
+    "templates/polybar/scripts/ufw-status.sh.in"
+    "templates/polybar/scripts/bluetooth-status.sh.in"
     "templates/picom/picom.conf.in"
     "templates/kitty/kitty.conf.in"
     "templates/kitty/colorshemes/monochromatic.conf.in"

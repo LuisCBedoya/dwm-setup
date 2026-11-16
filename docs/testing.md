@@ -117,8 +117,8 @@ Comprobado:
 - `Alt+Tab` y `Alt+Shift+Tab` probados con XTest: ciclo de ventanas.
 - `Super+Shift+s` probado con XTest: región 400x300 copiada como
   `image/png`, sin temporales y con notificación de dunst.
-- `Super+Shift+d` abre `rofi -show run`; `Super+d` sigue abriendo
-  `rofi -show drun`.
+- `Super+Shift+d` abre `rofi -show drun`; `Super+d` abre
+  `rofi -show run`.
 - `polybar-variant cycle` probado: A arriba → A abajo → B arriba →
   B abajo; sxhkd recargado con el binding `Super+Alt+p`.
 
@@ -463,8 +463,8 @@ Criterios de aceptación:
 | Atajo | Acción | Criterio |
 |---|---|---|
 | `Super+Return` | kitty | Abre terminal |
-| `Super+d` | rofi drun | Abre lanzador |
-| `Super+Shift+d` | rofi -show run | Lanzador de comandos |
+| `Super+d` | rofi -show run | Lanzador de comandos |
+| `Super+Shift+d` | rofi drun | Abre lanzador |
 | `Super+Shift+s` | scrot región | Selecciona y copia al portapapeles |
 | `Super+Shift+p` | pcmanfm | Pendiente de instalar pcmanfm |
 | `Super+Shift+b` | chromium | Pendiente de instalar chromium |
@@ -1183,3 +1183,80 @@ ytsearch50  → 4533 ms
   `#eff1f5`, dark `#0d0d14`. Pendiente `sudo ./install.sh` para crear
   el symlink `/usr/share` y prueba visual final; las pestañas abiertas
   necesitan `Ctrl+R`.
+- 2026-11-14: UFW y Bluetooth en polybar. Simulado: helper UFW
+  (status/rules/enable/disable) con fakes; estado UFW on/off; estado
+  Bluetooth conectado/off; menú Bluetooth conectando un emparejado y
+  seleccionando `bluez_output.*`; `visudo -cf` del sudoers UFW OK.
+  Pendiente `sudo ./install.sh` y prueba en vivo: SSH desde el cliente,
+  DHCP/Wi-Fi con UFW activo, auriculares Bluetooth con audio, menú de
+  escaneo/pareo y barra A/B. Conteos: A 15 (16 con backlight), B 17
+  (18 con backlight). Corregido falso negativo: `ufw --force enable`
+  podía dejar `ufw.service` inactivo; ahora se hace `systemctl enable
+  --now ufw` y el estado se lee de `ufw status` con `LC_ALL=C`.
+  Bluetooth arranca apagado (`AutoEnable=false`); el servicio sigue
+  activo y el módulo puede encenderlo desde el menú.
+- 2026-11-14: rofi, esquinas y bordes. `config.rasi` usa radio 12 y el
+  listview con padding en vez de borde; `powermenu.rasi` tiene
+  `background-color` en `window`, radio 12 y `mainbox`/`listview`/
+  `element`/`element-text`/`element-icon` transparentes para evitar
+  bloques blancos dentro del borde. Probado visualmente en Xorg en
+  claro; `-dump-theme` correcto en ambos. Fallback documentado: borde
+  en `mainbox` con `window { border: 0; }` si rofi 1.7.5 no redondeara
+  el borde de `window` (no fue necesario).
+- 2026-11-14: rofi pasa a sidebar izquierdo a altura completa, con
+  borde (`border: 2px`) y sin redondeo (`border-radius: 0`). En la
+  sesión viva, drun y powermenu salen en 360x1080, en `x=0,y=0`, con
+  borde visible y esquinas cuadradas; `listview lines: 0` ocupa el
+  alto. `keybindings_rofi.sh` y `screenshot.sh` ya no pasan `-width`.
+  Probados visualmente drun y el tema de powermenu; pendiente menús
+  largos y claro/oscuro. Picom excluye rofi de sombra, redondeo y fade
+  (`class_g = 'Rofi'`/`class_i = 'rofi'`); verificado que drun mantiene
+  esquinas cuadradas con picom activo.
+- 2026-11-14: Bluetooth, pareo y audio. Faltaba
+  `libspa-0.2-bluetooth` (WirePlumber: plugin BlueZ ausente); añadido
+  a `AUDIO_PKGS` y `restart_bluetooth_audio`. El menú ahora pareja con
+  `--agent NoInputNoOutput`, verifica `Paired: yes`/`Connected: yes`
+  con reintentos (~3 s; evita el falso fallo por carrera de BlueZ),
+  muestra el error real y escribe
+  `~/.local/state/dwm-setup/bluetooth.log`. Simulado con fakes: pareo
+  exitoso con `info` retrasado, pareo exitoso normal y fallo de
+  autenticación con notificación clara. Añadidos `rtkit`, nombre a 28
+  caracteres y menú `Perfil de audio` (A2DP/SBC-XQ/HFP); simulado que
+  HFP fija `bluez_input.*` como source. Pendiente probar con los GM2
+  Pro en modo emparejamiento y comprobar sink `bluez_output.*`.
+- 2026-11-15: audio automático por dispositivo. `audio-watch.sh` aplica
+  jack > USB > Bluetooth > HDMI > altavoces internos solo cuando cambia
+  la firma del hardware, con dos lecturas seguidas para no reaccionar al
+  hueco de un cambio A2DP↔HFP; simulado con `pactl` falso: HDMI,
+  Bluetooth (sink + loopback, sin `bluez_input_internal`), jack, USB,
+  prioridad completa, watcher con cambios en caliente (HDMI → Bluetooth
+  → jack) y un hueco breve de Bluetooth que no provoca cambio de salida.
+  `audio-switch.sh` elige `output:hdmi-stereo+input:analog-stereo` y no
+  arrastra el volumen entre sinks. En vivo con HDMI conectado, el perfil
+  pasó de `output:hdmi-stereo` a
+  `output:hdmi-stereo+input:analog-stereo`, el source por defecto pasó
+  de `hdmi-stereo.monitor` a `alsa_input...analog-stereo` y `parecord`
+  grabó 3 s sin errores. Se forzó el monitor de HDMI como source por
+  defecto y el watcher lo corrigió solo en ~7 s. Menú `Perfil de audio`
+  probado con fakes:
+  `Automático` aplica `a2dp-sink`, fija el sink y el loopback, no el
+  source `_internal`. Menú de encendido probado con fakes: reconecta el
+  headset `Trusted` con `Icon: audio-headset` y omite un teclado.
+  `50-dwm-setup.conf` de WirePlumber instalado;
+  `wpctl settings bluetooth.autoswitch-to-headset-profile` = `true`.
+  Pendiente: con los GM2 Pro, grabar y comprobar el salto automático a
+  `headset-head-unit` y la vuelta a `a2dp-sink`, además de la
+  reconexión (`Bonded`).
+- 2026-11-15: menú contextual de Brave con doble recuadro. Con picom
+  activo se veía el menú y, detrás, un segundo recuadro redondeado gris;
+  con picom parado el menú quedaba limpio. La ventana del menú es
+  `_NET_WM_WINDOW_TYPE_MENU`, override-redirect, ARGB, 475x330, con
+  márgenes transparentes para la sombra que dibuja Chromium; picom
+  añadía su propia sombra (`radius 10`, `opacity 0.35`) visible a través
+  de esos márgenes. Solución: añadir `window_type = 'menu'`,
+  `'popup_menu'`, `'dropdown_menu'` y `'tooltip'` a `shadow-exclude` en
+  `templates/picom/picom.conf.in` (sin tocar `corner-radius`). Probado
+  con una config temporal: el recuadro desaparece y se mantiene la sombra
+  propia del menú; también se comprobó con picom parado como control.
+  Aplicado a la sesión viva reiniciando picom; pendiente la captura
+  final con Brave abierto.

@@ -7,7 +7,10 @@ backend = "glx";
 vsync = true;
 use-damage = true;
 
-# Sombras sutiles (ADR-110). Barra (dock) y escritorio excluidos.
+# Sombras sutiles (ADR-110). Barra (dock), escritorio, menús y popups
+# quedan fuera: los menús ya dibujan su propia sombra y, al ser ARGB con
+# márgenes transparentes, la sombra de picom se vería como un segundo
+# recuadro (p. ej. el menú contextual de Brave).
 shadow = true;
 shadow-radius = 10;
 shadow-opacity = 0.35;
@@ -15,7 +18,13 @@ shadow-offset-x = -8;
 shadow-offset-y = -8;
 shadow-exclude = [
   "window_type = 'dock'",
-  "window_type = 'desktop'"
+  "window_type = 'desktop'",
+  "window_type = 'menu'",
+  "window_type = 'popup_menu'",
+  "window_type = 'dropdown_menu'",
+  "window_type = 'tooltip'",
+  "class_g = 'Rofi'",
+  "class_i = 'rofi'"
 ];
 # Esquinas redondeadas (solo ventanas normales); dock/notificaciones/
 # escritorio quedan fuera para no dejar huecos ni marcos descuadrados.
@@ -23,7 +32,9 @@ corner-radius = 10;
 rounded-corners-exclude = [
   "window_type = 'dock'",
   "window_type = 'notification'",
-  "window_type = 'desktop'"
+  "window_type = 'desktop'",
+  "class_g = 'Rofi'",
+  "class_i = 'rofi'"
 ];
 fading = true;
 fade-delta = 5;
@@ -32,7 +43,9 @@ fade-out-step = 0.035;
 fade-exclude = [
   "window_type = 'dock'",
   "window_type = 'notification'",
-  "window_type = 'desktop'"
+  "window_type = 'desktop'",
+  "class_g = 'Rofi'",
+  "class_i = 'rofi'"
 ];
 
 # Sin transparencias ni blur: opacidad siempre al 100 %.

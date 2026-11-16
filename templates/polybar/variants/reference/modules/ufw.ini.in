@@ -1,0 +1,13 @@
+; ufw — estado del firewall; clic para gestionarlo
+[module/ufw]
+type = custom/script
+exec = @HOME@/.config/polybar/scripts/ufw-status.sh
+interval = 30
+exec-if = [ -x /usr/sbin/ufw ]
+format = <label>
+format-padding = 1
+format-background = ${colors.module-bg}
+format-font = 1
+format-foreground = ${colors.foreground}
+label = %output%
+click-left = @HOME@/.config/polybar/scripts/ufw-menu.sh

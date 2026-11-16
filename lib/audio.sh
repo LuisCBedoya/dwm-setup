@@ -83,3 +83,41 @@ install_headset_quirk() {
   REBOOT_REQUIRED=1
   ok "Quirk ALC255 instalado; reinicia para aplicar el micrófono del jack combo"
 }
+
+# Política de usuario de WirePlumber para el audio Bluetooth: el perfil
+# HFP/HSP se activa solo mientras una aplicación graba y vuelve a A2DP al
+# terminar. Así el micrófono del headset funciona sin cambiar de perfil a
+# mano y la música sigue en alta calidad cuando no se graba.
+install_wireplumber_audio() {
+  local dir="$TARGET_HOME/.config/wireplumber/wireplumber.conf.d"
+  local target="$dir/50-dwm-setup.conf"
+
+  if dry_run; then
+    log "[dry-run] instalaría $target (autoswitch A2DP/HFP)"
+    return 0
+  fi
+
+  make_user_dir "$dir"
+  backup_user_path "$target"
+  install_template_user 0644 \
+    "$PROJECT_ROOT/templates/wireplumber/50-dwm-setup.conf" "$target"
+  ok "WirePlumber: autoswitch de perfil Bluetooth configurado"
+}
+
+# libspa-0.2-bluetooth se instala con los paquetes de audio; WirePlumber
+# debe reiniciarse para cargar el plugin BlueZ en la sesión actual.
+restart_bluetooth_audio() {
+  local uid
+
+  if dry_run; then
+    log "[dry-run] reiniciar wireplumber para cargar el plugin Bluetooth"
+    return 0
+  fi
+
+  command -v systemctl >/dev/null 2>&1 || return 0
+  run_root systemctl enable --now rtkit-daemon >/dev/null 2>&1 || true
+  uid=$(id -u "$TARGET_USER" 2>/dev/null) || return 0
+  run_user env XDG_RUNTIME_DIR="/run/user/$uid" \
+    systemctl --user restart wireplumber >/dev/null 2>&1 ||
+    warn "No se pudo reiniciar wireplumber; reinicia la sesión para cargar el audio Bluetooth"
+}

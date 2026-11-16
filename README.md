@@ -19,13 +19,14 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
-- **polybar** con **13 módulos** (14 con backlight), más la bandeja del
+- **polybar** con **15 módulos** (16 con backlight), más la bandeja del
   sistema (XEmbed): logo StumbleUpon, escritorios dinámicos, pomodoro, temperatura,
   RAM, CPU, **gobernador de CPU** (clic alterna performance/powersave + notificación),
-  red unificada (`󰖩/󰈀 connected`, `󰖩 NoC` sin conexión), servicios
+  red unificada (`󰖩/󰈀 connected`, `󰖩 NoC` sin conexión), **Bluetooth**
+  (apagado/encendido/conectado), **UFW** (`on`/`off` + reglas), servicios
   systemd, volumen, batería, fecha y actualizaciones (calavera + número).
   `font-1` 10 y `font-3` 13; logo en `font-0`.
-- **dunst**, **rofi** (y **dmenu** para el módulo de servicios), **kitty**
+- **dunst**, **rofi** (panel lateral izquierdo, también para los menús de la barra), **kitty**
   (`--single-instance`),
   **flameshot**. Shell **zsh** con Oh My Zsh/cypher, autosuggestions y
   **lsd**. Compositor **picom** (vsync + fade sutil + sombras sutiles,
@@ -113,7 +114,7 @@ No incluido todavía:
 
 - IDE (VS Code), Firefox ESR, correo, Teams y reproductores de música
   locales (cmus/mpd). Brave y el streaming (`yt-play`, `ytwatch`) sí están.
-- Bluetooth, htop, ripgrep, nvitop/nvtop, Node/nvm.
+- htop, ripgrep, nvitop/nvtop, Node/nvm.
 - XFCE, LightDM o un entorno de escritorio completo.
 - Repositorio de dotfiles externo: las plantillas de este repo son la
   fuente de verdad.
@@ -254,18 +255,33 @@ GPU y del firmware; `desktop-doctor` muestra el estado.
 `audio-watch.sh` arranca desde `autostart` y aplica esta prioridad:
 
 1. **Auriculares de cable** (`analog-output-headphones`).
-2. **HDMI** (`output:hdmi-stereo`).
-3. **Altavoces analógicos**.
+2. **Audio USB** (auriculares con dongle inalámbrico, DAC o headset).
+3. **Bluetooth** (`bluez_output.*`).
+4. **HDMI** (`output:hdmi-stereo+input:analog-stereo`).
+5. **Altavoces analógicos**.
+
+El micrófono sigue al dispositivo: micro del jack > micro USB > micro
+Bluetooth (`bluez_input.*`) > micro interno. Con HDMI se mantiene el
+perfil duplex para no perder el micrófono interno.
 
 El watcher detecta las tarjetas/perfiles/puertos con `pactl`; no hardcodea
-nombres. Si el usuario tiene seleccionado un sink/source USB o Bluetooth,
-no lo pisa. Conserva volumen/mute y mueve los streams existentes.
+nombres. Solo reaplica la política cuando cambia el hardware conectado,
+así una elección manual en `pavucontrol` se respeta hasta el siguiente
+cambio. Conserva volumen/mute al cambiar de puerto en el mismo sink y
+mueve los streams existentes.
+
+Con Bluetooth, la música va en A2DP; cuando una aplicación graba,
+WirePlumber cambia a HFP/HSP y vuelve a A2DP al terminar. No se puede
+tener A2DP y micrófono a la vez: HFP baja la calidad mientras dura la
+grabación.
 
 Comandos manuales:
 
 ```sh
 ~/.config/bspwm/scripts/audio-switch.sh auto
 ~/.config/bspwm/scripts/audio-switch.sh headphones
+~/.config/bspwm/scripts/audio-switch.sh usb
+~/.config/bspwm/scripts/audio-switch.sh bluetooth
 ~/.config/bspwm/scripts/audio-switch.sh hdmi
 ~/.config/bspwm/scripts/audio-switch.sh analog
 ```
@@ -324,8 +340,8 @@ Si algo falla:
 | Atajo | Acción |
 |---|---|
 | `Super+Return` | kitty |
-| `Super+d` | rofi (drun) |
-| `Super+Shift+d` | rofi -show run |
+| `Super+d` | rofi -show run |
+| `Super+Shift+d` | rofi (drun) |
 | `Super+Shift+s` | scrot: seleccionar región y copiar al portapapeles |
 | `Super+Shift+p` | pcmanfm (pendiente de instalar) |
 | `Super+Shift+b` | brave-browser |
@@ -376,10 +392,10 @@ existentes `Ctrl+Tab`,
 `Ctrl+Tab` deja de cambiar de pestaña en el navegador (quedan
 `Ctrl+PageUp/PageDown`).
 
-`Super` es la tecla Windows. La barra muestra 13 módulos (14 si hay
+`Super` es la tecla Windows. La barra muestra 15 módulos (16 si hay
 backlight): logo StumbleUpon, escritorios dinámicos, pomodoro, temperatura, RAM,
-CPU, red, servicios, volumen, batería, fecha, actualizaciones y bandeja del
-sistema. La red muestra un solo `󰖩 connected` o
+CPU, red, Bluetooth, UFW, servicios, volumen, batería, fecha,
+actualizaciones y bandeja del sistema. La red muestra un solo `󰖩 connected` o
 `󰈀 connected`; Ethernet tiene prioridad si el cable está conectado. Si no
 hay conexión, muestra `󰖩 NoC` y sigue siendo clicable. Al hacer clic en el módulo se abre un menú
 WiFi para elegir y conectar una red. Las actualizaciones muestran calavera +
@@ -389,20 +405,34 @@ al hacer clic abre un menú para iniciarlos, detenerlos o reiniciarlos.
 El volumen llega como máximo a 120 % y sube/baja de 10 en 10. Las
 notificaciones críticas de dunst se cierran solas a los 10 s. El brillo
 aparece solo si el equipo tiene backlight y también cambia de 10 en 10.
+Bluetooth arranca **apagado** (`AutoEnable=false`) y muestra `off`, `on`
+o el dispositivo conectado (con batería si la informa); al hacer clic se
+abre un menú para encender/apagar, conectar/desconectar, escanear,
+emparejar, elegir el sink de audio y cambiar el perfil de audio
+(automático/A2DP/HFP). Al encender el adaptador reconecta los dispositivos
+de audio de confianza (`Icon: audio*`). Con el perfil automático, el
+micrófono del headset se activa solo mientras una aplicación graba y
+vuelve a A2DP al terminar. El audio Bluetooth usa `libspa-0.2-bluetooth` y
+`rtkit`; si el pareo falla, el error real queda en
+`~/.local/state/dwm-setup/bluetooth.log`. UFW
+muestra `on`/`off` y el número de reglas; su menú permite ver estado y
+reglas, activar, desactivar y recargar. UFW mantiene `22/tcp` permitido
+para no cambiar el acceso SSH.
 
 ### Variantes de polybar
 
 Hay dos barras instaladas:
 
-- **actual**: la barra compacta de 13 módulos (14 con backlight): logo,
+- **actual**: la barra compacta de 15 módulos (16 con backlight): logo,
   workspaces 1-7, updates, servicios, pomodoro, temperatura, RAM, CPU,
-  red, volumen, batería, fecha, bandeja del sistema y brillo opcional. En
-  monocle añade un contador `[N]` junto a los workspaces.
-- **referencia**: variante de 15 módulos (16 con backlight). Workspaces
+  red, Bluetooth, UFW, volumen, batería, fecha, bandeja del sistema y
+  brillo opcional. En monocle añade un contador `[N]` junto a los
+  workspaces.
+- **referencia**: variante de 17 módulos (18 con backlight). Workspaces
   como círculos al centro; a la izquierda `date`, `day`, **gobernador**, `updates`,
   pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
-  volumen, batería, bandeja del sistema y brillo opcional. En monocle, `[N]`
-  junto a los círculos de workspaces.
+  Bluetooth, UFW, volumen, batería, bandeja del sistema y brillo opcional.
+  En monocle, `[N]` junto a los círculos de workspaces.
   La bandeja usa XEmbed; Telegram/Discord modernos pueden no aparecer hasta
   añadir `snixembed`.
   Barra de 30 px con fondo sólido del modo activo, fuentes 10/13, iconos JBM y
@@ -650,11 +680,13 @@ lib/config.sh              Configs de usuario, wallpaper y binarios
 lib/fastfetch.sh           fastfetch y logos Neofet-{light,dark}.png
 lib/music.sh               yt-dlp oficial, scripts de streaming y teclas
 lib/brave.sh               Brave: repo APT, policies, atajos, temas y SurfingKeys
+lib/ufw.sh                 Firewall UFW: helper root, sudoers y reglas base
 lib/verify.sh              Verificación estática final
 lib/theme.sh               Paletas (Mocha Black, Latte) y render
 lib/audio.sh               Quirk ALC255 condicionado por hardware
 bin/desktop-safe           Acciones de sesión
 bin/desktop-doctor         Diagnóstico y cámara (POSIX sh)
+bin/dwm-setup-ufw          Helper root acotado del módulo UFW
 bin/theme-mode             Cambio dark/light en caliente
 bin/brave-theme            Asegura «Usar GTK» en Brave (sin sudo)
 bin/yt-play                Audio o vídeo de YouTube (URL o búsqueda con fzf)
@@ -734,7 +766,9 @@ docs/                      Hardware y testing
 - El quirk `alc255-asus` está condicionado a ASUS FX504GE/ALC255; en otros
   PCs no se aplica. Requiere reinicio y está pendiente de validación en
   hardware real.
-- Bluetooth queda fuera de fase 1; se configurará más adelante.
+- Bluetooth está incluido como módulo de polybar y menú de dispositivos.
+  El pareo con PIN puede requerir `bluetoothctl` en terminal; los
+  auriculares suelen usar Just Works.
 
 ## Documentación
 

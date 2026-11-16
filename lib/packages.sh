@@ -28,6 +28,7 @@ BUILD_PKGS=(
 
 AUDIO_PKGS=(
   pipewire pipewire-pulse pipewire-alsa wireplumber
+  libspa-0.2-bluetooth rtkit
   alsa-utils pavucontrol pulseaudio-utils pamixer sound-theme-freedesktop
   ffmpeg libavcodec-extra ffmpegthumbnailer
   gstreamer1.0-libav gstreamer1.0-plugins-base gstreamer1.0-plugins-good
@@ -66,7 +67,7 @@ DESKTOP_PKGS=(
 BROWSER_PKGS=()  # Brave se instala en lib/brave.sh (repo APT propio,
 # ADR-113)
 
-NETWORK_PKGS=(network-manager network-manager-gnome dbus-user-session dbus-x11)
+NETWORK_PKGS=(ufw network-manager network-manager-gnome dbus-user-session dbus-x11)
 
 FONT_PKGS=(
   fonts-jetbrains-mono fonts-font-awesome fonts-noto-color-emoji

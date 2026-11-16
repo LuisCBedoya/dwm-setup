@@ -69,6 +69,10 @@ source "$PROJECT_ROOT/lib/boot.sh"
 source "$PROJECT_ROOT/lib/power.sh"
 # shellcheck source=lib/fans.sh
 source "$PROJECT_ROOT/lib/fans.sh"
+# shellcheck source=lib/ufw.sh
+source "$PROJECT_ROOT/lib/ufw.sh"
+# shellcheck source=lib/bluetooth.sh
+source "$PROJECT_ROOT/lib/bluetooth.sh"
 # shellcheck source=lib/brave.sh
 source "$PROJECT_ROOT/lib/brave.sh"
 # shellcheck source=lib/verify.sh
@@ -222,8 +226,10 @@ check_project_layout() {
     "$PROJECT_ROOT/bin/desktop-safe"
     "$PROJECT_ROOT/bin/desktop-doctor"
     "$PROJECT_ROOT/bin/dwm-setup-cpu-governor"
+    "$PROJECT_ROOT/bin/dwm-setup-ufw"
     "$PROJECT_ROOT/templates/picom/picom.conf.in"
     "$PROJECT_ROOT/templates/sudoers/dwm-setup-cpu-governor.in"
+    "$PROJECT_ROOT/templates/sudoers/dwm-setup-ufw.in"
     "$PROJECT_ROOT/templates/systemd/dwm-setup-cpu-governor.service"
     "$PROJECT_ROOT/templates/polybar/modules/governor.ini.in"
     "$PROJECT_ROOT/templates/polybar/scripts/cpu-governor.sh.in"
@@ -283,6 +289,8 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/modules/cpu.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/xkeyboard.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/network.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/bluetooth.ini.in"
+    "$PROJECT_ROOT/templates/polybar/modules/ufw.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/services.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/brightness.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/battery.ini.in"
@@ -293,6 +301,10 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/scripts/polypomo.in"
     "$PROJECT_ROOT/templates/polybar/scripts/network-status.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/network-menu.sh.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/bluetooth-status.sh.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/bluetooth-menu.sh.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/ufw-status.sh.in"
+    "$PROJECT_ROOT/templates/polybar/scripts/ufw-menu.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/services.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/volume.sh.in"
     "$PROJECT_ROOT/templates/polybar/scripts/monocle-count.sh.in"
@@ -317,6 +329,8 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/temp.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/pipewire.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/network.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/bluetooth.ini.in"
+    "$PROJECT_ROOT/templates/polybar/variants/reference/modules/ufw.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/services.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/brightness.ini.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/memory.ini.in"
@@ -385,6 +399,8 @@ Variantes polybar:      ~/.config/polybar/polybar-variant actual|referencia
 Modo de color:          theme-mode dark|light|toggle|status
 Compositor:             picom (vsync + fade sutil; sin transparencias/sombras)
 Gobernador CPU:         módulo polybar governor (clic alterna; performance al boot)
+Firewall:               UFW activo · módulo polybar (SSH 22/tcp permitido)
+Bluetooth:              módulo polybar · apagado por defecto · menú y audio
 Música/streams:         yt-play [--audio|--video] <url | búsqueda> · ytdlp-check|update|rollback
 Buscador TUI:           ytwatch (terminal) · ytwatch-check|update · miniaturas: ueberzugpp
 Avisos YouTube:         timer de usuario (dunst) · systemctl --user list-timers
@@ -401,7 +417,8 @@ Próximo paso:
 
 Atajos principales:
   Super+Return      kitty
-  Super+d           rofi (drun)
+  Super+d           rofi (run)
+  Super+Shift+d     rofi (drun)
   Super+Shift+b     brave-browser
   Super+Shift+e     VS Code (no instalado en fase 1)
   Super+Shift+f     thunar
@@ -497,9 +514,13 @@ main() {
   fi
 
   install_packages
+  install_ufw
+  install_bluetooth_defaults
   install_brave
   install_gpu_configs
   install_headset_quirk
+  install_wireplumber_audio
+  restart_bluetooth_audio
   install_bspwm
   install_sxhkd
   install_polybar
