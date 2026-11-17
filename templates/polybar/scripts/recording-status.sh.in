@@ -1,0 +1,41 @@
+#!/bin/sh
+# recording-status — indicador de grabación para el módulo polybar recording.
+set -u
+
+state="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record"
+pidfile="$state/ffmpeg.pid"
+startfile="$state/start"
+hidden="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record-hidden"
+
+hide_module() {
+  [ -e "$hidden" ] && return 0
+  command -v polybar-msg >/dev/null 2>&1 || return 0
+  polybar-msg action "#recording.module_hide" >/dev/null 2>&1 || true
+  : >"$hidden" 2>/dev/null || true
+}
+
+if [ ! -s "$pidfile" ]; then
+  hide_module
+  exit 0
+fi
+
+pid=$(cat "$pidfile" 2>/dev/null || printf '')
+if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then
+  hide_module
+  exit 0
+fi
+rm -f "$hidden" 2>/dev/null || true
+
+start=$(cat "$startfile" 2>/dev/null || date +%s)
+now=$(date +%s)
+secs=$((now - start))
+[ "$secs" -ge 0 ] || secs=0
+h=$((secs / 3600))
+m=$(((secs % 3600) / 60))
+s=$((secs % 60))
+
+if [ "$h" -gt 0 ]; then
+  printf '%%{F@COLOR_RED@}●%%{F-} REC %d:%02d:%02d\n' "$h" "$m" "$s"
+else
+  printf '%%{F@COLOR_RED@}●%%{F-} REC %02d:%02d\n' "$m" "$s"
+fi

@@ -1,0 +1,194 @@
+#!/bin/sh
+# screen-record — graba la pantalla con ffmpeg; un solo atajo sirve para
+# empezar y para parar. El audio sale del monitor del sink por defecto,
+# que sigue la política de audio-watch (jack > USB/BT > HDMI > interno).
+set -u
+
+action="${1:-toggle}"
+state_dir="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record"
+pidfile="$state_dir/ffmpeg.pid"
+startfile="$state_dir/start"
+outfile="$state_dir/output"
+trayfile="$state_dir/tray.pid"
+logfile="$state_dir/ffmpeg.log"
+hidden_marker="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record-hidden"
+tray_app="$HOME/.config/bspwm/scripts/recording-tray.py"
+
+notify() {
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send -a "dwm-setup" -i "media-record" "$1" "${2:-}"
+}
+
+polybar_action() {
+  command -v polybar-msg >/dev/null 2>&1 || return 0
+  polybar-msg action "#recording.$1" >/dev/null 2>&1 || true
+}
+
+is_recording() {
+  [ -s "$pidfile" ] || return 1
+  pid=$(cat "$pidfile" 2>/dev/null || printf '')
+  [ -n "$pid" ] || return 1
+  kill -0 "$pid" 2>/dev/null
+}
+
+stop_recording() {
+  pid=""
+  [ -s "$pidfile" ] && pid=$(cat "$pidfile" 2>/dev/null || printf '')
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    kill -INT "$pid" 2>/dev/null || true
+    i=0
+    while kill -0 "$pid" 2>/dev/null && [ "$i" -lt 100 ]; do
+      sleep 0.1
+      i=$((i + 1))
+    done
+    kill -TERM "$pid" 2>/dev/null || true
+  fi
+
+  tray=""
+  [ -s "$trayfile" ] && tray=$(cat "$trayfile" 2>/dev/null || printf '')
+  [ -n "$tray" ] && kill "$tray" 2>/dev/null || true
+
+  out=""
+  [ -s "$outfile" ] && out=$(cat "$outfile" 2>/dev/null || printf '')
+  if [ -n "$out" ] && [ -s "$out" ]; then
+    notify "Grabación guardada" "$out"
+  else
+    notify "Grabación" "No se generó el archivo"
+  fi
+  rm -rf "$state_dir" 2>/dev/null || true
+  : >"$hidden_marker" 2>/dev/null || true
+  polybar_action module_hide
+}
+
+choose_monitor() {
+  all=$(xdpyinfo 2>/dev/null | awk '/dimensions:/{print $2; exit}')
+  menu=""
+  count=0
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    name=$(printf '%s\n' "$line" | awk '{print $2}')
+    name=$(printf '%s\n' "$name" | sed 's/^[+*]*//')
+    geom=$(printf '%s\n' "$line" | awk '{print $3}')
+    wh=$(printf '%s\n' "$geom" | sed -E 's#^([0-9]+)/[0-9]+x([0-9]+)/[0-9]+\+.*#\1x\2#')
+    [ -n "$wh" ] || wh="$all"
+    menu="$menu$name ($wh)|$name|$geom\n"
+    count=$((count + 1))
+  done <<EOF
+$(xrandr --listmonitors 2>/dev/null | tail -n +2)
+EOF
+
+  if [ "$count" -eq 0 ]; then
+    [ -n "$all" ] || return 1
+    selection="Todas ($all)|Todas|$all+0+0"
+  elif [ "$count" -eq 1 ]; then
+    selection=$(printf '%b' "$menu" | head -1)
+  else
+    [ -n "$all" ] && menu="$menu Todas ($all)|Todas|$all+0+0\n"
+    selection=$(printf '%b' "$menu" | rofi -dmenu -i -p "Grabar pantalla" -lines 10 2>/dev/null) || return 1
+    [ -n "$selection" ] || return 1
+  fi
+
+  name=$(printf '%s\n' "$selection" | cut -d'|' -f2)
+  geom=$(printf '%s\n' "$selection" | cut -d'|' -f3)
+  case "$name" in
+    Todas)
+      wh="$all"
+      x=0
+      y=0
+      ;;
+    *)
+      wh=$(printf '%s\n' "$geom" | sed -E 's#^([0-9]+)/[0-9]+x([0-9]+)/[0-9]+\+.*#\1x\2#')
+      x=$(printf '%s\n' "$geom" | sed -E 's#^.*\+([0-9]+)\+[0-9]+$#\1#')
+      y=$(printf '%s\n' "$geom" | sed -E 's#^.*\+[0-9]+\+([0-9]+)$#\1#')
+      ;;
+  esac
+  [ -n "$wh" ] && [ -n "$x" ] && [ -n "$y" ] || return 1
+  monitor_name="$name"
+  return 0
+}
+
+start_recording() {
+  if is_recording; then
+    notify "Grabación" "Ya está grabando"
+    return 0
+  fi
+  command -v ffmpeg >/dev/null 2>&1 || { notify "Grabación" "Falta ffmpeg"; return 1; }
+  command -v xrandr >/dev/null 2>&1 || { notify "Grabación" "Falta xrandr"; return 1; }
+
+  choose_monitor || { notify "Grabación" "No se eligió pantalla"; return 1; }
+
+  videos=$(xdg-user-dir VIDEOS 2>/dev/null || true)
+  case "$videos" in ""|"$HOME") videos="$HOME/Vídeos" ;; esac
+  mkdir -p "$videos/Grabaciones" 2>/dev/null || {
+    notify "Grabación" "No se pudo crear $videos/Grabaciones"
+    return 1
+  }
+  out="$videos/Grabaciones/grabacion-$(date +%Y-%m-%d_%H-%M-%S).mkv"
+
+  rm -rf "$state_dir" 2>/dev/null || true
+  rm -f "$hidden_marker" 2>/dev/null || true
+  mkdir -p "$state_dir" 2>/dev/null || return 1
+
+  sink=$(pactl get-default-sink 2>/dev/null || true)
+  display="${DISPLAY:-:0}"
+  case "$display" in *.*) ;; *) display="$display.0" ;; esac
+
+  launch() {
+    with_audio="$1"
+    set -- -hide_banner -loglevel error -f x11grab -framerate 30 \
+      -video_size "$wh" -i "${display}+${x},${y}"
+    if [ "$with_audio" -eq 1 ] && [ -n "$sink" ]; then
+      set -- "$@" -f pulse -i "${sink}.monitor" -c:a aac -b:a 160k
+    fi
+    set -- "$@" -c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p -y "$out"
+    if command -v nice >/dev/null 2>&1; then
+      nohup nice -n 10 ffmpeg "$@" >"$logfile" 2>&1 &
+    else
+      nohup ffmpeg "$@" >"$logfile" 2>&1 &
+    fi
+    launched_pid=$!
+  }
+
+  launch 1
+  pid="$launched_pid"
+  printf '%s\n' "$pid" >"$pidfile"
+  date +%s >"$startfile"
+  printf '%s\n' "$out" >"$outfile"
+  sleep 0.6
+
+  if ! kill -0 "$pid" 2>/dev/null; then
+    rm -f "$out"
+    launch 0
+    pid="$launched_pid"
+    printf '%s\n' "$pid" >"$pidfile"
+    sleep 0.5
+    if ! kill -0 "$pid" 2>/dev/null; then
+      notify "Grabación" "ffmpeg no pudo iniciar (ver $logfile)"
+      rm -rf "$state_dir" 2>/dev/null || true
+      return 1
+    fi
+    notify "Grabando (solo vídeo)" "$monitor_name · $out"
+  else
+    notify "Grabando pantalla" "$monitor_name · $out"
+  fi
+
+  if [ -x "$tray_app" ] && command -v python3 >/dev/null 2>&1 &&
+     xprop -root 2>/dev/null | grep -q '_NET_SYSTEM_TRAY_S[0-9]'; then
+    nohup python3 "$tray_app" >/dev/null 2>&1 &
+    printf '%s\n' "$!" >"$trayfile"
+  fi
+  polybar_action module_show
+  return 0
+}
+
+case "$action" in
+  toggle)
+    if is_recording; then stop_recording; else start_recording; fi
+    ;;
+  start) start_recording ;;
+  stop) stop_recording ;;
+  *)
+    printf 'Uso: %s {toggle|start|stop}\n' "$0" >&2
+    exit 1
+    ;;
+esac

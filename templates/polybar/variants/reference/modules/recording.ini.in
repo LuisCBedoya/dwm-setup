@@ -1,0 +1,12 @@
+; recording — indicador de grabación de pantalla
+[module/recording]
+type = custom/script
+exec = ~/.config/polybar/scripts/recording-status.sh
+interval = 1
+format = <label>
+label = %output%
+format-padding = 2
+format-margin = 0
+format-background = ${colors.module-bg}
+format-foreground = ${colors.foreground}
+format-font = 1

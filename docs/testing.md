@@ -472,6 +472,7 @@ Criterios de aceptación:
 | `Super+Shift+i` | ristretto | Pendiente de instalar ristretto |
 | `Super+Shift+a` | lxappearance | Pendiente de instalar lxappearance |
 | `Super+Shift+f` | Thunar | Abre gestor |
+| `Super+Shift+g` | grabar pantalla | Alterna empezar/parar; el módulo aparece solo mientras graba |
 | `Super+Shift+l` | lock | Bloquea |
 | `Super+Shift+e` | logout | Cierra la sesión |
 | `Super+Shift+c` | reload | Recarga sxhkd/bspwm |
@@ -488,7 +489,7 @@ Criterios de aceptación:
 | `Super+{1-7}` | escritorios | Cambia escritorio |
 | `Super+r`, luego `h/j/k/l` | resize | Modo resize; Escape o 6 s sale |
 | `Print` | captura completa | Copia al portapapeles y muestra miniatura |
-| `Super+Print` | menú de capturas | Abre el menú y permite guardar en `~/Pictures/Screenshots` |
+| `Super+Print` | menú de capturas | Abre el menú y permite guardar en `~/Imágenes/Capturas` |
 | `XF86Audio*` | volumen | pamixer |
 | `XF86MonBrightness*` | brillo | brightnessctl |
 
@@ -561,6 +562,61 @@ Criterios:
   dejar temporales en `/tmp/scrot.*`. `Super+Print` debe seguir abriendo el
   menú de capturas.
 - En un PC sin HDMI/auriculares o en VM, el watcher no falla.
+
+## 6c. Grabación de pantalla
+
+Directorios y dependencias:
+
+```sh
+ls -ld ~/Descargas ~/Documentos ~/Imágenes ~/Imágenes/Capturas \
+  ~/Música ~/Vídeos ~/Vídeos/Grabaciones
+cat ~/.config/user-dirs.dirs
+ls -l ~/.config/bspwm/scripts/screen-record.sh \
+  ~/.config/bspwm/scripts/recording-tray.py \
+  ~/.config/polybar/scripts/recording-status.sh
+grep -n 'super + shift + g' -A1 ~/.config/sxhkd/sxhkdrc
+```
+
+Prueba con el atajo (la misma tecla inicia y para):
+
+```sh
+# 1. Pulsar Super+Shift+G → notificación "Grabando pantalla"
+# 2. Esperar unos segundos (el módulo polybar muestra ● REC mm:ss)
+# 3. Pulsar Super+Shift+G otra vez → "Grabación guardada"
+
+ls -lh ~/Vídeos/Grabaciones/
+ffprobe -v error -show_entries stream=codec_type,codec_name \
+  -of default=nw=1 "$(ls -t ~/Vídeos/Grabaciones/*.mkv | head -1)"
+```
+
+Criterios:
+
+- El archivo se llama `grabacion-YYYY-MM-DD_HH-MM-SS.mkv` y contiene
+  `h264` + `aac`.
+- `ps -o ni= -p "$(cat "${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record/ffmpeg.pid")"`
+  debe devolver `10`: ffmpeg corre con prioridad baja para no competir
+  con el escritorio.
+- El audio sale del **monitor del sink por defecto**, que sigue la política
+  de `audio-watch.sh` (jack > USB > Bluetooth > HDMI > altavoces). Se puede
+  comprobar con `pactl get-default-sink`.
+- El módulo `recording` de polybar solo se ve mientras dura la grabación:
+  punto `●` rojo, `REC` y el tiempo en el color de texto normal, con el
+  mismo fondo y padding que el resto de módulos. Al parar desaparece
+  (`module_hide`); al empezar reaparece (`module_show`). Si `ffmpeg`
+  muere solo, el módulo se oculta en el siguiente ciclo.
+- Con un solo monitor empieza directo; con varios abre un menú rofi con
+  nombre y resolución de cada pantalla (y una opción «Todas»).
+- Si `ffmpeg` no puede abrir el monitor de audio, reintenta solo con vídeo
+  y avisa «Grabando (solo vídeo)».
+- Parar dos veces no duplica notificaciones ni deja procesos `ffmpeg`.
+
+Prueba desde la terminal (sin atajo):
+
+```sh
+~/.config/bspwm/scripts/screen-record.sh start
+~/.config/bspwm/scripts/screen-record.sh stop
+~/.config/bspwm/scripts/screen-record.sh toggle
+```
 
 Quirk ALC255 (solo ASUS FX504GE/ALC255):
 

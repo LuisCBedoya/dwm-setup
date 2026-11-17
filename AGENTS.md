@@ -17,7 +17,7 @@ caliente mediante `xsettingsd` (ADR-115). **Bluetooth** está incluido
 como módulo polybar y menú de dispositivos (bluez ya estaba instalado);
 **UFW** se instala activo con `allow 22/tcp` y módulo de estado/control.
 
-La barra final es la de la config viva: **15 módulos** (**16 con backlight**),
+La barra final es la de la config viva: **16 módulos** (**17 con backlight**),
 logo StumbleUpon
 (`U+F1A4`), escritorios dinámicos (solo los existentes), actualizaciones al inicio de la derecha, fecha al final,
 red unificada (`󰖩/󰈀 connected`, Ethernet prioritario, `󰖩 NoC` sin conexión), Bluetooth
@@ -32,7 +32,7 @@ nuevo marginal): `cpu` cierra en `%{O2}`, `governor` añade `%{O5}` y
 `pipewire` lleva `format-padding 2` en ambas variantes (en la B,
 `memory` padding 1).
 
-Hay una **variante B "referencia"** instalada aparte: 17 módulos (18 con
+Hay una **variante B "referencia"** instalada aparte: 18 módulos (19 con
 backlight), escritorios dinámicos como círculos al centro; a la izquierda `date`, `day`,
 gobernador, `updates`,
 pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU,
@@ -112,7 +112,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
     abre el modo resize: `resize-mode.sh` arranca un sxhkd hijo que captura
     solo `h/j/k/l` y `Escape`; `Escape` o 6 s sin teclas lo cierran.
     `Print` captura pantalla completa al portapapeles; `Super+Print` abre el
-    menú de capturas. `Super+Alt+p` cicla A arriba → A abajo → B arriba → B abajo.
+    menú de capturas. `Super+Shift+G` alterna empezar/parar la grabación
+    de pantalla (`screen-record.sh toggle`). `Super+Alt+p` cicla A arriba → A abajo → B arriba → B abajo.
     `Super+Alt+t` alterna Catppuccin Mocha Black / Latte (`theme-mode toggle`).
     `Ctrl+Space` alterna flotante/tiled (además de `Super+Shift+Space`).
     Los argumentos `~...` de bspwm en `sxhkdrc` van entre comillas
@@ -431,6 +432,31 @@ La fase 1 termina en el escritorio. No implementar todavía:
     panel). El fondo de `window` y los elementos transparentes son
     necesarios para que el borde siga las esquinas.
 
+30. **Directorios XDG y grabación de pantalla (ADR-124).** `ensure_user_dirs`
+    (`lib/config.sh`) ejecuta `xdg-user-dirs-update` con el locale del
+    sistema y crea `Imágenes/Capturas` y `Vídeos/Grabaciones`; los
+    `Downloads`/`Pictures` antiguos se conservan y no se borran.
+    `screen-record.sh` (`toggle|start|stop`) graba con `ffmpeg`
+    (`x11grab` + `libx264` + `aac`, `nice -n 10` para no competir con el
+    escritorio) el monitor elegido: con uno empieza
+    directo y con varios abre un menú rofi con nombre/resolución y
+    «Todas». El audio es el monitor del **sink por defecto**, así que
+    hereda la política de `audio-watch.sh` (jack > USB/BT > HDMI >
+    interno); si el audio falla, reintenta solo vídeo y lo avisa. El
+    archivo va a `~/Vídeos/Grabaciones/grabacion-YYYY-MM-DD_HH-MM-SS.mkv`
+    y el estado a `$XDG_RUNTIME_DIR/dwm-screen-record`. El indicador es
+    el módulo `recording` de polybar (`● REC` + tiempo) en A y B; solo el
+    punto va en rojo y el módulo se oculta con `module_hide` al parar y se
+    muestra con `module_show` al empezar (también desde `launch.sh`). En B
+    usa `format-background = ${colors.module-bg}` y `format-padding = 2`
+    para igualar al resto; el
+    `Gtk.StatusIcon` de `recording-tray.py` es opcional y solo arranca si
+    existe `_NET_SYSTEM_TRAY_S*` (el tray de polybar no está activo por
+    `override-redirect = true`). Atajo único `Super+Shift+G`.
+    `recording-status.sh` lleva colores de paleta (store de `theme-mode`).
+    `verify.sh` exige scripts, `xdg-user-dir`, `xrandr`, `python3`,
+    directorios y binding.
+
 ## Estructura relevante
 
 | Archivo | Responsabilidad |
@@ -466,9 +492,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
 | `bin/dwm-setup-cpu-governor` | Helper root del módulo governor: valida y escribe `scaling_governor` |
 | `bin/dwm-setup-ufw` | Helper root acotado del módulo UFW (`status/enable/disable/reload/rules`) |
-| `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults y workspace.sh, ADR-112) |
+| `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults, workspace.sh ADR-112, screen-record.sh y recording-tray.py ADR-124) |
 | `templates/sxhkd/` | sxhkdrc |
-| `templates/polybar/` | config.ini, modules/ (governor, ufw, bluetooth), scripts/ (incl. temp-status) y variants/ |
+| `templates/polybar/` | config.ini, modules/ (governor, ufw, bluetooth, recording), scripts/ (incl. temp-status y recording-status) y variants/ |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
 | `templates/rofi/` | powermenu.rasi y config.rasi |
 | `templates/kitty/` | kitty.conf y colorshemes/ |
@@ -531,7 +557,8 @@ sh -n templates/polybar/scripts/cpu-governor.sh.in
 sh -n templates/polybar/scripts/ufw-status.sh.in \
   templates/polybar/scripts/ufw-menu.sh.in \
   templates/polybar/scripts/bluetooth-status.sh.in \
-  templates/polybar/scripts/bluetooth-menu.sh.in
+  templates/polybar/scripts/bluetooth-menu.sh.in \
+  templates/polybar/scripts/recording-status.sh.in
 bash -n bin/theme-mode bin/brave-theme
 bash -n bin/yt-play bin/yt-preview bin/ytdlp-check bin/ytdlp-update \
   bin/ytdlp-rollback bin/music-ctl bin/ytwatch-check bin/ytwatch-update \
@@ -540,8 +567,10 @@ bash -n templates/bspwm/autostart.in templates/bspwm/bspwmrc.in
 sh -n templates/bspwm/scripts/workspace.sh.in \
   templates/bspwm/scripts/audio-watch.sh.in \
   templates/bspwm/scripts/audio-switch.sh.in \
+  templates/bspwm/scripts/screen-record.sh.in \
   templates/polybar/scripts/temp-status.sh.in \
   templates/mpv/mpv-wrapper.sh
+python3 -c "compile(open('templates/bspwm/scripts/recording-tray.py.in', encoding='utf-8').read(), 'recording-tray.py', 'exec')"
 
 # Gobernador: lista oficial y sudoers renderizado (sin tocar el sistema)
 sh -n bin/dwm-setup-cpu-governor bin/dwm-setup-ufw
@@ -655,6 +684,15 @@ desktop-doctor --camera
   Bluetooth arranca apagado (`AutoEnable=false`) y el servicio sigue
   activo. Simulado y `--dry-run` OK; pendiente `sudo ./install.sh` y
   prueba en vivo de SSH/DHCP, auriculares y barra A/B.
+- Directorios XDG + grabación (2026-11-16, ADR-124): `ensure_user_dirs`
+  crea `Imágenes/Capturas` y `Vídeos/Grabaciones` con
+  `xdg-user-dirs-update` en `es_CO.UTF-8`. `screen-record.sh toggle`
+  graba con `ffmpeg` (`nice -n 10`) el monitor elegido (menú rofi solo con varios) y el
+  audio del sink por defecto; `Super+Shift+G` inicia y para, y el módulo
+  `recording` de polybar muestra `● REC` + tiempo (solo el punto rojo) y
+  desaparece al parar. Prueba en vivo:
+  `h264` + `aac`, 3,6 s, audio por HDMI y módulo correcto. Pendiente
+  probar multi-monitor y Bluetooth.
 - Falta validar una instalación desde cero en VM Debian 13 y subir el repo.
 - `PROGRESS.md` contiene la lista de pruebas y bloqueos.
 - Si se completa una prueba real, actualizar `PROGRESS.md` y

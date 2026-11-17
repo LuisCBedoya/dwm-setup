@@ -117,7 +117,8 @@ check_file "$HOME/.gtkrc-2.0"
 check_file "$HOME/.xinitrc"
 check_file "$HOME/.local/share/wallpapers/wallpaper.png"
 check_file "$HOME/.local/share/wallpapers/wallpaper-alt.png"
-check_dir "$HOME/Pictures/Screenshots"
+shot_dir=$(xdg-user-dir PICTURES 2>/dev/null || printf '%s' "$HOME/Imágenes")
+check_dir "$shot_dir/Capturas"
 
 if [ -f "$CONFIG/vlc/vlcrc" ]; then
   if grep -qx 'qt-dark-palette=1' "$CONFIG/vlc/vlcrc" 2>/dev/null; then

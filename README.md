@@ -19,7 +19,7 @@ Incluido:
 - Debian 13 minimal, x86_64.
 - Xorg + **startx** (sin display manager).
 - **bspwm** + **sxhkd**.
-- **polybar** con **15 módulos** (16 con backlight), más la bandeja del
+- **polybar** con **16 módulos** (17 con backlight), más la bandeja del
   sistema (XEmbed): logo StumbleUpon, escritorios dinámicos, pomodoro, temperatura,
   RAM, CPU, **gobernador de CPU** (clic alterna performance/powersave + notificación),
   red unificada (`󰖩/󰈀 connected`, `󰖩 NoC` sin conexión), **Bluetooth**
@@ -51,6 +51,16 @@ Incluido:
   suspensión usan el wallpaper del modo (`light`/`dark`) desenfocado
   (`i3lock -i`, `-blur 0x18`) y cacheado; no se captura la pantalla en
   cada bloqueo.
+- Directorios XDG (`Descargas`, `Documentos`, `Imágenes`, `Música`,
+  `Vídeos`, etc.) creados por el instalador. Capturas en
+  `~/Imágenes/Capturas` y grabaciones en `~/Vídeos/Grabaciones`; los
+  `Downloads`/`Pictures` antiguos se conservan.
+- Grabación de pantalla con **`Super+Shift+G`**: alterna empezar/parar,
+  graba el monitor elegido (menú si hay varios), usa el audio del **sink
+  por defecto** (jack > USB/BT > HDMI > interno) y guarda
+  `grabacion-YYYY-MM-DD_HH-MM-SS.mkv`. Muestra un `● REC` (punto rojo,
+  texto normal) en el módulo `recording` de polybar, que solo aparece
+  mientras grabas.
 - Pantalla siempre encendida: sin salvapantallas ni DPMS por inactividad.
   El bloqueo manual (`Super+Shift+L`) y el de suspensión siguen activos.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
@@ -204,7 +214,7 @@ y `--debug`.
 6. **Configuración**: renderiza bspwm, sxhkd, polybar, dunst, rofi, kitty
    y xsettingsd con la paleta activa (Mocha Black por defecto), el CSS de
    GTK y los defaults de Thunar; instala `.xinitrc`, wallpaper,
-   `~/Pictures/Screenshots`, `desktop-safe` y `desktop-doctor`.
+   `~/Imágenes/Capturas`, `desktop-safe` y `desktop-doctor`.
 7. **Limpieza de restos**: retira restos de la barra anterior (`DesktopLogo`)
    con backup previo.
 8. **Verificación**: comprueba binarios, ficheros, módulos de polybar,
@@ -360,6 +370,7 @@ Si algo falla:
 | `Super+d` | rofi -show run |
 | `Super+Shift+d` | rofi (drun) |
 | `Super+Shift+s` | scrot: seleccionar región y copiar al portapapeles |
+| `Super+Shift+g` | grabar pantalla: empezar / parar (misma tecla) |
 | `Super+Shift+p` | pcmanfm (pendiente de instalar) |
 | `Super+Shift+b` | brave-browser |
 | `Super+Shift+v` | codium (pendiente; no está en Debian) |
@@ -409,9 +420,9 @@ existentes `Ctrl+Tab`,
 `Ctrl+Tab` deja de cambiar de pestaña en el navegador (quedan
 `Ctrl+PageUp/PageDown`).
 
-`Super` es la tecla Windows. La barra muestra 15 módulos (16 si hay
+`Super` es la tecla Windows. La barra muestra 16 módulos (17 si hay
 backlight): logo StumbleUpon, escritorios dinámicos, pomodoro, temperatura, RAM,
-CPU, red, Bluetooth, UFW, servicios, volumen, batería, fecha,
+CPU, red, Bluetooth, UFW, servicios, volumen, batería, fecha, grabación,
 actualizaciones y bandeja del sistema. La temperatura es la del paquete
 real (`coretemp`, `Package id 0`), no la zona ACPI. La red muestra un
 solo `󰖩 connected` o
@@ -442,15 +453,16 @@ para no cambiar el acceso SSH.
 
 Hay dos barras instaladas:
 
-- **actual**: la barra compacta de 15 módulos (16 con backlight): logo,
+- **actual**: la barra compacta de 16 módulos (17 con backlight): logo,
   workspaces 1-7, updates, servicios, pomodoro, temperatura, RAM, CPU,
-  red, Bluetooth, UFW, volumen, batería, fecha, bandeja del sistema y
-  brillo opcional. En monocle añade un contador `[N]` junto a los
+  red, Bluetooth, UFW, volumen, batería, fecha, grabación, bandeja del
+  sistema y brillo opcional. En monocle añade un contador `[N]` junto a los
   workspaces.
-- **referencia**: variante de 17 módulos (18 con backlight). Workspaces
+- **referencia**: variante de 18 módulos (19 con backlight). Workspaces
   como círculos al centro; a la izquierda `date`, `day`, **gobernador**, `updates`,
   pomodoro y `der`; a la derecha `izq`, servicios, temperatura, RAM, CPU, red,
-  Bluetooth, UFW, volumen, batería, bandeja del sistema y brillo opcional.
+  Bluetooth, UFW, volumen, batería, grabación, bandeja del sistema y brillo
+  opcional.
   En monocle, `[N]` junto a los círculos de workspaces.
   La bandeja usa XEmbed; Telegram/Discord modernos pueden no aparecer hasta
   añadir `snixembed`.

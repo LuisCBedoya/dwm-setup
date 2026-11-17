@@ -1,13 +1,37 @@
 #!/usr/bin/env bash
 # Instalación de configuraciones de usuario y de sesión (fase 1b: bspwm+polybar).
 
+# Crea los directorios XDG del usuario (Descargas, Documentos, Imágenes...).
+ensure_user_dirs() {
+  local home="$TARGET_HOME" pictures videos locale
+  locale=$(sed -n 's/^LANG=//p' /etc/default/locale 2>/dev/null | tr -d '"' | head -1)
+  [ -n "$locale" ] ||
+    locale=$(run_user sh -lc 'locale 2>/dev/null | sed -n "s/^LANG=//p"' 2>/dev/null | head -1)
+  [ -n "$locale" ] || locale="${LANG:-es_CO.UTF-8}"
+
+  if cmd_exists xdg-user-dirs-update; then
+    run_user env LANG="$locale" LC_ALL="$locale" xdg-user-dirs-update >/dev/null 2>&1 ||
+      warn "xdg-user-dirs-update falló; se usan rutas por defecto"
+  else
+    warn "xdg-user-dirs-update no está; se usan rutas por defecto"
+  fi
+
+  pictures=$(run_user xdg-user-dir PICTURES 2>/dev/null || true)
+  videos=$(run_user xdg-user-dir VIDEOS 2>/dev/null || true)
+  case "$pictures" in ""|"$home") pictures="$home/Imágenes" ;; esac
+  case "$videos" in ""|"$home") videos="$home/Vídeos" ;; esac
+  make_user_dir "$pictures/Capturas"
+  make_user_dir "$videos/Grabaciones"
+  info "Directorios: $pictures/Capturas y $videos/Grabaciones"
+}
+
 install_user_configs() {
   section "Configuración del escritorio"
   local home="$TARGET_HOME"
 
   if dry_run; then
     log "[dry-run] instalar ~/.config/{bspwm,sxhkd,polybar,dunst,rofi,kitty}"
-    log "[dry-run] instalar ~/.xinitrc, wallpaper y ~/Pictures/Screenshots"
+    log "[dry-run] instalar ~/.xinitrc, wallpaper y directorios XDG (Imágenes/Capturas, Vídeos/Grabaciones)"
     log "[dry-run] preparar ~/.local/share/xorg (0700) para el log de Xorg sin root"
     log "[dry-run] instalar /usr/local/bin/desktop-safe, desktop-doctor y theme-mode"
     log "[dry-run] instalar plantillas y paletas en ~/.local/share/dwm-setup"
@@ -28,7 +52,7 @@ install_user_configs() {
   make_user_dir "$home/.config/kitty"
   make_user_dir "$home/.local/share"
   make_user_dir "$home/.local/share/wallpapers"
-  make_user_dir "$home/Pictures/Screenshots"
+  ensure_user_dirs
   # Xorg log dir (para startx sin root)
   run_root install -d -m 0700 -o "$TARGET_USER" -g "$TARGET_GROUP" \
     "$home/.local/share/xorg"
@@ -131,6 +155,7 @@ install_theme_store() {
     "templates/polybar/scripts/fan-mode.sh.in"
     "templates/polybar/scripts/ufw-status.sh.in"
     "templates/polybar/scripts/bluetooth-status.sh.in"
+    "templates/polybar/scripts/recording-status.sh.in"
     "templates/picom/picom.conf.in"
     "templates/kitty/kitty.conf.in"
     "templates/kitty/colorshemes/monochromatic.conf.in"

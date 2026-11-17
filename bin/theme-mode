@@ -130,6 +130,8 @@ render_mode() {
     "$h/.config/polybar/scripts/ufw-status.sh" 0755
   render_one "polybar/scripts/bluetooth-status.sh.in" \
     "$h/.config/polybar/scripts/bluetooth-status.sh" 0755
+  render_one "polybar/scripts/recording-status.sh.in" \
+    "$h/.config/polybar/scripts/recording-status.sh" 0755
   render_one "picom/picom.conf.in" "$h/.config/picom/picom.conf" 0644
   render_one "kitty/kitty.conf.in" "$h/.config/kitty/kitty.conf" 0644
   render_one "kitty/colorshemes/monochromatic.conf.in" \

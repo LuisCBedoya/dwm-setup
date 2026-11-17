@@ -84,4 +84,26 @@ esac
 exec 9>&-
 polybar -r main -c "$CONFIG" &
 
+# El indicador de grabación solo ocupa sitio mientras se graba.
+record_pidfile="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record/ffmpeg.pid"
+record_pid=""
+if [ -s "$record_pidfile" ]; then
+  record_pid=$(cat "$record_pidfile" 2>/dev/null || printf '')
+fi
+if [ -n "$record_pid" ] && kill -0 "$record_pid" 2>/dev/null; then
+  record_state=module_show
+else
+  record_state=module_hide
+fi
+record_tries=0
+if command -v polybar-msg >/dev/null 2>&1; then
+  while [ "$record_tries" -lt 30 ]; do
+    if polybar-msg action "#recording.$record_state" >/dev/null 2>&1; then
+      break
+    fi
+    record_tries=$((record_tries + 1))
+    sleep 0.1
+  done
+fi
+
 echo "Polybar iniciado"

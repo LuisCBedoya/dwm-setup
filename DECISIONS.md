@@ -914,7 +914,7 @@ decisión; el atajo `Super+Shift+b` se queda como no-op.
   portapapeles; una terminal normal no pega imágenes.
 - Scrot no dibuja flechas ni texto; para eso queda flameshot manual.
 - El script es POSIX sh y se instala con el resto de scripts de bspwm.
-- No queda basura en `/tmp` ni en `~/Pictures/Screenshots` por esta captura.
+- No queda basura en `/tmp` ni en `~/Imágenes/Capturas` por esta captura.
 
 ## ADR-037 — Audio HDMI/auriculares, sonido dunst y quirk ALC255
 
@@ -3124,3 +3124,46 @@ sensible.
   desenfocar.
 - El bloqueo manual y el de suspensión usan el mismo camino.
 - Cambiar de tema (`Super+Alt+t`) no revierte el locker al color sólido.
+
+## ADR-124 — Directorios XDG y grabación de pantalla con un solo atajo
+
+**Contexto:** el instalador solo creaba `~/Pictures/Screenshots` en inglés
+y no había forma de grabar la pantalla. El usuario quería los directorios
+XDG estándar en español, un único atajo que iniciara y parara la
+grabación (rápido como `scrot`), elegir monitor cuando hay varios,
+guardar con fecha/hora en `Vídeos` y ver el estado en la barra. El audio
+debía seguir la misma prioridad que el escritorio (jack > USB/Bluetooth >
+HDMI > interno).
+
+**Decisión:**
+1. `ensure_user_dirs` ejecuta `xdg-user-dirs-update` con el locale del
+   sistema (`es_CO.UTF-8`) y crea `Imágenes/Capturas` y
+   `Vídeos/Grabaciones`. Los `Downloads`/`Pictures` existentes no se
+   borran.
+2. La grabación usa `ffmpeg` (`x11grab` + `libx264` + `aac`), no
+   SimpleScreenRecorder.
+3. `screen-record.sh` acepta `toggle|start|stop`; guarda PID y estado en
+   `$XDG_RUNTIME_DIR/dwm-screen-record`, y el archivo en
+   `grabacion-YYYY-MM-DD_HH-MM-SS.mkv`.
+4. Con un solo monitor empieza directo; con varios abre un menú `rofi`
+   con cada monitor y una opción «Todas». La geometría sale de
+   `xrandr --listmonitors`.
+5. El audio es el monitor del **sink por defecto**, por lo que hereda la
+   política de `audio-watch.sh` sin duplicarla. Si el monitor de audio
+   falla, reintenta solo vídeo y lo notifica.
+6. El indicador es un módulo `recording` de polybar (`● REC` + tiempo),
+   presente en las variantes A y B. El tray `Gtk.StatusIcon` queda como
+   apoyo opcional: solo arranca si existe un `_NET_SYSTEM_TRAY_S*`
+   (el tray de polybar no está activo por `override-redirect = true`).
+7. Atajo `Super+Shift+G`; `verify.sh` exige los scripts, `xdg-user-dir`,
+   `xrandr`, `python3` y el binding.
+
+**Consecuencias:**
+- Grabar y parar usa la misma tecla y no abre ninguna ventana con un solo
+  monitor.
+- El archivo queda con audio del dispositivo que esté sonando en ese
+  momento; si se cambia de sink a mitad de grabación, la pista sigue en
+  el sink elegido al empezar.
+- El módulo `recording` ocupa un hueco fijo en la barra (vacío al no
+  grabar); no se añadió un systray real porque polybar no lo expone.
+- `ani-cli`/`ani-es` siguen fuera del proyecto.

@@ -30,6 +30,9 @@ super + shift + a
 super + shift + s
     @HOME@/.config/bspwm/scripts/screenshot_region.sh
 
+super + shift + g
+    @HOME@/.config/bspwm/scripts/screen-record.sh toggle
+
 super + shift + f
     @FILEMGR@
 

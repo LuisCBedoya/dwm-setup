@@ -32,7 +32,8 @@ if [ -x "$HOME/.config/bspwm/scripts/display-setup.sh" ]; then
 fi
 
 # --- Directorios de usuario ---
-mkdir -p "$HOME/Pictures/Screenshots" 2>/dev/null || true
+SHOT_DIR="$(xdg-user-dir PICTURES 2>/dev/null || printf '%s' "$HOME/Imágenes")/Capturas"
+mkdir -p "$SHOT_DIR" 2>/dev/null || true
 
 # --- XSettings: tema e iconos GTK del modo activo ---
 # xsettingsd no se daemoniza: se lanza en segundo plano y theme-mode lo

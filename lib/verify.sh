@@ -5,11 +5,16 @@ verify_install() {
   section "Verificación final"
   local failures=0
   local home="$TARGET_HOME"
-  local path module line
+  local path module line shot_dir videos_dir
+  shot_dir=$(HOME="$home" XDG_CONFIG_HOME="$home/.config" xdg-user-dir PICTURES 2>/dev/null || true)
+  case "$shot_dir" in ""|"$home") shot_dir="$home/Imágenes" ;; esac
+  videos_dir=$(HOME="$home" XDG_CONFIG_HOME="$home/.config" xdg-user-dir VIDEOS 2>/dev/null || true)
+  case "$videos_dir" in ""|"$home") videos_dir="$home/Vídeos" ;; esac
 
   for cmd in bspwm sxhkd polybar picom xsettingsd ufw bluetoothctl dunst rofi feh kitty flameshot i3lock \
     xss-lock convert brightnessctl xclip xdotool thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay \
-    xwallpaper playerctl nvim zsh lsd ranger zathura vlc ueberzug fastfetch mpv fzf chafa; do
+    xwallpaper playerctl nvim zsh lsd ranger zathura vlc ueberzug fastfetch mpv fzf chafa \
+    xdg-user-dir xrandr python3; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
@@ -204,7 +209,8 @@ verify_install() {
     "$home/.local/share/wallpapers/wallpaper.png" \
     "$home/.local/share/wallpapers/wallpaper-alt.png" \
     "$home/.local/share/xorg" \
-    "$home/Pictures/Screenshots" \
+    "$shot_dir/Capturas" \
+    "$videos_dir/Grabaciones" \
     "/usr/local/bin/desktop-safe" \
     "/usr/local/bin/desktop-doctor" \
     "/usr/local/bin/dwm-setup-ufw" \
@@ -249,6 +255,7 @@ verify_install() {
     "$home/.config/gtk-3.0/gtk.css" \
     "$home/.config/gtk-4.0/gtk.css"
     "$home/.config/zathura/zathurarc"
+    "$home/.config/polybar/scripts/recording-status.sh"
   )
 
   # Bloqueo: imagen del wallpaper del modo desenfocada, sin captura por bloqueo.
@@ -257,6 +264,29 @@ verify_install() {
     failures=$((failures + 1))
   elif ! grep -q 'i3lock -i' "$home/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh"; then
     error "i3lock-fancy.sh no usa i3lock -i (bloqueo con blur estático)"
+    failures=$((failures + 1))
+  fi
+
+  for screen_file in "$home/.config/bspwm/scripts/screen-record.sh" \
+                     "$home/.config/bspwm/scripts/recording-tray.py" \
+                     "$home/.config/polybar/scripts/recording-status.sh"; do
+    if [[ ! -x "$screen_file" ]]; then
+      error "Falta $screen_file (grabación de pantalla)"
+      failures=$((failures + 1))
+    fi
+  done
+  if ! grep -q '^super + shift + g$' "$home/.config/sxhkd/sxhkdrc" 2>/dev/null; then
+    error "sxhkd no tiene Super+Shift+G para grabar pantalla"
+    failures=$((failures + 1))
+  fi
+  if ! grep -q 'module_show' "$home/.config/bspwm/scripts/screen-record.sh" 2>/dev/null ||
+     ! grep -q 'module_hide' "$home/.config/bspwm/scripts/screen-record.sh" 2>/dev/null; then
+    error "screen-record.sh no oculta/muestra el módulo recording de polybar"
+    failures=$((failures + 1))
+  fi
+  if ! grep -q 'format-background = ${colors.module-bg}' \
+      "$home/.config/polybar/variants/reference/modules/recording.ini" 2>/dev/null; then
+    error "El módulo recording de la variante B no usa el fondo del resto"
     failures=$((failures + 1))
   fi
 
@@ -1067,7 +1097,7 @@ PYCHK
     "$home/.config-backup" \
     "$home/.cache" \
     "$home/.xinitrc" \
-    "$home/Pictures/Screenshots"; do
+    "$shot_dir/Capturas"; do
     [[ -e "$path" ]] || continue
     if [[ "$(stat -c '%U' "$path" 2>/dev/null || true)" != "$TARGET_USER" ]]; then
       error "Propietario incorrecto en $path (se espera $TARGET_USER)"

@@ -2,7 +2,7 @@
 # screenshot — menú rofi para capturas de pantalla
 # Requiere: scrot, rofi, xclip
 
-SHOT_DIR="$HOME/Pictures/Screenshots"
+SHOT_DIR="$(xdg-user-dir PICTURES 2>/dev/null || printf '%s' "$HOME/Imágenes")/Capturas"
 mkdir -p "$SHOT_DIR" 2>/dev/null || true
 
 choice=$(printf '%s\n' \

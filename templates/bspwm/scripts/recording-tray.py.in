@@ -1,0 +1,104 @@
+#!/usr/bin/env python3
+# recording-tray — icono de grabación en el systray de polybar (XEmbed).
+# Se lanza desde screen-record.sh mientras hay una grabación activa.
+import os
+import subprocess
+import sys
+import time
+
+try:
+    import gi
+
+    gi.require_version("Gtk", "3.0")
+    from gi.repository import GLib, Gtk
+except Exception:
+    sys.exit(1)
+
+STATE = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "dwm-screen-record")
+PIDFILE = os.path.join(STATE, "ffmpeg.pid")
+STARTFILE = os.path.join(STATE, "start")
+OUTFILE = os.path.join(STATE, "output")
+SCRIPT = os.path.expanduser("~/.config/bspwm/scripts/screen-record.sh")
+
+
+def read(path):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
+icon = Gtk.StatusIcon()
+icon.set_from_icon_name("media-record")
+icon.set_tooltip_text("Grabando pantalla")
+icon.set_visible(True)
+
+menu = Gtk.Menu()
+
+stop_item = Gtk.MenuItem(label="Detener grabación")
+stop_item.connect("activate", lambda _w: subprocess.Popen([SCRIPT, "stop"]))
+menu.append(stop_item)
+
+open_item = Gtk.MenuItem(label="Abrir carpeta")
+
+
+def open_folder(_w):
+    out = read(OUTFILE)
+    if out:
+        subprocess.Popen(["xdg-open", os.path.dirname(out)])
+
+
+open_item.connect("activate", open_folder)
+menu.append(open_item)
+menu.show_all()
+
+
+def popup(_icon, button, atime):
+    menu.popup(None, None, None, None, button, atime)
+
+
+icon.connect("popup-menu", popup)
+icon.connect("activate", lambda _i: subprocess.Popen([SCRIPT, "stop"]))
+
+
+def tick():
+    raw = read(PIDFILE)
+    if not raw:
+        Gtk.main_quit()
+        return False
+    try:
+        pid = int(raw)
+    except ValueError:
+        Gtk.main_quit()
+        return False
+    if not alive(pid):
+        Gtk.main_quit()
+        return False
+
+    try:
+        start = float(read(STARTFILE))
+    except ValueError:
+        start = time.time()
+
+    seconds = max(0, int(time.time() - start))
+    hours, rem = divmod(seconds, 3600)
+    minutes, secs = divmod(rem, 60)
+    if hours:
+        elapsed = f"{hours:d}:{minutes:02d}:{secs:02d}"
+    else:
+        elapsed = f"{minutes:02d}:{secs:02d}"
+    icon.set_tooltip_text(f"Grabando pantalla · {elapsed}")
+    return True
+
+
+GLib.timeout_add(1000, tick)
+Gtk.main()

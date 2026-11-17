@@ -2185,3 +2185,56 @@ UHD 630; sin servicios ni configuración extra.
   `~/.config/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh` y el script
   sigue con `i3lock -i`.
 - Pendiente: probar `Super+Alt+t` + `Super+Shift+L` en la sesión.
+
+### Directorios XDG y grabación de pantalla — 2026-11-16
+
+- `lib/config.sh` incorpora `ensure_user_dirs`: ejecuta
+  `xdg-user-dirs-update` con `es_CO.UTF-8` y crea `Imágenes/Capturas` y
+  `Vídeos/Grabaciones`. No borra `Downloads`/`Pictures` existentes.
+- `templates/bspwm/scripts/screen-record.sh.in` graba con `ffmpeg`
+  (`x11grab`, `libx264`, `aac`) y se controla con
+  `toggle|start|stop`. Guarda el estado en
+  `$XDG_RUNTIME_DIR/dwm-screen-record` y el archivo en
+  `~/Vídeos/Grabaciones/grabacion-YYYY-MM-DD_HH-MM-SS.mkv`.
+- Con un monitor empieza directo; con varios abre rofi con nombre,
+  resolución y opción «Todas». El audio es el monitor del sink por
+  defecto (política de `audio-watch.sh`); si falla, reintenta sin audio.
+- `templates/bspwm/scripts/recording-tray.py.in` añade un
+  `Gtk.StatusIcon` opcional solo si hay `_NET_SYSTEM_TRAY_S*`; el
+  indicador real es el módulo `recording` de polybar (`● REC` + tiempo),
+  en A y B, porque el tray de polybar no está activo
+  (`override-redirect = true`).
+- Atajo `Super+Shift+G` en `sxhkdrc`; `verify.sh` comprueba scripts,
+  `xdg-user-dir`, `xrandr`, `python3`, binding y directorios.
+- Prueba en vivo (2026-11-16): `Super+Shift+G` inicia y para; el archivo
+  resultante tiene `h264` + `aac`, 3,6 s, audio del sink HDMI por
+  defecto; el módulo muestra `● REC 00:02` y queda vacío al parar.
+- Pendiente: probar con varios monitores (menú rofi) y con auriculares
+  Bluetooth conectados.
+
+### Indicador de grabación: fondo, padding y ocultación — 2026-11-16
+
+- El módulo `recording` de la variante B usa
+  `format-background = ${colors.module-bg}` para tener el mismo fondo que
+  el resto de módulos; ambas variantes usan `format-padding = 2`,
+  `format-foreground = ${colors.foreground}` y `format-font = 1`.
+- El texto queda `● REC mm:ss` con **solo el punto en rojo**; `REC` y el
+  tiempo usan el color normal.
+- `screen-record.sh` envía `polybar-msg action "#recording.module_show"`
+  al empezar y `module_hide` al parar. `launch.sh` oculta el módulo tras
+  arrancar polybar si no hay grabación activa (y lo muestra si la hay).
+  `recording-status.sh` se auto-oculta si el PID de ffmpeg ya no existe.
+- Prueba en vivo con capturas de la barra: oculto tras `launch.sh`, sin
+  REC tras parar, sin REC tras `kill -9` de ffmpeg y REC de nuevo al
+  empezar. `verify.sh` comprueba `module_show`/`module_hide` y el fondo
+  del módulo B.
+
+### Grabación con prioridad baja — 2026-11-16
+
+- ffmpeg se lanza con `nice -n 10` (si existe) para que compilar, una VM
+  o cualquier carga pesada tengan prioridad sobre la grabación. La
+  calidad no cambia: 30 fps, `libx264 veryfast`, CRF 23, AAC 160k.
+- Medido antes del cambio: ~0,8 núcleos con escritorio estático
+  (~10 % de los 8 hilos) y ~1,2 con movimiento a pantalla completa
+  (~15 %); RAM ~480–580 MB.
+- Se borró el MKV de 0 bytes que dejó la prueba de `kill -9`.

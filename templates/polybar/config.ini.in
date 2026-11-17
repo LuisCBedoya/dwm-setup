@@ -64,7 +64,7 @@ font-4 = "@FONT@:size=11;5"
 font-5 = "Noto Color Emoji:scale=9:antialias=false;3"
 
 modules-left = logo bspwm monocle resize
-modules-right = updates services polypomo temp memory cpu governor fan network bluetooth ufw pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ date tray
+modules-right = updates services polypomo temp memory cpu governor fan network bluetooth ufw pipewire @BRIGHTNESS_MODULE@ @BATTERY_MODULE@ date recording tray
 
 cursor-click = pointer
 cursor-scroll = ns-resize
