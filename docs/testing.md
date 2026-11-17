@@ -1451,3 +1451,13 @@ ytsearch50  → 4533 ms
 - Casos a probar en hardware real: conectar un monitor 60 Hz (debe quedar
   a 60), reconectar el HDMI 120 Hz (debe volver a 120) y arrancar con el
   monitor apagado.
+
+### Geometría de bspwm 2/15 (2026-11-17, ADR-134)
+
+- `bspc config border_width` debe devolver `2` y `bspc config window_gap`
+  debe devolver `15`.
+- En el `bspwmrc` instalado:
+  `grep -E 'border_width|window_gap' ~/.config/bspwm/bspwmrc`.
+- `install.sh --dry-run` renderiza la plantilla nueva; una instalación
+  limpia debe arrancar con borde 2 y gap 15 sin tocar nada a mano.
+- El padding (30 px) sigue viniendo de la posición de polybar.

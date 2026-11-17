@@ -15,8 +15,8 @@ if ! pgrep -f '@HOME@/.config/bspwm/scripts/workspace.sh daemon' >/dev/null 2>&1
 fi
 
 # Geometría
-bspc config border_width         3
-bspc config window_gap          10
+bspc config border_width         2
+bspc config window_gap          15
 position="top"
 if [ -r "@HOME@/.config/polybar/position" ]; then
   position=$(cat "@HOME@/.config/polybar/position" 2>/dev/null || printf 'top')

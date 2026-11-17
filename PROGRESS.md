@@ -2398,3 +2398,13 @@ UHD 630; sin servicios ni configuración extra.
   `60.00` → `120.00`); `apply` en 120 no toca el modo.
 - `verify.sh` exige la política `auto`, el watcher y `display.conf`.
 - Pendiente: desconectar/reconectar HDMI y probar un monitor distinto.
+
+### Geometría de bspwm — 2026-11-17
+
+- El usuario fijó `border_width=2` y `window_gap=15` en vivo; la
+  plantilla seguía en 3/10.
+- `templates/bspwm/bspwmrc.in` actualizado a 2/15 y `verify.sh` exige
+  esos valores.
+- La sesión viva ya coincidía; no hizo falta reiniciar bspwm.
+- La barra queda arriba por defecto (la posición es estado del ciclo
+  `Super+Alt+p`, no configuración del instalador).

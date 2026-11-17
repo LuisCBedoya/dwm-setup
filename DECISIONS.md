@@ -3419,3 +3419,23 @@ subía a 120 hasta el siguiente `startx`. Además, `max` podía elegir
 - El hotplug no fuerza lecturas EDID periódicas.
 - En un monitor 4K@60 se mantiene 4K; para priorizar fluidez habría que
   añadir una política de resolución nueva.
+
+## ADR-134 — Borde 2 y gap 15 en bspwm
+
+**Contexto:** el usuario ajustó a mano `border_width=2` y
+`window_gap=15` en bspwm y quiere que una instalación limpia reproduzca
+ese escritorio. La plantilla seguía en `3`/`10` desde ADR-083.
+
+**Decisión:**
+1. `templates/bspwm/bspwmrc.in` usa `border_width 2` y `window_gap 15`.
+2. `lib/verify.sh` comprueba ambos valores en el `bspwmrc` instalado.
+3. La barra sigue arriba por defecto: `~/.config/polybar/position` es
+   estado del ciclo `Super+Alt+p` y no se fija desde el instalador.
+
+**Consecuencias:**
+- Instalaciones limpias y `theme-mode` mantienen el mismo marco y
+  separación que la sesión viva.
+- El padding superior/inferior sigue dependiendo de la posición de
+  polybar (30 px).
+- Si se vuelve a cambiar la geometría a mano, hay que actualizar la
+  plantilla para que `verify.sh` no falle.

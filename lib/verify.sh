@@ -507,6 +507,11 @@ verify_install() {
       error "bspwmrc no lanza el daemon de escritorios dinámicos"
       failures=$((failures + 1))
     fi
+    if ! grep -q 'bspc config border_width[[:space:]]*2' "$home/.config/bspwm/bspwmrc" ||
+       ! grep -q 'bspc config window_gap[[:space:]]*15' "$home/.config/bspwm/bspwmrc"; then
+      error "bspwmrc no usa la geometría del repo (borde 2, gap 15)"
+      failures=$((failures + 1))
+    fi
   fi
   if [[ -f "$home/.config/sxhkd/sxhkdrc" ]]; then
     if grep -q 'super + {_,shift + }{h,j,k,l}' "$home/.config/sxhkd/sxhkdrc"; then
