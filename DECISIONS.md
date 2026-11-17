@@ -3388,3 +3388,34 @@ ausente, lo que afecta a la colocación de la ventana de mpv en X11.
 - Brave se sigue usando si el usuario abre un canal/enlace desde ytwatch.
 - El chat se puede reactivar con `[chat] enabled = true` y, si se quiere,
   `[chat] browser`.
+
+## ADR-133 — Pantalla automática 120/60 con hotplug
+
+**Contexto:** `display-setup.sh` se ejecutaba una sola vez al iniciar la
+sesión y elegía la tasa máxima disponible. Si el monitor se apagaba,
+reconectaba o cambiaba, X volvía a su modo preferido (60 Hz) y nadie lo
+subía a 120 hasta el siguiente `startx`. Además, `max` podía elegir
+100/75 Hz y no la política pedida, y no se comprobaba la tasa aplicada.
+
+**Decisión:**
+1. `refresh=auto` por defecto: dentro de la resolución preferida del
+   EDID, 120 (o 119.88) → 60 (o 59.94) → máxima. `max`, `preferred` y
+   `<Hz>` siguen disponibles.
+2. La resolución nativa manda sobre la tasa: 4K@60 antes que 1080p@120.
+3. `autostart` lanza `watch` en segundo plano; vigila
+   `/sys/class/drm/*/status` (sin DDC) y solo llama a `xrandr` cuando
+   cambia la firma de conectores.
+4. `apply_layout` no re-hace el modeset si resolución, tasa, posición y
+   `primary` ya coinciden.
+5. Tras aplicar se relee el modo/tasa real; si no coincide se anota en
+   `~/.local/state/dwm-setup/display.log`.
+6. `~/.config/dwm-setup/display.conf` (`layout=`, `refresh=`) se crea si
+   falta y no se pisa; las variables de entorno tienen prioridad.
+
+**Consecuencias:**
+- Al arrancar y al reconectar la pantalla se aplica 120 Hz si el monitor
+  lo admite; si no, 60 Hz.
+- Sin parpadeo extra al iniciar cuando el modo ya es el correcto.
+- El hotplug no fuerza lecturas EDID periódicas.
+- En un monitor 4K@60 se mantiene 4K; para priorizar fluidez habría que
+  añadir una política de resolución nueva.

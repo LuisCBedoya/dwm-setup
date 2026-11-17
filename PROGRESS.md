@@ -2382,3 +2382,19 @@ UHD 630; sin servicios ni configuración extra.
 - `wmctrl` instalado y añadido a paquetes/verify; `ytwatch doctor` ya no
   marca requeridos ausentes.
 - Pendiente: probar un LIVE VOD en el TUI y comprobar que no abre Brave.
+
+### Pantalla auto 120/60 y hotplug — 2026-11-17
+
+- `display-setup.sh` aplica `refresh=auto`: 120/119.88 → 60/59.94 →
+  máxima, dentro de la resolución preferida del EDID.
+- `autostart` lanza `apply` y un `watch` que vigila `/sys/class/drm`
+  (sin DDC); el watcher queda activo en la sesión actual.
+- No se re-aplica el modo si ya coincide (sin parpadeo al iniciar).
+- Lectura de vuelta tras aplicar; avisos en
+  `~/.local/state/dwm-setup/display.log`.
+- `~/.config/dwm-setup/display.conf` (`layout=`, `refresh=`) creado sin
+  pisar el del usuario.
+- Probado en vivo: forzar 60 → `120.00*` al volver a `auto` (log
+  `60.00` → `120.00`); `apply` en 120 no toca el modo.
+- `verify.sh` exige la política `auto`, el watcher y `display.conf`.
+- Pendiente: desconectar/reconectar HDMI y probar un monitor distinto.

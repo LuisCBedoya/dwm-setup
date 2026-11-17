@@ -29,6 +29,11 @@ xset -dpms 2>/dev/null || true
 # --- Pantallas: adaptar salidas conectadas y no-blanqueo (todo terreno) ---
 if [ -x "$HOME/.config/bspwm/scripts/display-setup.sh" ]; then
   "$HOME/.config/bspwm/scripts/display-setup.sh" apply 2>/dev/null || true
+  # Hotplug: vigila /sys/class/drm (sin DDC) y re-aplica al conectar o
+  # desconectar un monitor. Un solo proceso por sesión.
+  if ! pgrep -f 'display-setup.sh watch' >/dev/null 2>&1; then
+    "$HOME/.config/bspwm/scripts/display-setup.sh" watch >/dev/null 2>&1 &
+  fi
 fi
 
 # --- Directorios de usuario ---

@@ -488,6 +488,21 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `verify.sh` exige scripts, `xdg-user-dir`, `xrandr`, `python3`,
     directorios y binding.
 
+31. **Pantalla automática.** `display-setup.sh` lee las salidas con
+    `xrandr` y usa la resolución preferida del EDID; dentro de ella
+    aplica `refresh=auto`: **120 Hz** (o 119.88) si existe, si no **60 Hz**
+    (o 59.94), y si no la máxima. `~/.config/dwm-setup/display.conf`
+    (`layout=extend|mirror`, `refresh=auto|max|preferred|<Hz>`) manda
+    salvo que `DISPLAY_LAYOUT`/`DISPLAY_REFRESH` estén en el entorno.
+    `autostart` lanza `apply` y un `watch` en segundo plano que vigila
+    `/sys/class/drm/*/status` (sin DDC) y re-aplica al conectar o
+    desconectar un monitor. No se re-hace el modeset si la resolución,
+    la tasa, la posición y el `primary` ya coinciden. Tras aplicar se
+    relee la tasa real y se anota un aviso en
+    `~/.local/state/dwm-setup/display.log` si no coincide. No usar
+    `xrandr --current` en bucles: puede forzar lecturas DDC y parpadear
+    el HDMI.
+
 ## Estructura relevante
 
 | Archivo | Responsabilidad |
@@ -567,6 +582,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/wireplumber/` | `50-dwm-setup.conf` (autoswitch A2DP/HFP) |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
 | `templates/recording/` | `recording.conf` con el modo de audio (`mix`/`system`/`mic`) |
+| `templates/display/` | `display.conf` con `layout` (extend/mirror) y `refresh` (auto/max/preferred/Hz) |
 | `templates/nvidia/prime-run` | Wrapper de offload por app a la dGPU NVIDIA (ADR-111) |
 | `templates/colors/` | `palette-mocha-black.sh`, `palette-latte.sh` y helpers |
 | `assets/wallpaper.png` | Wallpaper principal |

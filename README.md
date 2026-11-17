@@ -35,10 +35,12 @@ Incluido:
   transparente. **xsettingsd** publica el tema GTK del modo para que
   Brave y las apps GTK cambien en caliente.
 - **Pantallas**: `display-setup.sh` detecta los monitores conectados y usa
-  su **resolución preferida (EDID) y la tasa de refresco más alta**
-  (120 Hz si el monitor lo permite; `DISPLAY_REFRESH=60` para forzarla).
-  Extiende o espeja (`DISPLAY_LAYOUT=mirror`), soporta hotplug (`watch`) y
-  refuerza el no-blanqueo. Brave usa **VA-API** para decodificar vídeo
+  su **resolución preferida (EDID)**; dentro de ella aplica la política
+  `auto`: **120 Hz** (o 119.88) si el monitor lo ofrece, si no **60 Hz**
+  (o 59.94), y si no la máxima disponible. `~/.config/dwm-setup/display.conf`
+  permite fijar `layout=extend|mirror` y `refresh=auto|max|preferred|<Hz>`.
+  Un watcher sobre `/sys/class/drm` re-aplica la política al conectar o
+  desconectar un monitor (sin sondeo DDC) y refuerza el no-blanqueo. Brave usa **VA-API** para decodificar vídeo
   por GPU cuando el driver está disponible (actívalo en `brave://flags`,
   `VaapiVideoDecoder`).
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo y
@@ -769,6 +771,7 @@ templates/icons/           papirus-folders y carpetas cat-*
 templates/modprobe/        i915.conf y nvidia.conf
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
 templates/recording/       recording.conf (modo de audio de la grabación)
+templates/display/         display.conf (layout y refresh de pantalla)
 templates/colors/          palette-mocha-black.sh y palette-latte.sh
 assets/wallpaper.png       Wallpaper por defecto de dark
 assets/wallpaper-alt.png   Wallpaper por defecto de light

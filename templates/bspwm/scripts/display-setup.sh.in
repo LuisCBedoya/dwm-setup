@@ -2,11 +2,16 @@
 # display-setup — adapta las salidas de vídeo al hardware conectado.
 # Todo terreno: no asume nombres de salida ni resoluciones; usa la
 # resolución preferida (EDID) de cada monitor y, dentro de ella, la tasa
-# de refresco más alta disponible (fluidez). Refuerza el no-blanqueo.
+# de refresco según la política: 120 → 60 → la máxima disponible.
+# Refuerza el no-blanqueo.
 #
 # Variables:
 #   DISPLAY_LAYOUT=extend|mirror   distribución con varios monitores
-#   DISPLAY_REFRESH=max|preferred|<Hz>  tasa de refresco (max por defecto)
+#   DISPLAY_REFRESH=auto|max|preferred|<Hz>  tasa (auto por defecto)
+#   DISPLAY_SETUP_DRY_RUN=1        solo imprime lo que haría
+#
+# Config: ~/.config/dwm-setup/display.conf (layout=, refresh=).
+# Las variables de entorno tienen prioridad sobre el archivo.
 #
 # Uso:
 #   display-setup.sh apply   aplica ahora
@@ -20,16 +25,44 @@ xset s off 2>/dev/null || true
 xset s noblank 2>/dev/null || true
 xset -dpms 2>/dev/null || true
 
-layout=${DISPLAY_LAYOUT:-extend}
-refresh=${DISPLAY_REFRESH:-max}
+conf="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup/display.conf"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dwm-setup"
+dry=${DISPLAY_SETUP_DRY_RUN:-0}
+
+conf_layout=""
+conf_refresh=""
+if [ -r "$conf" ]; then
+  conf_layout=$(sed -n 's/^[[:space:]]*layout[[:space:]]*=[[:space:]]*"\{0,1\}\([A-Za-z]*\)"\{0,1\}.*/\1/p' "$conf" | tail -n 1)
+  conf_refresh=$(sed -n 's/^[[:space:]]*refresh[[:space:]]*=[[:space:]]*"\{0,1\}\([A-Za-z0-9.]*\)"\{0,1\}.*/\1/p' "$conf" | tail -n 1)
+fi
+
+layout=${DISPLAY_LAYOUT:-${conf_layout:-extend}}
+refresh=${DISPLAY_REFRESH:-${conf_refresh:-auto}}
+
+log_msg() {
+  mkdir -p "$state_dir" 2>/dev/null || return 0
+  printf '%s %s\n' "$(date '+%F %T')" "$*" >>"$state_dir/display.log" 2>/dev/null || true
+}
+
+# Una sola lectura de xrandr por pasada: el estado de las salidas no cambia
+# mientras se aplica la configuración.
+xrandr_query=""
+snapshot() {
+  xrandr_query=$(xrandr --query 2>/dev/null) || xrandr_query=""
+}
 
 connected() {
-  xrandr --query 2>/dev/null | awk '/ connected/ {print $1}'
+  printf '%s\n' "$xrandr_query" | awk '/ connected/ {print $1}'
+}
+
+output_header() {
+  printf '%s\n' "$xrandr_query" | awk -v o="$1" '$1==o && / connected/ {print; exit}'
 }
 
 # Líneas de modos de una salida (tras su cabecera hasta la siguiente salida).
 output_modes() {
-  xrandr --query 2>/dev/null | awk -v o="$1" '$1==o{f=1;next} f&&!/^[[:space:]]/{exit} f{print}'
+  printf '%s\n' "$xrandr_query" |
+    awk -v o="$1" '$1==o{f=1;next} f&&!/^[[:space:]]/{exit} f{print}'
 }
 
 # Resolución preferida de la salida (marcada con '+'), o la primera.
@@ -40,7 +73,36 @@ preferred_resolution() {
   printf '%s' "$res"
 }
 
-# tasa de refresco a usar para resolución $1 de la salida $2.
+geometry_of() {
+  output_header "$1" |
+    awk '{for (i=2;i<=NF;i++) if ($i ~ /^[0-9]+x[0-9]+\+[0-9]+\+[0-9]+$/) {print $i; exit}}'
+}
+
+is_primary() {
+  output_header "$1" | grep -qw primary 2>/dev/null
+}
+
+# Modo y tasa activos (los marca '*' en xrandr).
+current_mode_rate() {
+  output_modes "$1" | awk '/\*/ {
+    m=$1; r="";
+    for (i=2;i<=NF;i++) if ($i ~ /\*/) { r=$i; gsub(/[*+]/, "", r) }
+    if (r != "") { printf "%s|%s\n", m, r; exit }
+  }'
+}
+
+same_rate() {
+  awk -v a="$1" -v b="$2" 'BEGIN { d=a-b; if (d<0) d=-d; exit !(d<0.5) }'
+}
+
+# Tasas de la resolución $1 dentro de [lo, hi]; la más alta.
+pick_rate() {
+  printf '%s\n' "$1" |
+    awk -v lo="$2" -v hi="$3" '$1+0>=lo && $1+0<=hi' |
+    sort -rn | head -n 1
+}
+
+# Tasa de refresco a usar para resolución $1 de la salida $2.
 choose_rate() {
   res=$1
   modes=$(output_modes "$2")
@@ -49,8 +111,15 @@ choose_rate() {
   [ -n "$rates" ] || return 0
   case "$refresh" in
     preferred)
-      pref=$(printf '%s\n' "$rates" | head -1)
-      printf '%s' "$pref"
+      printf '%s' "$(printf '%s\n' "$rates" | head -1)"
+      ;;
+    auto)
+      # 120 (o 119.88) primero; si no, 60 (o 59.94). Si el monitor no
+      # ofrece ninguna de las dos, la máxima disponible.
+      rate=$(pick_rate "$rates" 119.5 120.5)
+      [ -n "$rate" ] || rate=$(pick_rate "$rates" 59.5 60.5)
+      [ -n "$rate" ] || rate=$(printf '%s\n' "$rates" | sort -rn | head -1)
+      printf '%s' "$rate"
       ;;
     *[!0-9.]*|'')
       printf '%s' "$(printf '%s\n' "$rates" | sort -rn | head -1)"
@@ -64,32 +133,77 @@ choose_rate() {
 apply_output() {
   out=$1 res=$2 rate=$3
   shift 3
+  if [ "$dry" = "1" ]; then
+    printf 'display-setup: xrandr --output %s --mode %s --rate %s %s\n' \
+      "$out" "${res:-auto}" "${rate:-auto}" "$*"
+    return 0
+  fi
   if [ -n "$res" ] && [ -n "$rate" ]; then
     xrandr --output "$out" --mode "$res" --rate "$rate" "$@" 2>/dev/null ||
       xrandr --output "$out" --auto "$@" 2>/dev/null || true
   else
     xrandr --output "$out" --auto "$@" 2>/dev/null || true
   fi
+
+  # Lectura de vuelta: no dejar en silencio una tasa distinta a la pedida.
+  now=$(xrandr --query 2>/dev/null | awk -v o="$out" '
+    $1==o{f=1;next} f&&!/^[[:space:]]/{exit}
+    f&&/\*/{m=$1; for(i=2;i<=NF;i++) if ($i ~ /\*/) {r=$i; gsub(/[*+]/,"",r)}
+      print m "|" r; exit}')
+  if [ -n "$res" ] && [ -n "$rate" ]; then
+    got=${now#*|}
+    if [ "$now" = "${now%%|*}" ] || ! same_rate "$got" "$rate"; then
+      log_msg "aviso: $out quedó en ${now:-desconocido} (pedido $res@$rate)"
+    fi
+  fi
+  log_msg "display: $out ${now:-sin modo} (pedido ${res:-auto}@${rate:-auto})"
 }
 
 apply_layout() {
+  snapshot
   set -- $(connected)
   [ "$#" -gt 0 ] || return 0
   first=$1
-  res=$(preferred_resolution "$first")
-  rate=$(choose_rate "$res" "$first")
-  apply_output "$first" "$res" "$rate" --primary
-  shift
-  prev=$first
+  x=0
+  idx=0
+
   for out in "$@"; do
     res=$(preferred_resolution "$out")
     rate=$(choose_rate "$res" "$out")
+    w=0
+    case "$res" in
+      *x*) w=${res%%x*} ;;
+    esac
+    px=0
     if [ "$layout" = "mirror" ]; then
-      apply_output "$out" "$res" "$rate" --same-as "$first"
+      px=0
     else
-      apply_output "$out" "$res" "$rate" --right-of "$prev"
+      px=$x
+      x=$((x + w))
     fi
-    prev=$out
+    desired="${res}+${px}+0"
+
+    cur=$(current_mode_rate "$out")
+    cur_res=${cur%%|*}
+    cur_rate=${cur#*|}
+    cur_geom=$(geometry_of "$out")
+    need=1
+    if [ -n "$res" ] && [ "$cur_res" = "$res" ] &&
+       same_rate "$cur_rate" "$rate" && [ "$cur_geom" = "$desired" ]; then
+      need=0
+      [ "$idx" -gt 0 ] || is_primary "$out" || need=1
+    fi
+
+    if [ "$need" = "1" ]; then
+      if [ "$idx" -eq 0 ]; then
+        apply_output "$out" "$res" "$rate" --primary --pos "${px}x0"
+      elif [ "$layout" = "mirror" ]; then
+        apply_output "$out" "$res" "$rate" --same-as "$first"
+      else
+        apply_output "$out" "$res" "$rate" --pos "${px}x0"
+      fi
+    fi
+    idx=$((idx + 1))
   done
 }
 
@@ -100,7 +214,7 @@ write_monitor_cache() {
   cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup"
   cache="$cache_dir/monitors"
   mkdir -p "$cache_dir" 2>/dev/null || return 0
-  xrandr --query 2>/dev/null |
+  printf '%s\n' "$xrandr_query" |
     awk '/ connected/ {
       name=$1; geom="";
       for (i=2;i<=NF;i++) if ($i ~ /^[0-9]+x[0-9]+\+[0-9]+\+[0-9]+$/) { geom=$i; break }
@@ -108,23 +222,52 @@ write_monitor_cache() {
     }' >"$cache" 2>/dev/null || rm -f "$cache"
 }
 
+# Firma de los conectores leída del kernel (sin DDC ni xrandr): solo cambia
+# cuando se enchufa/desenchufa algo.
+drm_signature() {
+  for f in /sys/class/drm/card*-*/status; do
+    [ -r "$f" ] || continue
+    printf '%s=%s ' "${f%/status}" "$(cat "$f" 2>/dev/null)"
+  done
+}
+
 case "${1:-apply}" in
   apply)
     apply_layout
+    snapshot
     write_monitor_cache
     ;;
   watch)
-    sig=$(connected | tr '\n' ' ')
     apply_layout
+    snapshot
     write_monitor_cache
-    while :; do
-      sleep 5
-      now=$(connected | tr '\n' ' ')
-      [ "$now" = "$sig" ] && continue
-      sig=$now
-      apply_layout
-      write_monitor_cache
-    done
+    if [ -n "$(drm_signature)" ]; then
+      sig=$(drm_signature)
+      while :; do
+        sleep 2
+        now=$(drm_signature)
+        [ "$now" = "$sig" ] && continue
+        sig=$now
+        # Dejar que el kernel termine de exponer el modo del monitor.
+        sleep 1
+        apply_layout
+        snapshot
+        write_monitor_cache
+      done
+    else
+      # Sin /sys/class/drm (raro): sondeo lento de xrandr como respaldo.
+      sig=$(connected | tr '\n' ' ')
+      while :; do
+        sleep 10
+        snapshot
+        now=$(connected | tr '\n' ' ')
+        [ "$now" = "$sig" ] && continue
+        sig=$now
+        apply_layout
+        snapshot
+        write_monitor_cache
+      done
+    fi
     ;;
   *)
     printf 'Uso: %s [apply|watch]\n' "$0" >&2

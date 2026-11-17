@@ -1429,3 +1429,25 @@ ytsearch50  → 4533 ms
   devuelve **“All required programs found”**.
 - Pendiente: abrir un LIVE VOD desde el TUI y confirmar que solo aparece
   mpv (sin ventana de Brave).
+
+### Pantalla automática 120/60 y hotplug (2026-11-17, ADR-133)
+
+- `display-setup.sh apply` en una sesión que ya está en 120 **no cambia
+  el modo** (sin parpadeo). La primera pasada puede tardar lo que tarde
+  `xrandr`, pero no hay modeset.
+- Prueba de política: `DISPLAY_REFRESH=60 ... apply` deja
+  `1920x1080|60.00`; `DISPLAY_REFRESH=auto ... apply` vuelve a
+  `1920x1080|120.00`. Comprobar en `~/.local/state/dwm-setup/display.log`.
+- `DISPLAY_REFRESH=auto` con el monitor actual:
+  `xrandr` debe mostrar `120.00*`.
+- `DISPLAY_SETUP_DRY_RUN=1` imprime los `xrandr` que haría sin aplicarlos.
+- Hotplug: `autostart` lanza `display-setup.sh watch`; se puede comprobar
+  con `pgrep -af 'display-setup.sh watch'`. El watcher lee
+  `/sys/class/drm/*/status` cada 2 s (sin DDC) y solo llama a `xrandr`
+  cuando cambia la firma.
+- `~/.config/dwm-setup/display.conf` debe existir con `layout=` y
+  `refresh=`. Los cambios de `refresh=60` se aplican al reconectar o al
+  reiniciar la sesión; para aplicarlo ya: `display-setup.sh apply`.
+- Casos a probar en hardware real: conectar un monitor 60 Hz (debe quedar
+  a 60), reconectar el HDMI 120 Hz (debe volver a 120) y arrancar con el
+  monitor apagado.

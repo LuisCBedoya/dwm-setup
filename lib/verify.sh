@@ -306,6 +306,19 @@ verify_install() {
     error "display-setup.sh no escribe la caché de monitores"
     failures=$((failures + 1))
   fi
+  if ! grep -q 'auto)' "$home/.config/bspwm/scripts/display-setup.sh" 2>/dev/null ||
+     ! grep -q 'drm_signature' "$home/.config/bspwm/scripts/display-setup.sh" 2>/dev/null; then
+    error "display-setup.sh no aplica la política auto (120/60) ni vigila /sys/class/drm"
+    failures=$((failures + 1))
+  fi
+  if ! grep -q 'display-setup.sh watch' "$home/.config/bspwm/scripts/autostart" 2>/dev/null; then
+    error "autostart no inicia el watcher de pantalla (hotplug)"
+    failures=$((failures + 1))
+  fi
+  if [[ ! -f "$home/.config/dwm-setup/display.conf" ]]; then
+    error "Falta ~/.config/dwm-setup/display.conf"
+    failures=$((failures + 1))
+  fi
   if ! grep -q '^audio_mode=' "$home/.config/dwm-setup/recording.conf" 2>/dev/null; then
     error "Falta audio_mode en ~/.config/dwm-setup/recording.conf"
     failures=$((failures + 1))
