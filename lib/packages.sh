@@ -48,7 +48,8 @@ STORAGE_PKGS=(
 DESKTOP_PKGS=(
   bspwm sxhkd polybar picom xsettingsd
   dunst rofi dmenu feh kitty flameshot neovim i3lock xss-lock
-  brightnessctl xclip xdotool thunar libmtp-runtime curl
+  brightnessctl xclip xdotool thunar libmtp-runtime curl wmctrl
+  tumbler
   xwallpaper playerctl
   zsh zsh-autosuggestions lsd
   ranger zathura zathura-pdf-poppler zathura-cb zathura-djvu zathura-ps

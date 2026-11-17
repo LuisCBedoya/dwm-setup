@@ -2238,3 +2238,147 @@ UHD 630; sin servicios ni configuración extra.
   (~10 % de los 8 hilos) y ~1,2 con movimiento a pantalla completa
   (~15 %); RAM ~480–580 MB.
 - Se borró el MKV de 0 bytes que dejó la prueba de `kill -9`.
+
+### Fix del quirk ALC255: módulo correcto — 2026-11-17
+
+- Causa: `/etc/modprobe.d/alsa-fx504.conf` usaba
+  `options snd-hda-codec-realtek model=alc255-asus`, pero ese módulo no
+  tiene parámetro `model`; `snd_hda_intel` seguía con `model=(null)` y el
+  jack combo no exponía `analog-input-headset-mic`.
+- Corregido a `options snd-hda-intel model=alc255-asus` en la plantilla y
+  en el archivo instalado (con backup e `update-initramfs -u`).
+- `verify.sh` ahora exige la línea exacta, no solo la existencia del
+  archivo. Documentado en `README.md`, `docs/hardware.md`,
+  `docs/testing.md`, `AGENTS.md` y ADR-125.
+- Pendiente: reiniciar y comprobar `model=alc255-asus`, el puerto
+  “Headset Microphone” en pavucontrol y una captura con `parecord`.
+
+### Grabación autónoma con sistema + micrófono — 2026-11-17
+
+- `screen-record.sh` usa el sink y el source por defecto de PipeWire
+  (`pactl get-default-sink/source`), así que sigue la misma prioridad que
+  `audio-watch.sh`: jack/headset > USB > Bluetooth > HDMI > interno.
+- Modo por defecto `mix`: mezcla `${sink}.monitor` + micro con `amix`,
+  `aformat` a 48 kHz estéreo y `alimiter`. Fallbacks: pedido → solo
+  sistema → solo vídeo; la notificación indica el modo real.
+- Nuevo `~/.config/dwm-setup/recording.conf` con `audio_mode`
+  (`mix`/`system`/`mic`); el instalador lo crea solo si no existe.
+- Bluetooth: si el sink es `bluez_output.*`, espera a `bluez_input.*`
+  (HFP) antes de mezclar; si no aparece, usa el micro real disponible.
+- `verify.sh` comprueba `get-default-source`, `amix`, el `.conf` y
+  `audio_mode`. Documentado en README, docs/testing, AGENTS y ADR-126.
+- Pendiente de prueba en vivo con auriculares, HDMI y Bluetooth.
+
+### Ganancia del micro del jack (ruido) — 2026-11-17
+
+- Causa del ruido en `grabacion-2026-11-17_12-38-41.mkv`: ALC255 dejaba
+  `Headset Mic Boost Volume=3` (+30 dB) y `Capture Volume=63` (+30 dB).
+  RMS −14 dB y sin silencios por debajo de −30 dB.
+- `audio-switch.sh` añade `set_headset_mic_gain`: al elegir el micro del
+  jack baja el boost a 0 y limita el capture a 55 solo si venían más
+  altos. Afecta a grabación, Teams y navegador por igual.
+- Medición con `parecord` en silencio: antes ~−22 dB de media; después
+  ~−45 dB (capture 55, boost 0).
+- `verify.sh` exige `amixer` y la función. Documentado en README,
+  docs/testing, AGENTS y ADR-127.
+- Pendiente: prueba de voz real y decidir si hace falta RNNoise global.
+
+### Avisos de grabación sin sonido — 2026-11-17
+
+- El chime de `notification-sound.sh` entraba en el monitor y se colaba en
+  la grabación (a veces con picos de 0 dB). Ahora el script sale sin
+  sonar si `DUNST_APP_NAME=dwm-setup` y el resumen empieza por
+  `Grabando`/`Grabación`; el resto de notificaciones sigue sonando.
+- Prueba: grabar en silencio con la ganancia corregida da ~−38/−44 dB
+  (antes el chime disparaba el pico). Medición final en mix: **−45,5 dB
+  RMS**, DC 0 y sin chime; pendiente la prueba de voz real.
+
+### Parpadeo al grabar y sonido de avisos — 2026-11-17
+
+- Causa del parpadeo: `xrandr --listmonitors` en `choose_monitor`
+  provocaba una relectura EDID/DDC del monitor HDMI HP (visible en
+  `Xorg.0.log` como `EDID vendor "HPN"`); el monitor se quedaba negro
+  unos segundos.
+- `display-setup.sh` escribe `~/.cache/dwm-setup/monitors`
+  (`nombre|WxH+X+Y`); `screen-record.sh` lee esa caché y no llama a
+  xrandr. Sin caché usa `xdpyinfo` y graba “Todas”.
+- El aviso de inicio vuelve a sonar, pero se manda antes de lanzar
+  ffmpeg y se espera 1,2 s para que el chime no entre en el vídeo. El de
+  parada suena después. Correcciones de modo con `dwm-setup-silent`.
+- `verify.sh` comprueba que no se use `xrandr --listmonitors` al grabar y
+  que `display-setup.sh` escriba la caché.
+- Pendiente: probar visualmente que ya no parpadea y que el chime no
+  aparece en el MKV.
+
+### DC del micro en la mezcla — 2026-11-17
+
+- La mezcla podía salir con un DC offset de ~0,15–0,19 y RMS −4/−9 dB
+  aunque no hubiera sonido; la pista del micro sola no lo mostraba.
+- Se añade `highpass=f=80` al micro antes de `amix` (y en modo `mic`).
+  Prueba manual: DC −0,192 → −0,000005; RMS −4,55 → −41,1 dB.
+- Con esto la grabación en silencio queda limpia y el chime de inicio ya
+  no se cuela (se reproduce de forma síncrona antes de ffmpeg).
+
+### i915 SAGV y apagones del monitor — 2026-11-17
+
+- Evidencia: el MKV de la grabación de 30 s tiene brillo constante y
+  ningún frame negro; el escritorio/framebuffer está bien y es el
+  monitor/enlace el que pierde la imagen.
+- Descartados: xrandr/EDID, picom/polybar, HDA power_save, códec HDMI,
+  120 Hz y el puerto del sink (ya corregido para el audio).
+- `enable_sagv=Y` era el último parámetro de software relevante; se añade
+  `enable_sagv=0` a `templates/modprobe/i915.conf` y a `lib/gpu.sh`.
+- `verify.sh` exige `enable_sagv=0`. Requiere `update-initramfs -u` y
+  reinicio; pendiente de probar una grabación de 30 s tras reiniciar.
+- Si persiste, siguiente: otro cable/puerto HDMI o monitor.
+
+### Micro del jack interno por defecto — 2026-11-17
+
+- Se reprodujo el parpadeo seleccionando a mano el puerto “Headset
+  Microphone”: el cambio de ruta del ALC255 re-sincroniza el HDMI y apaga
+  la pantalla. El watcher lo seleccionaba automáticamente.
+- `audio-switch.sh` añade `JACK_MIC=internal|headset|manual` con
+  `internal` por defecto. La salida sigue automática (jack > USB/BT >
+  HDMI > interno); USB/BT conservan su micrófono automático.
+- `set_headset_mic_gain` solo se aplica con `JACK_MIC=headset`.
+- Documentado en README, docs/testing, AGENTS y ADR-130.
+- Pendiente: reinstalar, comprobar que la fuente queda en
+  `analog-input-internal-mic` y que grabar no apaga la pantalla.
+
+### Thunar, VLC y micro interno — 2026-11-17
+
+- Miniaturas: faltaba `tumbler`; instalado (sin `tumbler-plugins-extra`
+  para evitar WebKit), `tumblerd` activo y `/misc-thumbnail-mode=1`. La
+  caché pasó de 13 a 30 miniaturas al abrir Thunar.
+- VLC: `avcodec-hw=any` + `vout=gl`; con `vout=gl` la decodificación
+  VA-API (Intel iHD) funciona sin los errores de conversión de
+  `xcb_x11`. Probado con el MKV de 1080p.
+- Micro: `Internal Mic Boost=2` (+20 dB) y `Headset Mic Boost=1`
+  (+10 dB); la grabación aplica `mic_gain=3.0` (+9,5 dB). El micro del
+  jack sigue interno por defecto y el headset manual.
+- `tumbler` añadido a paquetes/verify; VLC comprobado en verify.
+- Prueba de voz: con el interno, boost 2 y `mic_gain=3.0` el pico pasó
+  de −38 a −28,8 dB; el audio del sistema se captura correctamente.
+- Pendiente: instalación completa con Brave cerrado y valoración
+  auditiva de la voz.
+
+### Ranger con ueberzug — 2026-11-17
+
+- `preview_images_method kitty` dejaba restos gráficos en kitty 0.41
+  (bandas/recuadros) y el `~` de truncado se confundía con un error.
+- Se pasa a `preview_images_method ueberzug` (el shim `/usr/bin/ueberzug`
+  de ueberzugpp ya está instalado) y se añade `unicode_ellipsis true` y
+  `column_ratios 2,3,4` para dar más ancho a la columna izquierda.
+- El `~` es la marca normal de nombre truncado de Ranger, no un fallo.
+- Pendiente: abrir Ranger y comprobar que desaparecen las bandas.
+
+### ytwatch: chat desactivado y wmctrl — 2026-11-17
+
+- El “Brave al abrir un vídeo” era el **chat replay** de un LIVE VOD, no
+  el reproductor; el vídeo va a mpv.
+- `[chat] enabled=false` en la config viva y en
+  `templates/ytwatch/config.toml.in`; el navegador queda para enlaces y
+  canales.
+- `wmctrl` instalado y añadido a paquetes/verify; `ytwatch doctor` ya no
+  marca requeridos ausentes.
+- Pendiente: probar un LIVE VOD en el TUI y comprobar que no abre Brave.

@@ -3167,3 +3167,224 @@ HDMI > interno).
 - El módulo `recording` ocupa un hueco fijo en la barra (vacío al no
   grabar); no se añadió un systray real porque polybar no lo expone.
 - `ani-cli`/`ani-es` siguen fuera del proyecto.
+
+## ADR-125 — El quirk ALC255 se aplica en snd-hda-intel
+
+**Contexto:** el quirk del micrófono del jack combo del ASUS FX504GE se
+instalaba como `options snd-hda-codec-realtek model=alc255-asus`, pero
+`model` no es un parámetro de ese módulo (no tiene carpeta en
+`/sys/module/snd_hda_codec_realtek/parameters/`). El parámetro pertenece
+a `snd-hda-intel`, que seguía con `model=(null)`. Resultado: tras
+reiniciar, el códec mantenía los pines del jack deshabilitados por la
+BIOS y solo aparecía `analog-input-mic` (micro interno), sin
+`analog-input-headset-mic`.
+
+**Decisión:** el `.conf` pasa a ser
+`options snd-hda-intel model=alc255-asus`. `verify.sh` comprueba la línea
+exacta, no solo que exista el archivo. Se mantiene el resto: solo se
+instala si DMI es FX504GE/FX504 y el códec es ALC255, con backup,
+`update-initramfs -u` y reinicio.
+
+**Consecuencias:**
+- Tras reiniciar, `snd_hda_intel` aplica `ALC255_FIXUP_ASUS_MIC_NO_PRESENCE`
+  y expone el puerto `analog-input-headset-mic`.
+- `audio-switch.sh` ya intenta ese puerto primero con auriculares; si no
+  existe, cae al micro interno.
+- El fixup no tiene detección de presencia: con auriculares TRS sin
+  micrófono el puerto aparece igualmente y hay que elegir “Micrófono”
+  a mano. Con un headset TRRS funciona.
+- Quien tenga instalada la versión anterior debe reinstalar o corregir el
+  `.conf`, ejecutar `update-initramfs -u` y reiniciar.
+
+## ADR-126 — Grabación con audio del sistema + micrófono
+
+**Contexto:** `screen-record.sh` grababa solo `${sink}.monitor`, es decir,
+lo que sonaba por los auriculares/HDMI. Tras habilitar el micro del jack
+combo, el usuario esperaba que la grabación también llevara su voz y que
+el dispositivo se eligiera solo al conectar auriculares, USB, Bluetooth
+o HDMI.
+
+**Decisión:**
+1. El grabador lee `pactl get-default-sink` y `pactl get-default-source`;
+   no hardcodea tarjeta, perfil ni puerto. Hereda así la política de
+   `audio-watch.sh` (jack > USB > Bluetooth > HDMI > interno).
+2. El modo por defecto es `mix`: monitor del sink + source por defecto,
+   mezclados con `amix` (`normalize=0` + `alimiter`).
+3. `~/.config/dwm-setup/recording.conf` permite `mix`, `system` o `mic`.
+   El instalador lo crea solo si no existe; no pisa ediciones.
+4. Si el source es un `.monitor` o falta, se busca un micro real. Con
+   Bluetooth se espera brevemente a `bluez_input.*` (HFP).
+5. Intentos en orden: el modo pedido, solo sistema y solo vídeo; la
+   notificación indica el modo realmente aplicado.
+6. El dispositivo se fija al empezar. Cambiarlo a mitad de grabación
+   exigiría reiniciar ffmpeg y puede corromper la pista; se para y se
+   vuelve a empezar.
+
+**Consecuencias:**
+- Una grabación normal lleva voz + audio del sistema, con auriculares,
+  USB, Bluetooth o HDMI, sin elegir dispositivos a mano.
+- Con altavoces en vez de auriculares puede aparecer eco: el micro
+  captura lo que suena. Con auriculares no.
+- Teams y compartir pantalla no cambian: cada app abre su propio
+  micrófono; el modo del grabador solo afecta al MKV local.
+- Si el micro falla, la grabación sigue con audio del sistema o solo
+  vídeo, y se avisa.
+
+## ADR-127 — Ganancia sana del micro del jack ALC255
+
+**Contexto:** la grabación `grabacion-2026-11-17_12-38-41.mkv` tenía
+RMS −14 dB y ni un silencio por debajo de −30 dB. El ALSA del ALC255
+dejaba el micro del jack con `Headset Mic Boost Volume=3` (+30 dB) y
+`Capture Volume=63` (+30 dB): **+60 dB de ganancia**, que amplificaba el
+ruido del headset en la grabación, Teams y cualquier app.
+
+**Decisión:**
+1. `audio-switch.sh` aplica `set_headset_mic_gain` al seleccionar
+   `analog-input-headset-mic`:
+   - `Headset Mic Boost Volume` a 0 si venía por encima de 0.
+   - `Capture Volume` a 55 si venía por encima de 55.
+2. Solo corrige valores altos; no sube una ganancia que el usuario haya
+   bajado a mano.
+3. El ajuste es de ALSA, así que afecta a todas las apps y a la
+   grabación; no requiere reiniciar ni instalar nada.
+4. `verify.sh` exige `amixer` y la función en `audio-switch.sh`.
+
+**Consecuencias:**
+- El ruido de fondo del micro del jack bajó de ~−22 dB a ~−45 dB en la
+  prueba de silencio (capture 55, boost 0).
+- La voz baja de nivel; si hace falta, se sube el volumen del source en
+  pavucontrol. El boost a 0 es preferible a amplificar ruido.
+- Si aún se quiere más limpieza, el siguiente paso es RNNoise global
+  (ADR futuro); esto no sustituye a la supresión de ruido.
+
+## ADR-128 — Caché de monitores y aviso de grabación sin parpadeo
+
+**Contexto:** `screen-record.sh` llamaba a `xrandr --listmonitors` al
+empezar. En el monitor HDMI HP del host, xrandr fuerza una relectura
+EDID/DDC (`EDID vendor "HPN"` en Xorg) y la pantalla se queda en negro
+unos segundos. Además, el chime de dunst se colaba en el monitor de audio
+y en la grabación.
+
+**Decisión:**
+1. `display-setup.sh` escribe `~/.cache/dwm-setup/monitors` con
+   `nombre|WxH+X+Y` al aplicar la configuración (arranque de sesión o
+   `display-setup.sh apply`).
+2. `screen-record.sh` lee esa caché y **no llama a xrandr**. Si no hay
+   caché, usa `xdpyinfo` y graba “Todas” a 0,0.
+3. El aviso de inicio se envía **antes** de lanzar ffmpeg y se espera
+   1,2 s (duración del chime ~1 s), así el sonido no entra en la
+   grabación. El aviso de parada suena después de cerrar ffmpeg.
+4. Si ffmpeg cae a otro modo de audio, se manda una corrección con la app
+   `dwm-setup-silent`, que `notification-sound.sh` no reproduce.
+
+**Consecuencias:**
+- Grabar/parar ya no provoca el parpadeo del monitor por EDID.
+- El sonido de las notificaciones vuelve a ser normal, pero el de inicio
+  no queda en el vídeo; se nota un retardo de ~1,2 s antes de grabar.
+- Tras cambiar monitores hay que ejecutar `display-setup.sh apply` para
+  refrescar la caché; si no, se graba la geometría anterior o “Todas”.
+
+## ADR-129 — i915 con SAGV desactivado para evitar apagones del monitor
+
+**Contexto:** con grabación de pantalla, el monitor HDMI se apagaba unos
+segundos. Se descartaron xrandr/EDID (el script no lo llama y Xorg no
+registra cambios), picom/polybar (el MKV no tiene frames negros y el
+framebuffer sigue bien), el ahorro del HDA, el códec de audio HDMI y la
+tasa de refresco (también pasaba a 60 Hz). El estado de i915 mostraba
+`enable_sagv=Y`; SAGV puede provocar underruns del pipe de display bajo
+carga y apagones del monitor externo sin errores en Xorg.
+
+**Decisión:** añadir `enable_sagv=0` a
+`/etc/modprobe.d/dwm-setup-i915.conf` junto a `enable_fbc=0`,
+`enable_psr=0` y `enable_dc=0` (este último en la plantilla). Se aplica a
+equipos Intel; requiere `update-initramfs -u` y reinicio. `verify.sh`
+comprueba que el archivo tenga `enable_sagv=0`.
+
+**Consecuencias:**
+- Se sacrifica un estado de ahorro de energía del system agent a cambio
+  de estabilidad del display; el impacto en batería es pequeño.
+- Si tras reiniciar sigue el apagón, el problema es hardware (cable,
+  puerto o monitor) y no quedan parámetros de software razonables.
+- No se toca el audio: el arreglo del puerto del sink sigue siendo
+  independiente (audio-switch).
+
+## ADR-130 — Micro del jack interno por defecto (el headset, manual)
+
+**Contexto:** al seleccionar a mano “Headset Microphone” en pavucontrol,
+la pantalla HDMI se apaga unos segundos. El ALC255 reporta los puertos de
+entrada como `availability unknown` y el micro del jack es un phantom
+jack sin detección real; al cambiar la ruta del códec, el enlace HDMI se
+re-sincroniza. El watcher de audio elegía ese puerto automáticamente, y
+por eso el parpadeo coincidía con grabar/arrancar audio.
+
+**Decisión:**
+1. La **salida** mantiene la prioridad automática actual: jack > USB >
+   Bluetooth > HDMI > altavoces internos.
+2. En el **jack**, el micro por defecto es el **interno**
+   (`JACK_MIC=internal`). `JACK_MIC=headset` fuerza el del headset y
+   `manual` deja la elección a pavucontrol.
+3. USB y Bluetooth siguen cambiando su micrófono automáticamente; HDMI
+   mantiene el micro interno.
+4. `set_headset_mic_gain` solo se aplica cuando se elige explícitamente
+   el micro del jack.
+
+**Consecuencias:**
+- Grabar y arrancar audio ya no cambia el puerto del micro del jack, así
+  que no se reajusta el HDMI ni parpadea la pantalla.
+- El micro del headset queda disponible a mano; si al seleccionarlo con
+  un headset conectado sigue parpadeando, la alternativa es desvincular
+  el códec HDMI o usar un headset USB.
+- La detección automática sigue igual para salida, USB, Bluetooth y
+  HDMI; solo se hace conservadora en el caso que el ALC255 no sabe
+  detectar.
+
+## ADR-131 — Miniaturas de Thunar, VLC con VA-API y micro interno
+
+**Contexto:** Thunar mostraba iconos genéricos porque `tumbler` no estaba
+instalado; VLC solo llevaba `avcodec-hw` implícito y con la salida X11
+fallaba al convertir superficies VA-API; el micro interno se oía bajo
+(`Internal Mic Boost=0`).
+
+**Decisión:**
+1. Instalar `tumbler` (no `tumbler-plugins-extra`: el paquete base ya
+   trae plugins de imágenes, PDF y vídeo vía GStreamer; el extra metía
+   WebKit y ~130 MB de RSS). Añadirlo a paquetes y `verify.sh`.
+2. `thunar-defaults.sh` deja `/misc-thumbnail-mode=1` (solo locales).
+3. VLC usa `avcodec-hw=any` y `vout=gl`: con `vout=gl` la conversión
+   VA-API funciona (Intel iHD) sin los errores de `xcb_x11`.
+4. `audio-switch.sh` deja `Internal Mic Boost=2` (+20 dB) y
+   `Headset Mic Boost=1` (+10 dB); el micro del jack sigue en interno por
+   defecto y el headset manual. La grabación aplica `mic_gain=3.0`
+   (+9,5 dB) a la pista del micro (`recording.conf`).
+
+**Consecuencias:**
+- Thunar genera miniaturas de imágenes, PDF y vídeo; `tumblerd` baja a
+  ~28 MB de RSS sin el plugin extra.
+- VLC decodifica por hardware de forma estable; si no hay VA-API, cae al
+  decodificador software de VLC.
+- La voz del micro interno sube ~20 dB de hardware y +9,5 dB de software
+  en la grabación; si sigue baja, usar el micro del headset a mano
+  (conectado) o subir el boost interno a 3.
+
+## ADR-132 — ytwatch sin chat replay y con wmctrl
+
+**Contexto:** al reproducir un **LIVE VOD**, ytwatch levantaba su servidor
+local de chat (`127.0.0.1`) y lo abría en Brave, además de la ventana de
+mpv. El usuario solo quería el vídeo; el navegador parecía abrirse “para
+el vídeo”. Además `ytwatch doctor` marcaba `wmctrl` como requerido
+ausente, lo que afecta a la colocación de la ventana de mpv en X11.
+
+**Decisión:**
+1. Añadir `[chat] enabled = false` a `config.toml.in` y a la config viva:
+   el chat replay deja de abrirse. `[general] browser` sigue disponible
+   para enlaces/canales (`c`).
+2. Añadir `wmctrl` a paquetes y `verify.sh`; `ytwatch doctor` queda sin
+   programas requeridos ausentes.
+3. Mantener `[mpv] workspace = ""`; bspwm coloca la ventana.
+
+**Consecuencias:**
+- Reproducir un live VOD abre solo mpv; no aparece una ventana de Brave
+  por el chat.
+- Brave se sigue usando si el usuario abre un canal/enlace desde ytwatch.
+- El chat se puede reactivar con `[chat] enabled = true` y, si se quiere,
+  `[chat] browser`.

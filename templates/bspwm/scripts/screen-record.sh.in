@@ -1,7 +1,8 @@
 #!/bin/sh
 # screen-record — graba la pantalla con ffmpeg; un solo atajo sirve para
-# empezar y para parar. El audio sale del monitor del sink por defecto,
-# que sigue la política de audio-watch (jack > USB/BT > HDMI > interno).
+# empezar y para parar. El audio y el micrófono siguen la política de
+# audio-watch (jack > USB > Bluetooth > HDMI > interno): se usan el sink y
+# el source por defecto, sin hardcodear dispositivos.
 set -u
 
 action="${1:-toggle}"
@@ -12,11 +13,59 @@ outfile="$state_dir/output"
 trayfile="$state_dir/tray.pid"
 logfile="$state_dir/ffmpeg.log"
 hidden_marker="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record-hidden"
+starting_marker="$state_dir/starting"
 tray_app="$HOME/.config/bspwm/scripts/recording-tray.py"
+conf="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup/recording.conf"
+
+# mix = sistema + micro, system = solo lo que suena, mic = solo micro.
+audio_mode="mix"
+# Ganancia de la pista del micro en la mezcla (1.0 = sin cambio).
+mic_gain="3.0"
+if [ -r "$conf" ]; then
+  configured=$(sed -n 's/^[[:space:]]*audio_mode[[:space:]]*=[[:space:]]*"\{0,1\}\([A-Za-z]*\)"\{0,1\}.*/\1/p' "$conf" | tail -n 1)
+  case "$configured" in
+    mix|system|mic) audio_mode="$configured" ;;
+  esac
+  configured_gain=$(sed -n 's/^[[:space:]]*mic_gain[[:space:]]*=[[:space:]]*\([0-9][0-9.]*\).*/\1/p' "$conf" | tail -n 1)
+  case "$configured_gain" in
+    ''|*[!0-9.]*) ;;
+    *) mic_gain="$configured_gain" ;;
+  esac
+fi
 
 notify() {
   command -v notify-send >/dev/null 2>&1 || return 0
   notify-send -a "dwm-setup" -i "media-record" "$1" "${2:-}"
+}
+
+# Corrección silenciosa cuando el modo real no coincide con el previsto.
+notify_silent() {
+  command -v notify-send >/dev/null 2>&1 || return 0
+  notify-send -a "dwm-setup-silent" -i "media-record" "$1" "${2:-}"
+}
+
+mode_label() {
+  case "$1" in
+    mix) printf 'sistema + micro' ;;
+    system) printf 'solo sistema' ;;
+    mic) printf 'solo micro' ;;
+    *) printf 'solo vídeo' ;;
+  esac
+}
+
+# Suena el aviso de inicio de forma síncrona, antes de abrir ffmpeg: así el
+# chime termina seguro y no entra en el monitor de audio. El toast visual se
+# manda como dwm-setup-silent para que dunst no reproduzca otro sonido.
+play_start_sound() {
+  script="$HOME/.config/dunst/scripts/notification-sound.sh"
+  sound=/usr/share/sounds/freedesktop/stereo/message-new-instant.oga
+  if [ -x "$script" ]; then
+    DUNST_APP_NAME= DUNST_SUMMARY= "$script" >/dev/null 2>&1 || true
+  elif command -v paplay >/dev/null 2>&1 && [ -r "$sound" ]; then
+    paplay "$sound" >/dev/null 2>&1 || true
+  elif command -v pw-play >/dev/null 2>&1 && [ -r "$sound" ]; then
+    pw-play "$sound" >/dev/null 2>&1 || true
+  fi
 }
 
 polybar_action() {
@@ -62,20 +111,22 @@ stop_recording() {
 
 choose_monitor() {
   all=$(xdpyinfo 2>/dev/null | awk '/dimensions:/{print $2; exit}')
+  cache="${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup/monitors"
   menu=""
   count=0
-  while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    name=$(printf '%s\n' "$line" | awk '{print $2}')
-    name=$(printf '%s\n' "$name" | sed 's/^[+*]*//')
-    geom=$(printf '%s\n' "$line" | awk '{print $3}')
-    wh=$(printf '%s\n' "$geom" | sed -E 's#^([0-9]+)/[0-9]+x([0-9]+)/[0-9]+\+.*#\1x\2#')
-    [ -n "$wh" ] || wh="$all"
-    menu="$menu$name ($wh)|$name|$geom\n"
-    count=$((count + 1))
-  done <<EOF
-$(xrandr --listmonitors 2>/dev/null | tail -n +2)
-EOF
+
+  # La caché la escribe display-setup.sh al iniciar la sesión. Evita llamar
+  # a xrandr aquí: en algunos HDMI, xrandr fuerza una lectura EDID/DDC y la
+  # pantalla se queda en negro unos segundos.
+  if [ -s "$cache" ]; then
+    while IFS='|' read -r name geom; do
+      [ -n "$name" ] || continue
+      [ -n "$geom" ] || continue
+      wh=$(printf '%s\n' "$geom" | sed -E 's#^([0-9]+)(/[0-9]+)?x([0-9]+)(/[0-9]+)?\+.*#\1x\3#')
+      menu="$menu$name ($wh)|$name|$geom\n"
+      count=$((count + 1))
+    done <"$cache"
+  fi
 
   if [ "$count" -eq 0 ]; then
     [ -n "$all" ] || return 1
@@ -97,9 +148,9 @@ EOF
       y=0
       ;;
     *)
-      wh=$(printf '%s\n' "$geom" | sed -E 's#^([0-9]+)/[0-9]+x([0-9]+)/[0-9]+\+.*#\1x\2#')
-      x=$(printf '%s\n' "$geom" | sed -E 's#^.*\+([0-9]+)\+[0-9]+$#\1#')
-      y=$(printf '%s\n' "$geom" | sed -E 's#^.*\+[0-9]+\+([0-9]+)$#\1#')
+      wh=$(printf '%s\n' "$geom" | sed -E 's#^([0-9]+)(/[0-9]+)?x([0-9]+)(/[0-9]+)?\+.*#\1x\3#')
+      x=$(printf '%s\n' "$geom" | sed -E 's#^[^+]*\+([0-9]+)\+[0-9]+$#\1#')
+      y=$(printf '%s\n' "$geom" | sed -E 's#^[^+]*\+[0-9]+\+([0-9]+)$#\1#')
       ;;
   esac
   [ -n "$wh" ] && [ -n "$x" ] && [ -n "$y" ] || return 1
@@ -107,13 +158,83 @@ EOF
   return 0
 }
 
+# El watcher de audio ya deja como predeterminados el sink y el source que
+# tocan. Aquí solo se leen; si el source es un monitor (no sirve como micro)
+# o no existe, se busca un micro real.
+pick_audio() {
+  sink=$(pactl get-default-sink 2>/dev/null || printf '')
+  source=$(pactl get-default-source 2>/dev/null || printf '')
+  case "$source" in *.monitor) source="" ;; esac
+
+  # Con Bluetooth, WirePlumber cambia a HFP al abrir el micro; darle un
+  # momento por si el source aún no está creado.
+  case "$sink" in
+    bluez_output.*)
+      i=0
+      while [ "$i" -lt 30 ]; do
+        bt_src=$(pactl list short sources 2>/dev/null | awk '$2 ~ /^bluez_input\./ {print $2; exit}')
+        if [ -n "$bt_src" ]; then
+          source="$bt_src"
+          break
+        fi
+        sleep 0.1
+        i=$((i + 1))
+      done
+      ;;
+  esac
+
+  if [ -z "$source" ]; then
+    source=$(pactl list short sources 2>/dev/null | awk '$2 !~ /\.monitor$/ {print $2; exit}')
+  fi
+}
+
+launch_attempt() {
+  mode="$1"
+  set -- -hide_banner -loglevel error -f x11grab -framerate 30 \
+    -video_size "$wh" -i "${display}+${x},${y}"
+
+  case "$mode" in
+    mix)
+      set -- "$@" \
+        -f pulse -i "${sink}.monitor" \
+        -f pulse -i "$source" \
+        -filter_complex "[1:a]aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[a1];[2:a]highpass=f=80,volume=${mic_gain},aformat=sample_fmts=fltp:sample_rates=48000:channel_layouts=stereo[a2];[a1][a2]amix=inputs=2:duration=longest:dropout_transition=2:normalize=0,alimiter=limit=0.95:level=0[a]" \
+        -map 0:v -map "[a]" -c:a aac -b:a 160k
+      ;;
+    system)
+      set -- "$@" -f pulse -i "${sink}.monitor" \
+        -map 0:v -map 1:a -c:a aac -b:a 160k
+      ;;
+    mic)
+      set -- "$@" -f pulse -i "$source" \
+        -af "highpass=f=80,volume=${mic_gain}" \
+        -map 0:v -map 1:a -c:a aac -b:a 160k
+      ;;
+  esac
+
+  set -- "$@" -c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p -y "$out"
+  if command -v nice >/dev/null 2>&1; then
+    nohup nice -n 10 ffmpeg "$@" >"$logfile" 2>&1 &
+  else
+    nohup ffmpeg "$@" >"$logfile" 2>&1 &
+  fi
+  launched_pid=$!
+}
+
 start_recording() {
   if is_recording; then
     notify "Grabación" "Ya está grabando"
     return 0
   fi
+  if [ -e "$starting_marker" ]; then
+    spid=$(cat "$starting_marker" 2>/dev/null || printf '')
+    if [ -n "$spid" ] && kill -0 "$spid" 2>/dev/null; then
+      notify "Grabación" "Ya se está preparando"
+      return 0
+    fi
+    rm -f "$starting_marker"
+  fi
   command -v ffmpeg >/dev/null 2>&1 || { notify "Grabación" "Falta ffmpeg"; return 1; }
-  command -v xrandr >/dev/null 2>&1 || { notify "Grabación" "Falta xrandr"; return 1; }
 
   choose_monitor || { notify "Grabación" "No se eligió pantalla"; return 1; }
 
@@ -128,48 +249,79 @@ start_recording() {
   rm -rf "$state_dir" 2>/dev/null || true
   rm -f "$hidden_marker" 2>/dev/null || true
   mkdir -p "$state_dir" 2>/dev/null || return 1
+  printf '%s\n' "$$" >"$starting_marker" 2>/dev/null || true
 
-  sink=$(pactl get-default-sink 2>/dev/null || true)
+  pick_audio
   display="${DISPLAY:-:0}"
   case "$display" in *.*) ;; *) display="$display.0" ;; esac
 
-  launch() {
-    with_audio="$1"
-    set -- -hide_banner -loglevel error -f x11grab -framerate 30 \
-      -video_size "$wh" -i "${display}+${x},${y}"
-    if [ "$with_audio" -eq 1 ] && [ -n "$sink" ]; then
-      set -- "$@" -f pulse -i "${sink}.monitor" -c:a aac -b:a 160k
-    fi
-    set -- "$@" -c:v libx264 -preset veryfast -crf 23 -pix_fmt yuv420p -y "$out"
-    if command -v nice >/dev/null 2>&1; then
-      nohup nice -n 10 ffmpeg "$@" >"$logfile" 2>&1 &
-    else
-      nohup ffmpeg "$@" >"$logfile" 2>&1 &
-    fi
-    launched_pid=$!
-  }
+  # Orden de intentos según el modo configurado; siempre se acaba en vídeo.
+  attempts=""
+  predicted="video"
+  case "$audio_mode" in
+    mix)
+      if [ -n "$sink" ] && [ -n "$source" ]; then
+        attempts="mix"
+        predicted="mix"
+      elif [ -n "$sink" ]; then
+        attempts="system"
+        predicted="system"
+      fi
+      ;;
+    mic)
+      if [ -n "$source" ]; then
+        attempts="mic"
+        predicted="mic"
+      elif [ -n "$sink" ]; then
+        attempts="system"
+        predicted="system"
+      fi
+      ;;
+    system)
+      if [ -n "$sink" ]; then
+        attempts="system"
+        predicted="system"
+      fi
+      ;;
+  esac
+  if [ -z "$attempts" ] && [ -n "$source" ]; then
+    attempts="mic"
+    predicted="mic"
+  fi
+  attempts="$attempts video"
 
-  launch 1
-  pid="$launched_pid"
-  printf '%s\n' "$pid" >"$pidfile"
-  date +%s >"$startfile"
-  printf '%s\n' "$out" >"$outfile"
-  sleep 0.6
+  # El aviso visual es silencioso; el sonido se reproduce aparte y de forma
+  # síncrona, antes de arrancar ffmpeg, para que no entre en la grabación.
+  notify_silent "Grabando ($(mode_label "$predicted"))" "$monitor_name · $out"
+  play_start_sound
 
-  if ! kill -0 "$pid" 2>/dev/null; then
+  selected=""
+  pid=""
+  for mode in $attempts; do
     rm -f "$out"
-    launch 0
+    launch_attempt "$mode"
     pid="$launched_pid"
     printf '%s\n' "$pid" >"$pidfile"
-    sleep 0.5
-    if ! kill -0 "$pid" 2>/dev/null; then
-      notify "Grabación" "ffmpeg no pudo iniciar (ver $logfile)"
-      rm -rf "$state_dir" 2>/dev/null || true
-      return 1
+    sleep 0.6
+    if kill -0 "$pid" 2>/dev/null; then
+      selected="$mode"
+      break
     fi
-    notify "Grabando (solo vídeo)" "$monitor_name · $out"
-  else
-    notify "Grabando pantalla" "$monitor_name · $out"
+  done
+
+  if [ -z "$selected" ]; then
+    notify "Grabación" "ffmpeg no pudo iniciar (ver $logfile)"
+    rm -rf "$state_dir" 2>/dev/null || true
+    return 1
+  fi
+
+  rm -f "$starting_marker" 2>/dev/null || true
+  date +%s >"$startfile"
+  printf '%s\n' "$out" >"$outfile"
+
+  # Si ffmpeg tuvo que caer a otro modo, corregir el aviso sin otro chime.
+  if [ "$selected" != "$predicted" ]; then
+    notify_silent "Grabando ($(mode_label "$selected"))" "$monitor_name · $out"
   fi
 
   if [ -x "$tray_app" ] && command -v python3 >/dev/null 2>&1 &&

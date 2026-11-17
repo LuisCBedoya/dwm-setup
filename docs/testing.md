@@ -133,6 +133,10 @@ Comprobado:
 - `grep -n '^qt-dark-palette=1$' ~/.config/vlc/vlcrc` debe devolver la clave.
 - Al abrir `vlc`, la ventana, menús y lista de reproducción salen oscuros.
 - VLC 3.0.24 en Debian 13 admite `--qt-dark-palette`.
+- **VA-API**: `avcodec-hw=any` + `vout=gl`; al reproducir, el log debe
+  mostrar `avcodec decoder: Using Intel iHD driver ... hardware decoding`
+  sin `Failed to create video converter`. `vout=xcb_x11` no sirve para
+  VA-API en este equipo.
 - No requiere `qt5-gtk-platformtheme`.
 
 ### Borde enfocado gris (2026-10-25)
@@ -300,6 +304,10 @@ Probado en vivo con Thunar 4.20.2:
 - Ctrl+M recupera el menú y F9 el panel lateral (defaults de
   `~/.config/Thunar/accels.scm`).
 - `thunar-defaults.sh` no pisa propiedades existentes.
+- **Miniaturas**: requiere `tumbler` (paquete base; trae plugins de
+  imágenes, PDF y vídeo). `misc-thumbnail-mode=1` deja solo archivos
+  locales. Comprobar `systemctl --user is-active tumblerd` y que
+  `~/.cache/thumbnails/normal` crece al abrir Thunar.
 - `desktop-doctor` reconoce los CSS y el script.
 
 ### Paleta Mono Slate (2026-10-25)
@@ -580,7 +588,7 @@ grep -n 'super + shift + g' -A1 ~/.config/sxhkd/sxhkdrc
 Prueba con el atajo (la misma tecla inicia y para):
 
 ```sh
-# 1. Pulsar Super+Shift+G → notificación "Grabando pantalla"
+# 1. Pulsar Super+Shift+G → notificación "Grabando (sistema + micro)"
 # 2. Esperar unos segundos (el módulo polybar muestra ● REC mm:ss)
 # 3. Pulsar Super+Shift+G otra vez → "Grabación guardada"
 
@@ -596,18 +604,45 @@ Criterios:
 - `ps -o ni= -p "$(cat "${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record/ffmpeg.pid")"`
   debe devolver `10`: ffmpeg corre con prioridad baja para no competir
   con el escritorio.
-- El audio sale del **monitor del sink por defecto**, que sigue la política
-  de `audio-watch.sh` (jack > USB > Bluetooth > HDMI > altavoces). Se puede
-  comprobar con `pactl get-default-sink`.
+- El audio sale del **monitor del sink por defecto** mezclado con el
+  **source por defecto** (micrófono). La salida mantiene la prioridad de
+  `audio-watch.sh` (jack > USB > Bluetooth > HDMI > interno). En el jack,
+  el micro es el **interno por defecto** (`JACK_MIC=internal`) para no
+  reajustar el HDMI; USB/Bluetooth siguen automáticos y
+  `JACK_MIC=headset` fuerza el del headset. Se puede comprobar con
+  `pactl get-default-sink` y `pactl get-default-source`.
+- El micro interno lleva `Internal Mic Boost=2` (+20 dB) y el headset
+  `1` (+10 dB). La grabación aplica `mic_gain=3.0` (+9,5 dB) a la pista
+  del micro; se puede bajar a 1.0 en `recording.conf`. Si la voz sigue
+  baja, usar el micro del headset conectado a mano o subir el boost.
+- `~/.config/dwm-setup/recording.conf` elige el modo:
+  `audio_mode="mix"` (sistema + micro, por defecto), `"system"` o `"mic"`.
+- Prueba de mezcla: reproducir música y hablar a la vez; en el MKV deben
+  oírse las dos cosas. Con `audio_mode="system"` no debe oírse la voz y
+  con `"mic"` solo la voz. El micro lleva `highpass=f=80` para quitar el
+  DC/rumble; sin él, la mezcla puede salir con un offset de ~0,15 y RMS
+  alto aunque haya silencio.
+- Con Bluetooth, al empezar a grabar debe aparecer `bluez_input.*` (HFP);
+  al parar, WirePlumber vuelve a A2DP. Con HDMI se mantiene el micro
+  interno/headset del perfil duplex.
 - El módulo `recording` de polybar solo se ve mientras dura la grabación:
   punto `●` rojo, `REC` y el tiempo en el color de texto normal, con el
   mismo fondo y padding que el resto de módulos. Al parar desaparece
   (`module_hide`); al empezar reaparece (`module_show`). Si `ffmpeg`
   muere solo, el módulo se oculta en el siguiente ciclo.
-- Con un solo monitor empieza directo; con varios abre un menú rofi con
-  nombre y resolución de cada pantalla (y una opción «Todas»).
-- Si `ffmpeg` no puede abrir el monitor de audio, reintenta solo con vídeo
-  y avisa «Grabando (solo vídeo)».
+- Con un solo monitor empieza directo (sin llamar a `xrandr`); con varios
+  abre un menú rofi con nombre y resolución de cada pantalla (y una opción
+  «Todas»). La geometría sale de `~/.cache/dwm-setup/monitors`, escrita
+  por `display-setup.sh`; si falta, se graba «Todas» con `xdpyinfo`. Tras
+  cambiar monitores, ejecutar `display-setup.sh apply` para refrescar.
+- El aviso de inicio suena ~1,2 s antes de que empiece ffmpeg (para que
+  el chime no se grabe); el de parada suena después. No debe haber ningún
+  `paplay` en el monitor mientras graba.
+- Mientras graba, `pgrep -af 'ffmpeg.*x11grab'` debe mostrar las dos
+  entradas `-f pulse -i` (monitor y micro) y `amix` en `filter_complex`.
+- Si el micro no abre, reintenta solo sistema; si el sistema no abre,
+  solo vídeo. La notificación indica el modo real: “sistema + micro”,
+  “solo sistema”, “solo micro” o “solo vídeo”.
 - Parar dos veces no duplica notificaciones ni deja procesos `ffmpeg`.
 
 Prueba desde la terminal (sin atajo):
@@ -624,7 +659,17 @@ Quirk ALC255 (solo ASUS FX504GE/ALC255):
 # Detección en dry-run
 ./install.sh --dry-run | grep -A2 'modprobe.d/alsa-fx504'
 
-# Tras instalar y reiniciar, con los auriculares conectados:
+# El quirk debe apuntar a snd-hda-intel (no a snd-hda-codec-realtek)
+grep -x 'options snd-hda-intel model=alc255-asus' /etc/modprobe.d/alsa-fx504.conf
+
+# Con auriculares, el boost del micro debe quedar a 0 y el capture <= 55:
+amixer -c0 cget name='Headset Mic Boost Volume' | tail -2
+amixer -c0 cget name='Capture Volume' | tail -2
+
+# Tras instalar y reiniciar, el módulo debe llevar el modelo aplicado:
+cat /sys/module/snd_hda_intel/parameters/model   # debe empezar por alc255-asus
+
+# Con los auriculares conectados:
 pactl list sources | grep -A12 -i 'analog-input\|headset\|mic'
 pactl list cards | grep -E 'analog-input|Active Profile'
 timeout 5 parecord --device=alsa_input.pci-0000_00_1f.3.analog-stereo /tmp/mic-test.wav
@@ -1372,3 +1417,15 @@ ytsearch50  → 4533 ms
   `theme-mode --no-reload light` no cambió el mtime del script y sigue
   usando `i3lock -i`. Pendiente la prueba visual de `Super+Alt+t` +
   `Super+Shift+L`.
+
+### ytwatch: sin chat replay y con wmctrl (2026-11-17, ADR-132)
+
+- Al reproducir un **LIVE VOD**, ytwatch abría su chat replay en
+  `127.0.0.1:<puerto>` con Brave. No era el vídeo: el vídeo va a mpv.
+- `[chat] enabled = false` en `~/.config/ytwatch/config.toml` y en
+  `templates/ytwatch/config.toml.in`. Comprobar con
+  `grep -A2 '^\[chat\]' ~/.config/ytwatch/config.toml`.
+- `wmctrl` instalado y añadido a paquetes/verify; `ytwatch doctor`
+  devuelve **“All required programs found”**.
+- Pendiente: abrir un LIVE VOD desde el TUI y confirmar que solo aparece
+  mpv (sin ventana de Brave).

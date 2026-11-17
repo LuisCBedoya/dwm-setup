@@ -12,13 +12,20 @@ verify_install() {
   case "$videos_dir" in ""|"$home") videos_dir="$home/Vídeos" ;; esac
 
   for cmd in bspwm sxhkd polybar picom xsettingsd ufw bluetoothctl dunst rofi feh kitty flameshot i3lock \
-    xss-lock convert brightnessctl xclip xdotool thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay \
+    xss-lock convert brightnessctl xclip xdotool thunar udiskie v4l2-ctl ffmpeg pactl wpctl pamixer paplay amixer \
     xwallpaper playerctl nvim zsh lsd ranger zathura vlc ueberzug fastfetch mpv fzf chafa \
-    xdg-user-dir xrandr python3; do
+    xdg-user-dir xrandr python3 wmctrl; do
     if cmd_exists "$cmd"; then
       debug "ok: $cmd"
     else
       error "Falta el comando requerido: $cmd"
+      failures=$((failures + 1))
+    fi
+  done
+
+  for pkg in tumbler; do
+    if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+      error "Falta el paquete requerido: $pkg (miniaturas de Thunar)"
       failures=$((failures + 1))
     fi
   done
@@ -201,6 +208,7 @@ verify_install() {
     "$home/.gtkrc-2.0" \
     "$home/.config/xsettingsd/xsettingsd.conf" \
     "$home/.config/vlc/vlcrc" \
+    "$home/.config/dwm-setup/recording.conf" \
     "$home/.oh-my-zsh/oh-my-zsh.sh" \
     "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
     "$home/.config/dunst/scripts/notification-sound.sh" \
@@ -284,9 +292,44 @@ verify_install() {
     error "screen-record.sh no oculta/muestra el módulo recording de polybar"
     failures=$((failures + 1))
   fi
+  if ! grep -q 'get-default-source' "$home/.config/bspwm/scripts/screen-record.sh" 2>/dev/null ||
+     ! grep -q 'amix' "$home/.config/bspwm/scripts/screen-record.sh" 2>/dev/null; then
+    error "screen-record.sh no mezcla micrófono + sistema (get-default-source/amix)"
+    failures=$((failures + 1))
+  fi
+  if ! grep -q 'dwm-setup/monitors' "$home/.config/bspwm/scripts/screen-record.sh" 2>/dev/null ||
+     grep -q 'xrandr --listmonitors' "$home/.config/bspwm/scripts/screen-record.sh" 2>/dev/null; then
+    error "screen-record.sh debe leer la caché de monitores y no llamar a xrandr"
+    failures=$((failures + 1))
+  fi
+  if ! grep -q 'write_monitor_cache' "$home/.config/bspwm/scripts/display-setup.sh" 2>/dev/null; then
+    error "display-setup.sh no escribe la caché de monitores"
+    failures=$((failures + 1))
+  fi
+  if ! grep -q '^audio_mode=' "$home/.config/dwm-setup/recording.conf" 2>/dev/null; then
+    error "Falta audio_mode en ~/.config/dwm-setup/recording.conf"
+    failures=$((failures + 1))
+  fi
   if ! grep -q 'format-background = ${colors.module-bg}' \
       "$home/.config/polybar/variants/reference/modules/recording.ini" 2>/dev/null; then
     error "El módulo recording de la variante B no usa el fondo del resto"
+    failures=$((failures + 1))
+  fi
+
+  if [[ -f "$home/.config/vlc/vlcrc" ]] &&
+     ! grep -q '^avcodec-hw=any' "$home/.config/vlc/vlcrc"; then
+    error "VLC no tiene avcodec-hw=any (VA-API)"
+    failures=$((failures + 1))
+  fi
+  if [[ -f "$home/.config/vlc/vlcrc" ]] &&
+     ! grep -q '^vout=gl' "$home/.config/vlc/vlcrc"; then
+    error "VLC no tiene vout=gl (salida compatible con VA-API)"
+    failures=$((failures + 1))
+  fi
+
+  if ! grep -q '^set preview_images_method ueberzug' \
+      "$home/.config/ranger/rc.conf" 2>/dev/null; then
+    error "Ranger no usa ueberzug para las miniaturas"
     failures=$((failures + 1))
   fi
 
@@ -572,6 +615,10 @@ verify_install() {
   fi
   if [[ -f "$home/.config/dunst/scripts/notification-sound.sh" && ! -x "$home/.config/dunst/scripts/notification-sound.sh" ]]; then
     error "Script no ejecutable: $home/.config/dunst/scripts/notification-sound.sh"
+    failures=$((failures + 1))
+  fi
+  if ! grep -q 'set_headset_mic_gain' "$home/.config/bspwm/scripts/audio-switch.sh" 2>/dev/null; then
+    error "audio-switch.sh no corrige el boost del micro del jack ALC255"
     failures=$((failures + 1))
   fi
 
@@ -963,12 +1010,22 @@ PYCHK
     fi
   fi
 
+  if [[ -f /etc/modprobe.d/dwm-setup-i915.conf ]] &&
+     ! grep -q 'enable_sagv=0' /etc/modprobe.d/dwm-setup-i915.conf; then
+    error "i915 no tiene enable_sagv=0 (riesgo de apagones del monitor)"
+    failures=$((failures + 1))
+  fi
+
   if [[ "${HEADSET_QUIRK_INSTALLED:-0}" -eq 1 ]]; then
-    if [[ -f /etc/modprobe.d/alsa-fx504.conf ]]; then
-      info "Quirk ALC255 instalado; requiere reiniciar para aplicar el micrófono"
-    else
+    if [[ ! -f /etc/modprobe.d/alsa-fx504.conf ]]; then
       error "Se esperaba /etc/modprobe.d/alsa-fx504.conf para el quirk ALC255"
       failures=$((failures + 1))
+    elif ! grep -qx 'options snd-hda-intel model=alc255-asus' \
+        /etc/modprobe.d/alsa-fx504.conf; then
+      error "El quirk ALC255 debe ser 'options snd-hda-intel model=alc255-asus'"
+      failures=$((failures + 1))
+    else
+      info "Quirk ALC255 instalado; requiere reiniciar para aplicar el micrófono"
     fi
   fi
 

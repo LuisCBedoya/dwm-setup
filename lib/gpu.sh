@@ -10,7 +10,7 @@ install_gpu_configs() {
   local connected=""
   local edp=0
   local changed_modprobe=0
-  local i915_opts="enable_fbc=0"
+  local i915_opts="enable_fbc=0 enable_dc=0 enable_sagv=0"
   local d
 
   section "Configuración gráfica"

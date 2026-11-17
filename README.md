@@ -42,7 +42,9 @@ Incluido:
   por GPU cuando el driver está disponible (actívalo en `brave://flags`,
   `VaapiVideoDecoder`).
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo y
-  previews de imagen por el protocolo gráfico de **kitty**. Texto, código y
+  previews de imagen con **ueberzug** (X11). VLC usa
+  `avcodec-hw=any` y `vout=gl` para decodificar por **VA-API** sin los
+  errores de conversión de X11. Texto, código y
   Markdown se abren con **Neovim**. Tema GTK **Catppuccin** (Mocha Black o
   Latte) e iconos **Papirus** con carpetas Catppuccin.
 - Asociaciones de archivo: PDF/EPUB/CB → **zathura**, imágenes → **feh**,
@@ -56,11 +58,13 @@ Incluido:
   `~/Imágenes/Capturas` y grabaciones en `~/Vídeos/Grabaciones`; los
   `Downloads`/`Pictures` antiguos se conservan.
 - Grabación de pantalla con **`Super+Shift+G`**: alterna empezar/parar,
-  graba el monitor elegido (menú si hay varios), usa el audio del **sink
-  por defecto** (jack > USB/BT > HDMI > interno) y guarda
-  `grabacion-YYYY-MM-DD_HH-MM-SS.mkv`. Muestra un `● REC` (punto rojo,
-  texto normal) en el módulo `recording` de polybar, que solo aparece
-  mientras grabas.
+  graba el monitor elegido (menú si hay varios) y **mezcla el audio del
+  sistema con el micrófono**, usando el sink y el source por defecto
+  (misma prioridad que `audio-watch`: jack > USB/BT > HDMI > interno).
+  Guarda `grabacion-YYYY-MM-DD_HH-MM-SS.mkv`. El modo se cambia en
+  `~/.config/dwm-setup/recording.conf` (`mix`, `system` o `mic`). Muestra
+  un `● REC` (punto rojo, texto normal) en el módulo `recording` de
+  polybar, que solo aparece mientras grabas.
 - Pantalla siempre encendida: sin salvapantallas ni DPMS por inactividad.
   El bloqueo manual (`Super+Shift+L`) y el de suspensión siguen activos.
 - Brillo, volumen, portapapeles y agente polkit (`lxpolkit`).
@@ -71,7 +75,7 @@ Incluido:
   **solo notificación**; nunca se abre una aplicación automáticamente.
 - Thunar como gestor de archivos puntual (`Super+Shift+F`), con la paleta
   global, sin menú, panel lateral ni barra de estado (Ctrl+M y F9 los
-  recuperan).
+  recuperan) y **miniaturas** de imágenes, PDF y vídeo con `tumbler`.
 - **fastfetch** con logo propio (`Neofet-light.png`/`Neofet-dark.png`) y
   módulos de hardware, software y tema.
 - Fuente JetBrainsMono Nerd Font, wallpaper oscuro y paleta **Catppuccin**:
@@ -282,9 +286,14 @@ GPU y del firmware; `desktop-doctor` muestra el estado.
 4. **HDMI** (`output:hdmi-stereo+input:analog-stereo`).
 5. **Altavoces analógicos**.
 
-El micrófono sigue al dispositivo: micro del jack > micro USB > micro
-Bluetooth (`bluez_input.*`) > micro interno. Con HDMI se mantiene el
-perfil duplex para no perder el micrófono interno.
+El micrófono **del jack** queda en el **interno por defecto**
+(`JACK_MIC=internal`): el ALC255 no detecta bien el headset y el cambio
+de puerto reajusta el HDMI y apaga la pantalla. `JACK_MIC=headset` fuerza
+el del headset y `manual` deja elegirlo en pavucontrol. El micro interno
+usa `Internal Mic Boost=2` (+20 dB) y el headset `1` (+10 dB). La
+grabación aplica `mic_gain=3.0` a la pista del micro. Los micrófonos
+USB y Bluetooth siguen cambiando solos; con HDMI se mantiene el perfil
+duplex para conservar el micro interno.
 
 El watcher detecta las tarjetas/perfiles/puertos con `pactl`; no hardcodea
 nombres. Solo reaplica la política cuando cambia el hardware conectado,
@@ -315,9 +324,15 @@ sigue disponible para offload.
 
 Si el jack combo de 3.5 mm no expone el micrófono del headset, el watcher
 usa el micrófono interno. En el **ASUS FX504GE con ALC255** el instalador
-detecta el modelo y ofrece el fixup `alc255-asus`; en otros PCs no toca el
-kernel. Opciones: `--headset-quirk` (forzar) y `--no-headset-quirk`
-(omitir). El quirk requiere reiniciar.
+detecta el modelo y ofrece el fixup `alc255-asus`
+(`options snd-hda-intel model=alc255-asus`); en otros PCs no toca el
+kernel. El micro del jack se queda en el **interno por defecto**
+(`JACK_MIC=internal`) para no reajustar el HDMI; `JACK_MIC=headset` fuerza
+el del headset y `manual` lo deja a pavucontrol. Al usar el micro del
+jack con `headset`, `audio-switch.sh` deja el `Headset Mic Boost` en 1
+y limita el `Capture Volume` a 55. Opciones:
+`--headset-quirk` (forzar) y `--no-headset-quirk` (omitir). El quirk
+requiere reiniciar.
 
 Dunst reproduce `message-new-instant.oga` en cada notificación mediante una
 regla con `script`; el sonido sale por el sink activo (HDMI, auriculares o
@@ -530,7 +545,11 @@ ytdlp-rollback   # vuelve a la anterior
 
 Perfil TUI (vim keys, miniaturas junto a cada resultado, filtros de
 tipo/duración/fecha, cola multi-select, playlists y live con chat). No
-sustituye a `yt-play`: es otra puerta al mismo yt-dlp + mpv.
+sustituye a `yt-play`: es otra puerta al mismo yt-dlp + mpv. El chat
+replay está **desactivado** (`[chat] enabled = false`): un LIVE VOD
+reproduce solo en mpv y no abre una ventana de Brave. El navegador
+(`brave-browser`) se sigue usando para abrir enlaces y canales (`c`).
+`wmctrl` se instala para que ytwatch coloque la ventana de mpv en X11.
 
 ```sh
 ytwatch            # abre con la búsqueda activa
@@ -749,6 +768,7 @@ assets/fastfetch/          Neofet-{light,dark}.png (logos de fastfetch)
 templates/icons/           papirus-folders y carpetas cat-*
 templates/modprobe/        i915.conf y nvidia.conf
 templates/modprobe/        alsa-fx504.conf (quirk ALC255)
+templates/recording/       recording.conf (modo de audio de la grabación)
 templates/colors/          palette-mocha-black.sh y palette-latte.sh
 assets/wallpaper.png       Wallpaper por defecto de dark
 assets/wallpaper-alt.png   Wallpaper por defecto de light

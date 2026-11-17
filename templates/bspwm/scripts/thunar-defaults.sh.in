@@ -24,5 +24,7 @@ set_default thunar /last-menubar-visible   bool false
 set_default thunar /last-statusbar-visible bool false
 set_default thunar /last-side-pane         string THUNAR_SIDEPANE_TYPE_HIDDEN_SHORTCUTS
 set_default thunar /last-show-hidden       bool false
+# Miniaturas de archivos locales (tumbler).
+set_default thunar /misc-thumbnail-mode    uint 1
 
 exit 0

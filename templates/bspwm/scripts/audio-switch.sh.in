@@ -11,6 +11,13 @@ mode="${1:-auto}"
 VOL=50
 MUTE=false
 SAVED_VOLUME=0
+# Entrada del jack: internal (por defecto), headset o manual.
+# La salida sigue siendo automática (jack > USB > Bluetooth > HDMI > interno).
+JACK_MIC="${JACK_MIC:-internal}"
+case "$JACK_MIC" in
+  internal|headset|manual) ;;
+  *) JACK_MIC=internal ;;
+esac
 
 log() { printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"; }
 
@@ -141,11 +148,19 @@ analog_card() {
 }
 
 headphones_available() {
-  pactl list cards 2>/dev/null | grep -qE 'analog-output-headphones:.*, available\)'
+  pactl list cards 2>/dev/null |
+    grep -qE 'analog-output-headphones:.*availability available\)' && return 0
+  # El ALC255 puede reportar el jack como "unknown" aunque esté conectado.
+  # Si los altavoces no están disponibles, es que hay algo en el jack.
+  pactl list cards 2>/dev/null |
+    grep -qE 'analog-output-headphones:.*availability unknown\)' &&
+    ! pactl list cards 2>/dev/null |
+      grep -qE 'analog-output-speaker:.*availability available\)'
 }
 
 hdmi_available() {
-  pactl list cards 2>/dev/null | grep -qE 'hdmi-output-[0-9]+:.*, available\)'
+  pactl list cards 2>/dev/null |
+    grep -qE 'hdmi-output-[0-9]+:.*availability available\)'
 }
 
 move_streams() {
@@ -178,6 +193,49 @@ set_source_port() {
   move_source_streams "$source"
 }
 
+# El ALC255 arranca el micro del jack con +30 dB de boost y el capture al
+# máximo (+30 dB): eso amplifica muchísimo el ruido del headset. Se corrige
+# solo si viene en los valores altos, para respetar ajustes manuales más bajos.
+set_headset_mic_gain() {
+  command -v amixer >/dev/null 2>&1 || return 0
+
+  card=$(awk '/^[[:space:]]*[0-9]+ \[/ { if ($0 ~ /HDA Intel|PCH/) { print $1; exit } }' /proc/asound/cards 2>/dev/null)
+  [ -n "$card" ] || card=0
+
+  boost=$(amixer -c "$card" cget name='Headset Mic Boost Volume' 2>/dev/null |
+    sed -n 's/.*: values=\([0-9][0-9]*\),.*/\1/p' | head -n 1)
+  if [ -n "$boost" ] && [ "$boost" -ne 1 ]; then
+    amixer -c "$card" cset name='Headset Mic Boost Volume' 1 >/dev/null 2>&1 || true
+  fi
+
+  capture=$(amixer -c "$card" cget name='Capture Volume' 2>/dev/null |
+    sed -n 's/.*: values=\([0-9][0-9]*\),.*/\1/p' | head -n 1)
+  if [ -n "$capture" ] && [ "$capture" -gt 55 ]; then
+    amixer -c "$card" cset name='Capture Volume' 55 >/dev/null 2>&1 || true
+  fi
+}
+
+# El micro interno suele venir con boost 0 y se oye bajo. Se sube a 1
+# (+10 dB) solo si está a 0; no se pisa un ajuste manual mayor.
+set_internal_mic_gain() {
+  command -v amixer >/dev/null 2>&1 || return 0
+
+  card=$(awk '/^[[:space:]]*[0-9]+ \[/ { if ($0 ~ /HDA Intel|PCH/) { print $1; exit } }' /proc/asound/cards 2>/dev/null)
+  [ -n "$card" ] || card=0
+
+  boost=$(amixer -c "$card" cget name='Internal Mic Boost Volume' 2>/dev/null |
+    sed -n 's/.*: values=\([0-9][0-9]*\),.*/\1/p' | head -n 1)
+  if [ -n "$boost" ] && [ "$boost" -ne 2 ]; then
+    amixer -c "$card" cset name='Internal Mic Boost Volume' 2 >/dev/null 2>&1 || true
+  fi
+
+  capture=$(amixer -c "$card" cget name='Capture Volume' 2>/dev/null |
+    sed -n 's/.*: values=\([0-9][0-9]*\),.*/\1/p' | head -n 1)
+  if [ -n "$capture" ] && [ "$capture" -gt 55 ]; then
+    amixer -c "$card" cset name='Capture Volume' 55 >/dev/null 2>&1 || true
+  fi
+}
+
 switch_bluetooth() {
   sink=$(wait_for_sink '^bluez_output\.' 30) || return 1
   pactl set-default-sink "$sink" >/dev/null 2>&1 || return 1
@@ -208,7 +266,8 @@ switch_usb() {
   else
     src=$(wait_for_analog_source 20) || true
     if [ -n "$src" ]; then
-      set_source_port "$src" analog-input-mic
+      set_source_port "$src" analog-input-internal-mic
+      set_internal_mic_gain
     fi
     log "audio: USB ($sink, micrófono interno)"
   fi
@@ -231,7 +290,8 @@ switch_hdmi() {
 
   src=$(wait_for_analog_source 20) || true
   if [ -n "$src" ]; then
-    set_source_port "$src" analog-input-mic
+    set_source_port "$src" analog-input-internal-mic
+    set_internal_mic_gain
   fi
 
   log "audio: HDMI ($sink)"
@@ -257,9 +317,11 @@ switch_analog() {
 
   sink=$(wait_for_sink 'analog' 30) || return 1
   if [ "$target" = "headphones" ]; then
-    pactl set-sink-port "$sink" analog-output-headphones >/dev/null 2>&1 || true
+    pactl set-sink-port "$sink" analog-output-headphones >/dev/null 2>&1 ||
+      pactl set-sink-port "$sink" analog-output-speaker >/dev/null 2>&1 || true
   else
-    pactl set-sink-port "$sink" analog-output-speaker >/dev/null 2>&1 || true
+    pactl set-sink-port "$sink" analog-output-speaker >/dev/null 2>&1 ||
+      pactl set-sink-port "$sink" analog-output-headphones >/dev/null 2>&1 || true
   fi
 
   pactl set-default-sink "$sink" >/dev/null 2>&1 || return 1
@@ -270,10 +332,14 @@ switch_analog() {
 
   source=$(wait_for_analog_source 20) || true
   if [ -n "$source" ]; then
-    if [ "$target" = "headphones" ]; then
-      set_source_port "$source" analog-input-headset-mic analog-input-mic
+    if [ "$target" = "headphones" ] && [ "$JACK_MIC" = "headset" ]; then
+      set_source_port "$source" analog-input-headset-mic analog-input-internal-mic
+      set_headset_mic_gain
     else
-      set_source_port "$source" analog-input-mic
+      # Por defecto, micro interno: el puerto del headset del ALC255 no
+      # tiene detección fiable y su cambio de ruta apaga el HDMI.
+      set_source_port "$source" analog-input-internal-mic
+      set_internal_mic_gain
     fi
   fi
 

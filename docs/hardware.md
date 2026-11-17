@@ -97,7 +97,8 @@ No hardcodea tarjeta ni monitor.
 
 El codec es **Realtek ALC255**. En el FX504GE el micrófono del jack combo no
 aparece por defecto; el instalador detecta DMI + códec y ofrece el fixup
-`alc255-asus` (`/etc/modprobe.d/alsa-fx504.conf`). En otros PCs no se aplica.
+`alc255-asus` (`/etc/modprobe.d/alsa-fx504.conf`, con
+`options snd-hda-intel model=alc255-asus`). En otros PCs no se aplica.
 Requiere reinicio y es reversible.
 
 Dunst reproduce `message-new-instant.oga` en cada notificación con `paplay`

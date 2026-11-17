@@ -93,19 +93,37 @@ apply_layout() {
   done
 }
 
+# Guarda la geometría de los monitores para que screen-record no tenga que
+# consultar xrandr (en algunos monitores HDMI eso fuerza un EDID/DDC y la
+# pantalla parpadea unos segundos).
+write_monitor_cache() {
+  cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup"
+  cache="$cache_dir/monitors"
+  mkdir -p "$cache_dir" 2>/dev/null || return 0
+  xrandr --query 2>/dev/null |
+    awk '/ connected/ {
+      name=$1; geom="";
+      for (i=2;i<=NF;i++) if ($i ~ /^[0-9]+x[0-9]+\+[0-9]+\+[0-9]+$/) { geom=$i; break }
+      if (geom != "") print name "|" geom
+    }' >"$cache" 2>/dev/null || rm -f "$cache"
+}
+
 case "${1:-apply}" in
   apply)
     apply_layout
+    write_monitor_cache
     ;;
   watch)
     sig=$(connected | tr '\n' ' ')
     apply_layout
+    write_monitor_cache
     while :; do
       sleep 5
       now=$(connected | tr '\n' ' ')
       [ "$now" = "$sig" ] && continue
       sig=$now
       apply_layout
+      write_monitor_cache
     done
     ;;
   *)

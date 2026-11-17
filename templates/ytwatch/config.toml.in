@@ -31,6 +31,11 @@ language = "es"
 region = ""
 hide = []                    # nunca mostrar: shorts, playlists, live, upcoming, vods
 
+[chat]
+enabled = false             # sin chat replay ni ventana de Brave al reproducir
+# browser = "brave-browser" # navegador solo para el chat, si se habilita
+# workspace = ""            # bspwm coloca la ventana
+
 [history]
 enabled = true
 max_age_days = 30

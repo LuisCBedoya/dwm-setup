@@ -35,6 +35,7 @@ install_user_configs() {
     log "[dry-run] preparar ~/.local/share/xorg (0700) para el log de Xorg sin root"
     log "[dry-run] instalar /usr/local/bin/desktop-safe, desktop-doctor y theme-mode"
     log "[dry-run] instalar plantillas y paletas en ~/.local/share/dwm-setup"
+    log "[dry-run] crear ~/.config/dwm-setup/recording.conf si no existe (audio mix/system/mic)"
     log "[dry-run] corregir propietario de ~/.config, ~/.local y ~/.config-backup"
     log "[dry-run] asociar PDF→zathura, imágenes→feh y vídeo→VLC (xdg-mime)"
     return 0
@@ -53,6 +54,14 @@ install_user_configs() {
   make_user_dir "$home/.local/share"
   make_user_dir "$home/.local/share/wallpapers"
   ensure_user_dirs
+
+  # Config de grabación: se crea una vez y no se pisa si el usuario la edita.
+  make_user_dir "$home/.config/dwm-setup"
+  if [[ ! -f "$home/.config/dwm-setup/recording.conf" ]]; then
+    run_root install -D -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" \
+      "$PROJECT_ROOT/templates/recording/recording.conf" \
+      "$home/.config/dwm-setup/recording.conf"
+  fi
   # Xorg log dir (para startx sin root)
   run_root install -d -m 0700 -o "$TARGET_USER" -g "$TARGET_GROUP" \
     "$home/.local/share/xorg"

@@ -151,11 +151,24 @@ La fase 1 termina en el escritorio. No implementar todavía:
     micro interno. No arrastrar el volumen de un sink a otro; solo se
     conserva al cambiar de puerto dentro del mismo sink. El quirk
     `alc255-asus` solo se aplica en ASUS FX504GE con códec ALC255; en otro
-    hardware se omite. `--headset-quirk` fuerza y `--no-headset-quirk`
-    desactiva. El sonido de dunst usa `sound-theme-freedesktop` y
+    hardware se omite. La opción correcta es
+    `options snd-hda-intel model=alc255-asus` (el parámetro `model` no
+    existe en `snd-hda-codec-realtek`; si se pone ahí, modprobe la ignora
+    y el micro del jack no aparece). El micrófono del jack queda en el
+    **interno por defecto** (`JACK_MIC=internal`) para no provocar el
+    apagón del HDMI al cambiar de puerto; `JACK_MIC=headset` fuerza el
+    del headset y `manual` deja elegirlo en pavucontrol. USB y Bluetooth
+    siguen cambiando solos; HDMI usa el interno. Al seleccionar el micro
+    del jack con `headset`, `audio-switch.sh` deja su boost en 1 y limita
+    el capture a 55. El micro interno se sube a `Internal Mic Boost=2`
+    (+20 dB) y la grabación aplica `mic_gain=3.0` (+9,5 dB) a la pista del
+    micro. `--headset-quirk` fuerza y
+    `--no-headset-quirk` desactiva. El sonido de dunst usa `sound-theme-freedesktop` y
     `paplay`/`pw-play`; `stack_duplicates = false` hace que cada mensaje
     suene, `gap_size = 6` los separa y `flock` serializa sonidos
-    simultáneos. Las capturas de región usan
+    simultáneos. Las correcciones de modo usan `dwm-setup-silent` (sin
+    sonido); el aviso de inicio se reproduce antes de ffmpeg y el de
+    parada después. Las capturas de región usan
     `scrot -s --line mode=edge,color=#FF00FF,width=2,opacity=255` y un
     `xrefresh` posterior para borrar el rectángulo residual; el magenta se
     ve sobre fondo blanco. La notificación usa como icono
@@ -362,7 +375,11 @@ La fase 1 termina en el escritorio. No implementar todavía:
     de `templates/ytwatch/config.toml.in` (tema `terminal`, sin hex:
     no entra en el store 20b), browser es `brave-browser` y
     `audio_only = false` (vídeo por defecto; `a` conmuta a audio en el
-    TUI; cambiar el default exige decisión). Actualizaciones: `ytwatch-check` (avisa por dunst) y
+    TUI; cambiar el default exige decisión). `[chat] enabled = false`
+    evita que un LIVE VOD abra el chat replay en Brave (el vídeo va a
+    mpv); el navegador queda para enlaces y canales. `wmctrl` es
+    requerido por el doctor de ytwatch para colocar la ventana en X11.
+    Actualizaciones: `ytwatch-check` (avisa por dunst) y
     `ytwatch-update` (`--ueberzugpp` para el paquete); `lib/ytwatch.sh`
     instala ambos en `~/.local/bin` (usuario, sin sudo) — sin ellos el
     timer de avisos no puede revisar ytwatch. **Sin binding de
@@ -440,7 +457,11 @@ La fase 1 termina en el escritorio. No implementar todavía:
     (`x11grab` + `libx264` + `aac`, `nice -n 10` para no competir con el
     escritorio) el monitor elegido: con uno empieza
     directo y con varios abre un menú rofi con nombre/resolución y
-    «Todas». El audio es el monitor del **sink por defecto**, así que
+    «Todas». La geometría se lee de
+    `~/.cache/dwm-setup/monitors`, que escribe `display-setup.sh` al
+    iniciar la sesión; **no se llama a `xrandr` al grabar** porque en
+    algunos HDMI fuerza una lectura EDID/DDC y la pantalla parpadea. Si
+    no hay caché, graba “Todas” con `xdpyinfo`. El audio es el monitor del **sink por defecto**, así que
     hereda la política de `audio-watch.sh` (jack > USB/BT > HDMI >
     interno); si el audio falla, reintenta solo vídeo y lo avisa. El
     archivo va a `~/Vídeos/Grabaciones/grabacion-YYYY-MM-DD_HH-MM-SS.mkv`
@@ -449,7 +470,17 @@ La fase 1 termina en el escritorio. No implementar todavía:
     punto va en rojo y el módulo se oculta con `module_hide` al parar y se
     muestra con `module_show` al empezar (también desde `launch.sh`). En B
     usa `format-background = ${colors.module-bg}` y `format-padding = 2`
-    para igualar al resto; el
+    para igualar al resto. El audio usa el **sink y el source por
+    defecto** (la política de `audio-watch`: jack > USB/BT > HDMI >
+    interno) y los mezcla con `amix`; al micro se le aplica
+    `highpass=f=80` antes de mezclar para quitar el DC/rumble del
+    ALC255. `~/.config/dwm-setup/recording.conf`
+    elige `mix` (defecto), `system` o `mic`. Si el micro o el sistema
+    fallan, cae a solo sistema o solo vídeo. El aviso de inicio se manda
+    **antes** de lanzar ffmpeg y se espera ~1,2 s a que termine el chime,
+    para que no entre en la grabación; el de parada suena después de
+    cerrar ffmpeg. Las correcciones de modo usan la app
+    `dwm-setup-silent` (sin sonido). El
     `Gtk.StatusIcon` de `recording-tray.py` es opcional y solo arranca si
     existe `_NET_SYSTEM_TRAY_S*` (el tray de polybar no está activo por
     `override-redirect = true`). Atajo único `Super+Shift+G`.
@@ -535,6 +566,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/sysctl/` | `99-dwm-setup-swappiness.conf` (vm.swappiness=10) |
 | `templates/wireplumber/` | `50-dwm-setup.conf` (autoswitch A2DP/HFP) |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
+| `templates/recording/` | `recording.conf` con el modo de audio (`mix`/`system`/`mic`) |
 | `templates/nvidia/prime-run` | Wrapper de offload por app a la dGPU NVIDIA (ADR-111) |
 | `templates/colors/` | `palette-mocha-black.sh`, `palette-latte.sh` y helpers |
 | `assets/wallpaper.png` | Wallpaper principal |
@@ -687,8 +719,9 @@ desktop-doctor --camera
 - Directorios XDG + grabación (2026-11-16, ADR-124): `ensure_user_dirs`
   crea `Imágenes/Capturas` y `Vídeos/Grabaciones` con
   `xdg-user-dirs-update` en `es_CO.UTF-8`. `screen-record.sh toggle`
-  graba con `ffmpeg` (`nice -n 10`) el monitor elegido (menú rofi solo con varios) y el
-  audio del sink por defecto; `Super+Shift+G` inicia y para, y el módulo
+  graba con `ffmpeg` (`nice -n 10`) el monitor elegido (menú rofi solo con varios) y
+  mezcla el sink y el source por defecto (ADR-126); `Super+Shift+G`
+  inicia y para, y el módulo
   `recording` de polybar muestra `● REC` + tiempo (solo el punto rojo) y
   desaparece al parar. Prueba en vivo:
   `h264` + `aac`, 3,6 s, audio por HDMI y módulo correcto. Pendiente

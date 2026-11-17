@@ -1,5 +1,7 @@
 set preview_images true
-set preview_images_method kitty
+set preview_images_method ueberzug
 set use_preview_script true
 set draw_borders true
 set colorscheme default
+set unicode_ellipsis true
+set column_ratios 2,3,4
