@@ -44,12 +44,14 @@ install_herdr() {
     log "[dry-run] descargar $(herdr_download_url) (SHA-256 verificado)"
     log "[dry-run] instalar ~/.local/bin/herdr 0755 (usuario, sin sudo)"
     log "[dry-run] renderizar ~/.config/herdr/config.toml desde templates/herdr"
+    log "[dry-run] instalar ~/.local/lib/dwm-setup/preview_tag.py (etiqueta de previews)"
     return 0
   fi
 
   section "Configurando Herdr (TUI de terminal)"
   install_herdr_binary
   install_herdr_config
+  install_herdr_preview_tag
   ok "Herdr listo: escribe 'herdr' en una kitty"
 }
 
@@ -137,4 +139,23 @@ install_herdr_config() {
   render_theme_template "$PROJECT_ROOT/templates/herdr/config.toml.in" \
     "$dir/config.toml" 0644
   ok "Herdr: config en $dir/config.toml"
+}
+
+# Módulo compartido por los wrappers de ueberzug: aprende la base X11 de su
+# hijo y etiqueta cada ventana con la pestaña real de Herdr (HERDR_TAB_ID).
+install_herdr_preview_tag() {
+  local dir="$TARGET_HOME/.local/lib/dwm-setup"
+  local src="$PROJECT_ROOT/templates/herdr/preview_tag.py"
+  local dst="$dir/preview_tag.py"
+
+  [[ -f "$src" ]] || { warn "Falta $src; se omite el etiquetado de previews"; return 0; }
+  make_user_dir "$dir"
+  if [[ -f "$dst" ]] && cmp -s "$src" "$dst"; then
+    return 0
+  fi
+  if [[ -f "$dst" ]]; then
+    backup_user_path "$dst"
+  fi
+  run_user install -m 0644 -- "$src" "$dst"
+  ok "Herdr: etiquetado de previews en $dst"
 }

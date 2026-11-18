@@ -72,7 +72,9 @@ fi
 
 # Herdr: ueberzug (ranger/ytwatch) necesita el WINDOWID de la ventana de
 # kitty para pintar dentro de una pane; Herdr limpia los marcadores de la
-# terminal exterior. Se toma la ventana activa al lanzar la app.
+# terminal exterior. Se toma la ventana activa como pista, pero puede ser
+# mpv u otra app: el wrapper de ueberzug la sustituye por la kitty real de
+# Herdr (preview_tag.py) antes de lanzar el binario.
 if [ -n "${HERDR_ENV:-}" ] && command -v xdotool >/dev/null 2>&1; then
   _herdr_window_id() { export WINDOWID="$(xdotool getactivewindow 2>/dev/null)"; }
   ranger()  { _herdr_window_id; command ranger  "$@"; }

@@ -45,10 +45,12 @@ Incluido:
   `VaapiVideoDecoder`).
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo y
   previews de imagen con **ueberzug** (X11). Dentro de Herdr, la función
-  `ranger` de zsh exporta `WINDOWID` para que ueberzug pinte en la pane;
-  el wrapper `~/.local/bin/ueberzug` deja la imagen/PDF dentro del borde
-  de la columna, y `preview-sync` oculta la preview de las pestañas que
-  no están enfocadas. VLC usa
+  `ranger` de zsh exporta `WINDOWID` como pista y el wrapper la corrige a
+  la kitty real de Herdr; el wrapper `~/.local/bin/ueberzug` deja la
+  imagen/PDF dentro del borde de la columna y la etiqueta con su pestaña
+  real (`preview_tag.py`);
+  `preview-sync` oculta la preview de las pestañas que no están
+  enfocadas. VLC usa
   `avcodec-hw=any` y `vout=gl` para decodificar por **VA-API** sin los
   errores de conversión de X11. Texto, código y
   Markdown se abren con **Neovim**. Tema GTK **Catppuccin** (Mocha Black o
@@ -564,10 +566,11 @@ herdr
 
 en una kitty; `Super+Return` sigue abriendo kitty. El instalador deja
 `~/.config/herdr/config.toml` con los atajos actuales (`Alt+K/N/Q`,
-`Ctrl+Alt+D`; `Alt+Q` cierra pane → pestaña con `herdr-close`) y el tema
-de la paleta activa. `theme-mode` actualiza el tema en caliente y
-ranger/ytwatch muestran sus previews reales dentro de Herdr. Con
-`--no-herdr` se omite el bloque.
+`Ctrl+Alt+D`; `Alt+Q` cierra pane → pestaña con `herdr-close`), el tema
+de la paleta activa y `~/.local/lib/dwm-setup/preview_tag.py`, que ata
+cada preview a su pestaña real. `theme-mode` actualiza el tema en
+caliente y ranger/ytwatch muestran sus previews reales dentro de Herdr.
+Con `--no-herdr` se omite el bloque.
 
 ## ytwatch — buscador TUI
 
@@ -593,10 +596,12 @@ arma cola, `f` filtra,
 `?` muestra la ayuda completa. Las miniaturas van con el backend `x11`
 de `ueberzugpp` (ventana-hija sobre la terminal; en Debian 13 llega por
 `.deb` del proyecto, sin añadir repositorios). Dentro de Herdr funciona
-con la función `ytwatch` de zsh, que exporta `WINDOWID`; el wrapper
-`~/.local/bin/ueberzugpp` suma el offset del sidebar y la barra de
-pestañas para que la miniatura caiga en el panel PREVIEW, y
-`preview-sync` la oculta al cambiar de pestaña y la recupera al volver.
+con la función `ytwatch` de zsh, que exporta `WINDOWID` como pista; el
+wrapper `~/.local/bin/ueberzugpp` la corrige a la kitty real de Herdr,
+suma el offset del sidebar y la barra de pestañas para que la miniatura
+caiga en el panel PREVIEW y la etiqueta con su pestaña real
+(`preview_tag.py`), y `preview-sync` la oculta al cambiar de pestaña y
+la recupera al volver.
 El binario se gestiona solo:
 
 ```sh
@@ -794,7 +799,7 @@ bin/music-ctl              Teclas multimedia del reproductor activo
 bin/ytwatch-check          Aviso de versión nueva (ytwatch/ueberzugpp, dunst)
 bin/ytwatch-update         Actualiza ytwatch o ueberzugpp (--ueberzugpp)
 lib/ytwatch.sh             Instalación de ytwatch y ueberzugpp con SHA-256
-lib/herdr.sh               Instalación de Herdr con SHA-256 y config
+lib/herdr.sh               Instalación de Herdr con SHA-256, config y preview_tag
 templates/bspwm/           bspwmrc.in, autostart.in, scripts/
 templates/sxhkd/           sxhkdrc.in
 templates/polybar/         config.ini.in, modules/, scripts/ y variants/
@@ -804,7 +809,7 @@ templates/kitty/           kitty.conf.in y colorshemes/
 templates/zsh/             zshrc.in
 templates/lsd/             config.yml e icons.yaml
 templates/ranger/          rc.conf, rifle.conf y previews
-templates/herdr/           config.toml.in (atajos y tema de Herdr)
+templates/herdr/           config.toml.in (atajos y tema) y preview_tag.py
 templates/xorg/            configuración Xorg por hardware
 templates/gtk/             settings GTK2/3/4 y CSS
 templates/xsettingsd/      xsettingsd.conf.in (tema GTK del modo)

@@ -1641,3 +1641,42 @@ ytsearch50  → 4533 ms
 - `--no-herdr` debe omitir el bloque sin tocar el config ni el binario.
 - `herdr-close` debe quedar ejecutable en `~/.local/bin`.
 - Pendiente: instalación real desde cero en VM Debian 13.
+
+### Preview atada a su pestaña real (2026-11-17, ADR-141)
+
+- `~/.local/lib/dwm-setup/preview_tag.py` debe existir (0644) y
+  contener `Tagger`, `_DWM_SETUP_TAB_FALLBACK` y el filtro por
+  `WINDOWID`.
+- `~/.local/bin/ueberzug` y `~/.local/bin/ueberzugpp` deben contener
+  `preview_tag` y arrancar el tagger antes del binario real.
+- `~/.config/bspwm/scripts/preview-sync.py` debe usar
+  `herdr api snapshot`, `_DWM_SETUP_TAB_FALLBACK` y
+  `_DWM_SETUP_HIDDEN`, y filtrar con `kitty @ ls`.
+- Con Herdr abierto en «CODE» (`wQ:t1`) y ytwatch en «Musica»
+  (`wX:t1`), actualizar la miniatura de Musica sin cambiar de space
+  (`herdr pane send-keys wX:p1 j`). La ventana nueva debe llevar
+  `_DWM_SETUP_TAB = "wX:t1"`, no la pestaña enfocada:
+  `xprop -id <ventana> _DWM_SETUP_TAB`.
+- Al cambiar a Musica la miniatura debe verse; al volver a CODE debe
+  desaparecer. Al regresar a Musica debe reaparecer con el mismo
+  contenido.
+- La ventana oculta por el daemon debe llevar `_DWM_SETUP_HIDDEN`; una
+  ventana que el cliente desmapeó a propósito no debe recibirla.
+- Repetir con ranger en una pestaña temporal (imagen y PDF): la
+  preview debe quedar dentro del recuadro y ocultarse/recuperarse al
+  cambiar de pestaña.
+- Una kitty normal (sin Herdr) con ranger/ytwatch no debe ser tocada
+  por el daemon: sus overlays no cuelgan de la kitty de Herdr.
+- Sin Herdr, `preview-sync.py` debe terminar sin errores y sin tocar
+  ventanas; los wrappers deben ejecutar `/usr/bin/ueberzug` y
+  `/usr/bin/ueberzugpp` sin cambios.
+- Las ventanas creadas con la versión anterior del daemon conservan su
+  etiqueta hasta reiniciar la app o retiquetarlas a mano.
+
+**Resultado en vivo (2026-11-17):** pasado. ytwatch actualizó su
+miniatura en «Musica» mientras «CODE» tenía el foco; la ventana nueva
+quedó con `_DWM_SETUP_TAB = "wX:t1"` y `_DWM_SETUP_HIDDEN`, y se vio al
+enfocar «Musica». Ranger en una pestaña temporal, con zathura activa,
+quedó hijo de la kitty correcta y etiquetado con su pestaña. También se
+corrigió que `WINDOWID` podía apuntar a mpv: el wrapper localiza la
+kitty con `kitty @ ls`. Queda pendiente la instalación desde cero en VM.

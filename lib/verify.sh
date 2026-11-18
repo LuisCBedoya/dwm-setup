@@ -309,6 +309,11 @@ verify_install() {
   if [[ ! -x "$home/.config/bspwm/scripts/preview-sync.py" ]]; then
     error "Falta ~/.config/bspwm/scripts/preview-sync.py (previews en Herdr)"
     failures=$((failures + 1))
+  elif ! grep -q 'focused_tab_id' "$home/.config/bspwm/scripts/preview-sync.py" 2>/dev/null ||
+       ! grep -q '_DWM_SETUP_TAB_FALLBACK' "$home/.config/bspwm/scripts/preview-sync.py" 2>/dev/null ||
+       ! grep -q '_DWM_SETUP_HIDDEN' "$home/.config/bspwm/scripts/preview-sync.py" 2>/dev/null; then
+    error "preview-sync.py no usa la pestaña real (snapshot/fallback/hidden)"
+    failures=$((failures + 1))
   fi
   if ! grep -q 'preview-sync.py' "$home/.config/bspwm/scripts/autostart" 2>/dev/null; then
     error "autostart no inicia preview-sync.py (previews en Herdr)"
@@ -336,6 +341,21 @@ verify_install() {
       error "El config de Herdr no contiene onboarding=false, alt+k o herdr-close"
       failures=$((failures + 1))
     fi
+    if [[ ! -f "$home/.local/lib/dwm-setup/preview_tag.py" ]]; then
+      error "Falta ~/.local/lib/dwm-setup/preview_tag.py (etiqueta de previews)"
+      failures=$((failures + 1))
+    elif ! grep -q '_DWM_SETUP_TAB_FALLBACK' "$home/.local/lib/dwm-setup/preview_tag.py" 2>/dev/null; then
+      error "preview_tag.py no etiqueta las ventanas nuevas (fallback de pestaña)"
+      failures=$((failures + 1))
+    fi
+    for preview_wrapper in "$home/.local/bin/ueberzug" \
+      "$home/.local/bin/ueberzugpp"; do
+      if [[ -f "$preview_wrapper" ]] &&
+         ! grep -q 'preview_tag' "$preview_wrapper" 2>/dev/null; then
+        error "El wrapper $preview_wrapper no etiqueta la preview con su pestaña"
+        failures=$((failures + 1))
+      fi
+    done
   fi
   if [[ -x "$home/.local/bin/herdr" ]] &&
      ! grep -q '_herdr_window_id' "$home/.zshrc" 2>/dev/null; then

@@ -3666,3 +3666,64 @@ ranger/ytwatch quedaba inerte.
 - La config de Herdr se puede recuperar de los backups si se cambia el
   tema o los atajos.
 - Queda pendiente validar la instalación completa desde cero en VM.
+
+## ADR-141 — La preview de ueberzug pertenece a su pestaña real
+
+**Contexto:** ADR-139 etiquetaba cada overlay con la pestaña de Herdr que
+estaba enfocada cuando aparecía. Si ytwatch actualizaba la miniatura en
+la pestaña «Musica» (`wX:t1`) mientras el foco estaba en «CODE»
+(`wQ:t1`), la ventana nacía con la etiqueta de CODE y se quedaba visible
+al cambiar de space. La geometría no sirve para desambiguar: todas las
+pestañas actuales son una pane a pantalla completa con el mismo
+rectángulo de celdas. Las ventanas de ueberzugpp tampoco exponen
+`_NET_WM_PID` ni `WM_CLASS`, y todas las ventanas de un mismo proceso
+comparten la base de recurso de su conexión X11.
+
+**Decisión:**
+1. `templates/herdr/preview_tag.py` se instala en
+   `~/.local/lib/dwm-setup/preview_tag.py`. Es un hilo `Tagger` que
+   arranca **antes** que el hijo: guarda la foto de overlays existentes,
+   aprende la base X11 de la primera ventana nueva (filtrando por
+   `WINDOWID`, la kitty de Herdr) y etiqueta todas las ventanas de esa
+   base con `HERDR_TAB_ID` en `_DWM_SETUP_TAB`. Si la ventana lleva el
+   marcador `_DWM_SETUP_TAB_FALLBACK`, lo sobrescribe con su pestaña y
+   borra el marcador.
+2. `templates/ranger/ueberzug.in` y `templates/ytwatch/ueberzugpp.in`
+   importan el módulo solo dentro de Herdr, localizan la kitty de Herdr
+   con `kitty @ ls` y la imponen como `WINDOWID` antes de lanzar el
+   binario real: `xdotool getactivewindow` puede devolver mpv u otra
+   ventana y la miniatura colgaría de ella. Arrancan el tagger antes del
+   hijo y lo paran al terminar. Fuera de Herdr ejecutan el binario real
+   sin cambios.
+3. `templates/bspwm/scripts/preview-sync.py.in` deja de mirar `herdr tab
+   list`: lee `herdr api snapshot` (`result.snapshot.focused_tab_id`) y
+   sondea cada 0.2 s. Solo gestiona overlays que descienden de la
+   ventana de kitty que ejecuta Herdr, identificada con `kitty @ ls`
+   (`platform_window_id` y `foreground_processes` con `herdr`); la
+   lista se cachea 5 s. Una ventana sin etiqueta recibe el foco actual
+   como `_DWM_SETUP_TAB_FALLBACK`; el wrapper la corrige. El daemon
+   marca con `_DWM_SETUP_HIDDEN` solo las ventanas que ocultó él, de
+   modo que nunca remapea una que el cliente desmapeó a propósito.
+   Cualquier overlay mapeado de una pestaña no enfocada se vuelve a
+   ocultar aunque haya perdido el marcador.
+4. `lib/herdr.sh` instala el módulo (usuario, 0644) y `install.sh` lo
+   exige como archivo del proyecto. `lib/verify.sh` comprueba el
+   módulo, el uso de `preview_tag` en los wrappers y las marcas nueva
+   del daemon.
+5. Las ventanas creadas por la versión anterior del daemon conservan su
+   etiqueta errónea hasta reiniciar la app o retiquetarlas a mano; las
+   nuevas ya nacen con la pestaña correcta.
+
+**Consecuencias:**
+- Una preview actualizada en una pestaña oculta sigue perteneciendo a
+  esa pestaña: no aparece en el space equivocado y se recupera al
+  volver, sin depender de la geometría.
+- El marcador de fallback cubre la carrera entre el daemon (que puede
+  ver la ventana antes que el wrapper) y el tagger.
+- Sigue haciendo falta X11, `xdotool`, `xwininfo`, `xprop` y el control
+  remoto de kitty. Sin Herdr el daemon no hace nada y los wrappers no
+  cambian el comportamiento normal.
+- El tagger aprende la base de la primera ventana nueva; si dos
+  wrappers de pestañas distintas crean su primera ventana en el mismo
+  instante podría elegir la base equivocada. `WINDOWID` evita el cruce
+  entre kittys y el fallback del daemon acota el caso restante.

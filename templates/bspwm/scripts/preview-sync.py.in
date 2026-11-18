@@ -2,13 +2,24 @@
 # preview-sync.py — mantiene las previews de ueberzug dentro de su pestaña.
 #
 # Herdr no recorta las ventanas X11 de ueberzug (ranger/ytwatch): al cambiar
-# de pestaña, la imagen de la pestaña anterior se queda encima. Este proceso
-# etiqueta cada overlay con la pestaña de Herdr que estaba enfocada cuando
-# apareció y lo mapea/desmapea al cambiar de pestaña. El contenido se
-# conserva al volver (X11 mantiene el backing store de la ventana).
+# de pestaña, la imagen de la pestaña anterior se queda encima. Los wrappers
+# de ueberzug etiquetan sus ventanas con _DWM_SETUP_TAB (la pestaña real que
+# las creó, aunque esté oculta); este proceso las mapea/desmapea al cambiar
+# de pestaña. El contenido se conserva al volver (X11 mantiene el backing
+# store de la ventana).
 #
-# Requiere: herdr, xwininfo, xprop, xdotool y python3. Sin Herdr no hace nada.
+# Si el daemon ve una ventana antes de que el wrapper la etiquete, le pone
+# _DWM_SETUP_TAB_FALLBACK con la pestaña enfocada; el wrapper la sobrescribe
+# con su HERDR_TAB_ID y borra el marcador. _DWM_SETUP_HIDDEN distingue las
+# ventanas que ocultó el daemon de las que el cliente desmapeó a propósito.
+#
+# Solo gestiona overlays que descienden de la ventana de kitty que ejecuta
+# Herdr (identificada con `kitty @ ls`); una kitty normal no se toca.
+#
+# Requiere: herdr, kitty, xwininfo, xprop, xdotool y python3. Sin Herdr no
+# hace nada.
 
+import glob
 import json
 import os
 import re
@@ -17,18 +28,22 @@ import subprocess
 import time
 
 PROP = "_DWM_SETUP_TAB"
-POLL = 0.35
+FALLBACK = "_DWM_SETUP_TAB_FALLBACK"
+HIDDEN = "_DWM_SETUP_HIDDEN"
+POLL = 0.2
+KITTY_CACHE_TTL = 5.0
 WINDOW_RE = re.compile(
-    r'^\s*(0x[0-9a-fA-F]+)\s+"(ueberzugpp|ueberzug)":', re.MULTILINE
+    r'^(\s*)(0x[0-9a-fA-F]+)\s+(?:"([^"]*)"|(\(has no name\))):'
 )
 
 HERDR = shutil.which("herdr") or os.path.expanduser("~/.local/bin/herdr")
+KITTY = shutil.which("kitty")
 XWININFO = shutil.which("xwininfo")
 XPROP = shutil.which("xprop")
 XDOTOOL = shutil.which("xdotool")
 
 
-def run(cmd, timeout=2):
+def run(cmd, timeout=2, env=None):
     try:
         return subprocess.run(
             cmd,
@@ -36,80 +51,193 @@ def run(cmd, timeout=2):
             stderr=subprocess.DEVNULL,
             timeout=timeout,
             text=True,
+            env=env,
         ).stdout
     except Exception:
         return ""
 
 
+def run_ok(cmd, timeout=2):
+    try:
+        return subprocess.run(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=timeout,
+        ).returncode == 0
+    except Exception:
+        return False
+
+
 def focused_tab():
     """Pestaña enfocada de Herdr, o None si Herdr no está disponible."""
-    out = run([HERDR, "tab", "list"])
+    out = run([HERDR, "api", "snapshot"])
     try:
-        data = json.loads(out)
+        return json.loads(out)["result"]["snapshot"]["focused_tab_id"]
     except Exception:
         return None
-    for tab in data.get("result", {}).get("tabs", []):
-        if tab.get("focused"):
-            return tab.get("tab_id")
-    return None
 
 
-def overlays():
-    """Ventanas de ueberzug: {id: nombre}."""
-    out = run([XWININFO, "-root", "-tree"])
-    return {win: name for win, name in WINDOW_RE.findall(out)}
+def tree():
+    """Ventanas de xwininfo -root -tree: {id: {parent, name}}."""
+    windows = {}
+    stack = []
+    for line in run([XWININFO, "-root", "-tree"]).splitlines():
+        match = WINDOW_RE.match(line)
+        if not match:
+            continue
+        indent = len(match.group(1))
+        win = match.group(2).lower()
+        name = match.group(3) if match.group(3) is not None else ""
+        while stack and stack[-1][0] >= indent:
+            stack.pop()
+        windows[win] = {
+            "parent": stack[-1][1] if stack else None,
+            "name": name,
+        }
+        stack.append((indent, win))
+    return windows
 
 
-def get_tag(win):
-    out = run([XPROP, "-id", win, PROP])
-    match = re.search(r'=\s*"(.*)"', out)
-    return match.group(1) if match else None
+def descends_from(win, root, windows):
+    parent = windows.get(win, {}).get("parent")
+    while parent:
+        if parent == root:
+            return True
+        parent = windows.get(parent, {}).get("parent")
+    return False
 
 
-def set_tag(win, tab):
-    run([XPROP, "-id", win, "-f", PROP, "8s", "-set", PROP, tab])
+def overlays(windows, roots):
+    """Ventanas de ueberzug que cuelgan de alguna kitty de Herdr."""
+    return {
+        win for win, info in windows.items()
+        if info["name"] in ("ueberzugpp", "ueberzug")
+        and any(descends_from(win, root, windows) for root in roots)
+    }
 
 
-def show(win):
-    run([XDOTOOL, "windowmap", win])
+def window_runs_herdr(os_window):
+    for tab in os_window.get("tabs", []) or []:
+        for win in tab.get("windows", []) or []:
+            for proc in win.get("foreground_processes", []) or []:
+                cmdline = proc.get("cmdline") or []
+                if isinstance(cmdline, str):
+                    cmdline = [cmdline]
+                for part in cmdline:
+                    if os.path.basename(str(part)) == "herdr":
+                        return True
+    return False
 
 
-def hide(win):
-    run([XDOTOOL, "windowunmap", win])
+def herdr_kitty_windows():
+    """IDs X11 (hex) de las ventanas kitty que ejecutan Herdr."""
+    if not KITTY:
+        return set()
+    paths = []
+    listen = os.environ.get("KITTY_LISTEN_ON", "")
+    if listen.startswith("unix:"):
+        paths.append(listen[5:])
+    paths.extend(glob.glob("/tmp/kitty-*"))
+    paths.extend(glob.glob(os.path.expanduser("~/.cache/kitty-*")))
+    roots = set()
+    for sock in sorted(set(paths)):
+        if not os.path.exists(sock):
+            continue
+        env = dict(os.environ, KITTY_LISTEN_ON="unix:" + sock)
+        try:
+            data = json.loads(run([KITTY, "@", "ls"], timeout=3, env=env))
+        except Exception:
+            continue
+        if not isinstance(data, list):
+            continue
+        for os_window in data:
+            if not isinstance(os_window, dict) or not window_runs_herdr(os_window):
+                continue
+            try:
+                roots.add(hex(int(os_window["platform_window_id"])).lower())
+            except (KeyError, TypeError, ValueError):
+                continue
+    return roots
+
+
+class KittyRoots:
+    """Cache breve de las ventanas kitty de Herdr (evita `kitty @ ls` a 5 Hz)."""
+
+    def __init__(self):
+        self.roots = set()
+        self.expires = 0.0
+
+    def get(self):
+        now = time.monotonic()
+        if now >= self.expires:
+            self.roots = herdr_kitty_windows()
+            self.expires = now + KITTY_CACHE_TTL
+        return self.roots
+
+
+def get_props(win):
+    out = run([XPROP, "-id", win, PROP, FALLBACK, HIDDEN])
+    tag = re.search(rf'{PROP}\(STRING\) = "(.*)"', out)
+    fallback = re.search(rf'{FALLBACK}\(STRING\) = "(.*)"', out)
+    hidden = re.search(rf'{HIDDEN}\(STRING\) = "(.*)"', out)
+    return (
+        tag.group(1) if tag else None,
+        bool(fallback),
+        bool(hidden),
+    )
+
+
+def set_string(win, prop, value):
+    run([XPROP, "-id", win, "-f", prop, "8s", "-set", prop, value])
+
+
+def remove_prop(win, prop):
+    run([XPROP, "-id", win, "-remove", prop])
+
+
+def is_mapped(win):
+    out = run([XWININFO, "-id", win]).lower()
+    return "map state:" in out and "map state: isunmapped" not in out
 
 
 def main():
     if not all((XWININFO, XPROP, XDOTOOL)) or not os.path.exists(HERDR):
         return 1
 
-    tags = {}
-    shown = {}
+    roots_cache = KittyRoots()
     while True:
+        roots = roots_cache.get()
+        if not roots:
+            time.sleep(POLL)
+            continue
         tab = focused_tab()
-        current = overlays()
+        if not tab:
+            time.sleep(POLL)
+            continue
 
-        for win in list(tags):
-            if win not in current:
-                tags.pop(win, None)
-                shown.pop(win, None)
+        windows = tree()
+        current = overlays(windows, roots)
 
         for win in current:
-            if win not in tags:
-                # Si el daemon arranca con overlays ya abiertos, se quedan
-                # con la pestaña enfocada en ese momento.
-                tags[win] = get_tag(win) or tab
-                if tab and not get_tag(win):
-                    set_tag(win, tab)
+            tag, fallback, hidden = get_props(win)
+            if tag is None:
+                # El wrapper aún no la ha etiquetado: se usa el foco actual
+                # como respaldo; el wrapper la sobrescribe con su pestaña.
+                set_string(win, PROP, tab)
+                set_string(win, FALLBACK, "1")
+                tag, fallback = tab, True
 
-        for win, owner in tags.items():
-            visible = tab is None or owner is None or owner == tab
-            if shown.get(win) == visible:
+            if tag != tab:
+                # Se oculta siempre que el cliente la tenga mapeada. Si ya
+                # está desmapeada (remove), no se marca como oculta nuestra.
+                if is_mapped(win) and run_ok([XDOTOOL, "windowunmap", win]):
+                    set_string(win, HIDDEN, "1")
                 continue
-            if visible:
-                show(win)
-            else:
-                hide(win)
-            shown[win] = visible
+
+            # Pestaña enfocada: solo se mapea si la ocultamos nosotros.
+            if hidden and run_ok([XDOTOOL, "windowmap", win]):
+                remove_prop(win, HIDDEN)
 
         time.sleep(POLL)
 

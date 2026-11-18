@@ -530,12 +530,24 @@ La fase 1 termina en el escritorio. No implementar todavía:
     esa variable, ueberzug no encuentra la ventana. `templates/zsh/zshrc.in`
     define funciones `ranger` y `ytwatch` que, dentro de Herdr
     (`HERDR_ENV`), exportan `WINDOWID=$(xdotool getactivewindow)` antes
-    de lanzar la app. Así ranger (`preview_images_method ueberzug`) y
-    ytwatch (`output = "x11"`) muestran imágenes reales dentro de Herdr.
-    Los overlays X11 no los recorta Herdr: `preview-sync.py` (autostart)
-    etiqueta cada ventana `ueberzugpp` con `_DWM_SETUP_TAB` (la pestaña
-    enfocada al crearse) y la mapea/desmapea al cambiar de pestaña; al
-    volver, X11 conserva el contenido. Sin Herdr el daemon no hace nada.
+    de lanzar la app. El wrapper lo sustituye por la kitty real de Herdr
+    (`kitty @ ls`), porque la ventana activa puede ser mpv u otra app.
+    Así ranger (`preview_images_method ueberzug`) y ytwatch
+    (`output = "x11"`) muestran imágenes reales dentro de Herdr.
+    Los overlays X11 no los recorta Herdr. `templates/herdr/preview_tag.py`
+    (instalado en `~/.local/lib/dwm-setup/preview_tag.py`) lo importan los
+    wrappers dentro de Herdr: observan las ventanas nuevas, aprenden la
+    base X11 de su hijo y las etiquetan con `HERDR_TAB_ID` en
+    `_DWM_SETUP_TAB`, así una preview actualizada en una pestaña oculta no
+    se atribuye a la pestaña con foco. `preview-sync.py` (autostart) lee
+    `herdr api snapshot` (`focused_tab_id`) y mapea/desmapea las ventanas
+    de la pestaña activa; solo gestiona overlays que cuelgan de la ventana
+    de kitty que ejecuta Herdr (`kitty @ ls`), nunca una kitty normal. Si
+    ve una ventana antes que el wrapper, le pone
+    `_DWM_SETUP_TAB_FALLBACK` con el foco actual; el wrapper la sobrescribe
+    y borra el marcador. `_DWM_SETUP_HIDDEN` distingue las ventanas que
+    ocultó el daemon de las que el cliente desmapeó. Al volver, X11
+    conserva el contenido. Sin Herdr el daemon no hace nada.
     `templates/ytwatch/ueberzugpp.in` se instala en `~/.local/bin/ueberzugpp`
     (antes que `/usr/bin`) y suma a `x`/`y` el sidebar (26 columnas) y la
     barra de pestañas (2 filas) de Herdr; sin eso ytwatch pinta la
@@ -549,9 +561,12 @@ La fase 1 termina en el escritorio. No implementar todavía:
     la release oficial en `~/.local/bin/herdr` (usuario, sin sudo) con
     el SHA-256 fijado (`x86_64` `14d9e8…`, `aarch64` `17d753…`);
     `--no-herdr` lo omite. La release es un binario suelto, no un
-    tarball. Se instala antes de `install_user_configs` para que
-    `herdr-close` exista. `templates/herdr/config.toml.in` reproduce los
-    atajos actuales (`onboarding=false`, Alt+K/N/Q, Ctrl+Alt+D, Alt+Q →
+    tarball. También instala `templates/herdr/preview_tag.py` en
+    `~/.local/lib/dwm-setup/preview_tag.py` (0644) para que los wrappers
+    de ueberzug etiqueten sus ventanas con la pestaña real. Se instala
+    antes de `install_user_configs` para que `herdr-close` exista.
+    `templates/herdr/config.toml.in` reproduce los atajos actuales
+    (`onboarding=false`, Alt+K/N/Q, Ctrl+Alt+D, Alt+Q →
     `herdr-close`) y el tema desde `THEME_HERDR_NAME/ACTIVE/SELECTION`
     de la paleta. `theme-mode` sigue actualizando
     `theme.name`/`[theme.custom]`. Backups: `~/.config/herdr` y
@@ -586,7 +601,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/fastfetch.sh` | fastfetch: config y logos `Neofet-{light,dark}.png` |
 | `lib/music.sh` | yt-dlp oficial, scripts de streaming, mpv VA-API/iGPU y teclas |
 | `lib/ytwatch.sh` | ytwatch (binario GitHub) y ueberzugpp (.deb OBS) con SHA-256 |
-| `lib/herdr.sh` | Herdr TUI: binario fijado, SHA-256 y config reproducible |
+| `lib/herdr.sh` | Herdr TUI: binario fijado, SHA-256, config reproducible y `preview_tag.py` |
 | `lib/brave.sh` | Brave: repo APT, policies, atajos y SurfingKeys |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paletas (Mocha Black, Latte), par de modos y render |
@@ -595,7 +610,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
 | `bin/dwm-setup-cpu-governor` | Helper root del módulo governor: valida y escribe `scaling_governor` |
 | `bin/dwm-setup-ufw` | Helper root acotado del módulo UFW (`status/enable/disable/reload/rules`) |
-| `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults, workspace.sh ADR-112, screen-record.sh, recording-tray.py ADR-124 y preview-sync.py ADR-139) |
+| `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults, workspace.sh ADR-112, screen-record.sh, recording-tray.py ADR-124 y preview-sync.py ADR-141) |
 | `templates/sxhkd/` | sxhkdrc |
 | `templates/polybar/` | config.ini, modules/ (governor, ufw, bluetooth, recording), scripts/ (incl. temp-status y recording-status) y variants/ |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
@@ -636,7 +651,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/fans.sh` | Modo del ventilador: helper root y sudoers acotado |
 | `lib/sysctl.sh` | Instala `/etc/sysctl.d/99-dwm-setup-swappiness.conf` |
 | `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview `x11`) y `ueberzugpp.in` (wrapper de offset para Herdr) |
-| `templates/herdr/` | `config.toml.in` (atajos y tema de la TUI) |
+| `templates/herdr/` | `config.toml.in` (atajos y tema de la TUI) y `preview_tag.py` (etiqueta de pestaña) |
 | `templates/mpv/` | `mpv.conf` (VA-API) y wrapper `mpv` que fuerza la iGPU salvo `prime-run` |
 | `templates/sysctl/` | `99-dwm-setup-swappiness.conf` (vm.swappiness=10) |
 | `templates/wireplumber/` | `50-dwm-setup.conf` (autoswitch A2DP/HFP) |
@@ -680,6 +695,7 @@ sh -n templates/bspwm/scripts/workspace.sh.in \
   templates/mpv/mpv-wrapper.sh
 python3 -c "compile(open('templates/bspwm/scripts/recording-tray.py.in', encoding='utf-8').read(), 'recording-tray.py', 'exec')"
 python3 -c "compile(open('templates/bspwm/scripts/preview-sync.py.in', encoding='utf-8').read(), 'preview-sync.py', 'exec')"
+python3 -c "compile(open('templates/herdr/preview_tag.py', encoding='utf-8').read(), 'preview_tag.py', 'exec')"
 python3 -c "compile(open('templates/ytwatch/ueberzugpp.in', encoding='utf-8').read(), 'ueberzugpp', 'exec')"
 python3 -c "compile(open('templates/ranger/ueberzug.in', encoding='utf-8').read(), 'ueberzug', 'exec')"
 zsh -n templates/zsh/zshrc.in

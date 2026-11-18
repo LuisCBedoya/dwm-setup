@@ -2594,3 +2594,47 @@ UHD 630; sin servicios ni configuración extra.
   `theme-mode --no-reload` probado con un store temporal en ambos modos.
 - Pendiente: `sudo ./install.sh` en la sesión viva y una instalación
   desde cero en VM.
+
+### Previews atadas a su pestaña real — 2026-11-17
+
+- Bug: ytwatch actualizaba la miniatura en la pestaña «Musica»
+  (`wX:t1`) mientras el foco estaba en «CODE» (`wQ:t1`). El daemon
+  anterior etiquetaba la ventana nueva con la pestaña enfocada, así que
+  la preview quedaba asociada a CODE y aparecía en el space equivocado.
+  La geometría no distingue pestañas: todas son una pane a pantalla
+  completa con el mismo rectángulo.
+- `templates/herdr/preview_tag.py`: hilo que arranca antes que
+  ueberzug, aprende la base de recurso X11 de la primera ventana nueva
+  (filtrando por `WINDOWID`) y etiqueta todas las ventanas de esa base
+  con `HERDR_TAB_ID` en `_DWM_SETUP_TAB`. Si encuentra el marcador
+  `_DWM_SETUP_TAB_FALLBACK`, lo sobrescribe y lo borra.
+- `templates/ranger/ueberzug.in` y `templates/ytwatch/ueberzugpp.in`
+  importan el módulo solo dentro de Herdr y paran el tagger al cerrar
+  el hijo. Fuera de Herdr ejecutan el binario real sin cambios.
+- `templates/bspwm/scripts/preview-sync.py.in`: usa `herdr api snapshot`
+  (`focused_tab_id`) cada 0.2 s, solo toca overlays que cuelgan de la
+  kitty de Herdr (`kitty @ ls`, caché de 5 s) y marca con
+  `_DWM_SETUP_HIDDEN` solo lo que ocultó él. Una ventana sin etiqueta
+  recibe el foco actual como fallback; el wrapper la corrige.
+- `lib/herdr.sh` instala el módulo en
+  `~/.local/lib/dwm-setup/preview_tag.py`; `install.sh` lo exige y
+  `verify.sh` comprueba módulo, wrappers y daemon.
+- Probado en la sesión viva con la pestaña temporal `wQ:t1A`: el
+  tagger aprendió la base `0x2600000` y etiquetó las ventanas nuevas
+  (`0x2600004`, `0x2600006`) con `wQ:t1A`.
+- Caso del bug reproducido y corregido: con CODE (`wQ:t1`) enfocado,
+  `herdr pane send-keys wX:p1 j` actualizó la miniatura de «Musica».
+  La ventana nueva quedó con `_DWM_SETUP_TAB = "wX:t1"` y oculta; al
+  enfocar «Musica» se vio y al volver a CODE se ocultó. No apareció en
+  el space equivocado.
+- Ranger en la pestaña temporal, con zathura como ventana activa:
+  el wrapper sustituyó `WINDOWID` por la kitty real (`kitty @ ls`) y
+  la ventana quedó hija de kitty y etiquetada `wQ:t1A`; se ocultó y
+  recuperó al cambiar de pestaña.
+- Hallazgo: `xdotool getactivewindow` devolvía la ventana de mpv, no
+  kitty, y ueberzugpp colgaba la miniatura de mpv. El wrapper ahora
+  localiza la kitty de Herdr con `kitty @ ls` y la impone como
+  `WINDOWID` antes de lanzar el binario.
+- Pestaña temporal cerrada y `/tmp/opencode/preview-test` eliminado.
+- Pendiente: `sudo ./install.sh` para instalar el módulo desde el
+  instalador y una instalación desde cero en VM.

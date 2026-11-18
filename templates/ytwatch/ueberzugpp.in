@@ -5,6 +5,7 @@
 # el sidebar y la barra de pestañas. Fuera de Herdr se ejecuta el binario real
 # sin tocar nada.
 
+import importlib.util
 import json
 import os
 import re
@@ -14,6 +15,7 @@ import subprocess
 import sys
 
 REAL = "/usr/bin/ueberzugpp"
+PREVIEW_TAG = os.path.expanduser("~/.local/lib/dwm-setup/preview_tag.py")
 if not os.path.exists(REAL):
     found = shutil.which("ueberzugpp")
     if found and os.path.realpath(found) != os.path.realpath(sys.argv[0]):
@@ -59,22 +61,57 @@ def pane_offset(pane):
     return 0, 0
 
 
-def offsets():
-    if not os.environ.get("HERDR_ENV") or not os.environ.get("HERDR_PANE_ID"):
-        return 0, 0
+def inside_herdr_pane():
+    if not os.environ.get("HERDR_ENV"):
+        return False
     # Una kitty normal abierta desde una pane hereda HERDR_*; KITTY_WINDOW_ID
     # la delata. En una pane de Herdr se limpia y TERM_PROGRAM es herdr.
     if os.environ.get("KITTY_WINDOW_ID"):
-        return 0, 0
-    if os.environ.get("TERM_PROGRAM") != "herdr":
+        return False
+    return os.environ.get("TERM_PROGRAM") == "herdr"
+
+
+def offsets():
+    if not inside_herdr_pane() or not os.environ.get("HERDR_PANE_ID"):
         return 0, 0
     pane = os.environ["HERDR_PANE_ID"]
     x, y = pane_offset(pane)
     return sidebar_cols() + x, TAB_BAR_ROWS + y
 
 
+def load_preview_tag():
+    try:
+        spec = importlib.util.spec_from_file_location("dwm_setup_preview_tag",
+                                                      PREVIEW_TAG)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+    except Exception:
+        return None
+
+
 def forward(dx, dy):
-    child = subprocess.Popen([REAL] + sys.argv[1:], stdin=subprocess.PIPE, text=True)
+    tagger = None
+    module = load_preview_tag()
+    window = os.environ.get("WINDOWID")
+    if module is not None:
+        try:
+            found = module.herdr_kitty_window()
+        except Exception:
+            found = None
+        if found:
+            # WINDOWID puede ser la ventana activa (mpv, por ejemplo); el
+            # overlay debe colgar de la kitty de Herdr, no de otra ventana.
+            os.environ["WINDOWID"] = found
+            window = found
+        tagger = module.start(os.environ.get("HERDR_TAB_ID"), window)
+    try:
+        child = subprocess.Popen([REAL] + sys.argv[1:], stdin=subprocess.PIPE,
+                                 text=True)
+    except Exception:
+        if tagger is not None:
+            tagger.stop()
+        raise
     stopping = False
 
     def stop(signum, _frame):
@@ -112,6 +149,8 @@ def forward(dx, dy):
         except (BrokenPipeError, ValueError):
             pass
         child.wait()
+        if tagger is not None:
+            tagger.stop()
 
 
 def main():
@@ -120,9 +159,9 @@ def main():
         return 127
     if len(sys.argv) < 2 or sys.argv[1] != "layer" or "--no-stdin" in sys.argv[1:]:
         os.execv(REAL, [REAL] + sys.argv[1:])
-    dx, dy = offsets()
-    if dx == 0 and dy == 0:
+    if not inside_herdr_pane():
         os.execv(REAL, [REAL] + sys.argv[1:])
+    dx, dy = offsets()
     forward(dx, dy)
     return 0
 

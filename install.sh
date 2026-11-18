@@ -283,6 +283,7 @@ check_project_layout() {
     "$PROJECT_ROOT/bin/yt-update-notify"
     "$PROJECT_ROOT/templates/ytwatch/config.toml.in"
     "$PROJECT_ROOT/templates/herdr/config.toml.in"
+    "$PROJECT_ROOT/templates/herdr/preview_tag.py"
     "$PROJECT_ROOT/templates/ytwatch/ueberzugpp.in"
     "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.service"
     "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.timer"
