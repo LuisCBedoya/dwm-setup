@@ -45,6 +45,7 @@ install_ytwatch() {
     log "[dry-run] render ~/.config/ytwatch/config.toml desde templates/ytwatch"
     log "[dry-run] descargar $(ueberzugpp_deb_url) (SHA-256 verificado) y 'sudo dpkg -i'"
     log "[dry-run] si dpkg falla por dependencias: apt-get -y -f install"
+    log "[dry-run] instalar ~/.local/bin/ueberzugpp (wrapper de offset para Herdr)"
     return 0
   fi
 
@@ -53,6 +54,7 @@ install_ytwatch() {
   install_ytwatch_binary
   install_ytwatch_config
   install_ueberzugpp
+  install_ytwatch_overlay
   ok "ytwatch listo: escribe ytwatch en una kitty (audio por defecto)"
   info "Estado y actualizaciones: ytwatch-check · ytwatch-update"
 }
@@ -80,6 +82,26 @@ install_ytwatch_tools() {
     run_user install -m 0755 -- "$src" "$dst"
   done
   ok "ytwatch: ytwatch-check y ytwatch-update en $dir"
+}
+
+# Wrapper de ueberzugpp: ytwatch calcula x/y respecto a su pane, pero
+# ueberzugpp coloca la ventana X11 respecto a kitty. El wrapper suma el
+# sidebar y la barra de pestañas de Herdr; fuera de Herdr no toca nada.
+install_ytwatch_overlay() {
+  local dir="$TARGET_HOME/.local/bin"
+  local src="$PROJECT_ROOT/templates/ytwatch/ueberzugpp.in"
+  local dst="$dir/ueberzugpp"
+
+  [[ -f "$src" ]] || { warn "Falta $src; se omite el wrapper de ueberzugpp"; return 0; }
+  make_user_dir "$dir"
+  if [[ -f "$dst" ]] && cmp -s "$src" "$dst"; then
+    return 0
+  fi
+  if [[ -f "$dst" ]]; then
+    backup_user_path "$dst"
+  fi
+  run_user install -m 0755 -- "$src" "$dst"
+  ok "ytwatch: wrapper ueberzugpp en $dir (offset de Herdr)"
 }
 
 # Versión del binario ytwatch en ~/.local/bin (vacía si no está).

@@ -2538,3 +2538,59 @@ UHD 630; sin servicios ni configuración extra.
   panel `#0d0d14`, tarjetas `#1a1a24` y `Build` en azul `#89b4fa`.
 - Añadido a `lib/config.sh` (store), `install.sh` (requeridos) y a
   `theme-mode`.
+
+### Previews reales dentro de Herdr — 2026-11-17
+
+- Causa: Herdr 0.9.5 no pinta el protocolo kitty en las panes (probado
+  con `kitten icat` y en una sesión nueva, también con
+  `terminal.kitty_graphics = true`). El overlay X11 de ueberzug **sí**
+  funciona, pero necesita `WINDOWID` de la ventana de kitty porque Herdr
+  limpia los marcadores de la terminal exterior.
+- `templates/zsh/zshrc.in`: funciones `ranger` y `ytwatch` que, dentro
+  de Herdr, exportan `WINDOWID=$(xdotool getactivewindow)` antes de
+  lanzar la app. Probado con ranger (imagen real y PDF) y ytwatch
+  (miniatura de `lofi`), ambos dentro de Herdr.
+- `templates/bspwm/scripts/preview-sync.py.in`: daemon de autostart que
+  etiqueta cada ventana `ueberzugpp` con `_DWM_SETUP_TAB` y la
+  mapea/desmapea al cambiar de pestaña. Probado: la imagen de ranger se
+  oculta al pasar a ytwatch y reaparece al volver, con el contenido
+  intacto.
+- `templates/ytwatch/ueberzugpp.in`: wrapper para el offset de Herdr.
+  Ytwatch calcula la miniatura en celdas respecto a su pane y
+  ueberzugpp la coloca respecto a kitty, así que la miniatura caía
+  sobre la lista de resultados. El wrapper suma el sidebar (26) y la
+  barra de pestañas (2) a `x`/`y`; fuera de Herdr no toca nada. Probado:
+  la miniatura de `lofi` queda dentro del panel PREVIEW, y el daemon la
+  oculta/recupera al cambiar de pestaña.
+- `templates/ranger/ueberzug.in`: wrapper para el inset de ranger.
+  Dentro de Herdr la preview se dibujaba en el borde de la columna y
+  tapaba el recuadro; el wrapper suma 1 celda a `x`/`y` y resta 2 a
+  `max_width`/`max_height`. Probado con `wallpapers01.jpg` y el PDF:
+  la imagen queda dentro del marco, con el borde visible por los cuatro
+  lados. Fuera de Herdr ejecuta `/usr/bin/ueberzug` sin cambios.
+- `scope.sh` y `rc.conf` de ranger no cambian (`ueberzug`); ytwatch
+  sigue con `output = "x11"`. Se descarta `chafa` por la mala calidad.
+- La ventana en monocle parecía flotante porque el nodo estaba
+  `pseudo_tiled`; se pasó a `tiled` (`Super+t`).
+
+### Herdr reproducible — 2026-11-17
+
+- `lib/herdr.sh`: instala Herdr **v0.9.5** en `~/.local/bin/herdr`
+  (usuario, sin sudo) desde la release oficial, con SHA-256 fijado
+  (x86_64 `14d9e8…`, aarch64 `17d753…`). No descarga si la versión ya
+  coincide; respeta una versión más nueva; `--no-herdr` lo omite.
+- `templates/herdr/config.toml.in`: `onboarding=false`, atajos actuales
+  (Alt+K/N/Q, Ctrl+Alt+D, Alt+Q → `herdr-close`) y tema desde
+  `THEME_HERDR_NAME/ACTIVE/SELECTION` de la paleta.
+- `theme-mode` usa esas variables de paleta (dark y light quedan igual
+  que antes); `render_theme_template` las sustituye.
+- `install.sh`: source/option `--no-herdr`, instalación antes de
+  `install_user_configs`, archivos requeridos y resumen. Backups de
+  `~/.config/herdr`, `~/.local/bin/herdr` y `herdr-close`.
+- `verify.sh`: binario, config, `herdr config check`, atajos,
+  `herdr-close`, wrappers/preview-sync.
+- Probado el binario en un HOME temporal: descarga, SHA, `--version`
+  0.9.5. Config dark/light validada con `herdr config check`.
+  `theme-mode --no-reload` probado con un store temporal en ambos modos.
+- Pendiente: `sudo ./install.sh` en la sesión viva y una instalación
+  desde cero en VM.

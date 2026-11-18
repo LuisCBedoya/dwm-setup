@@ -14,6 +14,7 @@ install_ranger() {
 
   if dry_run; then
     log "[dry-run] instalar configs de ranger en $home/.config/ranger"
+    log "[dry-run] instalar $home/.local/bin/ueberzug (wrapper de inset para Herdr)"
     log "[dry-run] renderizar zathurarc en $home/.config/zathura"
     log "[dry-run] compilar zathura-pdf-mupdf ${RANGER_ZATHURA_PLUGIN_VERSION} si falta"
     log "[dry-run] verificar EPUB en zathura"
@@ -22,6 +23,18 @@ install_ranger() {
 
   make_user_dir "$home/.config/ranger"
   make_user_dir "$home/.config/zathura"
+
+  # Wrapper de ueberzug: dentro de Herdr la preview debe quedar dentro del
+  # borde de la columna; fuera de Herdr ejecuta el binario real.
+  if [[ -f "$PROJECT_ROOT/templates/ranger/ueberzug.in" ]]; then
+    make_user_dir "$home/.local/bin"
+    if [[ ! -f "$home/.local/bin/ueberzug" ]] ||
+       ! cmp -s "$PROJECT_ROOT/templates/ranger/ueberzug.in" "$home/.local/bin/ueberzug"; then
+      [[ -f "$home/.local/bin/ueberzug" ]] && backup_user_path "$home/.local/bin/ueberzug"
+      run_user install -m 0755 -- "$PROJECT_ROOT/templates/ranger/ueberzug.in" \
+        "$home/.local/bin/ueberzug"
+    fi
+  fi
 
   render_theme_template "$PROJECT_ROOT/templates/ranger/rc.conf.in" \
     "$home/.config/ranger/rc.conf" 0644 "HOME=$TARGET_HOME"

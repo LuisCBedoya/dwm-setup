@@ -1,0 +1,131 @@
+#!/usr/bin/env python3
+# ueberzugpp — wrapper para que las miniaturas de ytwatch caigan dentro de
+# su pane de Herdr. Ytwatch calcula x/y en celdas relativas a la pane, pero
+# ueberzugpp coloca la ventana X11 respecto a la ventana de kitty: le faltan
+# el sidebar y la barra de pestañas. Fuera de Herdr se ejecuta el binario real
+# sin tocar nada.
+
+import json
+import os
+import re
+import shutil
+import signal
+import subprocess
+import sys
+
+REAL = "/usr/bin/ueberzugpp"
+if not os.path.exists(REAL):
+    found = shutil.which("ueberzugpp")
+    if found and os.path.realpath(found) != os.path.realpath(sys.argv[0]):
+        REAL = found
+    else:
+        REAL = ""
+
+HERDR = shutil.which("herdr") or os.path.expanduser("~/.local/bin/herdr")
+TAB_BAR_ROWS = 2
+
+
+def run(cmd):
+    try:
+        return subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            timeout=2, text=True,
+        ).stdout
+    except Exception:
+        return ""
+
+
+def sidebar_cols():
+    try:
+        with open(os.path.expanduser("~/.config/herdr/config.toml"),
+                  encoding="utf-8") as fh:
+            text = fh.read()
+    except OSError:
+        return 26
+    match = re.search(r'^\s*sidebar_width\s*=\s*(\d+)', text, re.MULTILINE)
+    return int(match.group(1)) if match else 26
+
+
+def pane_offset(pane):
+    out = run([HERDR, "pane", "layout", "--pane", pane])
+    try:
+        layout = json.loads(out)["result"]["layout"]
+    except Exception:
+        return 0, 0
+    for item in layout.get("panes", []):
+        if item.get("pane_id") == pane:
+            rect = item.get("rect", {})
+            return int(rect.get("x", 0)), int(rect.get("y", 0))
+    return 0, 0
+
+
+def offsets():
+    if not os.environ.get("HERDR_ENV") or not os.environ.get("HERDR_PANE_ID"):
+        return 0, 0
+    # Una kitty normal abierta desde una pane hereda HERDR_*; KITTY_WINDOW_ID
+    # la delata. En una pane de Herdr se limpia y TERM_PROGRAM es herdr.
+    if os.environ.get("KITTY_WINDOW_ID"):
+        return 0, 0
+    if os.environ.get("TERM_PROGRAM") != "herdr":
+        return 0, 0
+    pane = os.environ["HERDR_PANE_ID"]
+    x, y = pane_offset(pane)
+    return sidebar_cols() + x, TAB_BAR_ROWS + y
+
+
+def forward(dx, dy):
+    child = subprocess.Popen([REAL] + sys.argv[1:], stdin=subprocess.PIPE, text=True)
+    stopping = False
+
+    def stop(signum, _frame):
+        nonlocal stopping
+        if stopping:
+            return
+        stopping = True
+        if child.poll() is None:
+            child.terminate()
+
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(sig, stop)
+
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                command = json.loads(line)
+            except json.JSONDecodeError:
+                child.stdin.write(line + "\n")
+                child.stdin.flush()
+                continue
+            if command.get("action") == "add":
+                command["x"] = int(command.get("x", 0)) + dx
+                command["y"] = int(command.get("y", 0)) + dy
+            child.stdin.write(json.dumps(command, separators=(",", ":")) + "\n")
+            child.stdin.flush()
+    except (BrokenPipeError, ValueError):
+        pass
+    finally:
+        try:
+            child.stdin.close()
+        except (BrokenPipeError, ValueError):
+            pass
+        child.wait()
+
+
+def main():
+    if not REAL:
+        sys.stderr.write("ueberzugpp: no se encuentra el binario real\n")
+        return 127
+    if len(sys.argv) < 2 or sys.argv[1] != "layer" or "--no-stdin" in sys.argv[1:]:
+        os.execv(REAL, [REAL] + sys.argv[1:])
+    dx, dy = offsets()
+    if dx == 0 and dy == 0:
+        os.execv(REAL, [REAL] + sys.argv[1:])
+    forward(dx, dy)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

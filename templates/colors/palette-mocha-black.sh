@@ -74,4 +74,8 @@ export THEME_COLOR_SCHEME="prefer-dark"
 export THEME_CURSOR="Adwaita"
 export THEME_LOGO="dark"
 
+export THEME_HERDR_NAME="catppuccin"
+export THEME_HERDR_ACTIVE="#1a1a24"
+export THEME_HERDR_SELECTION="#26262f"
+
 validate_palette

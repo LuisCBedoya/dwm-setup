@@ -59,6 +59,8 @@ source "$PROJECT_ROOT/lib/fastfetch.sh"
 source "$PROJECT_ROOT/lib/music.sh"
 # shellcheck source=lib/ytwatch.sh
 source "$PROJECT_ROOT/lib/ytwatch.sh"
+# shellcheck source=lib/herdr.sh
+source "$PROJECT_ROOT/lib/herdr.sh"
 # shellcheck source=lib/yt-notify.sh
 source "$PROJECT_ROOT/lib/yt-notify.sh"
 # shellcheck source=lib/sysctl.sh
@@ -103,7 +105,7 @@ Opciones avanzadas (automatización; normalmente no necesarias):
   --user USUARIO, --home RUTA, --nvidia, --no-nvidia,
   --cuda, --no-cuda,
   --headset-quirk, --no-headset-quirk, --intel-glitch,
-  --no-ytwatch,
+  --no-ytwatch, --no-herdr,
   --keymap MAPA, --font FUENTE, --font-size N, --resolution WxH, --debug
   --theme mocha-black|latte
 
@@ -114,6 +116,9 @@ Música: yt-play (audio o vídeo de YouTube con fzf y miniatura), teclas XF86Aud
 Los binarios se actualizan con ytdlp-update; nunca solos.
 Buscador: ytwatch (TUI con miniaturas y cola); sin --no-ytwatch se instala
 junto con ueberzugpp (miniaturas), ambos con ytwatch-check / ytwatch-update.
+Herdr: TUI de terminal; se instala en ~/.local/bin y se abre escribiendo
+'herdr' en kitty (--no-herdr para omitirlo). ranger/ytwatch muestran sus
+previews dentro de Herdr.
 
 Sesión: startx manual desde TTY (no se instala display manager).
 Fases futuras (IDE, correo) no se instalan desde aquí.
@@ -142,6 +147,7 @@ parse_args() {
       --headset-quirk) HEADSET_QUIRK_MODE="yes" ;;
       --no-headset-quirk) HEADSET_QUIRK_MODE="no" ;;
       --no-ytwatch) INSTALL_YTWATCH="no" ;;
+      --no-herdr) INSTALL_HERDR="no" ;;
       --intel-glitch) INTEL_GLITCH=1 ;;
       --theme)
         [[ $# -ge 2 ]] || die "--theme requiere un valor (mocha-black, latte)"
@@ -217,6 +223,7 @@ check_project_layout() {
     "$PROJECT_ROOT/lib/fastfetch.sh"
     "$PROJECT_ROOT/lib/music.sh"
     "$PROJECT_ROOT/lib/ytwatch.sh"
+    "$PROJECT_ROOT/lib/herdr.sh"
     "$PROJECT_ROOT/lib/yt-notify.sh"
     "$PROJECT_ROOT/lib/sysctl.sh"
     "$PROJECT_ROOT/lib/verify.sh"
@@ -254,6 +261,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/bspwm/scripts/display-setup.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/monocle.sh.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/resize-mode.sh.in"
+    "$PROJECT_ROOT/templates/bspwm/scripts/preview-sync.py.in"
     "$PROJECT_ROOT/templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in"
     "$PROJECT_ROOT/templates/sxhkd/sxhkdrc.in"
     "$PROJECT_ROOT/templates/sxhkd/resize-mode.sxhkdrc.in"
@@ -274,6 +282,8 @@ check_project_layout() {
     "$PROJECT_ROOT/bin/ytwatch-update"
     "$PROJECT_ROOT/bin/yt-update-notify"
     "$PROJECT_ROOT/templates/ytwatch/config.toml.in"
+    "$PROJECT_ROOT/templates/herdr/config.toml.in"
+    "$PROJECT_ROOT/templates/ytwatch/ueberzugpp.in"
     "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.service"
     "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.timer"
     "$PROJECT_ROOT/templates/sysctl/99-dwm-setup-swappiness.conf"
@@ -353,6 +363,7 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/ranger/rc.conf.in"
     "$PROJECT_ROOT/templates/ranger/rifle.conf.in"
     "$PROJECT_ROOT/templates/ranger/scope.sh.in"
+    "$PROJECT_ROOT/templates/ranger/ueberzug.in"
     "$PROJECT_ROOT/templates/ranger/epub-cover.sh.in"
     "$PROJECT_ROOT/templates/zathura/zathurarc.in"
     "$PROJECT_ROOT/templates/fastfetch/config.jsonc.in"
@@ -405,6 +416,7 @@ Firewall:               UFW activo · módulo polybar (SSH 22/tcp permitido)
 Bluetooth:              módulo polybar · apagado por defecto · menú y audio
 Música/streams:         yt-play [--audio|--video] <url | búsqueda> · ytdlp-check|update|rollback
 Buscador TUI:           ytwatch (terminal) · ytwatch-check|update · miniaturas: ueberzugpp
+Herdr TUI:              escribe 'herdr' en kitty · ranger/ytwatch con previews dentro
 Avisos YouTube:         timer de usuario (dunst) · systemctl --user list-timers
 Kernel:                 vm.swappiness=10 (/etc/sysctl.d/99-dwm-setup-swappiness.conf)
 Gráficos:               i915 FBC desactivado (requiere reinicio)
@@ -547,6 +559,7 @@ main() {
   install_fastfetch
   install_music
   install_ytwatch
+  install_herdr
   install_yt_update_notify
   install_sysctl
   install_boot_tweaks

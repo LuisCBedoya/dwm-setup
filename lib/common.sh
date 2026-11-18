@@ -324,6 +324,9 @@ backup_existing_configs() {
   backup_user_path "$home/.local/bin/ytwatch"
   backup_user_path "$home/.local/bin/brave-theme"
   backup_user_path "$home/.config/ytwatch"
+  backup_user_path "$home/.config/herdr"
+  backup_user_path "$home/.local/bin/herdr"
+  backup_user_path "$home/.local/bin/herdr-close"
 
   # Perfil de Brave: los atajos nativos se reescriben al instalar.
   backup_user_path "$home/.config/BraveSoftware/Brave-Browser/Default/Preferences"

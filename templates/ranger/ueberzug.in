@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+# ueberzug — wrapper para que la preview de ranger quede dentro del recuadro
+# de su columna en Herdr. Ranger pasa las coordenadas del borde de la columna
+# y ueberzugpp dibuja el overlay encima; fuera de Herdr no se toca nada.
+
+import json
+import os
+import shutil
+import signal
+import subprocess
+import sys
+
+REAL = "/usr/bin/ueberzug"
+if not os.path.exists(REAL):
+    found = shutil.which("ueberzug")
+    if found and os.path.realpath(found) != os.path.realpath(sys.argv[0]):
+        REAL = found
+    else:
+        REAL = ""
+
+# Celdas de margen interior y de recorte del tamaño máximo.
+INSET = 1
+
+
+def inside_herdr_pane():
+    if not os.environ.get("HERDR_ENV"):
+        return False
+    # Una kitty normal abierta desde una pane hereda HERDR_*; KITTY_WINDOW_ID
+    # la delata. En una pane de Herdr se limpia y TERM_PROGRAM es herdr.
+    if os.environ.get("KITTY_WINDOW_ID"):
+        return False
+    return os.environ.get("TERM_PROGRAM") == "herdr"
+
+
+def forward(inset):
+    child = subprocess.Popen([REAL] + sys.argv[1:], stdin=subprocess.PIPE, text=True)
+    stopping = False
+
+    def stop(signum, _frame):
+        nonlocal stopping
+        if stopping:
+            return
+        stopping = True
+        if child.poll() is None:
+            child.terminate()
+
+    for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(sig, stop)
+
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                command = json.loads(line)
+            except json.JSONDecodeError:
+                child.stdin.write(line + "\n")
+                child.stdin.flush()
+                continue
+            if command.get("action") == "add":
+                command["x"] = int(command.get("x", 0)) + inset
+                command["y"] = int(command.get("y", 0)) + inset
+                for key in ("max_width", "max_height"):
+                    value = command.get(key)
+                    if isinstance(value, int) and value > 2 * inset:
+                        command[key] = value - 2 * inset
+            child.stdin.write(json.dumps(command, separators=(",", ":")) + "\n")
+            child.stdin.flush()
+    except (BrokenPipeError, ValueError):
+        pass
+    finally:
+        try:
+            child.stdin.close()
+        except (BrokenPipeError, ValueError):
+            pass
+        child.wait()
+
+
+def main():
+    if not REAL:
+        sys.stderr.write("ueberzug: no se encuentra el binario real\n")
+        return 127
+    if len(sys.argv) < 2 or sys.argv[1] != "layer" or "--no-stdin" in sys.argv[1:]:
+        os.execv(REAL, [REAL] + sys.argv[1:])
+    if not inside_herdr_pane():
+        os.execv(REAL, [REAL] + sys.argv[1:])
+    forward(INSET)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

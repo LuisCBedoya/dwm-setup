@@ -123,6 +123,14 @@ if [ -x "$HOME/.local/bin/dwm-setup-fan-auto" ] &&
   "$HOME/.local/bin/dwm-setup-fan-auto" &
 fi
 
+# --- Previews de ueberzug (ranger/ytwatch) en su pestaña de Herdr ---
+# Oculta la imagen de la pestaña anterior al cambiar y la recupera al volver.
+if command -v herdr >/dev/null 2>&1 && command -v xdotool >/dev/null 2>&1 &&
+   [ -x "$HOME/.config/bspwm/scripts/preview-sync.py" ] &&
+   ! pgrep -f preview-sync.py >/dev/null 2>&1; then
+  setsid python3 "$HOME/.config/bspwm/scripts/preview-sync.py" >/dev/null 2>&1 &
+fi
+
 # --- Polkit agent (lxpolkit es el que está instalado) ---
 if command -v lxpolkit >/dev/null 2>&1; then
   lxpolkit &

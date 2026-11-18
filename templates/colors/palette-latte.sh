@@ -68,4 +68,8 @@ export THEME_COLOR_SCHEME="default"
 export THEME_CURSOR="Adwaita"
 export THEME_LOGO="light"
 
+export THEME_HERDR_NAME="catppuccin-latte"
+export THEME_HERDR_ACTIVE="#e6e9ef"
+export THEME_HERDR_SELECTION="#bdd0f5"
+
 validate_palette

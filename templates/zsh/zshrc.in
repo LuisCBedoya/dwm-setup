@@ -69,3 +69,12 @@ if command -v herdr >/dev/null 2>&1; then
   bindkey -r '^Q'   2>/dev/null || true   # Ctrl+Q (cerrar space)
   bindkey -r '^[^D' 2>/dev/null || true   # Ctrl+Alt+D (nuevo space)
 fi
+
+# Herdr: ueberzug (ranger/ytwatch) necesita el WINDOWID de la ventana de
+# kitty para pintar dentro de una pane; Herdr limpia los marcadores de la
+# terminal exterior. Se toma la ventana activa al lanzar la app.
+if [ -n "${HERDR_ENV:-}" ] && command -v xdotool >/dev/null 2>&1; then
+  _herdr_window_id() { export WINDOWID="$(xdotool getactivewindow 2>/dev/null)"; }
+  ranger()  { _herdr_window_id; command ranger  "$@"; }
+  ytwatch() { _herdr_window_id; command ytwatch "$@"; }
+fi

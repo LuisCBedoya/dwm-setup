@@ -1,0 +1,31 @@
+onboarding = false
+
+[keys]
+# Atajos directos (ADR-135): no dependen del prefijo ctrl+b.
+new_tab = ["prefix+c", "alt+k"]
+next_tab = ["prefix+n", "alt+o"]
+next_workspace = "ctrl+alt+n"
+previous_workspace = "ctrl+alt+p"
+rename_workspace = ["prefix+shift+w", "ctrl+alt+r"]
+close_tab = "prefix+shift+x"
+close_workspace = ["prefix+shift+d", "ctrl+alt+q", "ctrl+q"]
+toggle_sidebar = ["prefix+b", "alt+n"]
+new_workspace = ["prefix+shift+n", "ctrl+alt+d"]
+split_vertical = ["prefix+v", "prefix+enter"]
+split_horizontal = ["prefix+minus", "prefix+alt+enter"]
+
+[[keys.command]]
+key = "alt+q"
+type = "shell"
+command = "$HOME/.local/bin/herdr-close"
+description = "cerrar split, luego pestaña"
+
+[theme]
+name = "@THEME_HERDR_NAME@"
+auto_switch = false
+
+[theme.custom]
+sidebar_bg = "@COLOR_BG@"
+panel_bg = "@COLOR_BG@"
+active_row_bg = "@THEME_HERDR_ACTIVE@"
+selection_bg = "@THEME_HERDR_SELECTION@"

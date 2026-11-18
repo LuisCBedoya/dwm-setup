@@ -1592,3 +1592,52 @@ ytsearch50  → 4533 ms
   debe ser válido.
 - `templates/opencode/mocha-black.json` está en el store y en los
   requeridos de `install.sh`.
+
+### Previews reales en Herdr (2026-11-17, ADR-139)
+
+- En una pane de Herdr, `kitty +kitten icat` emite los escapes
+  (`\x1b_G...`) pero no se ve imagen, ni en una sesión nueva ni con
+  `[terminal] kitty_graphics = true`.
+- Dentro de Herdr, `ranger` (imagen y PDF) y `ytwatch lofi` deben
+  mostrar la preview real. Las funciones de zsh exportan `WINDOWID`;
+  sin ellas ueberzug no encuentra la ventana de kitty.
+- Al cambiar de pestaña, la preview de la anterior debe ocultarse y
+  reaparecer al volver (daemon `preview-sync.py`, etiqueta
+  `_DWM_SETUP_TAB` en las ventanas `ueberzugpp`).
+- `ytwatch doctor` debe decir `thumbnails ueberzugpp, output: x11`.
+- `command -v ueberzugpp` debe resolver a `~/.local/bin/ueberzugpp` (el
+  wrapper) y este debe existir y ser ejecutable.
+- `command -v ueberzug` debe resolver a `~/.local/bin/ueberzug` (el
+  wrapper de ranger), y `~/.config/ranger/rc.conf` debe usar
+  `preview_images_method ueberzug`.
+- Dentro de Herdr, la preview de ranger (imagen y PDF) debe quedar
+  **dentro del recuadro**, con el borde visible por los cuatro lados; el
+  wrapper suma 1 celda a `x`/`y` y resta 2 a `max_width`/`max_height`.
+- Fuera de Herdr el wrapper de ranger ejecuta `/usr/bin/ueberzug` sin
+  cambios; la preview debe verse como siempre.
+- Dentro de Herdr, la miniatura de ytwatch debe quedar **dentro del
+  panel PREVIEW**, no sobre la lista de resultados: el wrapper suma el
+  sidebar (26 columnas) y la barra de pestañas (2 filas) a `x`/`y`.
+- Fuera de Herdr (`HERDR_ENV` sin definir) el wrapper ejecuta
+  `/usr/bin/ueberzugpp` sin cambios; ytwatch debe seguir funcionando en
+  una kitty normal.
+- La config de Herdr no debe llevar `[terminal]` (se dejó como estaba).
+- La preview de ranger no debe usar chafa: se retiró por su calidad.
+
+### Herdr reproducible (2026-11-17, ADR-140)
+
+- `./install.sh --dry-run` debe mostrar la descarga de `herdr-linux-x86_64`,
+  la instalación en `~/.local/bin/herdr` y el render de
+  `~/.config/herdr/config.toml`, sin descargar ni escribir nada.
+- `~/.local/bin/herdr --version` debe responder `herdr 0.9.5`.
+- `~/.local/bin/herdr config check` debe dar `config: ok`.
+- El config debe contener `onboarding = false`, `alt+k` y
+  `herdr-close`, y el tema debe coincidir con el modo activo
+  (`catppuccin`/`catppuccin-latte`, `#0d0d14`/`#eff1f5`).
+- `theme-mode --no-reload light` y `theme-mode --no-reload dark` deben
+  actualizar `theme.name`, `sidebar_bg`, `panel_bg`, `active_row_bg` y
+  `selection_bg` a los valores de la paleta (`#eff1f5`/`#e6e9ef`/
+  `#bdd0f5` en light; `#0d0d14`/`#1a1a24`/`#26262f` en dark).
+- `--no-herdr` debe omitir el bloque sin tocar el config ni el binario.
+- `herdr-close` debe quedar ejecutable en `~/.local/bin`.
+- Pendiente: instalación real desde cero en VM Debian 13.

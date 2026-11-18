@@ -26,7 +26,7 @@ install_bspwm_scripts() {
   local home="$1"
   local battery
   battery=$(detect_battery)
-  local scripts=("bspwm_resize" "low_bat_notifier.sh" "keybindings_rofi.sh" "screenshot.sh" "screenshot_region.sh" "screenshot_full.sh" "screen-record.sh" "recording-tray.py" "audio-switch.sh" "audio-watch.sh" "thunar-defaults.sh" "dunst-position.sh" "wallpaper.sh" "display-setup.sh" "monocle.sh" "resize-mode.sh" "workspace.sh")
+  local scripts=("bspwm_resize" "low_bat_notifier.sh" "keybindings_rofi.sh" "screenshot.sh" "screenshot_region.sh" "screenshot_full.sh" "screen-record.sh" "recording-tray.py" "preview-sync.py" "audio-switch.sh" "audio-watch.sh" "thunar-defaults.sh" "dunst-position.sh" "wallpaper.sh" "display-setup.sh" "monocle.sh" "resize-mode.sh" "workspace.sh")
 
   for script in "${scripts[@]}"; do
     render_theme_template "$PROJECT_ROOT/templates/bspwm/scripts/$script.in" \

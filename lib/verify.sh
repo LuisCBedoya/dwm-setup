@@ -306,6 +306,50 @@ verify_install() {
     error "display-setup.sh no escribe la caché de monitores"
     failures=$((failures + 1))
   fi
+  if [[ ! -x "$home/.config/bspwm/scripts/preview-sync.py" ]]; then
+    error "Falta ~/.config/bspwm/scripts/preview-sync.py (previews en Herdr)"
+    failures=$((failures + 1))
+  fi
+  if ! grep -q 'preview-sync.py' "$home/.config/bspwm/scripts/autostart" 2>/dev/null; then
+    error "autostart no inicia preview-sync.py (previews en Herdr)"
+    failures=$((failures + 1))
+  fi
+  if [[ "${INSTALL_HERDR:-yes}" == "yes" ]]; then
+    for herdr_path in "$home/.local/bin/herdr" \
+      "$home/.config/herdr/config.toml" \
+      "$home/.local/bin/herdr-close"; do
+      if [[ ! -e "$herdr_path" ]]; then
+        error "Falta el archivo requerido de Herdr: $herdr_path"
+        failures=$((failures + 1))
+      fi
+    done
+    if [[ ! -x "$home/.local/bin/herdr" ]]; then
+      error "Herdr no está instalado o no es ejecutable"
+      failures=$((failures + 1))
+    elif ! run_user "$home/.local/bin/herdr" config check >/dev/null 2>&1; then
+      error "La configuración de Herdr no pasa 'herdr config check'"
+      failures=$((failures + 1))
+    fi
+    if ! grep -q '^onboarding = false' "$home/.config/herdr/config.toml" 2>/dev/null ||
+       ! grep -q 'alt+k' "$home/.config/herdr/config.toml" 2>/dev/null ||
+       ! grep -q 'herdr-close' "$home/.config/herdr/config.toml" 2>/dev/null; then
+      error "El config de Herdr no contiene onboarding=false, alt+k o herdr-close"
+      failures=$((failures + 1))
+    fi
+  fi
+  if [[ -x "$home/.local/bin/herdr" ]] &&
+     ! grep -q '_herdr_window_id' "$home/.zshrc" 2>/dev/null; then
+    error "zshrc no exporta WINDOWID para ranger/ytwatch en Herdr"
+    failures=$((failures + 1))
+  fi
+  if [[ -x "$home/.local/bin/herdr" ]]; then
+    for preview_cmd in xdotool xwininfo xprop; do
+      if ! cmd_exists "$preview_cmd"; then
+        error "Falta $preview_cmd (previews de ueberzug en Herdr)"
+        failures=$((failures + 1))
+      fi
+    done
+  fi
   if [[ -x "$home/.local/bin/herdr" && ! -x "$home/.local/bin/herdr-close" ]]; then
     error "Herdr está instalado pero falta ~/.local/bin/herdr-close"
     failures=$((failures + 1))
@@ -469,6 +513,7 @@ verify_install() {
   # ytwatch: buscador TUI solo si el bloque está habilitado (--no-ytwatch lo salta).
   if [[ "${INSTALL_YTWATCH:-yes}" == "yes" ]]; then
     for tw_path in "$home/.local/bin/ytwatch" \
+      "$home/.local/bin/ueberzugpp" \
       "$home/.config/ytwatch/config.toml" \
       /usr/bin/ueberzugpp; do
       if [[ -e "$tw_path" ]]; then
@@ -482,6 +527,12 @@ verify_install() {
       debug "ok: ytwatch ejecutable"
     else
       error "ytwatch no es ejecutable"
+      failures=$((failures + 1))
+    fi
+    if [[ -x "$home/.local/bin/ueberzugpp" ]]; then
+      debug "ok: wrapper ueberzugpp"
+    else
+      error "Falta el wrapper ~/.local/bin/ueberzugpp (offset de Herdr)"
       failures=$((failures + 1))
     fi
     for tw_unit in "$home/.config/systemd/user/dwm-setup-yt-update-notify.service" \
@@ -964,10 +1015,14 @@ PYCHK
     fi
   fi
 
-  # Ranger: previews con el protocolo de kitty (ueberzug no está instalado).
+  # Ranger: previews con ueberzug; dentro de Herdr el wrapper añade el inset.
   if [[ -f "$home/.config/ranger/rc.conf" ]] &&
-     ! grep -qx 'set preview_images_method kitty' "$home/.config/ranger/rc.conf"; then
-    error "ranger no usa preview_images_method kitty (las previews no se ven)"
+     ! grep -qx 'set preview_images_method ueberzug' "$home/.config/ranger/rc.conf"; then
+    error "ranger no usa preview_images_method ueberzug (las previews no se ven)"
+    failures=$((failures + 1))
+  fi
+  if cmd_exists ranger && [[ ! -x "$home/.local/bin/ueberzug" ]]; then
+    error "Falta ~/.local/bin/ueberzug (inset de ranger en Herdr)"
     failures=$((failures + 1))
   fi
 

@@ -3576,3 +3576,93 @@ unido; en dark no.
 - El logo dark conserva la cara y el anillo, sin el círculo blanco.
 - Si se cambia la paleta dark, el logo dark debe regenerarse con el
   nuevo fondo.
+
+## ADR-139 — Previews reales de ranger y ytwatch dentro de Herdr
+
+**Contexto:** en Herdr 0.9.5 las panes no pintan el protocolo kitty de
+imágenes: `kitten icat` emite los escapes correctamente, pero no se ve
+nada (también en una sesión nueva y con `terminal.kitty_graphics =
+true`). El overlay X11 de **ueberzug sí funciona**, pero solo si se le
+da `WINDOWID` de la ventana de kitty: Herdr limpia los marcadores de la
+terminal exterior y, sin esa variable, ueberzug no encuentra dónde
+dibujar. Ranger (ueberzug) y ytwatch (`output = "x11"`) usan ese overlay.
+El problema restante es que Herdr no recorta las ventanas X11: al cambiar
+de pestaña, la imagen de la anterior se queda encima.
+
+**Decisión:**
+1. `templates/zsh/zshrc.in` define funciones `ranger` y `ytwatch` que,
+   dentro de Herdr (`HERDR_ENV`), exportan
+   `WINDOWID=$(xdotool getactivewindow)` antes de lanzar la app. Así
+   ueberzug encuentra la ventana de kitty y pinta en la pane.
+2. `preview-sync.py` (autostart) etiqueta cada ventana `ueberzugpp` con
+   `_DWM_SETUP_TAB` (la pestaña enfocada al crearse) y la mapea o
+   desmapea cuando cambia el foco de Herdr. X11 conserva el contenido:
+   al volver a la pestaña reaparece la misma imagen. Sin Herdr no hace
+   nada; con una sola pestaña no cambia nada.
+3. `templates/ytwatch/ueberzugpp.in` se instala en
+   `~/.local/bin/ueberzugpp`, que va antes que `/usr/bin` en el PATH.
+   Ytwatch calcula la miniatura en celdas **relativas a su pane**, pero
+   ueberzugpp coloca la ventana respecto a kitty: el wrapper suma el
+   sidebar (26 columnas) y la barra de pestañas (2 filas) a `x`/`y` de
+   los comandos `add`. Sin eso la miniatura cae sobre la lista de
+   resultados. Solo actúa con `HERDR_ENV`; fuera de Herdr ejecuta el
+   binario real sin cambios. Ranger usa `ueberzug` y no pasa por él.
+4. `templates/ranger/ueberzug.in` se instala en `~/.local/bin/ueberzug`
+   (antes que `/usr/bin`). Dentro de Herdr, ranger coloca la preview en
+   la coordenada exterior de la columna y el overlay X11 tapa el borde;
+   el wrapper suma 1 celda a `x`/`y` y resta 2 a `max_width`/`max_height`,
+   así la imagen o el PDF quedan dentro del recuadro. Fuera de Herdr
+   ejecuta `/usr/bin/ueberzug` sin cambios.
+5. No se toca `scope.sh`: ranger sigue con `preview_images_method
+   ueberzug` y ytwatch con `output = "x11"`. No se usa chafa: el arte
+   ANSI era mucho peor que la imagen real.
+
+**Consecuencias:**
+- Ranger y ytwatch muestran imágenes reales dentro de Herdr, sin abrir
+  otra terminal, y la miniatura de ytwatch cae en su panel PREVIEW.
+- Los overlays son ventanas X11: si el daemon no corre, la preview de
+  una pestaña oculta puede quedar visible hasta cerrar la app.
+- Un overlay creado mientras su pestaña está oculta se etiqueta con la
+  pestaña enfocada; es raro porque las apps repintan al interactuar.
+- El wrapper de ytwatch asume el sidebar expandido (26 columnas) y una
+  barra de pestañas de 2 filas; si se colapsa el sidebar, hay que
+  reiniciar ytwatch o ajustar el offset. El de ranger usa un inset fijo
+  de 1 celda.
+- Depende de `xdotool`, `xwininfo` y `xprop` (X11). Si Herdr arregla el
+  protocolo kitty, se pueden retirar el daemon y el wrapper.
+
+## ADR-140 — Herdr reproducible en el instalador
+
+**Contexto:** Herdr se instaló y configuró a mano. El instalador solo
+creaba `herdr-close` si encontraba el binario, así que una instalación
+limpia no tenía Herdr, ni su config, ni los atajos, y la integración con
+ranger/ytwatch quedaba inerte.
+
+**Decisión:**
+1. `lib/herdr.sh` instala **Herdr v0.9.5** desde la release oficial en
+   `~/.local/bin/herdr` (usuario, sin sudo). El asset Linux es un
+   binario suelto; se fija el SHA-256 (`x86_64` `14d9e8…`, `aarch64`
+   `17d753…`). Si ya hay una versión igual no descarga; si hay una más
+   nueva, la respeta; si falla la red, conserva la anterior.
+2. `templates/herdr/config.toml.in` reproduce los atajos actuales
+   (`onboarding=false`, Alt+K/N/Q, Ctrl+Alt+D, Alt+Q →
+   `herdr-close`) y el tema desde `THEME_HERDR_NAME`,
+   `THEME_HERDR_ACTIVE` y `THEME_HERDR_SELECTION` de la paleta. Se
+   renderiza con `render_theme_template`; `theme-mode` sigue
+   actualizando `theme.name`/`[theme.custom]`.
+3. Se instala antes de `install_user_configs` para que `herdr-close`
+   esté presente. `backup_existing_configs` respalda
+   `~/.config/herdr`, `~/.local/bin/herdr` y `herdr-close`.
+4. `--no-herdr` lo omite; `--dry-run` solo muestra el plan.
+5. No hay atajo de lanzamiento: se escribe `herdr` en kitty y
+   `Super+Return` sigue abriendo kitty.
+
+**Consecuencias:**
+- Una instalación limpia tiene Herdr, su config y `herdr-close`; ranger
+  y ytwatch muestran sus previews dentro de Herdr sin configuración
+  manual.
+- El binario se actualiza a mano (`herdr update`); el instalador no
+  retrocede versiones.
+- La config de Herdr se puede recuperar de los backups si se cambia el
+  tema o los atajos.
+- Queda pendiente validar la instalación completa desde cero en VM.

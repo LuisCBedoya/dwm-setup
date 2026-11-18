@@ -7,8 +7,9 @@ proyecto. Leer primero `README.md`, `PROGRESS.md` y `DECISIONS.md`.
 
 Instalador reproducible de un escritorio mínimo para **Debian 13 (trixie)**
 con Xorg, **startx manual** (sin display manager), **bspwm**, **sxhkd**,
-**polybar**, **dunst**, **rofi**, **kitty**, **flameshot**, **zsh/Oh My Zsh**, **lsd**,
-**ranger**, **zathura**, **VLC**, **Brave**,
+**polybar**, **dunst**, **rofi**, **kitty**, **Herdr** (TUI de terminal con
+pestañas y previews de ranger/ytwatch en sus panes), **flameshot**,
+**zsh/Oh My Zsh**, **lsd**, **ranger**, **zathura**, **VLC**, **Brave**,
 **i3lock/xss-lock**, **picom** (compositor, ADR-107), PipeWire, cámara UVC
 y almacenamiento extraíble con notificación. La CPU arranca en
 `performance` y se alterna desde la barra (módulo `governor`, ADR-108).
@@ -208,8 +209,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `theme-mode` también actualiza `~/.config/herdr/config.toml`
     (`theme.name` y `[theme.custom]` sidebar/panel/active/selection;
     dark `#0d0d14`/`#1a1a24`/`#26262f`) y recarga el servidor de Herdr
-    con `herdr server reload-config`; no es una plantilla ni entra en
-    el store. También ajusta `~/.config/opencode/cli.json` (dark
+    con `herdr server reload-config`. El config se instala desde
+    `templates/herdr/config.toml.in` con `THEME_HERDR_*`; no entra en
+    el store de `theme-mode`. También ajusta `~/.config/opencode/cli.json` (dark
     `name=mocha-black` con `templates/opencode/mocha-black.json`, light
     `name=catppuccin`, con `mode` dark/light) y ejecuta `opencode
     reload`; tampoco es plantilla. El tema de opencode va en formato
@@ -394,6 +396,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
     evita que un LIVE VOD abra el chat replay en Brave (el vídeo va a
     mpv); el navegador queda para enlaces y canales. `wmctrl` es
     requerido por el doctor de ytwatch para colocar la ventana en X11.
+    `[preview] output = "x11"`: con las funciones de zsh y el wrapper de
+    `ueberzugpp` (regla 32) las miniaturas se ven dentro de Herdr.
     Actualizaciones: `ytwatch-check` (avisa por dunst) y
     `ytwatch-update` (`--ueberzugpp` para el paquete); `lib/ytwatch.sh`
     instala ambos en `~/.local/bin` (usuario, sin sudo) — sin ellos el
@@ -518,6 +522,43 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `xrandr --current` en bucles: puede forzar lecturas DDC y parpadear
     el HDMI.
 
+32. **Herdr y previews de ueberzug.** Herdr 0.9.5 no pinta el protocolo
+    kitty en las panes (comprobado con `kitten icat`, con
+    `terminal.kitty_graphics = true` y con una sesión nueva), pero
+    ueberzug **sí** funciona si se exporta `WINDOWID` de la ventana de
+    kitty: Herdr limpia los marcadores de la terminal exterior y, sin
+    esa variable, ueberzug no encuentra la ventana. `templates/zsh/zshrc.in`
+    define funciones `ranger` y `ytwatch` que, dentro de Herdr
+    (`HERDR_ENV`), exportan `WINDOWID=$(xdotool getactivewindow)` antes
+    de lanzar la app. Así ranger (`preview_images_method ueberzug`) y
+    ytwatch (`output = "x11"`) muestran imágenes reales dentro de Herdr.
+    Los overlays X11 no los recorta Herdr: `preview-sync.py` (autostart)
+    etiqueta cada ventana `ueberzugpp` con `_DWM_SETUP_TAB` (la pestaña
+    enfocada al crearse) y la mapea/desmapea al cambiar de pestaña; al
+    volver, X11 conserva el contenido. Sin Herdr el daemon no hace nada.
+    `templates/ytwatch/ueberzugpp.in` se instala en `~/.local/bin/ueberzugpp`
+    (antes que `/usr/bin`) y suma a `x`/`y` el sidebar (26 columnas) y la
+    barra de pestañas (2 filas) de Herdr; sin eso ytwatch pinta la
+    miniatura sobre la lista. `templates/ranger/ueberzug.in` se instala
+    en `~/.local/bin/ueberzug` y, dentro de Herdr, suma 1 celda a
+    `x`/`y` y recorta 2 celdas el tamaño máximo para que la imagen o el
+    PDF queden dentro del borde de la columna; fuera de Herdr no cambia
+    nada. No volver a chafa: el arte ANSI era muy pobre.
+
+33. **Herdr reproducible.** `lib/herdr.sh` instala **Herdr v0.9.5** desde
+    la release oficial en `~/.local/bin/herdr` (usuario, sin sudo) con
+    el SHA-256 fijado (`x86_64` `14d9e8…`, `aarch64` `17d753…`);
+    `--no-herdr` lo omite. La release es un binario suelto, no un
+    tarball. Se instala antes de `install_user_configs` para que
+    `herdr-close` exista. `templates/herdr/config.toml.in` reproduce los
+    atajos actuales (`onboarding=false`, Alt+K/N/Q, Ctrl+Alt+D, Alt+Q →
+    `herdr-close`) y el tema desde `THEME_HERDR_NAME/ACTIVE/SELECTION`
+    de la paleta. `theme-mode` sigue actualizando
+    `theme.name`/`[theme.custom]`. Backups: `~/.config/herdr` y
+    `~/.local/bin/herdr` en `backup_existing_configs`. No hay atajo de
+    lanzamiento: se escribe `herdr` en kitty y `Super+Return` sigue
+    abriendo kitty.
+
 ## Estructura relevante
 
 | Archivo | Responsabilidad |
@@ -537,7 +578,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/rofi.sh` | powermenu.rasi |
 | `lib/kitty.sh` | kitty.conf y paleta del terminal |
 | `lib/zsh.sh` | zsh, Oh My Zsh y lsd |
-| `lib/ranger.sh` | ranger, zathura, VLC y previews (método `kitty`) |
+| `lib/ranger.sh` | ranger, zathura, VLC y previews (ueberzug con WINDOWID e inset en Herdr) |
 | `lib/gpu.sh` | configuración Xorg/i915/NVIDIA por hardware |
 | `lib/gtk.sh` | temas GTK Catppuccin, tema derivado, iconos y xsettingsd.conf |
 | `lib/vlc.sh` | VLC con paleta oscura (`qt-dark-palette`) |
@@ -545,6 +586,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/fastfetch.sh` | fastfetch: config y logos `Neofet-{light,dark}.png` |
 | `lib/music.sh` | yt-dlp oficial, scripts de streaming, mpv VA-API/iGPU y teclas |
 | `lib/ytwatch.sh` | ytwatch (binario GitHub) y ueberzugpp (.deb OBS) con SHA-256 |
+| `lib/herdr.sh` | Herdr TUI: binario fijado, SHA-256 y config reproducible |
 | `lib/brave.sh` | Brave: repo APT, policies, atajos y SurfingKeys |
 | `lib/verify.sh` | Verificación estática final |
 | `lib/theme.sh` | Paletas (Mocha Black, Latte), par de modos y render |
@@ -553,7 +595,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
 | `bin/dwm-setup-cpu-governor` | Helper root del módulo governor: valida y escribe `scaling_governor` |
 | `bin/dwm-setup-ufw` | Helper root acotado del módulo UFW (`status/enable/disable/reload/rules`) |
-| `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults, workspace.sh ADR-112, screen-record.sh y recording-tray.py ADR-124) |
+| `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults, workspace.sh ADR-112, screen-record.sh, recording-tray.py ADR-124 y preview-sync.py ADR-139) |
 | `templates/sxhkd/` | sxhkdrc |
 | `templates/polybar/` | config.ini, modules/ (governor, ufw, bluetooth, recording), scripts/ (incl. temp-status y recording-status) y variants/ |
 | `templates/dunst/` | dunstrc y notification-sound.sh |
@@ -561,7 +603,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/kitty/` | kitty.conf y colorshemes/ |
 | `templates/zsh/` | zshrc |
 | `templates/lsd/` | config.yml e icons.yaml |
-| `templates/ranger/` | rc.conf, rifle.conf y previews |
+| `templates/ranger/` | rc.conf, rifle.conf, previews y `ueberzug.in` (inset de Herdr) |
 | `templates/xorg/` | 20-modesetting.conf |
 | `templates/picom/` | picom.conf.in (libconfig: comentarios `#`) |
 | `templates/sudoers/` | Fragmentos de sudoers del gobernador y UFW (`@USER@`) |
@@ -593,7 +635,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/power.sh` | Límite de carga de batería (80 %) vía sysfs + unidad systemd |
 | `lib/fans.sh` | Modo del ventilador: helper root y sudoers acotado |
 | `lib/sysctl.sh` | Instala `/etc/sysctl.d/99-dwm-setup-swappiness.conf` |
-| `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview kitty) |
+| `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview `x11`) y `ueberzugpp.in` (wrapper de offset para Herdr) |
+| `templates/herdr/` | `config.toml.in` (atajos y tema de la TUI) |
 | `templates/mpv/` | `mpv.conf` (VA-API) y wrapper `mpv` que fuerza la iGPU salvo `prime-run` |
 | `templates/sysctl/` | `99-dwm-setup-swappiness.conf` (vm.swappiness=10) |
 | `templates/wireplumber/` | `50-dwm-setup.conf` (autoswitch A2DP/HFP) |
@@ -636,6 +679,10 @@ sh -n templates/bspwm/scripts/workspace.sh.in \
   templates/polybar/scripts/temp-status.sh.in \
   templates/mpv/mpv-wrapper.sh
 python3 -c "compile(open('templates/bspwm/scripts/recording-tray.py.in', encoding='utf-8').read(), 'recording-tray.py', 'exec')"
+python3 -c "compile(open('templates/bspwm/scripts/preview-sync.py.in', encoding='utf-8').read(), 'preview-sync.py', 'exec')"
+python3 -c "compile(open('templates/ytwatch/ueberzugpp.in', encoding='utf-8').read(), 'ueberzugpp', 'exec')"
+python3 -c "compile(open('templates/ranger/ueberzug.in', encoding='utf-8').read(), 'ueberzug', 'exec')"
+zsh -n templates/zsh/zshrc.in
 
 # Gobernador: lista oficial y sudoers renderizado (sin tocar el sistema)
 sh -n bin/dwm-setup-cpu-governor bin/dwm-setup-ufw
@@ -665,6 +712,9 @@ shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor \
 # Streaming y limpieza
 ytdlp-check
 ytwatch-check
+~/.local/bin/herdr --version
+~/.local/bin/herdr config check
+./install.sh --dry-run 2>&1 | grep -A3 'Configurando Herdr'
 ./install.sh --dry-run 2>&1 | grep -A2 'Limpiando dependencias'
 
 # Modo de color (no pide sudo)
@@ -686,6 +736,9 @@ desktop-doctor --camera
 ## Estado esperado al retomar
 
 - El código de fase 1b está implementado y los checks estáticos pasan.
+- Herdr (2026-11-17): `lib/herdr.sh` instala v0.9.5 con SHA-256 y el
+  config se renderiza desde `templates/herdr/config.toml.in`; `--no-herdr`
+  lo omite. La instalación desde cero en VM queda pendiente.
 - Catppuccin (Mocha Black + Latte) implementado el 2026-11-02: dos paletas,
   `theme-mode`, temas GTK vendorizados y temas de iconos overlay. Pasan
   `bash -n`, `--dry-run` con ambas paletas y `theme-mode --no-reload` en un

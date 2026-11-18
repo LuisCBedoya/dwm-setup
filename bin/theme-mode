@@ -280,19 +280,12 @@ reload_wallpaper() {
 update_herdr_theme() {
   local mode="$1" name sidebar panel active selection config
   case "$mode" in
-    dark)
-      name="catppuccin"
-      sidebar="#0d0d14"
-      panel="#0d0d14"
-      active="#1a1a24"
-      selection="#26262f"
-      ;;
-    light)
-      name="catppuccin-latte"
-      sidebar="#eff1f5"
-      panel="#eff1f5"
-      active="#e6e9ef"
-      selection="#bdd0f5"
+    dark|light)
+      name="$THEME_HERDR_NAME"
+      sidebar="$COLOR_BG"
+      panel="$COLOR_BG"
+      active="$THEME_HERDR_ACTIVE"
+      selection="$THEME_HERDR_SELECTION"
       ;;
     *) return 1 ;;
   esac

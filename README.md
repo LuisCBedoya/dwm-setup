@@ -44,7 +44,11 @@ Incluido:
   por GPU cuando el driver está disponible (actívalo en `brave://flags`,
   `VaapiVideoDecoder`).
 - **ranger** con **zathura** para PDF/EPUB/DjVu/PS/CB, **VLC** para vídeo y
-  previews de imagen con **ueberzug** (X11). VLC usa
+  previews de imagen con **ueberzug** (X11). Dentro de Herdr, la función
+  `ranger` de zsh exporta `WINDOWID` para que ueberzug pinte en la pane;
+  el wrapper `~/.local/bin/ueberzug` deja la imagen/PDF dentro del borde
+  de la columna, y `preview-sync` oculta la preview de las pestañas que
+  no están enfocadas. VLC usa
   `avcodec-hw=any` y `vout=gl` para decodificar por **VA-API** sin los
   errores de conversión de X11. Texto, código y
   Markdown se abren con **Neovim**. Tema GTK **Catppuccin** (Mocha Black o
@@ -92,6 +96,10 @@ Incluido:
   YouTube con miniaturas (`ueberzugpp`), filtros, cola y descargas;
   usa el mismo yt-dlp oficial y mpv. Actualizable con `ytwatch-check` /
   `ytwatch-update`.
+- **Herdr** (TUI de terminal): se instala en `~/.local/bin`; se abre
+  escribiendo `herdr` en kitty. Pestañas y panes con `herdr-close`
+  (Alt+Q cierra pane → pestaña); ranger y ytwatch muestran sus previews
+  reales dentro de sus panes.
 - **Avisos de YouTube por dunst**: timer de usuario
   (`dwm-setup-yt-update-notify.timer`, 13:00 diario; si el PC estaba
   apagado, corre al encender) que
@@ -190,11 +198,13 @@ contraseña; nunca se almacena.
 | `./install.sh --yes` | No pide confirmación; no modifica repositorios APT |
 | `./install.sh --theme mocha-black` | Catppuccin Mocha Black (por defecto en instalación limpia) |
 | `./install.sh --theme latte` | Catppuccin Latte (claro) |
+| `./install.sh --no-ytwatch` | Omite ytwatch y ueberzugpp |
+| `./install.sh --no-herdr` | Omite Herdr y su config |
+| `./install.sh --help` | Ayuda |
+| `./install.sh --version` | Versión |
 
 Si ya existe `~/.config/dwm-setup/mode`, el instalador conserva el modo
 guardado (`dark`/`light`) y no lo cambia; `--theme` lo fuerza.
-| `./install.sh --help` | Ayuda |
-| `./install.sh --version` | Versión |
 
 Opciones avanzadas: `--user`, `--home`, `--nvidia`, `--no-nvidia`,
 `--cuda`, `--no-cuda`, `--keymap`, `--font`, `--font-size`, `--resolution`
@@ -543,6 +553,22 @@ ytdlp-rollback   # vuelve a la anterior
 
 `yt-play` avisa si YouTube cambia y yt-dlp ya no puede extraer el contenido.
 
+## Herdr — terminal con pestañas
+
+Herdr se instala en `~/.local/bin/herdr` (v0.9.5, SHA-256 fijado en
+`lib/herdr.sh`). Se abre escribiendo:
+
+```sh
+herdr
+```
+
+en una kitty; `Super+Return` sigue abriendo kitty. El instalador deja
+`~/.config/herdr/config.toml` con los atajos actuales (`Alt+K/N/Q`,
+`Ctrl+Alt+D`; `Alt+Q` cierra pane → pestaña con `herdr-close`) y el tema
+de la paleta activa. `theme-mode` actualiza el tema en caliente y
+ranger/ytwatch muestran sus previews reales dentro de Herdr. Con
+`--no-herdr` se omite el bloque.
+
 ## ytwatch — buscador TUI
 
 Perfil TUI (vim keys, miniaturas junto a cada resultado, filtros de
@@ -566,8 +592,12 @@ comportamiento, no un fallo. `d`/`a`/`Q` descargan (calidad/audio), `V`
 arma cola, `f` filtra,
 `?` muestra la ayuda completa. Las miniaturas van con el backend `x11`
 de `ueberzugpp` (ventana-hija sobre la terminal; en Debian 13 llega por
-`.deb` del proyecto, sin añadir repositorios) y el fallback `chafa`
-queda comentado. El binario se gestiona solo:
+`.deb` del proyecto, sin añadir repositorios). Dentro de Herdr funciona
+con la función `ytwatch` de zsh, que exporta `WINDOWID`; el wrapper
+`~/.local/bin/ueberzugpp` suma el offset del sidebar y la barra de
+pestañas para que la miniatura caiga en el panel PREVIEW, y
+`preview-sync` la oculta al cambiar de pestaña y la recupera al volver.
+El binario se gestiona solo:
 
 ```sh
 ytwatch-check        # ¿hay versión nueva de ytwatch o ueberzugpp? avisa por dunst
@@ -764,6 +794,7 @@ bin/music-ctl              Teclas multimedia del reproductor activo
 bin/ytwatch-check          Aviso de versión nueva (ytwatch/ueberzugpp, dunst)
 bin/ytwatch-update         Actualiza ytwatch o ueberzugpp (--ueberzugpp)
 lib/ytwatch.sh             Instalación de ytwatch y ueberzugpp con SHA-256
+lib/herdr.sh               Instalación de Herdr con SHA-256 y config
 templates/bspwm/           bspwmrc.in, autostart.in, scripts/
 templates/sxhkd/           sxhkdrc.in
 templates/polybar/         config.ini.in, modules/, scripts/ y variants/
@@ -773,6 +804,7 @@ templates/kitty/           kitty.conf.in y colorshemes/
 templates/zsh/             zshrc.in
 templates/lsd/             config.yml e icons.yaml
 templates/ranger/          rc.conf, rifle.conf y previews
+templates/herdr/           config.toml.in (atajos y tema de Herdr)
 templates/xorg/            configuración Xorg por hardware
 templates/gtk/             settings GTK2/3/4 y CSS
 templates/xsettingsd/      xsettingsd.conf.in (tema GTK del modo)

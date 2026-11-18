@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+# preview-sync.py — mantiene las previews de ueberzug dentro de su pestaña.
+#
+# Herdr no recorta las ventanas X11 de ueberzug (ranger/ytwatch): al cambiar
+# de pestaña, la imagen de la pestaña anterior se queda encima. Este proceso
+# etiqueta cada overlay con la pestaña de Herdr que estaba enfocada cuando
+# apareció y lo mapea/desmapea al cambiar de pestaña. El contenido se
+# conserva al volver (X11 mantiene el backing store de la ventana).
+#
+# Requiere: herdr, xwininfo, xprop, xdotool y python3. Sin Herdr no hace nada.
+
+import json
+import os
+import re
+import shutil
+import subprocess
+import time
+
+PROP = "_DWM_SETUP_TAB"
+POLL = 0.35
+WINDOW_RE = re.compile(
+    r'^\s*(0x[0-9a-fA-F]+)\s+"(ueberzugpp|ueberzug)":', re.MULTILINE
+)
+
+HERDR = shutil.which("herdr") or os.path.expanduser("~/.local/bin/herdr")
+XWININFO = shutil.which("xwininfo")
+XPROP = shutil.which("xprop")
+XDOTOOL = shutil.which("xdotool")
+
+
+def run(cmd, timeout=2):
+    try:
+        return subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=timeout,
+            text=True,
+        ).stdout
+    except Exception:
+        return ""
+
+
+def focused_tab():
+    """Pestaña enfocada de Herdr, o None si Herdr no está disponible."""
+    out = run([HERDR, "tab", "list"])
+    try:
+        data = json.loads(out)
+    except Exception:
+        return None
+    for tab in data.get("result", {}).get("tabs", []):
+        if tab.get("focused"):
+            return tab.get("tab_id")
+    return None
+
+
+def overlays():
+    """Ventanas de ueberzug: {id: nombre}."""
+    out = run([XWININFO, "-root", "-tree"])
+    return {win: name for win, name in WINDOW_RE.findall(out)}
+
+
+def get_tag(win):
+    out = run([XPROP, "-id", win, PROP])
+    match = re.search(r'=\s*"(.*)"', out)
+    return match.group(1) if match else None
+
+
+def set_tag(win, tab):
+    run([XPROP, "-id", win, "-f", PROP, "8s", "-set", PROP, tab])
+
+
+def show(win):
+    run([XDOTOOL, "windowmap", win])
+
+
+def hide(win):
+    run([XDOTOOL, "windowunmap", win])
+
+
+def main():
+    if not all((XWININFO, XPROP, XDOTOOL)) or not os.path.exists(HERDR):
+        return 1
+
+    tags = {}
+    shown = {}
+    while True:
+        tab = focused_tab()
+        current = overlays()
+
+        for win in list(tags):
+            if win not in current:
+                tags.pop(win, None)
+                shown.pop(win, None)
+
+        for win in current:
+            if win not in tags:
+                # Si el daemon arranca con overlays ya abiertos, se quedan
+                # con la pestaña enfocada en ese momento.
+                tags[win] = get_tag(win) or tab
+                if tab and not get_tag(win):
+                    set_tag(win, tab)
+
+        for win, owner in tags.items():
+            visible = tab is None or owner is None or owner == tab
+            if shown.get(win) == visible:
+                continue
+            if visible:
+                show(win)
+            else:
+                hide(win)
+            shown[win] = visible
+
+        time.sleep(POLL)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
