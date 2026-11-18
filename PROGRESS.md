@@ -2408,3 +2408,133 @@ UHD 630; sin servicios ni configuración extra.
 - La sesión viva ya coincidía; no hizo falta reiniciar bspwm.
 - La barra queda arriba por defecto (la posición es estado del ciclo
   `Super+Alt+p`, no configuración del instalador).
+
+### Herdr TUI: atajos y zsh — 2026-11-17
+
+- Instalada la TUI `herdr` 0.9.5 (solo terminal); retirada la app
+  gráfica `herdr-app` y su `herdr-core`/`hc`.
+- Atajos directos en `~/.config/herdr/config.toml`: `alt+k` nueva
+  pestaña, `alt+o` siguiente, `alt+n` sidebar, `alt+q` cerrar pestaña,
+  `ctrl+alt+n/p` workspace anterior/siguiente, `ctrl+alt+q` cerrar
+  workspace (confirmación) y `ctrl+alt+d` crear workspace.
+- Probado con xdotool: `alt+n` colapsa/expande el panel, `alt+k`+nombre
+  crea pestaña y `alt+q` la cierra, `ctrl+alt+d` crea workspace y
+  `ctrl+alt+q`+Enter lo cierra.
+- `templates/zsh/zshrc.in` desvincula `Alt+N/N/K/Q` y `Ctrl+Alt+D`
+  cuando `herdr` está instalado; `Alt+J` se conserva.
+- Pendiente: valorar si Herdr entra en el instalador como componente
+  opcional y añadir completions de zsh.
+
+### Herdr: renombrar workspace — 2026-11-17
+
+- `ctrl+alt+n` ya era `next_workspace`; Herdr no permite dos acciones en
+  la misma tecla (desactiva una). Se elige `ctrl+alt+r` para
+  `rename_workspace` y se mantiene `ctrl+alt+n/p` para navegar.
+- Probado en vivo: `ctrl+alt+r` abre el diálogo, `Ctrl+C` limpia el
+  campo y `Enter` guarda. Renombrado a `prueba2` y restaurado a `~`.
+- `ctrl+alt+r` no tiene binding en zsh; no requiere limpieza.
+
+### Herdr: splits con Ctrl+B — 2026-11-17
+
+- `split_vertical = ["prefix+v", "prefix+enter"]` (derecha) y
+  `split_horizontal = ["prefix+minus", "prefix+alt+enter"]` (abajo).
+- `Ctrl+Space` y `sxhkd` no se tocan: sigue alternando flotante/tiled.
+- Probado con xdotool en el workspace `code`: `Ctrl+B Enter` creó
+  `wA:p2` y `Ctrl+B Alt+Enter` creó `wA:p3`; ambos panes se cerraron
+  después y quedó el estado original.
+
+### Herdr: Alt+Q en cascada — 2026-11-17
+
+- `alt+q` deja de ser `close_tab` y pasa a `[[keys.command]]` con
+  `bin/herdr-close` (también en `~/.local/bin`).
+- Cascada segura: cierra el pane si hay split; si es el último pane,
+  cierra la pestaña; en la última pestaña avisa con `notify-send` y no
+  toca el workspace. El space se cierra con `ctrl+alt+q` + `Enter`.
+- Probado en un workspace temporal: última pestaña (no cerró), dos
+  pestañas (cerró una), split (cerró el pane). El workspace de prueba
+  se cerró después y quedó `~` como único space.
+- Resto de atajos directos intactos.
+
+### Herdr: Ctrl+Q cierra el space — 2026-11-17
+
+- Retirado el aviso `notify-send` de `bin/herdr-close`: en la última
+  pestaña `Alt+Q` no hace nada.
+- `close_workspace` añade `ctrl+q` (además de `prefix+shift+d` y
+  `ctrl+alt+q`): abre el `confirm_close` nativo y cierra el space.
+- zsh desvincula `^Q` (`push-line`) cuando Herdr está instalado.
+- Probado en un workspace temporal: `Ctrl+Q` mostró “Close workspace?”
+  y `Enter` lo cerró; `Alt+Q` en la última pestaña no generó avisos.
+
+### Herdr sigue el modo de color — 2026-11-17
+
+- `theme-mode` escribe en `~/.config/herdr/config.toml` el `theme.name`
+  (`catppuccin`/`catppuccin-latte`), `auto_switch = false` y
+  `[theme.custom] sidebar_bg/panel_bg` para que el sidebar no dependa
+  del fondo cacheado del terminal.
+- `reload_herdr` llama a `herdr server reload-config`; el cliente aplica
+  el tema en caliente. Probado con la versión instalada en
+  `/usr/local/bin/theme-mode`: dark → sidebar/tab bar Mocha, light →
+  Latte, sin reiniciar Herdr.
+- El panel de opencode conserva su propio tema; `theme-mode` no lo toca.
+- `--no-reload` actualiza el config pero no recarga el servidor.
+
+### Herdr: TOML duplicado corregido — 2026-11-17
+
+- El `config.toml` tenía dos tablas `[theme.custom]` (dark y light);
+  TOML no lo permite y Herdr mostraba “config.toml invalid” y no
+  recargaba. Se eliminó la duplicada y se dejó una con el modo activo.
+- `theme-mode` (repo) funde secciones `[theme.custom]` duplicadas antes
+  de escribir, conservando claves extra de la primera.
+- Probado con la versión instalada: `theme-mode light` y `dark` dejan
+  una sola sección y `herdr config check` → `config: ok`.
+- Recordatorio: `herdr server reload-config` va **sin sudo**; el
+  servidor es del usuario. La versión instalada aplica el tema; la
+  limpieza de duplicados se instalará con el próximo `sudo ./install.sh`.
+
+### opencode sigue el modo de color — 2026-11-17
+
+- `theme-mode` escribe `theme.name = "catppuccin"` y
+  `theme.mode = dark|light` en `~/.config/opencode/cli.json`,
+  preservando `$schema`, keybinds y plugins.
+- `reload_opencode` ejecuta `opencode reload`; el TUI `opencode -c` y
+  el servicio `opencode serve --service` aplican el tema en caliente.
+- Probado con capturas: light → Catppuccin claro (Latte), dark →
+  Catppuccin Mocha; `recargado:` incluye `opencode` y no se pierde la
+  sesión.
+- `--no-reload` solo escribe el JSON.
+- Instalado en `/usr/local/bin/theme-mode`; `diff` contra el repo OK.
+
+### Dark unificado: superficies y logo — 2026-11-17
+
+- Herdr dark usa `#0d0d14` en sidebar/panel, `#1a1a24` en active y
+  `#26262f` en selection; light mantiene `#eff1f5`/`#e6e9ef`/`#bdd0f5`.
+- opencode dark usa `theme.name = "system"` (paleta del terminal, fondo
+  `#0d0d14`); light sigue con `catppuccin` (Latte).
+- `assets/fastfetch/Neofet-dark.png` rediseñado: disco `#0d0d14`, cara
+  blanca, línea negra y anillo `#89b4fa`; `Neofet-light.png` intacto.
+  Se copió también a `~/.config/fastfetch/Neofet-dark.png`.
+- Verificado con capturas: terminal, sidebar, tab bar, opencode y logo
+  comparten el mismo fondo dark; light no cambió.
+- El `fastfetch` viejo en pantalla mostraba Latte; una ejecución nueva
+  reporta `catppuccin-mocha-black`/`Catppuccin-Mocha` (es una foto del
+  momento, no un fallo).
+- `theme-mode` instalado en `/usr/local/bin` (coincide con el repo).
+
+### opencode con tema mocha-black — 2026-11-17
+
+- El tema `system` de opencode aclaraba el panel de contexto a
+  `#1e1e2e`; se sustituye en dark por un tema custom `mocha-black`.
+- `templates/opencode/mocha-black.json` usa el **formato V2** de
+  opencode (`base` + `dark.hue`): `background.base` y `raised.base`
+  `#0d0d14`, `raised.high` `#1a1a24`, `raised.max` `#26262f`, texto
+  `#cdd6f4`/`#a6adc8`/`#6c7086` y acentos Catppuccin Mocha. Un JSON V1
+  (`defs`/`theme`) se ignora y el TUI cae al tema por defecto
+  (`#0a0a0a`/`#141414`/`#1e1e1e`), que fue el primer intento fallido.
+- `theme-mode dark` lo instala en `~/.config/opencode/themes/` y pone
+  `theme.name = "mocha-black"`; light sigue con `catppuccin`.
+  `opencode reload` aplica el cambio entre temas ya conocidos.
+- La lista de temas se lee al arrancar: tras **añadir** el archivo hay
+  que reiniciar opencode una vez. Verificado con un TUI nuevo: todo el
+  panel `#0d0d14`, tarjetas `#1a1a24` y `Build` en azul `#89b4fa`.
+- Añadido a `lib/config.sh` (store), `install.sh` (requeridos) y a
+  `theme-mode`.

@@ -604,7 +604,21 @@ caliente polybar, dunst, los bordes de bspwm, el **wallpaper del modo**,
 kitty y **xsettingsd** (`SIGHUP`). **No pide sudo**: los temas ya están
 instalados. `xsettingsd` publica el `Net/ThemeName` del modo y así **Brave
 («Usar GTK») y las apps GTK cambian al instante**, sin reiniciar. VLC
-necesita reiniciarse para aplicar el cambio.
+necesita reiniciarse para aplicar el cambio. **Herdr TUI** también sigue
+el modo: `theme-mode` ajusta `theme.name` (`catppuccin`/`catppuccin-latte`)
+y el `[theme.custom]` de `~/.config/herdr/config.toml` (dark `#0d0d14`,
+active `#1a1a24`, selection `#26262f`; light `#eff1f5`, `#e6e9ef`,
+`#bdd0f5`), y recarga su servidor. **opencode** sigue el modo por su
+cuenta: en dark usa el tema `mocha-black` (Catppuccin con las
+superficies de la paleta, fondo `#0d0d14`) y en light
+`catppuccin`/`light` en `~/.config/opencode/cli.json`, con
+`opencode reload`. El tema vive en
+`templates/opencode/mocha-black.json` (formato V2: `background.raised`
+`#0d0d14`/`#1a1a24`/`#26262f`) y se instala en
+`~/.config/opencode/themes/`; si el archivo es nuevo, hay que reiniciar
+opencode una vez para que lo descubra. El logo
+`assets/fastfetch/Neofet-dark.png` lleva un disco `#0d0d14` para que
+fastfetch se funda con el dark; el de light no se toca.
 
 Tras instalar en una sesión ya abierta, ejecuta `theme-mode light` (o
 `theme-mode toggle`) una vez para arrancar `xsettingsd`; si Brave ya estaba
@@ -766,6 +780,7 @@ templates/vlc/             vlcrc (oscuro o claro según el modo)
 templates/zathura/         zathurarc.in
 templates/themes/          catppuccin-mocha-blue y catppuccin-latte-blue
 templates/fastfetch/       config.jsonc.in
+templates/opencode/        mocha-black.json (tema Catppuccin con #0d0d14)
 assets/fastfetch/          Neofet-{light,dark}.png (logos de fastfetch)
 templates/icons/           papirus-folders y carpetas cat-*
 templates/modprobe/        i915.conf y nvidia.conf

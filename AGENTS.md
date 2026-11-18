@@ -205,6 +205,21 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `kitty @ set-colors --all --configured <colorsheme>`, que exige
     `allow_remote_control socket-only` y `listen_on unix:kitty-{kitty_pid}`
     en `kitty.conf`; sin ese socket, kitty solo cambia al reiniciarse.
+    `theme-mode` también actualiza `~/.config/herdr/config.toml`
+    (`theme.name` y `[theme.custom]` sidebar/panel/active/selection;
+    dark `#0d0d14`/`#1a1a24`/`#26262f`) y recarga el servidor de Herdr
+    con `herdr server reload-config`; no es una plantilla ni entra en
+    el store. También ajusta `~/.config/opencode/cli.json` (dark
+    `name=mocha-black` con `templates/opencode/mocha-black.json`, light
+    `name=catppuccin`, con `mode` dark/light) y ejecuta `opencode
+    reload`; tampoco es plantilla. El tema de opencode va en formato
+    V2 (`base` + `dark.hue`) con `background.raised` `#0d0d14`/
+    `#1a1a24`/`#26262f`; un JSON V1 (`defs`/`theme`) se ignora sin
+    aviso. Cambiar entre temas conocidos recarga en caliente, pero un
+    archivo de tema **nuevo** exige reiniciar el TUI (la lista se lee
+    al arrancar).
+    `assets/fastfetch/Neofet-dark.png` debe llevar el disco `#0d0d14`
+    (el de light se mantiene); `theme-mode` elige el logo por modo.
     `xsettingsd` publica `Net/ThemeName` y el resto de claves del tema
     desde `~/.config/xsettingsd/xsettingsd.conf`; `theme-mode` lo
     re-renderiza y lo recarga con `SIGHUP` (si no corre, lo arranca con
@@ -558,6 +573,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/zathura/` | zathurarc |
 | `templates/themes/` | `catppuccin-mocha-blue` y `catppuccin-latte-blue` |
 | `templates/fastfetch/` | `config.jsonc.in` (logo PNG y módulos) |
+| `templates/opencode/` | `mocha-black.json` (tema Catppuccin con superficies `#0d0d14`) |
 | `assets/fastfetch/` | `Neofet-{light,dark}.png` |
 | `templates/icons/` | `papirus-folders` y carpetas `cat-mocha-blue`/`cat-latte-blue` |
 | `bin/theme-mode` | Cambio de modo dark/light en caliente |
@@ -568,6 +584,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `bin/ytdlp-update` | Actualiza yt-dlp con copia y rollback |
 | `bin/ytdlp-rollback` | Restaura la copia anterior de yt-dlp |
 | `bin/music-ctl` | Teclas multimedia del reproductor activo |
+| `bin/herdr-close` | Cierre jerárquico de Herdr TUI: pane → pestaña; en la última pestaña no hace nada (Ctrl+Q cierra el space con confirmación) |
 | `bin/ytwatch-check` | Avisa (dunst) si ytwatch o ueberzugpp van desactualizados |
 | `bin/ytwatch-update` | Actualiza ytwatch (checksums.txt) o ueberzugpp (`--ueberzugpp`) |
 | `bin/yt-update-notify` | Wrapper del timer: agrupa los dos checkers en un toast dunst |
@@ -600,7 +617,7 @@ cd ~/dwm-setup
 # Sintaxis
 for f in install.sh lib/*.sh; do bash -n "$f" || exit 1; done
 for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor \
-  bin/dwm-setup-ufw; do sh -n "$f" || exit 1; done
+  bin/dwm-setup-ufw bin/herdr-close; do sh -n "$f" || exit 1; done
 sh -n templates/polybar/scripts/cpu-governor.sh.in
 sh -n templates/polybar/scripts/ufw-status.sh.in \
   templates/polybar/scripts/ufw-menu.sh.in \
@@ -643,7 +660,7 @@ stat -c '%A %n' ~/.config/bspwm/bspwmrc ~/.xinitrc
 shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor \
   bin/dwm-setup-cpu-governor bin/dwm-setup-ufw bin/theme-mode bin/brave-theme bin/yt-play bin/yt-preview \
   bin/ytdlp-check bin/ytdlp-update bin/ytdlp-rollback bin/music-ctl \
-  bin/ytwatch-check bin/ytwatch-update
+  bin/ytwatch-check bin/ytwatch-update bin/herdr-close
 
 # Streaming y limpieza
 ytdlp-check

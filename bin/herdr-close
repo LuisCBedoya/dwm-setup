@@ -1,0 +1,55 @@
+#!/bin/sh
+# herdr-close — cierre jerárquico para la TUI de Herdr.
+#
+# Orden:
+#   1. Si la pestaña tiene más de un pane, cierra el pane enfocado.
+#   2. Si es el último pane y hay más de una pestaña, cierra la pestaña.
+#   3. Si es la última pestaña, no hace nada: el space se cierra con
+#      Ctrl+Q (confirm_close) para no cerrarlo por accidente.
+#
+# Herdr exporta HERDR_ACTIVE_* a los comandos personalizados y
+# HERDR_BIN_PATH apunta al binario en uso.
+set -u
+
+bin=${HERDR_BIN_PATH:-herdr}
+pane=${HERDR_ACTIVE_PANE_ID:-}
+tab=${HERDR_ACTIVE_TAB_ID:-}
+ws=${HERDR_ACTIVE_WORKSPACE_ID:-}
+
+[ -n "$pane" ] && [ -n "$tab" ] || exit 0
+command -v "$bin" >/dev/null 2>&1 || exit 0
+
+count_panes() {
+  "$bin" pane list 2>/dev/null | python3 -c '
+import json, sys
+tab = sys.argv[1]
+try:
+    data = json.load(sys.stdin)
+    print(sum(1 for pane in data["result"]["panes"] if pane.get("tab_id") == tab))
+except Exception:
+    print(0)
+' "$tab"
+}
+
+count_tabs() {
+  "$bin" tab list --workspace "$ws" 2>/dev/null | python3 -c '
+import json, sys
+ws = sys.argv[1]
+try:
+    data = json.load(sys.stdin)
+    print(sum(1 for tab in data["result"]["tabs"] if tab.get("workspace_id") == ws))
+except Exception:
+    print(0)
+' "$ws"
+}
+
+if [ "$(count_panes)" -gt 1 ]; then
+  "$bin" pane close "$pane" >/dev/null 2>&1 && exit 0
+fi
+
+if [ "$(count_tabs)" -gt 1 ]; then
+  "$bin" tab close "$tab" >/dev/null 2>&1 && exit 0
+fi
+
+# Última pestaña: silencio. Ctrl+Q cierra el space con confirmación.
+exit 0

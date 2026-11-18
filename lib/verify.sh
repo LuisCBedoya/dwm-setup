@@ -306,6 +306,10 @@ verify_install() {
     error "display-setup.sh no escribe la caché de monitores"
     failures=$((failures + 1))
   fi
+  if [[ -x "$home/.local/bin/herdr" && ! -x "$home/.local/bin/herdr-close" ]]; then
+    error "Herdr está instalado pero falta ~/.local/bin/herdr-close"
+    failures=$((failures + 1))
+  fi
   if ! grep -q 'auto)' "$home/.config/bspwm/scripts/display-setup.sh" 2>/dev/null ||
      ! grep -q 'drm_signature' "$home/.config/bspwm/scripts/display-setup.sh" 2>/dev/null; then
     error "display-setup.sh no aplica la política auto (120/60) ni vigila /sys/class/drm"

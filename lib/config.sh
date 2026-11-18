@@ -34,6 +34,7 @@ install_user_configs() {
     log "[dry-run] instalar ~/.xinitrc, wallpaper y directorios XDG (Imágenes/Capturas, Vídeos/Grabaciones)"
     log "[dry-run] preparar ~/.local/share/xorg (0700) para el log de Xorg sin root"
     log "[dry-run] instalar /usr/local/bin/desktop-safe, desktop-doctor y theme-mode"
+    log "[dry-run] instalar ~/.local/bin/herdr-close si Herdr está instalado"
     log "[dry-run] instalar plantillas y paletas en ~/.local/share/dwm-setup"
     log "[dry-run] crear ~/.config/dwm-setup/recording.conf si no existe (audio mix/system/mic)"
     log "[dry-run] crear ~/.config/dwm-setup/display.conf si no existe (layout, refresh auto)"
@@ -83,6 +84,12 @@ install_user_configs() {
   run_root install -D -m 0755 "$PROJECT_ROOT/bin/desktop-safe" "/usr/local/bin/desktop-safe"
   run_root install -D -m 0755 "$PROJECT_ROOT/bin/desktop-doctor" "/usr/local/bin/desktop-doctor"
   run_root install -D -m 0755 "$PROJECT_ROOT/bin/theme-mode" "/usr/local/bin/theme-mode"
+
+  # Helper de cierre jerárquico de Herdr (solo si la TUI está instalada).
+  if [[ -x "$home/.local/bin/herdr" ]]; then
+    run_root install -D -m 0755 -o "$TARGET_USER" -g "$TARGET_GROUP" \
+      "$PROJECT_ROOT/bin/herdr-close" "$home/.local/bin/herdr-close"
+  fi
 
   # Plantillas y paletas para theme-mode (cambio de modo sin sudo)
   install_theme_store
@@ -189,6 +196,7 @@ install_theme_store() {
     "templates/xsettingsd/xsettingsd.conf.in"
     "templates/vlc/vlcrc.in"
     "templates/fastfetch/config.jsonc.in"
+    "templates/opencode/mocha-black.json"
   )
 
   make_user_dir "$store"

@@ -3439,3 +3439,140 @@ ese escritorio. La plantilla seguía en `3`/`10` desde ADR-083.
   polybar (30 px).
 - Si se vuelve a cambiar la geometría a mano, hay que actualizar la
   plantilla para que `verify.sh` no falle.
+
+## ADR-135 — Herdr TUI: atajos directos y zsh sin conflictos
+
+**Contexto:** Herdr se usa solo como TUI dentro de kitty. Los atajos con
+prefijo (`ctrl+b …`) son incómodos para el uso diario, y varios chords
+directos chocaban con bindings de zsh (`Alt+N` y `Alt+Shift+N` =
+`history-search-forward`; `Alt+K` = `up-line-or-search`; `Alt+Q` =
+`push-line`; `Ctrl+Alt+D` = `list-choices`).
+
+**Decisión:**
+1. `~/.config/herdr/config.toml` usa atajos directos:
+   `alt+k` nueva pestaña, `alt+o` siguiente pestaña, `alt+n`
+   sidebar, `ctrl+alt+n/p` navegar workspaces,
+   `ctrl+alt+q` cerrar workspace (con confirmación), `ctrl+alt+d`
+   crear workspace y `ctrl+alt+r` renombrar workspace (en el diálogo,
+   `Ctrl+C` limpia el campo). Se añaden `prefix+enter` (split derecha)
+   y `prefix+alt+enter` (split abajo) conservando `prefix+v` y
+   `prefix+minus`. Se conservan los `prefix+…` como alternativas.
+2. `alt+q` deja de ser `close_tab` y pasa a un comando personalizado
+   (`bin/herdr-close`, instalado en `~/.local/bin`): cierra el pane si
+   hay split; si es el último pane, cierra la pestaña; si es la última
+   pestaña, no hace nada (sin avisos). El space se cierra con `ctrl+q`,
+   que usa el `confirm_close` nativo de Herdr. `ctrl+alt+q` sigue como
+   alternativa.
+3. `templates/zsh/zshrc.in` elimina `bindkey '^[k' up-line-or-search` y,
+   solo si `herdr` está en el PATH, desvincula `^[n`, `^[N`, `^[k`,
+   `^[q`, `^Q` y `^[^D`. Sin Herdr instalado, zsh conserva sus bindings.
+4. Herdr no entra todavía en el instalador; la config es de usuario.
+
+**Consecuencias:**
+- Con Herdr instalado, esas teclas dejan de tener función en zsh aunque
+  se use una shell fuera de la TUI.
+- Herdr intercepta los atajos cuando tiene el foco; los paneles y los
+  cierres de workspace siguen funcionando con `prefix+…`.
+- Si se añade Herdr al instalador, la limpieza de zsh ya es reproducible.
+
+## ADR-136 — Herdr TUI sigue el modo de color
+
+**Contexto:** `Super+Alt+T` cambiaba kitty, polybar, dunst, etc., pero
+Herdr conservaba su tema. `theme.name` es configuración del cliente y
+el sidebar usa por defecto el fondo del terminal (`sidebar_bg = Reset`),
+que puede quedar cacheado tras el cambio de paleta. Un
+`server.reload-config` sí recarga el config de los clientes.
+
+**Decisión:**
+1. `theme-mode` actualiza `~/.config/herdr/config.toml`:
+   - `[theme] name = "catppuccin"` en dark y `"catppuccin-latte"` en
+     light; `auto_switch = false`.
+   - `[theme.custom]` con las superficies de la paleta global:
+     `sidebar_bg` y `panel_bg` `#0d0d14` en dark; `active_row_bg`
+     `#1a1a24` y `selection_bg` `#26262f`. En light: `#eff1f5`,
+     `#e6e9ef` y `#bdd0f5`. Así el sidebar y la barra de pestañas no
+     dependen del fondo cacheado del terminal y el dark queda unido al
+     terminal `#0d0d14`.
+2. Después de renderizar, `theme-mode` ejecuta
+   `herdr server reload-config` si el servidor está vivo. Los clientes
+   aplican el tema en caliente; no se reinician ni se cierran panes.
+3. Solo actúa si existe `~/.config/herdr/config.toml` y el binario
+   `herdr`; sin Herdr no hace nada.
+
+**Consecuencias:**
+- Sidebar, barra de pestañas y paneles de Herdr siguen el modo.
+- opencode tiene su propio tema (ADR-137); `theme-mode` lo sincroniza.
+- `theme-mode --no-reload` actualiza el config de Herdr para el próximo
+  arranque, pero no recarga el servidor.
+
+- `theme-mode` funde secciones `[theme.custom]` duplicadas en una sola
+  antes de escribir; Herdr rechaza el TOML con dos tablas del mismo
+  nombre. Las claves extra de la primera se conservan.
+
+## ADR-137 — opencode sigue el modo de color
+
+**Contexto:** `theme-mode` cambiaba kitty, polybar, Herdr, etc., pero el
+TUI de opencode seguía con `vesper` (tema oscuro) en `~/.config/opencode/cli.json`.
+opencode 2.1.4 acepta `theme.name`/`theme.mode` (`dark`, `light`,
+`system`) y tiene `opencode reload` para recargar la configuración. El
+tema `system` deriva una superficie elevada más clara para los paneles
+(~`#1e1e2e`), que no encaja con el fondo `#0d0d14` del escritorio.
+
+**Decisión:**
+1. `theme-mode` actualiza `~/.config/opencode/cli.json` con:
+   - dark: `theme.name = "mocha-black"`, `theme.mode = "dark"`.
+   - light: `theme.name = "catppuccin"`, `theme.mode = "light"`.
+   - preservando `$schema`, `keybinds`, `plugins` y el resto del JSON.
+2. `templates/opencode/mocha-black.json` se escribe en el **formato V2**
+   de opencode (`base` + `dark.hue`), no en el V1 (`defs`/`theme`): un
+   tema V1 en `themes/` se ignora en silencio y el TUI cae al tema por
+   defecto (`#0a0a0a`/`#141414`/`#1e1e1e`). Superficies explícitas:
+   `background.base` y `raised.base` `#0d0d14`, `raised.high` `#1a1a24`,
+   `raised.max` `#26262f`, borde `#26262f`, scrollbar `#35353f`; texto
+   `#cdd6f4`/`#a6adc8`/`#6c7086`; acentos Catppuccin Mocha
+   (`#89b4fa`, `#cba6f7`, `#a6e3a1`, `#f38ba8`, `#fab387`, `#94e2d5`).
+   Se instala en `~/.config/opencode/themes/mocha-black.json`.
+3. Después de escribir, ejecuta `opencode reload` si hay un proceso de
+   opencode. Cambiar entre temas ya conocidos se aplica en caliente.
+4. Al **añadir un archivo de tema nuevo**, la lista se lee al arrancar
+   el TUI: hay que reiniciar opencode una vez para que lo descubra.
+5. `--no-reload` escribe el config pero no ejecuta `opencode reload`.
+6. Si no existe `cli.json` o no hay `opencode`, no hace nada.
+
+**Consecuencias:**
+- El panel de opencode usa en dark el tema custom `mocha-black`
+  (`#0d0d14` con acentos Catppuccin) y en light Catppuccin Latte.
+- El panel de contexto deja de tener el `#1e1e2e` elevado del tema
+  `system`; las tarjetas usan `#1a1a24` y los menús `#26262f`.
+- En una instalación nueva el archivo ya existe al arrancar, así que no
+  hace falta reiniciar nada.
+- No se pierden sesiones ni hay que reiniciar el TUI.
+- El tema de opencode es configuración de usuario (`cli.json` y
+  `themes/mocha-black.json`), no una plantilla del store de
+  `theme-mode`.
+
+## ADR-138 — Dark unificado: superficies y logo fastfetch
+
+**Contexto:** en dark cada pieza usaba un fondo distinto: terminal
+`#0d0d14`, Herdr `#181825`/`#1e1e2e`, opencode `#1e1e2e` y el logo de
+fastfetch un círculo blanco. En light todo era `#eff1f5` y se veía
+unido; en dark no.
+
+**Decisión:**
+1. Herdr y opencode usan la base `#0d0d14` de mocha-black (ADR-136 y
+   ADR-137); las superficies elevadas de Herdr son `#1a1a24` y la
+   selección `#26262f`.
+2. `assets/fastfetch/Neofet-dark.png` se rediseña con un disco
+   `#0d0d14`, la cara blanca, la línea negra y el anillo `#89b4fa`.
+   `Neofet-light.png` no se toca. `theme-mode` ya elige el logo con
+   `THEME_LOGO`.
+3. El texto de `fastfetch` (`Desktop Theme`, `Icon Theme`) es una foto
+   del momento: hay que volver a ejecutarlo tras el cambio; no es un
+   fallo de tema.
+
+**Consecuencias:**
+- En dark el terminal, la sidebar, la barra de pestañas, opencode y el
+  logo comparten `#0d0d14`; en light se mantiene `#eff1f5`.
+- El logo dark conserva la cara y el anillo, sin el círculo blanco.
+- Si se cambia la paleta dark, el logo dark debe regenerarse con el
+  nuevo fondo.

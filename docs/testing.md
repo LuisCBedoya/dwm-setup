@@ -1461,3 +1461,134 @@ ytsearch50  → 4533 ms
 - `install.sh --dry-run` renderiza la plantilla nueva; una instalación
   limpia debe arrancar con borde 2 y gap 15 sin tocar nada a mano.
 - El padding (30 px) sigue viniendo de la posición de polybar.
+
+### Herdr TUI (terminal) y zsh (2026-11-17, ADR-135)
+
+- `herdr --version` → 0.9.5; binario estático en `~/.local/bin/herdr`.
+  El servidor se comprueba con `herdr status` y se para con
+  `herdr server stop`.
+- Atajos: `alt+k` nueva pestaña (pide nombre), `alt+o` siguiente,
+  `alt+q` cerrar pestaña, `alt+n` sidebar, `ctrl+alt+d` nuevo space,
+  `ctrl+alt+n/p` navegar y `ctrl+alt+q` cerrar con confirmación.
+- Comprobado con `xdotool`: el panel pasa de expandido a colapsado y
+  vuelve con `alt+n`; `ctrl+alt+d` crea un workspace y `ctrl+alt+q` +
+  `Enter` lo cierra.
+- zsh: con `herdr` en PATH, `bindkey "^[n"`, `"^[N"`, `"^[k"`, `"^[q"`
+  y `"^[^D"` deben devolver `undefined-key`. En shells abiertas antes
+  del cambio hay que abrir una nueva o `exec zsh`.
+- La app gráfica `herdr-app` y su `herdr-core`/`hc` no se usan.
+
+### Herdr: renombrar workspace (2026-11-17)
+
+- `ctrl+alt+r` abre el diálogo **rename workspace** con el nombre actual.
+- `Ctrl+C` limpia el campo (el pie muestra `^C clear`), `Enter` guarda
+  y `Esc` cancela. `Ctrl+A` **no** selecciona todo: no usarlo para
+  reemplazar.
+- Comprobado: renombrar a `prueba2` y volver a `~` con
+  `herdr workspace list`.
+- `ctrl+alt+n/p` siguen navegando; Herdr desactiva una de las dos si se
+  repite la misma tecla.
+
+### Herdr: splits (2026-11-17)
+
+- `Ctrl+B` + `Enter` → split a la derecha (`split_vertical`).
+- `Ctrl+B` + `Alt+Enter` → split abajo (`split_horizontal`).
+- Se mantienen `prefix+v` y `prefix+minus`.
+- Comprobado con `herdr pane list`: aparecen los panes nuevos y se
+  cierran con `herdr pane close <id>`.
+- `Ctrl+Space` sigue siendo el toggle flotante de sxhkd.
+
+### Herdr: Alt+Q en cascada (2026-11-17)
+
+- `alt+q` ejecuta `$HOME/.local/bin/herdr-close` (comando `[[keys.command]]`
+  de tipo `shell`). Usa `HERDR_ACTIVE_*` y `HERDR_BIN_PATH`.
+- Comprobado en un workspace temporal:
+  1. Última pestaña/pane → **no** cierra; lanza el aviso por `notify-send`.
+  2. Dos pestañas → cierra la pestaña activa.
+  3. Split → cierra solo el pane.
+- `Ctrl+Alt+Q` + `Enter` sigue cerrando el workspace con confirmación.
+- Si Herdr no exporta `HERDR_ACTIVE_*`, el comando no hace nada; revisar
+  que la versión sea 0.9.5 o superior.
+
+### Herdr: Ctrl+Q y Alt+Q sin aviso (2026-11-17)
+
+- `alt+q` (helper `herdr-close`): cierra pane; si es el último, cierra
+  pestaña; en la última pestaña **no hace nada** (sin `notify-send`).
+- `ctrl+q` cierra el workspace con el diálogo nativo `Close workspace?`
+  (`↵ confirm` / `esc cancel`). También siguen `ctrl+alt+q` y
+  `prefix+shift+d`.
+- Comprobado: `ctrl+q` + `Enter` cerró el workspace de prueba; las
+  notificaciones “Última pestaña” no aumentaron al pulsar `alt+q`.
+- zsh: `bindkey "^Q"` debe devolver `undefined-key` con Herdr instalado.
+
+### Herdr sigue el modo de color (2026-11-17, ADR-136)
+
+- `theme-mode dark` debe dejar en `~/.config/herdr/config.toml`:
+  `name = "catppuccin"`, `auto_switch = false`,
+  `sidebar_bg = "#181825"`, `panel_bg = "#1e1e2e"`.
+- `theme-mode light` debe dejar `name = "catppuccin-latte"` y
+  `sidebar_bg/panel_bg = "#eff1f5"`.
+- Con Herdr abierto, el comando debe listar `herdr` en
+  `recargado:` y el sidebar/barra de pestañas cambia sin reiniciar la
+  TUI. Comprobado con capturas en ambos modos.
+- `herdr config check` debe devolver `config: ok`.
+- El contenido de los panes (opencode, etc.) no cambia: usa su propio
+  tema.
+
+### Herdr: config TOML válido (2026-11-17)
+
+- `grep -c '^\[theme\.custom\]' ~/.config/herdr/config.toml` debe dar
+  `1`; dos tablas `[theme.custom]` hacen que Herdr rechace el config y
+  muestre la barra “config.toml invalid”.
+- `herdr config check` debe devolver `config: ok`.
+- `theme-mode light` y `theme-mode dark` deben dejar una sola sección y
+  recargar Herdr; usar `herdr server reload-config` **sin sudo**.
+- Si hay duplicados, la versión del repo de `theme-mode` los funde en la
+  primera sección antes de escribir.
+
+### opencode sigue el modo (2026-11-17, ADR-137)
+
+- `theme-mode light` deja en `~/.config/opencode/cli.json`:
+  `theme.name = "catppuccin"`, `theme.mode = "light"`.
+- `theme-mode dark` deja `theme.mode = "dark"`.
+- Con opencode abierto, `recargado:` debe incluir `opencode` y el TUI
+  cambia de tema sin reiniciar ni perder la sesión. Comprobado con
+  capturas en ambos modos.
+- `theme-mode --no-reload` escribe el config sin ejecutar
+  `opencode reload`.
+- Si el JSON no existe o no hay proceso de opencode, no se toca nada.
+- `$schema`, `keybinds` y `plugins` se conservan.
+
+### Dark unificado (2026-11-17, ADR-138)
+
+- `theme-mode dark` deja en Herdr: `sidebar_bg/panel_bg = "#0d0d14"`,
+  `active_row_bg = "#1a1a24"`, `selection_bg = "#26262f"`.
+- `theme-mode light` deja `#eff1f5`, `#e6e9ef`, `#bdd0f5`.
+- opencode dark: `theme.name = "system"`, `theme.mode = "dark"`; light:
+  `catppuccin`/`light`.
+- `fastfetch` en dark debe mostrar el logo con disco `#0d0d14` (no el
+  círculo blanco) y, tras re-ejecutarlo, `Desktop Theme` =
+  `catppuccin-mocha-black` y `Icon Theme` = `Catppuccin-Mocha`.
+- Capturas de control: terminal/sidebar/tab bar/opencode/logo con el
+  mismo fondo; light sin cambios.
+
+### opencode tema mocha-black (2026-11-17)
+
+- `theme-mode dark` debe dejar `cli.json` con
+  `theme.name = "mocha-black"`, `theme.mode = "dark"` y crear
+  `~/.config/opencode/themes/mocha-black.json`.
+- Ese JSON debe ser **V2**: `base.background.base = "#0d0d14"`,
+  `raised.base = "#0d0d14"`, `raised.high = "#1a1a24"`,
+  `raised.max = "#26262f"` y una paleta `dark.hue` completa. Un archivo
+  V1 (`defs`/`theme`) se ignora y el TUI usa el tema por defecto.
+- `theme-mode light` deja `theme.name = "catppuccin"` y `mode = "light"`.
+- Con opencode abierto, `opencode reload` cambia entre temas ya
+  conocidos. Si el archivo `mocha-black.json` es **nuevo**, hay que
+  reiniciar el TUI una vez: la lista de temas se lee al arrancar.
+- En un TUI nuevo, el panel de contexto debe tener el mismo fondo
+  `#0d0d14` que el terminal, las tarjetas `#1a1a24` y `Build` el azul
+  `#89b4fa`; no debe aparecer `#0a0a0a`, `#141414` ni `#1e1e1e`.
+- `python3 -m json.tool ~/.config/opencode/themes/mocha-black.json`
+  debe ser válido.
+- `templates/opencode/mocha-black.json` está en el store y en los
+  requeridos de `install.sh`.

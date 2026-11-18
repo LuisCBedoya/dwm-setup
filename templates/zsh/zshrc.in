@@ -3,7 +3,6 @@ export ZSH="$HOME/.oh-my-zsh"
 #keybindings
 bindkey '^d' forward-word
 bindkey '\C-H' backward-kill-word
-bindkey '^[k' up-line-or-search
 bindkey '^[j' down-line-or-search
 
 ZSH_THEME="cypher"
@@ -59,3 +58,14 @@ alias vi="nvim"
 
 # opencode
 export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"
+
+# Herdr: liberar Alt+N, Alt+K, Alt+Q y Ctrl+Alt+D en zsh. Esos atajos los
+# usa la TUI de Herdr; sin Herdr instalado, zsh conserva sus bindings.
+if command -v herdr >/dev/null 2>&1; then
+  bindkey -r '^[n'  2>/dev/null || true   # Alt+N (sidebar)
+  bindkey -r '^[N'  2>/dev/null || true   # Alt+Shift+N
+  bindkey -r '^[k'  2>/dev/null || true   # Alt+K (nueva pestaña)
+  bindkey -r '^[q'  2>/dev/null || true   # Alt+Q (cierre en cascada)
+  bindkey -r '^Q'   2>/dev/null || true   # Ctrl+Q (cerrar space)
+  bindkey -r '^[^D' 2>/dev/null || true   # Ctrl+Alt+D (nuevo space)
+fi
