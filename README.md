@@ -168,7 +168,7 @@ No incluido todavía:
 sudo apt update
 sudo apt install -y git
 
-git clone <URL_DEL_REPOSITORIO> luc-workspace
+git clone https://github.com/luiscbedoya/luc-workspace luc-workspace
 cd luc-workspace
 chmod +x install.sh
 
