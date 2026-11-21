@@ -99,8 +99,9 @@ El escritorio está terminado. No implementar todavía:
     sin él no hay sxhkd, polybar ni autostart.
 15. **No lanzar `kitty` desde `.xinitrc`.** El terminal se abre con
     `Super+Return`.
-16. **Actualizar la documentación** (`PROGRESS.md`, `DECISIONS.md`,
-    `docs/testing.md`) cuando cambie el diseño o se valide una prueba.
+16. **Actualizar la documentación** (`README.md`, `PROGRESS.md`,
+    `DECISIONS.md`, `docs/install.md`, `docs/usage.md`, `docs/testing.md`)
+    cuando cambie el diseño o se valide una prueba.
 17. **Estilo:** Bash con `#!/usr/bin/env bash`, `set -Eeuo pipefail` en la
     entrada, funciones pequeñas, `printf`, arrays citados y `shellcheck` si
     está disponible. Los scripts instalados que corren en sesión usan
@@ -661,6 +662,11 @@ El escritorio está terminado. No implementar todavía:
 | `templates/display/` | `display.conf` con `layout` (extend/mirror) y `refresh` (auto/max/preferred/Hz) |
 | `templates/nvidia/prime-run` | Wrapper de offload por app a la dGPU NVIDIA (ADR-111) |
 | `templates/colors/` | `palette-mocha-black.sh`, `palette-latte.sh` y helpers |
+| `docs/install.md` | Instalación, migración, backups, sesión, hardware y limitaciones |
+| `docs/usage.md` | Atajos, apps, tema y uso diario |
+| `docs/hardware.md` | Hardware de referencia y detección |
+| `docs/testing.md` | Plan de pruebas |
+| `assets/readme/` | Capturas y paleta usadas en el README |
 | `assets/wallpaper.png` | Wallpaper principal |
 | `assets/wallpaper-alt.png` | Wallpaper alternativo |
 

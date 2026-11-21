@@ -2663,3 +2663,14 @@ UHD 630; sin servicios ni configuración extra.
 - Pendiente: checks estáticos, `--dry-run`, migración en VM, migración
   en vivo con reinicio, renombrado del repo de GitHub y de la carpeta
   local.
+
+### README corto y docs separados — 2026-11-21
+
+- README reducido a 72 líneas: capturas, requisitos, instalación,
+  opciones, paleta, diagnóstico y enlaces.
+- El detalle se movió a `docs/install.md` (instalación, migración,
+  backups, sesión, hardware y limitaciones) y `docs/usage.md` (atajos,
+  variantes, música, Herdr, ytwatch, tema y Brave).
+- Capturas nuevas `assets/readme/luc-workspace-{dark,light}.jpg` y
+  `assets/readme/palette.png`; las barras A/B se reutilizan.
+- `AGENTS.md` actualizado con los nuevos documentos y `assets/readme/`.
