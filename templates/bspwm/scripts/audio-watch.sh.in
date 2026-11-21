@@ -13,7 +13,7 @@ switch="$script_dir/audio-switch.sh"
 
 # Evitar dos watchers si se reinicia bspwm/autostart.
 if command -v flock >/dev/null 2>&1; then
-  lock="${XDG_RUNTIME_DIR:-/tmp}/dwm-audio-watch.lock"
+  lock="${XDG_RUNTIME_DIR:-/tmp}/luc-workspace-audio-watch.lock"
   exec 9>"$lock" || exit 0
   flock -n 9 || exit 0
 fi

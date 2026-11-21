@@ -1,7 +1,7 @@
 #!/bin/sh
 # prime-run — lanza un programa renderizando en la GPU NVIDIA discreta
 # (PRIME render offload) mientras una GPU integrada maneja la pantalla.
-# Lo instala dwm-setup cuando detecta NVIDIA con driver propietario;
+# Lo instala luc-workspace cuando detecta NVIDIA con driver propietario;
 # Debian 13 no trae nvidia-prime, por eso el wrapper es propio.
 #
 # Uso: prime-run glxinfo -B | grep renderer

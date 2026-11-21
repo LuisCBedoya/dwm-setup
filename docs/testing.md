@@ -1,4 +1,7 @@
-# Plan de pruebas — fase 1b (bspwm + polybar)
+# Plan de pruebas — bspwm + polybar
+
+> Las pruebas anteriores a 2026-11-21 usan el nombre histórico
+> `dwm-setup`; el proyecto actual se llama `luc-workspace`.
 
 Objetivo: validar el instalador en **Debian 13 minimal** y comprobar que un
 `./install.sh` deja el escritorio listo sin `chown` ni `chmod` manuales.
@@ -9,13 +12,13 @@ Objetivo: validar el instalador en **Debian 13 minimal** y comprobar que un
 ## 1. Checks estáticos
 
 ```sh
-cd ~/dwm-setup
+cd ~/luc-workspace
 
 # Sintaxis Bash
 for f in install.sh lib/*.sh; do bash -n "$f" || exit 1; done
 
 # Sintaxis POSIX de binarios y scripts de sesión
-for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor; do sh -n "$f" || exit 1; done
+for f in bin/desktop-safe bin/desktop-doctor bin/luc-workspace-cpu-governor; do sh -n "$f" || exit 1; done
 for f in templates/bspwm/autostart.in templates/bspwm/bspwmrc.in \
          templates/polybar/scripts/cpu-governor.sh.in \
          templates/bspwm/scripts/*.in; do sh -n "$f" || exit 1; done
@@ -176,7 +179,7 @@ Comprobado:
 ### i915, xinitrc y kitty single-instance (2026-10-26)
 
 - `install.sh --dry-run` muestra
-  `/etc/modprobe.d/dwm-setup-i915.conf (enable_fbc=0)`.
+  `/etc/modprobe.d/luc-workspace-i915.conf (enable_fbc=0)`.
 - `.xinitrc` exporta `XDG_SESSION_TYPE=x11` y `GDK_BACKEND=x11`.
 - `Super+Return` ejecuta `kitty --single-instance`.
 - Segunda ventana de kitty: ~54 ms (antes ~250-300 ms).
@@ -601,7 +604,7 @@ Criterios:
 
 - El archivo se llama `grabacion-YYYY-MM-DD_HH-MM-SS.mkv` y contiene
   `h264` + `aac`.
-- `ps -o ni= -p "$(cat "${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record/ffmpeg.pid")"`
+- `ps -o ni= -p "$(cat "${XDG_RUNTIME_DIR:-/tmp}/luc-workspace-screen-record/ffmpeg.pid")"`
   debe devolver `10`: ffmpeg corre con prioridad baja para no competir
   con el escritorio.
 - El audio sale del **monitor del sink por defecto** mezclado con el
@@ -615,7 +618,7 @@ Criterios:
   `1` (+10 dB). La grabación aplica `mic_gain=3.0` (+9,5 dB) a la pista
   del micro; se puede bajar a 1.0 en `recording.conf`. Si la voz sigue
   baja, usar el micro del headset conectado a mano o subir el boost.
-- `~/.config/dwm-setup/recording.conf` elige el modo:
+- `~/.config/luc-workspace/recording.conf` elige el modo:
   `audio_mode="mix"` (sistema + micro, por defecto), `"system"` o `"mic"`.
 - Prueba de mezcla: reproducir música y hablar a la vez; en el MKV deben
   oírse las dos cosas. Con `audio_mode="system"` no debe oírse la voz y
@@ -632,7 +635,7 @@ Criterios:
   muere solo, el módulo se oculta en el siguiente ciclo.
 - Con un solo monitor empieza directo (sin llamar a `xrandr`); con varios
   abre un menú rofi con nombre y resolución de cada pantalla (y una opción
-  «Todas»). La geometría sale de `~/.cache/dwm-setup/monitors`, escrita
+  «Todas»). La geometría sale de `~/.cache/luc-workspace/monitors`, escrita
   por `display-setup.sh`; si falta, se graba «Todas» con `xdpyinfo`. Tras
   cambiar monitores, ejecutar `display-setup.sh apply` para refrescar.
 - El aviso de inicio suena ~1,2 s antes de que empiece ffmpeg (para que
@@ -696,8 +699,8 @@ sudo reboot
 ```sh
 desktop-doctor
 desktop-doctor --camera
-less ~/.local/state/dwm-setup/session.log
-less ~/.local/state/dwm-setup/install-*.log
+less ~/.local/state/luc-workspace/session.log
+less ~/.local/state/luc-workspace/install-*.log
 ```
 
 Si algo falla, entrar por `Ctrl+Alt+F3` y ejecutar `startx` manualmente.
@@ -705,7 +708,7 @@ Si algo falla, entrar por `Ctrl+Alt+F3` y ejecutar `startx` manualmente.
 ### Firefox ESR y Teams (2026-10-28)
 
 - `Super+Shift+b` por XTEST abre una ventana de Firefox.
-- `/etc/firefox-esr/zz-dwm-setup.js` contiene
+- `/etc/firefox-esr/zz-luc-workspace.js` contiene
   `media.gmp-gmpopenh264.enabled` y
   `media.peerconnection.video.h264_enabled` en `true`.
 - `about:plugins` muestra OpenH264 habilitado.
@@ -783,7 +786,7 @@ Preview y validación estática; **no** se ha ejecutado la instalación real.
 
 - `about:policies` muestra los dos `ExtensionSettings`.
 - El chrome usa `#0d0d14` y se ven atrás/adelante/recargar/descargas/menú.
-- Pegar `~/.config/dwm-setup/surfingkeys.js` y comprobar que el tema cambia
+- Pegar `~/.config/luc-workspace/surfingkeys.js` y comprobar que el tema cambia
   con `Super+Alt+t` sin volver a pegarlo (prueba de `prefers-color-scheme`).
 - `theme-mode toggle` muestra la notificación de dunst.
 
@@ -919,8 +922,8 @@ ytsearch50  → 4533 ms
   la cadena de compilación.
 
 - `desktop-safe lock` con un `i3lock` falso: en modo dark usa `0d0d14` y en
-  modo light `eff1f5`, leídos de `~/.local/share/dwm-setup/colors` y
-  `~/.config/dwm-setup/mode`.
+  modo light `eff1f5`, leídos de `~/.local/share/luc-workspace/colors` y
+  `~/.config/luc-workspace/mode`.
 
 ### Pantalla siempre encendida (2026-11-02)
 
@@ -930,7 +933,7 @@ ytsearch50  → 4533 ms
 - `sh -n templates/bspwm/autostart.in` y `sh -n
   templates/bspwm/scripts/i3lock-fancy/i3lock-fancy.sh.in`: OK.
 - `autostart` e `i3lock-fancy` instalados sincronizados desde las plantillas
-  con backup en `~/.config-backup/dwm-setup/20261102-193117`; `sh -n` de los
+  con backup en `~/.config-backup/luc-workspace/20261102-193117`; `sh -n` de los
   archivos instalados OK y permisos 0755 `luc:luc`.
 - Pendiente: `sudo ./install.sh` para el resto del bloque, reinicio de
   sesión, inactividad >10 min, `Super+Shift+L` (pantalla encendida) y
@@ -962,10 +965,10 @@ ytsearch50  → 4533 ms
 ### Compositor picom y módulo governor (2026-11-04)
 
 - `bash -n` en libs (`cpu.sh`, `picom.sh`) e `install.sh`: OK.
-- `sh -n` en `bin/dwm-setup-cpu-governor` (POSIX), `cpu-governor.sh.in`
+- `sh -n` en `bin/luc-workspace-cpu-governor` (POSIX), `cpu-governor.sh.in`
   y `autostart.in`: OK.
 - Helper con sysfs falsa en `/tmp/opencode` (override
-  `DWM_SETUP_CPU_SYS`): escribe `performance`/`powersave` en las 4 CPUs
+  `LUC_WORKSPACE_CPU_SYS`): escribe `performance`/`powersave` en las 4 CPUs
   falsas (rc 0); valor inexistente → rc 64 con lista de disponibles en
   stderr; sin CpUs escribibles → rc 65; CPU parcialmente bloqueada →
   rc 0 con aviso por la que no.
@@ -985,7 +988,7 @@ ytsearch50  → 4533 ms
   renders de `governor.ini` en ambas variantes, `cpu-governor.sh`,
   helper/sudoers/unidad y picom.conf.
 - En vivo (host de referencia, variante referencia activa): backups en
-  `~/.config-backup/dwm-setup/20261104-130202/`; ` governor` insertado
+  `~/.config-backup/luc-workspace/20261104-130202/`; ` governor` insertado
   tras `cpu` en ambos `config.ini`; módulos y script instalados con
   acento del modo activo (light: `#1e66f5`); picom reiniciado con la
   config final (pid activo) y polybar recargada con `launch.sh`.
@@ -1193,7 +1196,7 @@ ytsearch50  → 4533 ms
   sobrias) y hints de SurfingKeys a 15px azules. Pendiente reiniciar
   Brave y revisar captura; `BookmarkBarEnabled` requiere `sudo
   ./install.sh` para escribir la policy.
-- 2026-11-13: NTP de Brave sustituida por /usr/share/dwm-setup/newtab.html
+- 2026-11-13: NTP de Brave sustituida por /usr/share/luc-workspace/newtab.html
   vía policy NewTabPageLocation (negro liso, sin buscador ni sitios).
   Pendiente `sudo ./install.sh` con Brave cerrado y captura de Ctrl+T.
 - 2026-11-13: hints de SurfingKeys a 17px con fondo azul sólido y
@@ -1216,7 +1219,7 @@ ytsearch50  → 4533 ms
 - 2026-11-13: `ytwatch-update` arreglado (checksum por nombre real de
   asset) y actualizado a 0.3.0. Avisos de actualización persistentes
   (`[actualizaciones]`, timeout 0) y clicables: probado clic izquierdo →
-  kitty "dwm-setup: actualizar". Nota: tras cambiar `mouse_*` hay que
+  kitty "luc-workspace: actualizar". Nota: tras cambiar `mouse_*` hay que
   reiniciar dunst.
 - 2026-11-13: instalador aborta si Brave está abierto; verify de Brave
   pasa a JSON; VA-API por wrapper (`~/.local/bin/brave-browser` +
@@ -1233,7 +1236,7 @@ ytsearch50  → 4533 ms
 - 2026-11-14: módulo `fan` (modo del ventilador) en A y B. En este TUF
   el backend es `fan_boost_mode` (normal/overboost/silent). Pendiente
   `sudo ./install.sh` (helper + sudoers) y prueba del clic con toast.
-- 2026-11-14: daemons `dwm-setup-fan-auto` y `dwm-setup-power-auto`,
+- 2026-11-14: daemons `luc-workspace-fan-auto` y `luc-workspace-power-auto`,
   estado `auto` del ventilador y perfiles de energía. Pendiente
   `sudo ./install.sh` (helpers + sudoers) y probar clic de 4 estados y
   cambio AC/batería.
@@ -1273,7 +1276,7 @@ ytsearch50  → 4533 ms
   `prefers-color-scheme`: el toolbar de Brave cambia con xsettingsd,
   pero el contenido web no actualiza el media query (ni con pestaña
   nueva). Se descartó. La NTP vive en
-  `~/.local/share/dwm-setup/newtab.html` (usuario), `/usr/share/...` es
+  `~/.local/share/luc-workspace/newtab.html` (usuario), `/usr/share/...` es
   un symlink y `theme-mode` la re-renderiza con `COLOR_BG`/`COLOR_FG`.
   También se quitaron los colores fijos de `gtk-3.0.css`/`gtk-4.0.css`
   (solo estructura): con ellos, el toolbar tampoco cambiaba en caliente.
@@ -1319,7 +1322,7 @@ ytsearch50  → 4533 ms
   `--agent NoInputNoOutput`, verifica `Paired: yes`/`Connected: yes`
   con reintentos (~3 s; evita el falso fallo por carrera de BlueZ),
   muestra el error real y escribe
-  `~/.local/state/dwm-setup/bluetooth.log`. Simulado con fakes: pareo
+  `~/.local/state/luc-workspace/bluetooth.log`. Simulado con fakes: pareo
   exitoso con `info` retrasado, pareo exitoso normal y fallo de
   autenticación con notificación clara. Añadidos `rtkit`, nombre a 28
   caracteres y menú `Perfil de audio` (A2DP/SBC-XQ/HFP); simulado que
@@ -1343,7 +1346,7 @@ ytsearch50  → 4533 ms
   `Automático` aplica `a2dp-sink`, fija el sink y el loopback, no el
   source `_internal`. Menú de encendido probado con fakes: reconecta el
   headset `Trusted` con `Icon: audio-headset` y omite un teclado.
-  `50-dwm-setup.conf` de WirePlumber instalado;
+  `50-luc-workspace.conf` de WirePlumber instalado;
   `wpctl settings bluetooth.autoswitch-to-headset-profile` = `true`.
   Pendiente: con los GM2 Pro, grabar y comprobar el salto automático a
   `headset-head-unit` y la vuelta a `a2dp-sink`, además de la
@@ -1404,7 +1407,7 @@ ytsearch50  → 4533 ms
 - 2026-11-16: bloqueo con wallpaper desenfocado. `desktop-safe lock`
   llama a `i3lock-fancy.sh`, que elige el wallpaper light/dark, aplica
   `convert -blur 0x18` una vez y cachea en
-  `~/.cache/dwm-setup/lockscreen-<modo>-0x18.png`; luego usa `i3lock -i`
+  `~/.cache/luc-workspace/lockscreen-<modo>-0x18.png`; luego usa `i3lock -i`
   normal. Prueba con `i3lock` falso: light y dark generan cache
   (239/234 KB) y la llamada correcta; la primera generación light tardó
   1,24 s y las siguientes son instantáneas. Sin captura por bloqueo.
@@ -1437,7 +1440,7 @@ ytsearch50  → 4533 ms
   `xrandr`, pero no hay modeset.
 - Prueba de política: `DISPLAY_REFRESH=60 ... apply` deja
   `1920x1080|60.00`; `DISPLAY_REFRESH=auto ... apply` vuelve a
-  `1920x1080|120.00`. Comprobar en `~/.local/state/dwm-setup/display.log`.
+  `1920x1080|120.00`. Comprobar en `~/.local/state/luc-workspace/display.log`.
 - `DISPLAY_REFRESH=auto` con el monitor actual:
   `xrandr` debe mostrar `120.00*`.
 - `DISPLAY_SETUP_DRY_RUN=1` imprime los `xrandr` que haría sin aplicarlos.
@@ -1445,7 +1448,7 @@ ytsearch50  → 4533 ms
   con `pgrep -af 'display-setup.sh watch'`. El watcher lee
   `/sys/class/drm/*/status` cada 2 s (sin DDC) y solo llama a `xrandr`
   cuando cambia la firma.
-- `~/.config/dwm-setup/display.conf` debe existir con `layout=` y
+- `~/.config/luc-workspace/display.conf` debe existir con `layout=` y
   `refresh=`. Los cambios de `refresh=60` se aplican al reconectar o al
   reiniciar la sesión; para aplicarlo ya: `display-setup.sh apply`.
 - Casos a probar en hardware real: conectar un monitor 60 Hz (debe quedar
@@ -1603,7 +1606,7 @@ ytsearch50  → 4533 ms
   sin ellas ueberzug no encuentra la ventana de kitty.
 - Al cambiar de pestaña, la preview de la anterior debe ocultarse y
   reaparecer al volver (daemon `preview-sync.py`, etiqueta
-  `_DWM_SETUP_TAB` en las ventanas `ueberzugpp`).
+  `_LUC_WORKSPACE_TAB` en las ventanas `ueberzugpp`).
 - `ytwatch doctor` debe decir `thumbnails ueberzugpp, output: x11`.
 - `command -v ueberzugpp` debe resolver a `~/.local/bin/ueberzugpp` (el
   wrapper) y este debe existir y ser ejecutable.
@@ -1644,23 +1647,23 @@ ytsearch50  → 4533 ms
 
 ### Preview atada a su pestaña real (2026-11-17, ADR-141)
 
-- `~/.local/lib/dwm-setup/preview_tag.py` debe existir (0644) y
-  contener `Tagger`, `_DWM_SETUP_TAB_FALLBACK` y el filtro por
+- `~/.local/lib/luc-workspace/preview_tag.py` debe existir (0644) y
+  contener `Tagger`, `_LUC_WORKSPACE_TAB_FALLBACK` y el filtro por
   `WINDOWID`.
 - `~/.local/bin/ueberzug` y `~/.local/bin/ueberzugpp` deben contener
   `preview_tag` y arrancar el tagger antes del binario real.
 - `~/.config/bspwm/scripts/preview-sync.py` debe usar
-  `herdr api snapshot`, `_DWM_SETUP_TAB_FALLBACK` y
-  `_DWM_SETUP_HIDDEN`, y filtrar con `kitty @ ls`.
+  `herdr api snapshot`, `_LUC_WORKSPACE_TAB_FALLBACK` y
+  `_LUC_WORKSPACE_HIDDEN`, y filtrar con `kitty @ ls`.
 - Con Herdr abierto en «CODE» (`wQ:t1`) y ytwatch en «Musica»
   (`wX:t1`), actualizar la miniatura de Musica sin cambiar de space
   (`herdr pane send-keys wX:p1 j`). La ventana nueva debe llevar
-  `_DWM_SETUP_TAB = "wX:t1"`, no la pestaña enfocada:
-  `xprop -id <ventana> _DWM_SETUP_TAB`.
+  `_LUC_WORKSPACE_TAB = "wX:t1"`, no la pestaña enfocada:
+  `xprop -id <ventana> _LUC_WORKSPACE_TAB`.
 - Al cambiar a Musica la miniatura debe verse; al volver a CODE debe
   desaparecer. Al regresar a Musica debe reaparecer con el mismo
   contenido.
-- La ventana oculta por el daemon debe llevar `_DWM_SETUP_HIDDEN`; una
+- La ventana oculta por el daemon debe llevar `_LUC_WORKSPACE_HIDDEN`; una
   ventana que el cliente desmapeó a propósito no debe recibirla.
 - Repetir con ranger en una pestaña temporal (imagen y PDF): la
   preview debe quedar dentro del recuadro y ocultarse/recuperarse al
@@ -1675,7 +1678,7 @@ ytsearch50  → 4533 ms
 
 **Resultado en vivo (2026-11-17):** pasado. ytwatch actualizó su
 miniatura en «Musica» mientras «CODE» tenía el foco; la ventana nueva
-quedó con `_DWM_SETUP_TAB = "wX:t1"` y `_DWM_SETUP_HIDDEN`, y se vio al
+quedó con `_LUC_WORKSPACE_TAB = "wX:t1"` y `_LUC_WORKSPACE_HIDDEN`, y se vio al
 enfocar «Musica». Ranger en una pestaña temporal, con zathura activa,
 quedó hijo de la kitty correcta y etiquetado con su pestaña. También se
 corrigió que `WINDOWID` podía apuntar a mpv: el wrapper localiza la

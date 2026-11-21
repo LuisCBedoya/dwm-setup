@@ -23,6 +23,9 @@ TARGET_GROUP="${TARGET_GROUP:-}"
 TARGET_UID="${TARGET_UID:-}"
 TARGET_GID="${TARGET_GID:-}"
 LOG_FILE="${LOG_FILE:-}"
+PROJECT_SLUG="${PROJECT_SLUG:-luc-workspace}"
+PROJECT_NAME="${PROJECT_NAME:-luc-workspace}"
+PROJECT_VERSION="${PROJECT_VERSION:-1.0.0}"
 
 section() {
   printf '\n%s==> %s%s\n' "$C_BOLD$C_BLUE" "$*" "$C_RESET"
@@ -57,7 +60,7 @@ die() {
 }
 
 debug() {
-  if [[ "${DWM_DEBUG:-0}" == "1" ]]; then
+  if [[ "${LUC_WORKSPACE_DEBUG:-0}" == "1" ]]; then
     printf '[debug] %s\n' "$*" >&2
   fi
 }
@@ -151,7 +154,7 @@ render_template() {
   shift 2
   [[ -r "$src" ]] || die "No existe la plantilla: $src"
   local tmp
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-render.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-render.XXXXXX")
   cp -- "$src" "$tmp"
   while (( $# >= 2 )); do
     local key="$1" value="$2"
@@ -167,7 +170,7 @@ install_template_root() {
   local mode="$1" src="$2" dst="$3"
   shift 3
   local tmp
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-template.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-template.XXXXXX")
   cp -- "$src" "$tmp"
   while (( $# >= 2 )); do
     local key="$1" value="$2"
@@ -183,7 +186,7 @@ install_template_user() {
   local mode="$1" src="$2" dst="$3"
   shift 3
   local tmp
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-template.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-template.XXXXXX")
   cp -- "$src" "$tmp"
   while (( $# >= 2 )); do
     local key="$1" value="$2"
@@ -227,13 +230,17 @@ prune_backup_dir() {
   local base="$1" d n skip
   [[ -d "$base" ]] || return 0
   local -a old=() newest=()
+  # Solo se podan directorios de backup con formato YYYYMMDD-HHMMSS;
+  # `legacy/` y cualquier otro nombre se conservan.
   while IFS= read -r d; do
     [[ -n "$d" ]] && old+=("$d")
-  done < <(find "$base" -mindepth 1 -maxdepth 1 -type d -mtime +3 2>/dev/null | sort)
+  done < <(find "$base" -mindepth 1 -maxdepth 1 -type d \
+    -regextype posix-extended -regex '.*/[0-9]{8}-[0-9]{6}' -mtime +3 2>/dev/null | sort)
   while IFS= read -r d; do
     [[ -n "$d" ]] && newest+=("$d")
-  done < <(find "$base" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' 2>/dev/null |
-    sort -rn | head -3 | awk '{print $2}')
+  done < <(find "$base" -mindepth 1 -maxdepth 1 -type d \
+    -regextype posix-extended -regex '.*/[0-9]{8}-[0-9]{6}' \
+    -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -3 | awk '{print $2}')
   ((${#old[@]} > 0)) || return 0
   for d in "${old[@]}"; do
     skip=0
@@ -251,8 +258,8 @@ prune_backup_dir() {
 }
 
 prune_backups() {
-  prune_backup_dir "/var/backups/dwm-setup"
-  prune_backup_dir "$TARGET_HOME/.config-backup/dwm-setup"
+  prune_backup_dir "/var/backups/luc-workspace"
+  prune_backup_dir "$TARGET_HOME/.config-backup/luc-workspace"
 }
 
 # Crea un directorio del usuario. Se usa run_user para que también los
@@ -284,22 +291,22 @@ backup_existing_configs() {
   backup_root "/usr/local/bin/ytdlp-rollback"
   backup_root "/usr/local/bin/yt-update-notify"
   backup_root "/usr/local/bin/music-ctl"
-  backup_root "/usr/local/bin/dwm-setup-cpu-governor"
-  backup_root "/usr/local/bin/dwm-setup-ufw"
-  backup_root "/etc/sudoers.d/dwm-setup-cpu-governor"
-  backup_root "/etc/sudoers.d/dwm-setup-ufw"
+  backup_root "/usr/local/bin/luc-workspace-cpu-governor"
+  backup_root "/usr/local/bin/luc-workspace-ufw"
+  backup_root "/etc/sudoers.d/luc-workspace-cpu-governor"
+  backup_root "/etc/sudoers.d/luc-workspace-ufw"
   backup_root "/etc/bluetooth/main.conf"
-  backup_root "/etc/systemd/system/dwm-setup-cpu-governor.service"
+  backup_root "/etc/systemd/system/luc-workspace-cpu-governor.service"
   backup_root "/usr/share/themes/catppuccin-mocha-blue"
   backup_root "/usr/share/themes/catppuccin-latte-blue"
   backup_root "/usr/share/themes/catppuccin-mocha-black"
   backup_root "/usr/share/icons/Catppuccin-Mocha"
   backup_root "/usr/share/icons/Catppuccin-Latte"
-  backup_root "/usr/local/share/fonts/dwm-setup/desktop-logo.ttf"
+  backup_root "/usr/local/share/fonts/luc-workspace/desktop-logo.ttf"
   backup_root "/etc/modprobe.d/alsa-fx504.conf"
   backup_root "/etc/X11/xorg.conf.d/20-modesetting.conf"
-  backup_root "/etc/modprobe.d/dwm-setup-i915.conf"
-  backup_root "/etc/modprobe.d/dwm-setup-nvidia.conf"
+  backup_root "/etc/modprobe.d/luc-workspace-i915.conf"
+  backup_root "/etc/modprobe.d/luc-workspace-nvidia.conf"
   backup_user_path "$home/.config/bspwm"
   backup_user_path "$home/.config/sxhkd"
   backup_user_path "$home/.config/polybar"
@@ -318,7 +325,7 @@ backup_existing_configs() {
   backup_user_path "$home/.xinitrc"
   backup_user_path "$home/.local/share/wallpapers/rocky.jpg"
   backup_user_path "$home/.local/share/wallpapers/wallpaper.png"
-  backup_user_path "$home/.config/dwm-setup"
+  backup_user_path "$home/.config/luc-workspace"
   backup_user_path "$home/.config/fastfetch"
   backup_user_path "$home/.local/bin/yt-dlp"
   backup_user_path "$home/.local/bin/ytwatch"
@@ -363,7 +370,7 @@ prepare_user_dirs() {
   make_user_dir "$TARGET_HOME/.local/share"
   make_user_dir "$TARGET_HOME/.local/state"
   make_user_dir "$TARGET_HOME/.cache"
-  make_user_dir "$TARGET_HOME/.config-backup/dwm-setup"
+  make_user_dir "$TARGET_HOME/.config-backup/luc-workspace"
   chown_managed_paths
 }
 
@@ -392,10 +399,10 @@ chown_managed_paths() {
     "$TARGET_HOME/.config/lsd" \
     "$TARGET_HOME/.config/ranger" \
     "$TARGET_HOME/.config/zathura" \
-    "$TARGET_HOME/.config/dwm-setup" \
+    "$TARGET_HOME/.config/luc-workspace" \
     "$TARGET_HOME/.config/fastfetch" \
     "$TARGET_HOME/.local/bin" \
-    "$TARGET_HOME/.local/share/dwm-setup" \
+    "$TARGET_HOME/.local/share/luc-workspace" \
     "$TARGET_HOME/.config/vlc" \
     "$TARGET_HOME/.config/gtk-3.0" \
     "$TARGET_HOME/.config/gtk-4.0" \
@@ -403,9 +410,9 @@ chown_managed_paths() {
     "$TARGET_HOME/.zshrc" \
     "$TARGET_HOME/.local/share/wallpapers" \
     "$TARGET_HOME/.local/share/xorg" \
-    "$TARGET_HOME/.local/state/dwm-setup" \
-    "$TARGET_HOME/.cache/dwm-setup" \
-    "$TARGET_HOME/.config-backup/dwm-setup"; do
+    "$TARGET_HOME/.local/state/luc-workspace" \
+    "$TARGET_HOME/.cache/luc-workspace" \
+    "$TARGET_HOME/.config-backup/luc-workspace"; do
     [[ -e "$path" ]] || continue
     run_root chown -R "$TARGET_USER:$TARGET_GROUP" -- "$path" 2>/dev/null || true
   done
@@ -413,12 +420,12 @@ chown_managed_paths() {
 
 init_logging() {
   local log_home="${LOG_HOME:-$HOME}"
-  local log_dir="$log_home/.local/state/dwm-setup"
+  local log_dir="$log_home/.local/state/luc-workspace"
   run_user mkdir -p -- "$log_dir" 2>/dev/null || true
   LOG_FILE="$log_dir/install-$(timestamp).log"
   if ! run_root install -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" /dev/null "$LOG_FILE" 2>/dev/null; then
     # Fallback a ~/.cache si ~/.local/state falla
-    log_dir="$log_home/.cache/dwm-setup"
+    log_dir="$log_home/.cache/luc-workspace"
     run_user mkdir -p -- "$log_dir" 2>/dev/null || true
     LOG_FILE="$log_dir/install-$(timestamp).log"
     run_root install -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" /dev/null "$LOG_FILE" \
@@ -444,7 +451,7 @@ prompt_yes_no() {
 
 show_banner() {
   cat <<'EOF'
-  bspwm + polybar · Debian 13 · fase 1b (escritorio)
-  ---------------------------------------------------
+  luc-workspace · bspwm + polybar · Debian 13
+  --------------------------------------------
 EOF
 }

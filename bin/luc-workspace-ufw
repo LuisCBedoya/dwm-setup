@@ -1,10 +1,10 @@
 #!/bin/sh
-# dwm-setup-ufw — helper root del módulo polybar "ufw".
+# luc-workspace-ufw — helper root del módulo polybar "ufw".
 #
-# Uso: dwm-setup-ufw <status|enable|disable|reload|rules>
+# Uso: luc-workspace-ufw <status|enable|disable|reload|rules>
 #
 # Solo expone operaciones acotadas sobre UFW. Está pensado para ejecutarse
-# vía sudo con el fragmento de sudoers de dwm-setup (NOPASSWD limitado a
+# vía sudo con el fragmento de sudoers de luc-workspace (NOPASSWD limitado a
 # este binario exacto). No acepta argumentos arbitrarios ni permite añadir
 # reglas desde el menú.
 #
@@ -19,8 +19,8 @@ LC_ALL=C
 export LC_ALL
 
 PROG=${0##*/}
-UFW=${DWM_SETUP_UFW:-/usr/sbin/ufw}
-SYSTEMCTL=${DWM_SETUP_SYSTEMCTL:-/usr/bin/systemctl}
+UFW=${LUC_WORKSPACE_UFW:-/usr/sbin/ufw}
+SYSTEMCTL=${LUC_WORKSPACE_SYSTEMCTL:-/usr/bin/systemctl}
 
 usage() {
   printf 'Uso: %s status|enable|disable|reload|rules\n' "$PROG"

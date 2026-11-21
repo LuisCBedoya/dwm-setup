@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 REAL = "/usr/bin/ueberzugpp"
-PREVIEW_TAG = os.path.expanduser("~/.local/lib/dwm-setup/preview_tag.py")
+PREVIEW_TAG = os.path.expanduser("~/.local/lib/luc-workspace/preview_tag.py")
 if not os.path.exists(REAL):
     found = shutil.which("ueberzugpp")
     if found and os.path.realpath(found) != os.path.realpath(sys.argv[0]):
@@ -81,7 +81,7 @@ def offsets():
 
 def load_preview_tag():
     try:
-        spec = importlib.util.spec_from_file_location("dwm_setup_preview_tag",
+        spec = importlib.util.spec_from_file_location("luc_workspace_preview_tag",
                                                       PREVIEW_TAG)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # lib/power.sh — límite de carga de la batería (umbral del EC vía sysfs).
 
-DWM_BATTERY_THRESHOLD="${DWM_BATTERY_THRESHOLD:-80}"
+LUC_WORKSPACE_BATTERY_THRESHOLD="${LUC_WORKSPACE_BATTERY_THRESHOLD:-80}"
 
 install_battery_threshold() {
   section "Límite de carga de la batería"
 
   if dry_run; then
-    log "[dry-run] instalar /usr/local/bin/dwm-setup-battery-limit"
-    log "[dry-run] habilitar battery-charge-threshold.service (${DWM_BATTERY_THRESHOLD}%) si el hardware lo soporta"
+    log "[dry-run] instalar /usr/local/bin/luc-workspace-battery-limit"
+    log "[dry-run] habilitar battery-charge-threshold.service (${LUC_WORKSPACE_BATTERY_THRESHOLD}%) si el hardware lo soporta"
     return 0
   fi
 
@@ -21,17 +21,17 @@ install_battery_threshold() {
     return 0
   fi
 
-  run_root install -D -m 0755 "$PROJECT_ROOT/bin/dwm-setup-battery-limit" \
-    /usr/local/bin/dwm-setup-battery-limit
+  run_root install -D -m 0755 "$PROJECT_ROOT/bin/luc-workspace-battery-limit" \
+    /usr/local/bin/luc-workspace-battery-limit
 
   render_theme_template \
     "$PROJECT_ROOT/templates/systemd/battery-charge-threshold.service.in" \
     /etc/systemd/system/battery-charge-threshold.service 0644 \
-    "THRESHOLD=$DWM_BATTERY_THRESHOLD"
+    "THRESHOLD=$LUC_WORKSPACE_BATTERY_THRESHOLD"
 
   run_root systemctl daemon-reload >/dev/null 2>&1 || true
   if run_root systemctl enable --now battery-charge-threshold.service >/dev/null 2>&1; then
-    ok "Batería: carga limitada al ${DWM_BATTERY_THRESHOLD}%"
+    ok "Batería: carga limitada al ${LUC_WORKSPACE_BATTERY_THRESHOLD}%"
   else
     warn "No se pudo activar el límite de carga; se reintentará en el próximo arranque"
   fi
@@ -42,15 +42,15 @@ install_battery_threshold() {
 install_power_profile() {
   section "Perfil de energía automático"
 
-  local helper_src="$PROJECT_ROOT/bin/dwm-setup-power-profile"
-  local helper_dst="/usr/local/bin/dwm-setup-power-profile"
-  local sudoers_src="$PROJECT_ROOT/templates/sudoers/dwm-setup-power-profile.in"
-  local sudoers_dst="/etc/sudoers.d/dwm-setup-power-profile"
+  local helper_src="$PROJECT_ROOT/bin/luc-workspace-power-profile"
+  local helper_dst="/usr/local/bin/luc-workspace-power-profile"
+  local sudoers_src="$PROJECT_ROOT/templates/sudoers/luc-workspace-power-profile.in"
+  local sudoers_dst="/etc/sudoers.d/luc-workspace-power-profile"
 
   if dry_run; then
     log "[dry-run] instalar helper root $helper_dst (0755)"
     log "[dry-run] sudoers $sudoers_dst (NOPASSWD, visudo -cf)"
-    log "[dry-run] instalar ~/.local/bin/dwm-setup-power-auto (usuario)"
+    log "[dry-run] instalar ~/.local/bin/luc-workspace-power-auto (usuario)"
     return 0
   fi
 
@@ -62,8 +62,8 @@ install_power_profile() {
   backup_root "$helper_dst"
   run_root install -D -m 0755 "$helper_src" "$helper_dst"
 
-  local tmp pending="/etc/sudoers.d/.dwm-setup-power-profile.check"
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-sudoers-power.XXXXXX")
+  local tmp pending="/etc/sudoers.d/.luc-workspace-power-profile.check"
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-sudoers-power.XXXXXX")
   sed "s|@USER@|$TARGET_USER|g" "$sudoers_src" >"$tmp"
   run_root install -D -m 0440 "$tmp" "$pending"
   if ! run_root visudo -cf "$pending" >/dev/null 2>&1; then
@@ -78,7 +78,7 @@ install_power_profile() {
     die "sudoers final del perfil de energía inválido: $sudoers_dst"
 
   make_user_dir "$TARGET_HOME/.local/bin"
-  run_user install -m 0755 "$PROJECT_ROOT/bin/dwm-setup-power-auto" \
-    "$TARGET_HOME/.local/bin/dwm-setup-power-auto"
+  run_user install -m 0755 "$PROJECT_ROOT/bin/luc-workspace-power-auto" \
+    "$TARGET_HOME/.local/bin/luc-workspace-power-auto"
   ok "Energía: performance en AC y powersave+1.2 GHz en batería"
 }

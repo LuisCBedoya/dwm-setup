@@ -1,17 +1,17 @@
 #!/bin/sh
-# dwm-setup-power-auto — aplica el perfil de energía según el cargador.
+# luc-workspace-power-auto — aplica el perfil de energía según el cargador.
 #
-#   cargador conectado  -> dwm-setup-power-profile ac
-#   con batería         -> dwm-setup-power-profile battery
+#   cargador conectado  -> luc-workspace-power-profile ac
+#   con batería         -> luc-workspace-power-profile battery
 #
 # Sondea el estado de la fuente de alimentación cada POWER_POLL segundos y
 # solo actúa cuando cambia (o al arrancar). Nunca toca nada si el helper no
 # está instalado.
 set -u
 
-HELPER=${DWM_SETUP_POWER_HELPER:-/usr/local/bin/dwm-setup-power-profile}
-AC_GLOB=${DWM_SETUP_AC_GLOB:-/sys/class/power_supply/A*/online}
-POLL=${DWM_SETUP_POWER_POLL:-10}
+HELPER=${LUC_WORKSPACE_POWER_HELPER:-/usr/local/bin/luc-workspace-power-profile}
+AC_GLOB=${LUC_WORKSPACE_AC_GLOB:-/sys/class/power_supply/A*/online}
+POLL=${LUC_WORKSPACE_POWER_POLL:-10}
 
 [ -x "$HELPER" ] || exit 0
 

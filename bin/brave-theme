@@ -16,11 +16,11 @@
 set -Eeuo pipefail
 
 PROG="brave-theme"
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/luc-workspace"
 MODE_FILE="$CONFIG_DIR/mode"
 PROFILE_DIR="${BRAVE_PROFILE_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/BraveSoftware/Brave-Browser/Default}"
 PREFS="$PROFILE_DIR/Preferences"
-BACKUP="$PROFILE_DIR/Preferences.dwm-setup.bak"
+BACKUP="$PROFILE_DIR/Preferences.luc-workspace.bak"
 LOCK="$PROFILE_DIR/.brave-theme.lock"
 
 die() { printf '%s: error: %s\n' "$PROG" "$*" >&2; exit 1; }

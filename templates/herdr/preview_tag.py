@@ -4,7 +4,7 @@
 # ueberzugpp crea una ventana X11 por cada `add`; todas las ventanas de un
 # mismo proceso comparten la base de recurso de su conexión X11. El wrapper
 # conoce HERDR_TAB_ID, así que observa las ventanas nuevas, aprende la base
-# de su hijo y las marca con _DWM_SETUP_TAB. De este modo, una preview que
+# de su hijo y las marca con _LUC_WORKSPACE_TAB. De este modo, una preview que
 # se actualiza en una pestaña oculta no se atribuye a la pestaña con foco.
 #
 # WINDOWID (la kitty de Herdr, que el wrapper localiza con `kitty @ ls`)
@@ -19,8 +19,8 @@ import shutil
 import subprocess
 import threading
 
-PROP = "_DWM_SETUP_TAB"
-FALLBACK = "_DWM_SETUP_TAB_FALLBACK"
+PROP = "_LUC_WORKSPACE_TAB"
+FALLBACK = "_LUC_WORKSPACE_TAB_FALLBACK"
 KITTY = shutil.which("kitty")
 XWININFO = shutil.which("xwininfo")
 XPROP = shutil.which("xprop")

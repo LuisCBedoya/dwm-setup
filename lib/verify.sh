@@ -59,7 +59,7 @@ verify_install() {
     failures=$((failures + 1))
   fi
 
-  local wp_audio="$home/.config/wireplumber/wireplumber.conf.d/50-dwm-setup.conf"
+  local wp_audio="$home/.config/wireplumber/wireplumber.conf.d/50-luc-workspace.conf"
   if [[ ! -f "$wp_audio" ]]; then
     error "Falta $wp_audio (autoswitch A2DP/HFP del micrófono Bluetooth)"
     failures=$((failures + 1))
@@ -188,16 +188,16 @@ verify_install() {
     "/usr/local/bin/music-ctl" \
     "$home/.config/mpv/mpv.conf" \
     "$home/.local/bin/mpv" \
-    "$home/.local/bin/dwm-setup-fan-auto" \
-    "$home/.local/bin/dwm-setup-power-auto" \
-    "$home/.config/dwm-setup/fan-mode" \
+    "$home/.local/bin/luc-workspace-fan-auto" \
+    "$home/.local/bin/luc-workspace-power-auto" \
+    "$home/.config/luc-workspace/fan-mode" \
     "$home/.local/bin/ytwatch" \
     "$home/.local/bin/ytwatch-check" \
     "$home/.local/bin/ytwatch-update" \
     "$home/.local/bin/brave-theme" \
-    "$home/.local/share/dwm-setup/render.env" \
-    "$home/.config/dwm-setup/mode" \
-    "$home/.config/dwm-setup/surfingkeys.js" \
+    "$home/.local/share/luc-workspace/render.env" \
+    "$home/.config/luc-workspace/mode" \
+    "$home/.config/luc-workspace/surfingkeys.js" \
     "$home/.config/fastfetch/config.jsonc" \
     "$home/.config/fastfetch/Neofet-dark.png" \
     "$home/.config/fastfetch/Neofet-light.png" \
@@ -208,7 +208,7 @@ verify_install() {
     "$home/.gtkrc-2.0" \
     "$home/.config/xsettingsd/xsettingsd.conf" \
     "$home/.config/vlc/vlcrc" \
-    "$home/.config/dwm-setup/recording.conf" \
+    "$home/.config/luc-workspace/recording.conf" \
     "$home/.oh-my-zsh/oh-my-zsh.sh" \
     "/usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh" \
     "$home/.config/dunst/scripts/notification-sound.sh" \
@@ -221,9 +221,9 @@ verify_install() {
     "$videos_dir/Grabaciones" \
     "/usr/local/bin/desktop-safe" \
     "/usr/local/bin/desktop-doctor" \
-    "/usr/local/bin/dwm-setup-ufw" \
-    "/etc/sudoers.d/dwm-setup-ufw" \
-    "/etc/brave/policies/managed/dwm-setup.json"; do
+    "/usr/local/bin/luc-workspace-ufw" \
+    "/etc/sudoers.d/luc-workspace-ufw" \
+    "/etc/brave/policies/managed/luc-workspace.json"; do
     if [[ -e "$path" ]]; then
       debug "ok: $path"
     else
@@ -297,7 +297,7 @@ verify_install() {
     error "screen-record.sh no mezcla micrófono + sistema (get-default-source/amix)"
     failures=$((failures + 1))
   fi
-  if ! grep -q 'dwm-setup/monitors' "$home/.config/bspwm/scripts/screen-record.sh" 2>/dev/null ||
+  if ! grep -q 'luc-workspace/monitors' "$home/.config/bspwm/scripts/screen-record.sh" 2>/dev/null ||
      grep -q 'xrandr --listmonitors' "$home/.config/bspwm/scripts/screen-record.sh" 2>/dev/null; then
     error "screen-record.sh debe leer la caché de monitores y no llamar a xrandr"
     failures=$((failures + 1))
@@ -310,8 +310,8 @@ verify_install() {
     error "Falta ~/.config/bspwm/scripts/preview-sync.py (previews en Herdr)"
     failures=$((failures + 1))
   elif ! grep -q 'focused_tab_id' "$home/.config/bspwm/scripts/preview-sync.py" 2>/dev/null ||
-       ! grep -q '_DWM_SETUP_TAB_FALLBACK' "$home/.config/bspwm/scripts/preview-sync.py" 2>/dev/null ||
-       ! grep -q '_DWM_SETUP_HIDDEN' "$home/.config/bspwm/scripts/preview-sync.py" 2>/dev/null; then
+       ! grep -q '_LUC_WORKSPACE_TAB_FALLBACK' "$home/.config/bspwm/scripts/preview-sync.py" 2>/dev/null ||
+       ! grep -q '_LUC_WORKSPACE_HIDDEN' "$home/.config/bspwm/scripts/preview-sync.py" 2>/dev/null; then
     error "preview-sync.py no usa la pestaña real (snapshot/fallback/hidden)"
     failures=$((failures + 1))
   fi
@@ -341,10 +341,10 @@ verify_install() {
       error "El config de Herdr no contiene onboarding=false, alt+k o herdr-close"
       failures=$((failures + 1))
     fi
-    if [[ ! -f "$home/.local/lib/dwm-setup/preview_tag.py" ]]; then
-      error "Falta ~/.local/lib/dwm-setup/preview_tag.py (etiqueta de previews)"
+    if [[ ! -f "$home/.local/lib/luc-workspace/preview_tag.py" ]]; then
+      error "Falta ~/.local/lib/luc-workspace/preview_tag.py (etiqueta de previews)"
       failures=$((failures + 1))
-    elif ! grep -q '_DWM_SETUP_TAB_FALLBACK' "$home/.local/lib/dwm-setup/preview_tag.py" 2>/dev/null; then
+    elif ! grep -q '_LUC_WORKSPACE_TAB_FALLBACK' "$home/.local/lib/luc-workspace/preview_tag.py" 2>/dev/null; then
       error "preview_tag.py no etiqueta las ventanas nuevas (fallback de pestaña)"
       failures=$((failures + 1))
     fi
@@ -383,12 +383,12 @@ verify_install() {
     error "autostart no inicia el watcher de pantalla (hotplug)"
     failures=$((failures + 1))
   fi
-  if [[ ! -f "$home/.config/dwm-setup/display.conf" ]]; then
-    error "Falta ~/.config/dwm-setup/display.conf"
+  if [[ ! -f "$home/.config/luc-workspace/display.conf" ]]; then
+    error "Falta ~/.config/luc-workspace/display.conf"
     failures=$((failures + 1))
   fi
-  if ! grep -q '^audio_mode=' "$home/.config/dwm-setup/recording.conf" 2>/dev/null; then
-    error "Falta audio_mode en ~/.config/dwm-setup/recording.conf"
+  if ! grep -q '^audio_mode=' "$home/.config/luc-workspace/recording.conf" 2>/dev/null; then
+    error "Falta audio_mode en ~/.config/luc-workspace/recording.conf"
     failures=$((failures + 1))
   fi
   if ! grep -q 'format-background = ${colors.module-bg}' \
@@ -461,23 +461,23 @@ verify_install() {
     failures=$((failures + 1))
   fi
   if [[ -e /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]] &&
-     [[ ! -f /etc/sudoers.d/dwm-setup-power-profile ]]; then
-    error "Falta /etc/sudoers.d/dwm-setup-power-profile"
+     [[ ! -f /etc/sudoers.d/luc-workspace-power-profile ]]; then
+    error "Falta /etc/sudoers.d/luc-workspace-power-profile"
     failures=$((failures + 1))
   fi
   if [[ -e /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor ]] &&
-     [[ ! -x /usr/local/bin/dwm-setup-power-profile ]]; then
-    error "Falta /usr/local/bin/dwm-setup-power-profile"
+     [[ ! -x /usr/local/bin/luc-workspace-power-profile ]]; then
+    error "Falta /usr/local/bin/luc-workspace-power-profile"
     failures=$((failures + 1))
   fi
-  if [[ ! -x /usr/local/bin/dwm-setup-fan-mode ]]; then
-    error "Falta /usr/local/bin/dwm-setup-fan-mode"
+  if [[ ! -x /usr/local/bin/luc-workspace-fan-mode ]]; then
+    error "Falta /usr/local/bin/luc-workspace-fan-mode"
     failures=$((failures + 1))
   elif [[ -e /sys/devices/platform/asus-nb-wmi/fan_boost_mode ||
           -e /sys/devices/platform/asus-nb-wmi/throttle_thermal_policy ||
           -r /sys/firmware/acpi/platform_profile ]] &&
-       [[ ! -f /etc/sudoers.d/dwm-setup-fan-mode ]]; then
-    error "Falta /etc/sudoers.d/dwm-setup-fan-mode con soporte de ventilador"
+       [[ ! -f /etc/sudoers.d/luc-workspace-fan-mode ]]; then
+    error "Falta /etc/sudoers.d/luc-workspace-fan-mode con soporte de ventilador"
     failures=$((failures + 1))
   fi
 
@@ -555,9 +555,9 @@ verify_install() {
       error "Falta el wrapper ~/.local/bin/ueberzugpp (offset de Herdr)"
       failures=$((failures + 1))
     fi
-    for tw_unit in "$home/.config/systemd/user/dwm-setup-yt-update-notify.service" \
-      "$home/.config/systemd/user/dwm-setup-yt-update-notify.timer" \
-      "$home/.config/systemd/user/timers.target.wants/dwm-setup-yt-update-notify.timer" \
+    for tw_unit in "$home/.config/systemd/user/luc-workspace-yt-update-notify.service" \
+      "$home/.config/systemd/user/luc-workspace-yt-update-notify.timer" \
+      "$home/.config/systemd/user/timers.target.wants/luc-workspace-yt-update-notify.timer" \
       /usr/local/bin/yt-update-notify; do
       if [[ -e "$tw_unit" ]]; then
         debug "ok: $tw_unit"
@@ -621,21 +621,21 @@ verify_install() {
   fi
 
   # sysctl persistente (ADR del ajuste de swap).
-  if [[ -f /etc/sysctl.d/99-dwm-setup-swappiness.conf ]]; then
+  if [[ -f /etc/sysctl.d/99-luc-workspace-swappiness.conf ]]; then
     if [[ "$(cat /proc/sys/vm/swappiness 2>/dev/null || printf '')" == "10" ]]; then
       debug "ok: vm.swappiness = 10"
     else
       warn "vm.swappiness no es 10 todavía (se aplica con sysctl --system o al reiniciar)"
     fi
   else
-    error "Falta /etc/sysctl.d/99-dwm-setup-swappiness.conf"
+    error "Falta /etc/sysctl.d/99-luc-workspace-swappiness.conf"
     failures=$((failures + 1))
   fi
 
   # Gobernador: helper root, sudoers acotado y unidad de arranque.
-  for gov_path in /usr/local/bin/dwm-setup-cpu-governor \
-    /etc/sudoers.d/dwm-setup-cpu-governor \
-    /etc/systemd/system/dwm-setup-cpu-governor.service; do
+  for gov_path in /usr/local/bin/luc-workspace-cpu-governor \
+    /etc/sudoers.d/luc-workspace-cpu-governor \
+    /etc/systemd/system/luc-workspace-cpu-governor.service; do
     if [[ -e "$gov_path" ]]; then
       debug "ok: $gov_path"
     else
@@ -643,22 +643,22 @@ verify_install() {
       failures=$((failures + 1))
     fi
   done
-  if [[ -e /etc/sudoers.d/dwm-setup-cpu-governor ]]; then
-    if [[ "$(stat -c '%a' /etc/sudoers.d/dwm-setup-cpu-governor)" != "440" ]]; then
+  if [[ -e /etc/sudoers.d/luc-workspace-cpu-governor ]]; then
+    if [[ "$(stat -c '%a' /etc/sudoers.d/luc-workspace-cpu-governor)" != "440" ]]; then
       error "El fragmento de sudoers del gobernador no está 0440"
       failures=$((failures + 1))
     fi
   fi
-  if ! grep -q 'NOPASSWD: /usr/local/bin/dwm-setup-cpu-governor' \
-    /etc/sudoers.d/dwm-setup-cpu-governor 2>/dev/null; then
-    error "El sudoers del gobernador no autoriza exactamente /usr/local/bin/dwm-setup-cpu-governor"
+  if ! grep -q 'NOPASSWD: /usr/local/bin/luc-workspace-cpu-governor' \
+    /etc/sudoers.d/luc-workspace-cpu-governor 2>/dev/null; then
+    error "El sudoers del gobernador no autoriza exactamente /usr/local/bin/luc-workspace-cpu-governor"
     failures=$((failures + 1))
   fi
   if command -v systemctl >/dev/null 2>&1; then
-    if systemctl is-enabled dwm-setup-cpu-governor.service >/dev/null 2>&1; then
+    if systemctl is-enabled luc-workspace-cpu-governor.service >/dev/null 2>&1; then
       debug "ok: unidad del gobernador habilitada"
     else
-      error "dwm-setup-cpu-governor.service no está habilitada"
+      error "luc-workspace-cpu-governor.service no está habilitada"
       failures=$((failures + 1))
     fi
   fi
@@ -727,7 +727,7 @@ verify_install() {
     error "Brave no está instalado"
     failures=$((failures + 1))
   fi
-  local brave_policy=/etc/brave/policies/managed/dwm-setup.json
+  local brave_policy=/etc/brave/policies/managed/luc-workspace.json
   if [[ -f "$brave_policy" ]]; then
     for key in '"BraveP3AEnabled": false' '"BraveStatsPingEnabled": false' \
                '"BraveWebDiscoveryEnabled": false' '"BraveRewardsDisabled": true' \
@@ -774,8 +774,8 @@ PYCHK
   # Página de nueva pestaña propia (policy NewTabPageLocation). Vive en el
   # home para que theme-mode la re-renderice sin sudo; /usr/share es un
   # symlink que mantiene la ruta de la policy.
-  local newtab_user="$home/.local/share/dwm-setup/newtab.html"
-  local newtab_link=/usr/share/dwm-setup/newtab.html
+  local newtab_user="$home/.local/share/luc-workspace/newtab.html"
+  local newtab_link=/usr/share/luc-workspace/newtab.html
   if [[ ! -f "$newtab_user" ]]; then
     error "Falta la NTP de Brave: $newtab_user"
     failures=$((failures + 1))
@@ -918,7 +918,7 @@ PYCHK
     error "nvidia-drm sigue cargándose en el boot (/etc/modules-load.d/nvidia.conf)"
     failures=$((failures + 1))
   fi
-  if ! grep -qs 'OnBootSec=1h' /etc/systemd/system/systemd-tmpfiles-clean.timer.d/10-dwm-setup.conf; then
+  if ! grep -qs 'OnBootSec=1h' /etc/systemd/system/systemd-tmpfiles-clean.timer.d/10-luc-workspace.conf; then
     error "Falta el drop-in de systemd-tmpfiles-clean.timer (OnBootSec=1h)"
     failures=$((failures + 1))
   fi
@@ -933,6 +933,10 @@ PYCHK
 
   # Límite de carga de la batería (solo si el hardware lo expone).
   if compgen -G '/sys/class/power_supply/BAT*/charge_control_end_threshold' >/dev/null; then
+    if [[ ! -x /usr/local/bin/luc-workspace-battery-limit ]]; then
+      error "Falta /usr/local/bin/luc-workspace-battery-limit"
+      failures=$((failures + 1))
+    fi
     if ! systemctl is-enabled --quiet battery-charge-threshold.service 2>/dev/null; then
       error "battery-charge-threshold.service no está habilitado"
       failures=$((failures + 1))
@@ -1016,8 +1020,8 @@ PYCHK
       failures=$((failures + 1))
     fi
   fi
-  if [[ -f "$home/.config/systemd/user/dwm-setup-yt-update-notify.service" ]] &&
-     ! grep -q '^KillMode=process' "$home/.config/systemd/user/dwm-setup-yt-update-notify.service"; then
+  if [[ -f "$home/.config/systemd/user/luc-workspace-yt-update-notify.service" ]] &&
+     ! grep -q '^KillMode=process' "$home/.config/systemd/user/luc-workspace-yt-update-notify.service"; then
     error "yt-update-notify.service no tiene KillMode=process (el listener del clic moriría)"
     failures=$((failures + 1))
   fi
@@ -1097,9 +1101,9 @@ PYCHK
   fi
 
   # theme-mode debe ser ejecutable y coherente con el modo guardado.
-  if [[ -f "$home/.config/dwm-setup/mode" ]]; then
+  if [[ -f "$home/.config/luc-workspace/mode" ]]; then
     local saved_mode
-    saved_mode=$(<"$home/.config/dwm-setup/mode")
+    saved_mode=$(<"$home/.config/luc-workspace/mode")
     if [[ "$saved_mode" == "dark" && "$THEME_NAME" != "mocha-black" ]] ||
        [[ "$saved_mode" == "light" && "$THEME_NAME" != "latte" ]]; then
       error "El modo guardado ($saved_mode) no coincide con la paleta activa ($THEME_NAME)"
@@ -1107,8 +1111,8 @@ PYCHK
     fi
   fi
 
-  if [[ -f /etc/modprobe.d/dwm-setup-i915.conf ]] &&
-     ! grep -q 'enable_sagv=0' /etc/modprobe.d/dwm-setup-i915.conf; then
+  if [[ -f /etc/modprobe.d/luc-workspace-i915.conf ]] &&
+     ! grep -q 'enable_sagv=0' /etc/modprobe.d/luc-workspace-i915.conf; then
     error "i915 no tiene enable_sagv=0 (riesgo de apagones del monitor)"
     failures=$((failures + 1))
   fi
@@ -1201,8 +1205,8 @@ PYCHK
   # UFW: helper, sudoers, servicio activo y reglas aplicadas. ufw --force
   # enable puede aplicar reglas sin dejar la unidad activa; se acepta
   # cualquiera de las dos señales como estado real.
-  if [[ ! -x /usr/local/bin/dwm-setup-ufw ]]; then
-    error "Falta el helper ejecutable /usr/local/bin/dwm-setup-ufw"
+  if [[ ! -x /usr/local/bin/luc-workspace-ufw ]]; then
+    error "Falta el helper ejecutable /usr/local/bin/luc-workspace-ufw"
     failures=$((failures + 1))
   fi
   local ufw_running=0
@@ -1267,9 +1271,9 @@ PYCHK
     "$home/.config/kitty" \
     "$home/.local/share/wallpapers" \
     "$home/.local/share/xorg" \
-    "$home/.local/state/dwm-setup" \
-    "$home/.cache/dwm-setup" \
-    "$home/.config-backup/dwm-setup"; do
+    "$home/.local/state/luc-workspace" \
+    "$home/.cache/luc-workspace" \
+    "$home/.config-backup/luc-workspace"; do
     [[ -e "$path" ]] || continue
     if [[ -n "$(find "$path" -not -user "$TARGET_USER" -print -quit 2>/dev/null || true)" ]]; then
       error "Hay ficheros que no pertenecen a $TARGET_USER dentro de $path"

@@ -1,5 +1,5 @@
 #!/bin/sh
-# dwm-setup-power-profile — perfil de energía completo (gobernador + EPP + suelo).
+# luc-workspace-power-profile — perfil de energía completo (gobernador + EPP + suelo).
 #
 #   ac       -> performance + EPP performance + suelo mínimo del CPU
 #   battery  -> powersave + EPP balance_performance + suelo 1.2 GHz
@@ -18,8 +18,8 @@ esac
 
 [ "$(id -u)" -eq 0 ] || { echo "requiere root" >&2; exit 1; }
 
-CPUDIR=${DWM_SETUP_CPUFREQ:-/sys/devices/system/cpu/cpufreq}
-BAT_MIN_FREQ=${DWM_SETUP_BATTERY_MIN_FREQ:-1200000}
+CPUDIR=${LUC_WORKSPACE_CPUFREQ:-/sys/devices/system/cpu/cpufreq}
+BAT_MIN_FREQ=${LUC_WORKSPACE_BATTERY_MIN_FREQ:-1200000}
 
 if [ "$profile" = ac ]; then
   want_gov=performance

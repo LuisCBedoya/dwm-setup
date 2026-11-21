@@ -8,12 +8,12 @@
 install_cpu_governor() {
   section "Gobernador de CPU"
 
-  local helper_src="$PROJECT_ROOT/bin/dwm-setup-cpu-governor"
-  local helper_dst="/usr/local/bin/dwm-setup-cpu-governor"
-  local sudoers_src="$PROJECT_ROOT/templates/sudoers/dwm-setup-cpu-governor.in"
-  local sudoers_dst="/etc/sudoers.d/dwm-setup-cpu-governor"
-  local unit_src="$PROJECT_ROOT/templates/systemd/dwm-setup-cpu-governor.service"
-  local unit_dst="/etc/systemd/system/dwm-setup-cpu-governor.service"
+  local helper_src="$PROJECT_ROOT/bin/luc-workspace-cpu-governor"
+  local helper_dst="/usr/local/bin/luc-workspace-cpu-governor"
+  local sudoers_src="$PROJECT_ROOT/templates/sudoers/luc-workspace-cpu-governor.in"
+  local sudoers_dst="/etc/sudoers.d/luc-workspace-cpu-governor"
+  local unit_src="$PROJECT_ROOT/templates/systemd/luc-workspace-cpu-governor.service"
+  local unit_dst="/etc/systemd/system/luc-workspace-cpu-governor.service"
 
   if dry_run; then
     log "[dry-run] instalar helper root $helper_dst (0755)"
@@ -35,8 +35,8 @@ install_cpu_governor() {
   # Sudoers: fragmento con el usuario real. Se valida con visudo en un
   # archivo provisional (nombre con punto: sudoers.d lo ignora hasta que
   # se mueve a su destino definitivo).
-  local tmp pending="/etc/sudoers.d/.dwm-setup-cpu-governor.check"
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-sudoers.XXXXXX")
+  local tmp pending="/etc/sudoers.d/.luc-workspace-cpu-governor.check"
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-sudoers.XXXXXX")
   sed "s|@USER@|$TARGET_USER|g" "$sudoers_src" >"$tmp"
   run_root install -D -m 0440 "$tmp" "$pending"
   if ! run_root visudo -cf "$pending" >/dev/null 2>&1; then
@@ -56,7 +56,7 @@ install_cpu_governor() {
   backup_root "$unit_dst"
   run_root install -D -m 0644 "$unit_src" "$unit_dst"
   run_root systemctl daemon-reload
-  run_root systemctl enable dwm-setup-cpu-governor.service
-  run_root systemctl start dwm-setup-cpu-governor.service
-  ok "Unidad dwm-setup-cpu-governor habilitada (performance al boot)"
+  run_root systemctl enable luc-workspace-cpu-governor.service
+  run_root systemctl start luc-workspace-cpu-governor.service
+  ok "Unidad luc-workspace-cpu-governor habilitada (performance al boot)"
 }

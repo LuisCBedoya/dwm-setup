@@ -1,0 +1,298 @@
+#!/usr/bin/env bash
+# luc-workspace-migrate — migra una instalación dwm-setup a luc-workspace.
+#
+# Uso:
+#   sudo ./bin/luc-workspace-migrate --dry-run
+#   sudo ./bin/luc-workspace-migrate
+#
+# Requiere el repo nuevo y un install.sh funcional. No guarda contraseñas.
+# Es idempotente: si ya está migrado, no mueve ni borra nada.
+
+set -Eeuo pipefail
+
+OLD_SLUG="dwm-setup"
+NEW_SLUG="luc-workspace"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+INSTALL_SH="$SCRIPT_DIR/install.sh"
+
+DRY_RUN=0
+ASSUME_YES=0
+STAMP="$(date +%Y%m%d-%H%M%S)"
+
+TARGET_USER="${SUDO_USER:-$(id -un)}"
+TARGET_HOME="$(getent passwd "$TARGET_USER" | cut -d: -f6)"
+TARGET_UID="$(id -u "$TARGET_USER")"
+TARGET_GID="$(id -g "$TARGET_USER")"
+
+ROOT_BASE="/var/backups/$NEW_SLUG"
+USER_BASE="$TARGET_HOME/.config-backup/$NEW_SLUG"
+ROOT_LEGACY="$ROOT_BASE/legacy"
+USER_LEGACY="$USER_BASE/legacy"
+ROOT_PRE="$ROOT_BASE/pre-migration-$STAMP"
+USER_PRE="$USER_BASE/pre-migration-$STAMP"
+
+info() { printf '  %s\n' "$*"; }
+warn() { printf '  [warn] %s\n' "$*" >&2; }
+die() { printf 'migrate: error: %s\n' "$*" >&2; exit 1; }
+
+usage() {
+  cat <<'EOF'
+Uso: sudo ./bin/luc-workspace-migrate [--dry-run] [--yes]
+
+  --dry-run   Muestra el plan sin modificar nada.
+  --yes       No pide confirmación.
+  -h, --help  Esta ayuda.
+
+Migra una instalación dwm-setup a luc-workspace: mueve configuraciones,
+logs, cachés y backups; elimina helpers, units, sudoers, modprobe, sysctl,
+WirePlumber, policy de Brave y el newtab viejo; y ejecuta install.sh.
+Requiere reiniciar al terminar.
+EOF
+}
+
+run() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    printf '  [dry-run] %s\n' "$*"
+  else
+    "$@"
+  fi
+}
+
+run_user() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    printf '  [dry-run] (usuario %s) %s\n' "$TARGET_USER" "$*"
+  else
+    runuser -u "$TARGET_USER" -- "$@"
+  fi
+}
+
+run_user_systemctl() {
+  if [[ "$DRY_RUN" == "1" ]]; then
+    printf '  [dry-run] (usuario %s) systemctl --user %s\n' "$TARGET_USER" "$*"
+  else
+    runuser -u "$TARGET_USER" -- env XDG_RUNTIME_DIR="/run/user/$TARGET_UID" \
+      systemctl --user "$@" >/dev/null 2>&1 || true
+  fi
+}
+
+is_user_path() {
+  case "$1" in
+    "$TARGET_HOME"/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+backup_dir_for() {
+  if is_user_path "$1"; then
+    printf '%s' "$USER_PRE"
+  else
+    printf '%s' "$ROOT_PRE"
+  fi
+}
+
+make_backup_dir() {
+  local dir="$1"
+  if is_user_path "$dir"; then
+    run install -d -m 0755 -o "$TARGET_USER" -g "$TARGET_GID" "$dir"
+  else
+    run install -d -m 0755 "$dir"
+  fi
+}
+
+backup_and_remove() {
+  local path="$1" backup
+  [[ -e "$path" || -L "$path" ]] || return 0
+  backup="$(backup_dir_for "$path")"
+  make_backup_dir "$backup"
+  info "backup: $path -> $backup/"
+  run cp -a --parents -- "$path" "$backup/"
+  run rm -rf -- "$path"
+}
+
+move_dir() {
+  local old="$1" new="$2"
+  if [[ ! -e "$old" ]]; then
+    info "ya migrado o inexistente: $old"
+    return 0
+  fi
+  if [[ -e "$new" ]]; then
+    local keep="$USER_PRE/$(basename "$old")-new-$STAMP"
+    warn "$new ya existe; se guarda en $keep"
+    make_backup_dir "$USER_PRE"
+    run mv -- "$new" "$keep"
+  fi
+  make_backup_dir "$(dirname "$new")"
+  info "mover: $old -> $new"
+  run mv -- "$old" "$new"
+}
+
+move_legacy_backups() {
+  local old base
+  for old in "/var/backups/$OLD_SLUG" "$TARGET_HOME/.config-backup/$OLD_SLUG"; do
+    [[ -e "$old" ]] || continue
+    if is_user_path "$old"; then
+      base="$USER_LEGACY"
+      make_backup_dir "$USER_BASE"
+    else
+      base="$ROOT_LEGACY"
+      make_backup_dir "$ROOT_BASE"
+    fi
+    if [[ -e "$base" ]]; then
+      info "mover backups: $old -> $base-$STAMP"
+      run mv -- "$old" "$base-$STAMP"
+    else
+      info "mover backups: $old -> $base"
+      run mv -- "$old" "$base"
+    fi
+  done
+}
+
+stop_old() {
+  info "Parando unidades y daemons viejos"
+  run systemctl stop "$OLD_SLUG-cpu-governor.service" 2>/dev/null || true
+  run systemctl disable "$OLD_SLUG-cpu-governor.service" 2>/dev/null || true
+  run_user_systemctl stop "$OLD_SLUG-yt-update-notify.timer"
+  run_user_systemctl disable "$OLD_SLUG-yt-update-notify.timer"
+  run pkill -u "$TARGET_USER" -f "$OLD_SLUG-fan-auto" 2>/dev/null || true
+  run pkill -u "$TARGET_USER" -f "$OLD_SLUG-power-auto" 2>/dev/null || true
+  run pkill -u "$TARGET_USER" -f "preview-sync.py" 2>/dev/null || true
+  run pkill -u "$TARGET_USER" -f "recording-tray.py" 2>/dev/null || true
+  run pkill -u "$TARGET_USER" -f "audio-watch.sh" 2>/dev/null || true
+}
+
+move_user_data() {
+  info "Moviendo datos de usuario"
+  move_dir "$TARGET_HOME/.config/$OLD_SLUG" "$TARGET_HOME/.config/$NEW_SLUG"
+  move_dir "$TARGET_HOME/.local/share/$OLD_SLUG" "$TARGET_HOME/.local/share/$NEW_SLUG"
+  move_dir "$TARGET_HOME/.local/state/$OLD_SLUG" "$TARGET_HOME/.local/state/$NEW_SLUG"
+  move_dir "$TARGET_HOME/.cache/$OLD_SLUG" "$TARGET_HOME/.cache/$NEW_SLUG"
+  move_dir "$TARGET_HOME/.local/lib/$OLD_SLUG" "$TARGET_HOME/.local/lib/$NEW_SLUG"
+}
+
+remove_old_system() {
+  info "Eliminando artefactos viejos del sistema"
+  local paths=(
+    "/usr/local/bin/$OLD_SLUG-battery-limit"
+    "/usr/local/bin/$OLD_SLUG-cpu-governor"
+    "/usr/local/bin/$OLD_SLUG-fan-mode"
+    "/usr/local/bin/$OLD_SLUG-power-profile"
+    "/usr/local/bin/$OLD_SLUG-ufw"
+    "$TARGET_HOME/.local/bin/$OLD_SLUG-fan-auto"
+    "$TARGET_HOME/.local/bin/$OLD_SLUG-power-auto"
+    "/etc/systemd/system/$OLD_SLUG-cpu-governor.service"
+    "/etc/systemd/system/multi-user.target.wants/$OLD_SLUG-cpu-governor.service"
+    "/etc/sudoers.d/$OLD_SLUG-cpu-governor"
+    "/etc/sudoers.d/$OLD_SLUG-fan-mode"
+    "/etc/sudoers.d/$OLD_SLUG-power-profile"
+    "/etc/sudoers.d/$OLD_SLUG-ufw"
+    "/etc/modprobe.d/$OLD_SLUG-i915.conf"
+    "/etc/modprobe.d/$OLD_SLUG-nvidia.conf"
+    "/etc/sysctl.d/99-$OLD_SLUG-swappiness.conf"
+    "/etc/systemd/system/systemd-tmpfiles-clean.timer.d/10-$OLD_SLUG.conf"
+    "/etc/brave/policies/managed/$OLD_SLUG.json"
+    "/usr/share/$OLD_SLUG/newtab.html"
+    "/usr/local/share/fonts/$OLD_SLUG"
+    "/var/cache/$OLD_SLUG"
+    "$TARGET_HOME/.local/share/fonts/DesktopLogo"
+    "$TARGET_HOME/.config/wireplumber/wireplumber.conf.d/50-$OLD_SLUG.conf"
+    "$TARGET_HOME/.config/systemd/user/$OLD_SLUG-yt-update-notify.service"
+    "$TARGET_HOME/.config/systemd/user/$OLD_SLUG-yt-update-notify.timer"
+    "$TARGET_HOME/.config/systemd/user/timers.target.wants/$OLD_SLUG-yt-update-notify.timer"
+  )
+  local p
+  for p in "${paths[@]}"; do
+    backup_and_remove "$p"
+  done
+  run rmdir "/usr/share/$OLD_SLUG" 2>/dev/null || true
+  run rmdir "/etc/systemd/system/systemd-tmpfiles-clean.timer.d" 2>/dev/null || true
+  run rm -rf "/run/user/$TARGET_UID/dwm-screen-record" \
+    "/run/user/$TARGET_UID/dwm-screen-record-hidden" 2>/dev/null || true
+  run systemctl daemon-reload
+  run_user_systemctl daemon-reload
+  run systemctl reset-failed "$OLD_SLUG-cpu-governor.service" 2>/dev/null || true
+  run_user_systemctl reset-failed "$OLD_SLUG-yt-update-notify.timer"
+}
+
+show_plan() {
+  cat <<EOF
+Migración de $OLD_SLUG a $NEW_SLUG
+  Usuario:        $TARGET_USER ($TARGET_HOME)
+  Backups viejos: /var/backups/$NEW_SLUG/legacy y
+                  $TARGET_HOME/.config-backup/$NEW_SLUG/legacy
+  Pre-migración:  $ROOT_PRE y $USER_PRE
+  Instalador:     $INSTALL_SH
+  Marca:          $STAMP
+
+Se moverán:
+  ~/.config/$OLD_SLUG, ~/.local/share/$OLD_SLUG, ~/.local/state/$OLD_SLUG,
+  ~/.cache/$OLD_SLUG y ~/.local/lib/$OLD_SLUG
+Se eliminarán (con backup previo) los helpers, units, sudoers, modprobe,
+sysctl, WirePlumber, policy de Brave, newtab y restos de fuente viejos.
+Al final se ejecuta ./install.sh --yes --user $TARGET_USER.
+
+Requiere reiniciar para aplicar modprobe/initramfs y limpiar los átomos
+X11 de las previews.
+EOF
+}
+
+confirm() {
+  local answer
+  read -r -p "¿Migrar la instalación de $OLD_SLUG a $NEW_SLUG? [y/N] " answer
+  case "$answer" in
+    y|Y|yes|YES|sí|si|Sí|Si) ;;
+    *) die "Cancelado por el usuario." ;;
+  esac
+}
+
+main() {
+  while (($# > 0)); do
+    case "$1" in
+      --dry-run) DRY_RUN=1 ;;
+      -y|--yes) ASSUME_YES=1 ;;
+      -h|--help) usage; exit 0 ;;
+      *) die "Opción desconocida: $1 (usa --help)" ;;
+    esac
+    shift
+  done
+
+  if [[ "$DRY_RUN" != "1" ]]; then
+    [[ "$EUID" -eq 0 ]] || die "Ejecuta con sudo: sudo ./bin/luc-workspace-migrate"
+    [[ "$TARGET_USER" != "root" ]] || die "No se pudo determinar el usuario destino; ejecuta con sudo desde tu usuario."
+    command -v runuser >/dev/null 2>&1 || die "Falta runuser (util-linux)"
+    if pgrep -u "$TARGET_USER" -f 'brave' >/dev/null 2>&1; then
+      die "Cierra Brave antes de migrar; el instalador aborta si está abierto."
+    fi
+  fi
+  [[ -n "$TARGET_HOME" && -d "$TARGET_HOME" ]] || die "No se encontró el home de $TARGET_USER"
+  [[ -x "$INSTALL_SH" ]] || die "Falta $INSTALL_SH"
+
+  show_plan
+  if [[ "$DRY_RUN" != "1" && "$ASSUME_YES" != "1" ]]; then
+    confirm
+  fi
+
+  stop_old
+  move_legacy_backups
+  move_user_data
+  remove_old_system
+
+  info "Ejecutando el instalador nuevo"
+  run "$INSTALL_SH" --yes --user "$TARGET_USER"
+
+  run systemctl daemon-reload
+  run_user_systemctl daemon-reload
+  run_user_systemctl enable --now "$NEW_SLUG-yt-update-notify.timer"
+
+  cat <<EOF
+
+Migración terminada. Pasos siguientes:
+  1. Cierra Brave si estaba abierto.
+  2. Reinicia: sudo reboot
+  3. Entra por TTY1 y ejecuta: startx
+  4. Comprueba: desktop-doctor
+  5. Si algo falla, el rollback está en:
+     $ROOT_LEGACY y $USER_LEGACY
+EOF
+}
+
+main "$@"

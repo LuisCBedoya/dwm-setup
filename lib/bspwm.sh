@@ -56,7 +56,7 @@ generate_xinitrc() {
 
   cat > "$xinitrc" <<'EOF'
 #!/bin/sh
-# .xinitrc — generado por dwm-setup
+# .xinitrc — generado por luc-workspace
 # Inicia bspwm con la configuración del usuario.
 
 export XDG_CONFIG_HOME="$HOME/.config"
@@ -104,9 +104,9 @@ render_bspwm_template() {
 
   render_theme_template "$template" "$output" "$perms" \
     "HOME=$TARGET_HOME" \
-    "FONT=$DWM_FONT" \
-    "FONT_SIZE=$DWM_FONT_SIZE" \
-    "KEYMAP=$DWM_KEYMAP" \
+    "FONT=$LUC_WORKSPACE_FONT" \
+    "FONT_SIZE=$LUC_WORKSPACE_FONT_SIZE" \
+    "KEYMAP=$LUC_WORKSPACE_KEYMAP" \
     "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png" \
     "BAR_HEIGHT=$BAR_HEIGHT" \
     "ETH_IFACE=$eth_iface" \
@@ -126,9 +126,9 @@ render_bspwm_template_inline() {
 
   render_theme_template "$file" "$file" "$perms" \
     "HOME=$TARGET_HOME" \
-    "FONT=$DWM_FONT" \
-    "FONT_SIZE=$DWM_FONT_SIZE" \
-    "KEYMAP=$DWM_KEYMAP" \
+    "FONT=$LUC_WORKSPACE_FONT" \
+    "FONT_SIZE=$LUC_WORKSPACE_FONT_SIZE" \
+    "KEYMAP=$LUC_WORKSPACE_KEYMAP" \
     "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png" \
     "BAR_HEIGHT=$BAR_HEIGHT" \
     "ETH_IFACE=$eth_iface" \

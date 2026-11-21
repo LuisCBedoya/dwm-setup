@@ -8,10 +8,10 @@
 install_fan_control() {
   section "Modo del ventilador"
 
-  local helper_src="$PROJECT_ROOT/bin/dwm-setup-fan-mode"
-  local helper_dst="/usr/local/bin/dwm-setup-fan-mode"
-  local sudoers_src="$PROJECT_ROOT/templates/sudoers/dwm-setup-fan-mode.in"
-  local sudoers_dst="/etc/sudoers.d/dwm-setup-fan-mode"
+  local helper_src="$PROJECT_ROOT/bin/luc-workspace-fan-mode"
+  local helper_dst="/usr/local/bin/luc-workspace-fan-mode"
+  local sudoers_src="$PROJECT_ROOT/templates/sudoers/luc-workspace-fan-mode.in"
+  local sudoers_dst="/etc/sudoers.d/luc-workspace-fan-mode"
   local asus_dir=/sys/devices/platform/asus-nb-wmi
 
   if dry_run; then
@@ -25,11 +25,11 @@ install_fan_control() {
 
   # Daemon del ventilador automático y estado por defecto (auto).
   make_user_dir "$TARGET_HOME/.local/bin"
-  make_user_dir "$TARGET_HOME/.config/dwm-setup"
-  run_user install -m 0755 "$PROJECT_ROOT/bin/dwm-setup-fan-auto" \
-    "$TARGET_HOME/.local/bin/dwm-setup-fan-auto"
-  if [[ ! -f "$TARGET_HOME/.config/dwm-setup/fan-mode" ]]; then
-    printf 'auto\n' | run_user tee "$TARGET_HOME/.config/dwm-setup/fan-mode" >/dev/null
+  make_user_dir "$TARGET_HOME/.config/luc-workspace"
+  run_user install -m 0755 "$PROJECT_ROOT/bin/luc-workspace-fan-auto" \
+    "$TARGET_HOME/.local/bin/luc-workspace-fan-auto"
+  if [[ ! -f "$TARGET_HOME/.config/luc-workspace/fan-mode" ]]; then
+    printf 'auto\n' | run_user tee "$TARGET_HOME/.config/luc-workspace/fan-mode" >/dev/null
   fi
 
   if [[ ! -e "$asus_dir/fan_boost_mode" &&
@@ -40,8 +40,8 @@ install_fan_control() {
     return 0
   fi
 
-  local tmp pending="/etc/sudoers.d/.dwm-setup-fan-mode.check"
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-sudoers-fan.XXXXXX")
+  local tmp pending="/etc/sudoers.d/.luc-workspace-fan-mode.check"
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-sudoers-fan.XXXXXX")
   sed "s|@USER@|$TARGET_USER|g" "$sudoers_src" >"$tmp"
   run_root install -D -m 0440 "$tmp" "$pending"
   if ! run_root visudo -cf "$pending" >/dev/null 2>&1; then

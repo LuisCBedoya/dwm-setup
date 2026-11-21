@@ -1,20 +1,20 @@
 #!/bin/sh
-# dwm-setup-fan-mode — modo del ventilador según el firmware del portátil.
+# luc-workspace-fan-mode — modo del ventilador según el firmware del portátil.
 #
 # Backends (el primero que exista):
 #  1) ASUS fan_boost_mode        (0 normal, 1 overboost, 2 silent)
 #  2) ASUS throttle_thermal_policy (0 default, 1 overboost, 2 silent)
 #  3) ACPI platform_profile      (quiet / balanced / performance)
 #
-# Uso: dwm-setup-fan-mode supported|status|cycle|set <modo>
+# Uso: luc-workspace-fan-mode supported|status|cycle|set <modo>
 # Sale 1 si el equipo no expone ningún backend. Escribir requiere root.
 set -u
 
-ASUS_DIR=${DWM_SETUP_ASUS_DIR:-/sys/devices/platform/asus-nb-wmi}
+ASUS_DIR=${LUC_WORKSPACE_ASUS_DIR:-/sys/devices/platform/asus-nb-wmi}
 FAN_BOOST="$ASUS_DIR/fan_boost_mode"
 THROTTLE="$ASUS_DIR/throttle_thermal_policy"
-PROFILE=${DWM_SETUP_PLATFORM_PROFILE:-/sys/firmware/acpi/platform_profile}
-CHOICES=${DWM_SETUP_PLATFORM_PROFILE_CHOICES:-/sys/firmware/acpi/platform_profile_choices}
+PROFILE=${LUC_WORKSPACE_PLATFORM_PROFILE:-/sys/firmware/acpi/platform_profile}
+CHOICES=${LUC_WORKSPACE_PLATFORM_PROFILE_CHOICES:-/sys/firmware/acpi/platform_profile_choices}
 
 backend() {
   if [ -e "$FAN_BOOST" ]; then
@@ -143,7 +143,7 @@ case "${1:-status}" in
     ;;
   -h|--help)
     cat <<'EOF'
-Uso: dwm-setup-fan-mode supported|status|cycle|set <modo>
+Uso: luc-workspace-fan-mode supported|status|cycle|set <modo>
 
   supported  exit 0 si hay backend de ventilador (ASUS o platform_profile)
   status     muestra el modo actual

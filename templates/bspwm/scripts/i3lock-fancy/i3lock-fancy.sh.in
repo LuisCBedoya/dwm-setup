@@ -3,10 +3,10 @@
 # No captura la pantalla en cada bloqueo: cachea el blur por modo/wallpaper.
 set -u
 
-MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup/mode"
+MODE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/luc-workspace/mode"
 STATE_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/bspwm/wallpaper"
-CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup"
-BLUR="${DWM_LOCK_BLUR:-0x18}"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/luc-workspace"
+BLUR="${LUC_WORKSPACE_LOCK_BLUR:-0x18}"
 
 # Si ya hay un i3lock activo, no lanzar otro.
 if command -v pgrep >/dev/null 2>&1 && pgrep -x i3lock >/dev/null 2>&1; then

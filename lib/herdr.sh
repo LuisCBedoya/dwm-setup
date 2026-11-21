@@ -44,7 +44,7 @@ install_herdr() {
     log "[dry-run] descargar $(herdr_download_url) (SHA-256 verificado)"
     log "[dry-run] instalar ~/.local/bin/herdr 0755 (usuario, sin sudo)"
     log "[dry-run] renderizar ~/.config/herdr/config.toml desde templates/herdr"
-    log "[dry-run] instalar ~/.local/lib/dwm-setup/preview_tag.py (etiqueta de previews)"
+    log "[dry-run] instalar ~/.local/lib/luc-workspace/preview_tag.py (etiqueta de previews)"
     return 0
   fi
 
@@ -144,7 +144,7 @@ install_herdr_config() {
 # Módulo compartido por los wrappers de ueberzug: aprende la base X11 de su
 # hijo y etiqueta cada ventana con la pestaña real de Herdr (HERDR_TAB_ID).
 install_herdr_preview_tag() {
-  local dir="$TARGET_HOME/.local/lib/dwm-setup"
+  local dir="$TARGET_HOME/.local/lib/luc-workspace"
   local src="$PROJECT_ROOT/templates/herdr/preview_tag.py"
   local dst="$dir/preview_tag.py"
 

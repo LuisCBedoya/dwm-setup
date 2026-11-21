@@ -40,8 +40,8 @@ render_kitty_template() {
 
   render_theme_template "$template" "$output" "$perms" \
     "HOME=$TARGET_HOME" \
-    "FONT=$DWM_FONT" \
-    "FONT_SIZE=$DWM_FONT_SIZE" \
-    "KEYMAP=$DWM_KEYMAP" \
+    "FONT=$LUC_WORKSPACE_FONT" \
+    "FONT_SIZE=$LUC_WORKSPACE_FONT_SIZE" \
+    "KEYMAP=$LUC_WORKSPACE_KEYMAP" \
     "THEME_NAME=$THEME_NAME"
 }

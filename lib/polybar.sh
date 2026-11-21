@@ -40,9 +40,9 @@ polybar_common_vars() {
 
   printf '%s\n' \
     "HOME=$TARGET_HOME" \
-    "FONT=$DWM_FONT" \
-    "FONT_SIZE=$DWM_FONT_SIZE" \
-    "KEYMAP=$DWM_KEYMAP" \
+    "FONT=$LUC_WORKSPACE_FONT" \
+    "FONT_SIZE=$LUC_WORKSPACE_FONT_SIZE" \
+    "KEYMAP=$LUC_WORKSPACE_KEYMAP" \
     "WALLPAPER=$TARGET_HOME/.local/share/wallpapers/wallpaper.png" \
     "BAR_HEIGHT=$BAR_HEIGHT" \
     "ETH_IFACE=$eth_iface" \

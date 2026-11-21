@@ -85,7 +85,7 @@ exec 9>&-
 polybar -r main -c "$CONFIG" &
 
 # El indicador de grabación solo ocupa sitio mientras se graba.
-record_pidfile="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record/ffmpeg.pid"
+record_pidfile="${XDG_RUNTIME_DIR:-/tmp}/luc-workspace-screen-record/ffmpeg.pid"
 record_pid=""
 if [ -s "$record_pidfile" ]; then
   record_pid=$(cat "$record_pidfile" 2>/dev/null || printf '')

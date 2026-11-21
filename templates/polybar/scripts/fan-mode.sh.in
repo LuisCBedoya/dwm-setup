@@ -1,15 +1,15 @@
 #!/bin/sh
 # fan-mode.sh — módulo de ventilador para polybar (estado y clic).
-# Estados: auto (lo gestiona dwm-setup-fan-auto) o manual:<modo>.
+# Estados: auto (lo gestiona luc-workspace-fan-auto) o manual:<modo>.
 # Un clic cicla: auto -> normal -> overboost -> silent -> auto.
 set -u
 
-HELPER=${DWM_SETUP_FAN_HELPER:-/usr/local/bin/dwm-setup-fan-mode}
-AUTO=${DWM_SETUP_FAN_AUTO:-$HOME/.local/bin/dwm-setup-fan-auto}
-NOTIFY=${DWM_SETUP_NOTIFY:-notify-send}
-CONF_DIR=${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup
+HELPER=${LUC_WORKSPACE_FAN_HELPER:-/usr/local/bin/luc-workspace-fan-mode}
+AUTO=${LUC_WORKSPACE_FAN_AUTO:-$HOME/.local/bin/luc-workspace-fan-auto}
+NOTIFY=${LUC_WORKSPACE_NOTIFY:-notify-send}
+CONF_DIR=${XDG_CONFIG_HOME:-$HOME/.config}/luc-workspace
 STATE=$CONF_DIR/fan-mode
-CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup
+CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/luc-workspace
 EFFECTIVE=$CACHE_DIR/fan-effective
 
 ACCENT='@COLOR_BAR_ACCENT@'
@@ -75,15 +75,15 @@ case "${1:-status}" in
     if [ "$next" = auto ]; then
       [ -x "$AUTO" ] && "$AUTO" --once >/dev/null 2>&1 || true
       eff=$(cat "$EFFECTIVE" 2>/dev/null || printf 'normal')
-      notify -a "dwm-setup" -i "preferences-system" "Ventilador: auto" "El sistema decide ($eff)"
+      notify -a "luc-workspace" -i "preferences-system" "Ventilador: auto" "El sistema decide ($eff)"
     else
       m=${next#manual:}
       if sudo -n "$HELPER" set "$m" >/dev/null 2>&1; then
         mkdir -p "$CACHE_DIR" 2>/dev/null || true
         printf '%s\n' "$m" >"$EFFECTIVE" 2>/dev/null || true
-        notify -a "dwm-setup" -i "preferences-system" "Ventilador: $m" "Modo manual"
+        notify -a "luc-workspace" -i "preferences-system" "Ventilador: $m" "Modo manual"
       else
-        notify -a "dwm-setup" -i "dialog-warning" "Ventilador" "No se pudo cambiar el modo"
+        notify -a "luc-workspace" -i "dialog-warning" "Ventilador" "No se pudo cambiar el modo"
         exit 1
       fi
     fi

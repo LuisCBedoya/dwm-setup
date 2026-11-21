@@ -6,16 +6,16 @@
 set -u
 
 action="${1:-toggle}"
-state_dir="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record"
+state_dir="${XDG_RUNTIME_DIR:-/tmp}/luc-workspace-screen-record"
 pidfile="$state_dir/ffmpeg.pid"
 startfile="$state_dir/start"
 outfile="$state_dir/output"
 trayfile="$state_dir/tray.pid"
 logfile="$state_dir/ffmpeg.log"
-hidden_marker="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record-hidden"
+hidden_marker="${XDG_RUNTIME_DIR:-/tmp}/luc-workspace-screen-record-hidden"
 starting_marker="$state_dir/starting"
 tray_app="$HOME/.config/bspwm/scripts/recording-tray.py"
-conf="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup/recording.conf"
+conf="${XDG_CONFIG_HOME:-$HOME/.config}/luc-workspace/recording.conf"
 
 # mix = sistema + micro, system = solo lo que suena, mic = solo micro.
 audio_mode="mix"
@@ -35,13 +35,13 @@ fi
 
 notify() {
   command -v notify-send >/dev/null 2>&1 || return 0
-  notify-send -a "dwm-setup" -i "media-record" "$1" "${2:-}"
+  notify-send -a "luc-workspace" -i "media-record" "$1" "${2:-}"
 }
 
 # Corrección silenciosa cuando el modo real no coincide con el previsto.
 notify_silent() {
   command -v notify-send >/dev/null 2>&1 || return 0
-  notify-send -a "dwm-setup-silent" -i "media-record" "$1" "${2:-}"
+  notify-send -a "luc-workspace-silent" -i "media-record" "$1" "${2:-}"
 }
 
 mode_label() {
@@ -55,7 +55,7 @@ mode_label() {
 
 # Suena el aviso de inicio de forma síncrona, antes de abrir ffmpeg: así el
 # chime termina seguro y no entra en el monitor de audio. El toast visual se
-# manda como dwm-setup-silent para que dunst no reproduzca otro sonido.
+# manda como luc-workspace-silent para que dunst no reproduzca otro sonido.
 play_start_sound() {
   script="$HOME/.config/dunst/scripts/notification-sound.sh"
   sound=/usr/share/sounds/freedesktop/stereo/message-new-instant.oga
@@ -111,7 +111,7 @@ stop_recording() {
 
 choose_monitor() {
   all=$(xdpyinfo 2>/dev/null | awk '/dimensions:/{print $2; exit}')
-  cache="${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup/monitors"
+  cache="${XDG_CACHE_HOME:-$HOME/.cache}/luc-workspace/monitors"
   menu=""
   count=0
 

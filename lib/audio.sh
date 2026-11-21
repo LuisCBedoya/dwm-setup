@@ -90,7 +90,7 @@ install_headset_quirk() {
 # mano y la música sigue en alta calidad cuando no se graba.
 install_wireplumber_audio() {
   local dir="$TARGET_HOME/.config/wireplumber/wireplumber.conf.d"
-  local target="$dir/50-dwm-setup.conf"
+  local target="$dir/50-luc-workspace.conf"
 
   if dry_run; then
     log "[dry-run] instalaría $target (autoswitch A2DP/HFP)"
@@ -100,7 +100,7 @@ install_wireplumber_audio() {
   make_user_dir "$dir"
   backup_user_path "$target"
   install_template_user 0644 \
-    "$PROJECT_ROOT/templates/wireplumber/50-dwm-setup.conf" "$target"
+    "$PROJECT_ROOT/templates/wireplumber/50-luc-workspace.conf" "$target"
   ok "WirePlumber: autoswitch de perfil Bluetooth configurado"
 }
 

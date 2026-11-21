@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instalador fase 1b: Debian 13 minimal + Xorg + bspwm + sxhkd + polybar.
+# Instalador: Debian 13 minimal + Xorg + bspwm + sxhkd + polybar.
 #
 # Uso normal:
 #   ./install.sh
@@ -88,7 +88,7 @@ source "$PROJECT_ROOT/lib/gpu.sh"
 
 usage() {
   cat <<'EOF'
-Instalador de fase 1b: escritorio bspwm + polybar en Debian 13.
+Instalador del escritorio: bspwm + polybar en Debian 13.
 
 Uso normal:
   ./install.sh              Instalación guiada (recomendado)
@@ -156,27 +156,27 @@ parse_args() {
       --theme=*) THEME="${1#*=}" ;;
       --keymap)
         [[ $# -ge 2 ]] || die "--keymap requiere un valor"
-        DWM_KEYMAP="$2"; shift
+        LUC_WORKSPACE_KEYMAP="$2"; shift
         ;;
-      --keymap=*) DWM_KEYMAP="${1#*=}" ;;
+      --keymap=*) LUC_WORKSPACE_KEYMAP="${1#*=}" ;;
       --font)
         [[ $# -ge 2 ]] || die "--font requiere un valor"
-        DWM_FONT="$2"; DWM_FONT_EXPLICIT=1; shift
+        LUC_WORKSPACE_FONT="$2"; LUC_WORKSPACE_FONT_EXPLICIT=1; shift
         ;;
-      --font=*) DWM_FONT="${1#*=}"; DWM_FONT_EXPLICIT=1 ;;
+      --font=*) LUC_WORKSPACE_FONT="${1#*=}"; LUC_WORKSPACE_FONT_EXPLICIT=1 ;;
       --font-size)
         [[ $# -ge 2 ]] || die "--font-size requiere un valor"
-        DWM_FONT_SIZE="$2"; shift
+        LUC_WORKSPACE_FONT_SIZE="$2"; shift
         ;;
-      --font-size=*) DWM_FONT_SIZE="${1#*=}" ;;
+      --font-size=*) LUC_WORKSPACE_FONT_SIZE="${1#*=}" ;;
       --resolution)
         [[ $# -ge 2 ]] || die "--resolution requiere un valor"
-        DWM_RESOLUTION="$2"; shift
+        LUC_WORKSPACE_RESOLUTION="$2"; shift
         ;;
-      --resolution=*) DWM_RESOLUTION="${1#*=}" ;;
-      --debug) DWM_DEBUG=1 ;;
+      --resolution=*) LUC_WORKSPACE_RESOLUTION="${1#*=}" ;;
+      --debug) LUC_WORKSPACE_DEBUG=1 ;;
       -h|--help) usage; exit 0 ;;
-      --version) printf 'dwm-setup 0.4.0 (fase 1b: bspwm+polybar+catppuccin)\n'; exit 0 ;;
+      --version) printf '%s %s (bspwm+polybar+catppuccin)\n' "$PROJECT_NAME" "$PROJECT_VERSION"; exit 0 ;;
       *) die "Opción desconocida: $1 (usa --help)" ;;
     esac
     shift
@@ -184,13 +184,13 @@ parse_args() {
 }
 
 validate_options() {
-  if ! [[ "$DWM_FONT_SIZE" =~ ^[0-9]+$ ]] || ((DWM_FONT_SIZE < 6 || DWM_FONT_SIZE > 40)); then
-    die "--font-size debe ser un entero entre 6 y 40 (recibido: $DWM_FONT_SIZE)"
+  if ! [[ "$LUC_WORKSPACE_FONT_SIZE" =~ ^[0-9]+$ ]] || ((LUC_WORKSPACE_FONT_SIZE < 6 || LUC_WORKSPACE_FONT_SIZE > 40)); then
+    die "--font-size debe ser un entero entre 6 y 40 (recibido: $LUC_WORKSPACE_FONT_SIZE)"
   fi
-  [[ -n "$DWM_FONT" ]] || die "--font no puede estar vacío"
-  [[ -n "$DWM_KEYMAP" ]] || die "--keymap no puede estar vacío"
-  if [[ -n "$DWM_RESOLUTION" && ! "$DWM_RESOLUTION" =~ ^[0-9]+x[0-9]+$ ]]; then
-    die "--resolution debe tener el formato WxH, por ejemplo 1366x768 (recibido: $DWM_RESOLUTION)"
+  [[ -n "$LUC_WORKSPACE_FONT" ]] || die "--font no puede estar vacío"
+  [[ -n "$LUC_WORKSPACE_KEYMAP" ]] || die "--keymap no puede estar vacío"
+  if [[ -n "$LUC_WORKSPACE_RESOLUTION" && ! "$LUC_WORKSPACE_RESOLUTION" =~ ^[0-9]+x[0-9]+$ ]]; then
+    die "--resolution debe tener el formato WxH, por ejemplo 1366x768 (recibido: $LUC_WORKSPACE_RESOLUTION)"
   fi
   if [[ -n "$TARGET_HOME" ]]; then
     [[ "$TARGET_HOME" == /* ]] || die "--home debe ser una ruta absoluta: $TARGET_HOME"
@@ -233,12 +233,22 @@ check_project_layout() {
     "$PROJECT_ROOT/bin/desktop-safe"
     "$PROJECT_ROOT/bin/desktop-doctor"
     "$PROJECT_ROOT/bin/herdr-close"
-    "$PROJECT_ROOT/bin/dwm-setup-cpu-governor"
-    "$PROJECT_ROOT/bin/dwm-setup-ufw"
+    "$PROJECT_ROOT/bin/luc-workspace-migrate"
+    "$PROJECT_ROOT/bin/luc-workspace-battery-limit"
+    "$PROJECT_ROOT/bin/luc-workspace-cpu-governor"
+    "$PROJECT_ROOT/bin/luc-workspace-fan-auto"
+    "$PROJECT_ROOT/bin/luc-workspace-fan-mode"
+    "$PROJECT_ROOT/bin/luc-workspace-power-auto"
+    "$PROJECT_ROOT/bin/luc-workspace-power-profile"
+    "$PROJECT_ROOT/bin/luc-workspace-ufw"
     "$PROJECT_ROOT/templates/picom/picom.conf.in"
-    "$PROJECT_ROOT/templates/sudoers/dwm-setup-cpu-governor.in"
-    "$PROJECT_ROOT/templates/sudoers/dwm-setup-ufw.in"
-    "$PROJECT_ROOT/templates/systemd/dwm-setup-cpu-governor.service"
+    "$PROJECT_ROOT/templates/sudoers/luc-workspace-cpu-governor.in"
+    "$PROJECT_ROOT/templates/sudoers/luc-workspace-fan-mode.in"
+    "$PROJECT_ROOT/templates/sudoers/luc-workspace-power-profile.in"
+    "$PROJECT_ROOT/templates/sudoers/luc-workspace-ufw.in"
+    "$PROJECT_ROOT/templates/systemd/battery-charge-threshold.service.in"
+    "$PROJECT_ROOT/templates/wireplumber/50-luc-workspace.conf"
+    "$PROJECT_ROOT/templates/systemd/luc-workspace-cpu-governor.service"
     "$PROJECT_ROOT/templates/polybar/modules/governor.ini.in"
     "$PROJECT_ROOT/templates/polybar/scripts/cpu-governor.sh.in"
     "$PROJECT_ROOT/templates/polybar/variants/reference/modules/governor.ini.in"
@@ -285,9 +295,9 @@ check_project_layout() {
     "$PROJECT_ROOT/templates/herdr/config.toml.in"
     "$PROJECT_ROOT/templates/herdr/preview_tag.py"
     "$PROJECT_ROOT/templates/ytwatch/ueberzugpp.in"
-    "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.service"
-    "$PROJECT_ROOT/templates/systemd/dwm-setup-yt-update-notify.timer"
-    "$PROJECT_ROOT/templates/sysctl/99-dwm-setup-swappiness.conf"
+    "$PROJECT_ROOT/templates/systemd/luc-workspace-yt-update-notify.service"
+    "$PROJECT_ROOT/templates/systemd/luc-workspace-yt-update-notify.timer"
+    "$PROJECT_ROOT/templates/sysctl/99-luc-workspace-swappiness.conf"
     "$PROJECT_ROOT/templates/brave/surfingkeys.js.in"
     "$PROJECT_ROOT/templates/polybar/config.ini.in"
     "$PROJECT_ROOT/templates/polybar/modules/logo.ini.in"
@@ -406,7 +416,7 @@ EOF
   fi
   section "Instalación completada"
   cat <<EOF
-Fase 1b instalada para: $TARGET_USER
+Instalación completada para: $TARGET_USER
 Home:                   $TARGET_HOME
 Log:                    $LOG_FILE
 Variantes polybar:      ~/.config/polybar/polybar-variant actual|referencia
@@ -419,7 +429,7 @@ Música/streams:         yt-play [--audio|--video] <url | búsqueda> · ytdlp-ch
 Buscador TUI:           ytwatch (terminal) · ytwatch-check|update · miniaturas: ueberzugpp
 Herdr TUI:              escribe 'herdr' en kitty · ranger/ytwatch con previews dentro
 Avisos YouTube:         timer de usuario (dunst) · systemctl --user list-timers
-Kernel:                 vm.swappiness=10 (/etc/sysctl.d/99-dwm-setup-swappiness.conf)
+Kernel:                 vm.swappiness=10 (/etc/sysctl.d/99-luc-workspace-swappiness.conf)
 Gráficos:               i915 FBC desactivado (requiere reinicio)
 Permisos:               sudo al inicio para paquetes, portal, opt-2 e i915
 
@@ -435,7 +445,6 @@ Atajos principales:
   Super+d           rofi (run)
   Super+Shift+d     rofi (drun)
   Super+Shift+b     brave-browser
-  Super+Shift+e     VS Code (no instalado en fase 1)
   Super+Shift+f     thunar
   Super+Shift+l     bloquear
   Print             pantalla completa al portapapeles
@@ -502,7 +511,7 @@ main() {
   # Si no se pidió --theme, conservar el modo guardado (dark/light) para
   # que una reinstalación no cambie el escritorio ni falle la verificación.
   if [[ -z "${THEME:-}" ]]; then
-    case "$(cat "$TARGET_HOME/.config/dwm-setup/mode" 2>/dev/null || true)" in
+    case "$(cat "$TARGET_HOME/.config/luc-workspace/mode" 2>/dev/null || true)" in
       light) THEME=latte ;;
       dark) THEME=mocha-black ;;
       *) THEME="$DEFAULT_THEME" ;;
@@ -516,18 +525,18 @@ main() {
   # Los backups deben existir ANTES de cualquier escritura de configuración.
   local backup_ts
   backup_ts=$(timestamp)
-  ROOT_BACKUP_DIR="/var/backups/dwm-setup/$backup_ts"
-  USER_BACKUP_DIR="$TARGET_HOME/.config-backup/dwm-setup/$backup_ts"
+  ROOT_BACKUP_DIR="/var/backups/luc-workspace/$backup_ts"
+  USER_BACKUP_DIR="$TARGET_HOME/.config-backup/luc-workspace/$backup_ts"
 
   make_user_dir "$TARGET_HOME/.config-backup"
-  make_user_dir "$TARGET_HOME/.config-backup/dwm-setup"
+  make_user_dir "$TARGET_HOME/.config-backup/luc-workspace"
   make_user_dir "$USER_BACKUP_DIR"
   run_root install -d -m 0755 "$ROOT_BACKUP_DIR"
   backup_existing_configs
 
   preflight_repos
 
-  if ! confirm "¿Aplicar los cambios y continuar con la instalación de la fase 1b?"; then
+  if ! confirm "¿Aplicar los cambios y continuar con la instalación?"; then
     if [[ "$REPO_MODIFIED" -eq 1 ]]; then
       info "Cancelado. Los componentes APT añadidos se conservan en el backup: $ROOT_BACKUP_DIR"
     else

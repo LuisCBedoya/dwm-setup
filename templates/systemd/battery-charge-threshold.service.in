@@ -1,12 +1,12 @@
 [Unit]
-Description=dwm-setup: límite de carga de la batería (@THRESHOLD@%)
+Description=luc-workspace: límite de carga de la batería (@THRESHOLD@%)
 ConditionPathExistsGlob=/sys/class/power_supply/BAT*/charge_control_end_threshold
 After=systemd-modules-load.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/local/bin/dwm-setup-battery-limit @THRESHOLD@
+ExecStart=/usr/local/bin/luc-workspace-battery-limit @THRESHOLD@
 
 [Install]
 WantedBy=multi-user.target

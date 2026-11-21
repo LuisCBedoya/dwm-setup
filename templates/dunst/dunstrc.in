@@ -89,6 +89,6 @@
 # Avisos de actualización: no se autodestruyen y son críticos.
 # Un clic izquierdo lanza la acción (abrir la terminal de updates).
 [actualizaciones]
-    appname = "yt-dlp|ytwatch|dwm-setup"
+    appname = "yt-dlp|ytwatch|luc-workspace"
     urgency = critical
     timeout = 0

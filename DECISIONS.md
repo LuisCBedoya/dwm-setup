@@ -3727,3 +3727,54 @@ comparten la base de recurso de su conexión X11.
   wrappers de pestañas distintas crean su primera ventana en el mismo
   instante podría elegir la base equivocada. `WINDOWID` evita el cruce
   entre kittys y el fallback del daemon acota el caso restante.
+
+## ADR-142 — Renombrado completo a `luc-workspace`
+
+**Contexto:** el proyecto nació como un escritorio basado en dwm y conservó
+el nombre `dwm-setup` aunque el escritorio actual es bspwm + sxhkd +
+polybar. El nombre ya no describe el producto y aparece en binarios,
+unidades systemd, sudoers, rutas de usuario, backups y variables internas.
+El usuario pidió un renombrado completo y presentar el proyecto como
+definitivo (versión 1.0.0).
+
+**Decisión:**
+1. El nombre nuevo es `luc-workspace`. El repositorio, la carpeta local,
+   los archivos con `dwm-setup` en el nombre, los binarios, las unidades,
+   los sudoers, los modprobe, el sysctl, WirePlumber, la policy de Brave,
+   las rutas de usuario, los logs, las cachés y los backups pasan a
+   `luc-workspace`.
+2. Las variables internas `DWM_*` y `DWM_SETUP_*` pasan a
+   `LUC_WORKSPACE_*`; los átomos X11 `_DWM_SETUP_*` pasan a
+   `_LUC_WORKSPACE_*`; los prefijos temporales `dwm-*` pasan a
+   `luc-workspace-*`. La app de notificación `dwm-setup-silent` pasa a
+   `luc-workspace-silent`.
+3. `PROJECT_NAME`, `PROJECT_SLUG` y `PROJECT_VERSION` viven en
+   `lib/common.sh`; `install.sh --version` informa
+   `luc-workspace 1.0.0 (bspwm+polybar+catppuccin)`.
+4. Se añade `bin/luc-workspace-migrate`, idempotente y con `--dry-run`,
+   para una instalación existente: para units/timers viejos, mueve los
+   datos de usuario (config, share, state, cache y lib), mueve los
+   backups antiguos a `luc-workspace/legacy/`, elimina los artefactos del
+   sistema con el nombre viejo y ejecuta el `install.sh` nuevo. Requiere
+   reinicio por los cambios de modprobe/initramfs y para limpiar los
+   átomos X11 de las previews.
+5. `prune_backup_dir` solo poda directorios con formato
+   `YYYYMMDD-HHMMSS`; `legacy/` se conserva.
+6. GitHub se renombra después de migrar y probar; GitHub redirige las
+   URLs antiguas. La carpeta local se renombra al final, cuando la sesión
+   de opencode ya se puede mover a la ruta nueva.
+7. Los ADRs anteriores conservan el nombre `dwm-setup` como registro
+   histórico; las instrucciones actuales (`AGENTS.md`, `README.md`,
+   `docs/hardware.md`, `docs/testing.md`) usan `luc-workspace`.
+
+**Consecuencias:**
+- El proyecto deja de llamarse dwm; no queda `dwm` en el código, las
+  rutas ni los nombres de servicio actuales.
+- Los backups antiguos siguen disponibles en `luc-workspace/legacy/` para
+  rollback, sin que el podador automático los borre.
+- La migración es una operación de mantenimiento: hay que cerrar Brave,
+  parar los daemons viejos, ejecutar el script y reiniciar.
+- Las previews de Herdr/ranger/ytwatch creadas antes del renombrado
+  conservan los átomos viejos hasta reiniciar esas aplicaciones.
+- Las referencias a `dwm-setup` que quedan en ADRs y entradas históricas
+  de `PROGRESS.md` son deliberadas.

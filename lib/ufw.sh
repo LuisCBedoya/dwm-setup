@@ -8,11 +8,11 @@
 install_ufw() {
   section "Firewall UFW"
 
-  local helper_src="$PROJECT_ROOT/bin/dwm-setup-ufw"
-  local helper_dst="/usr/local/bin/dwm-setup-ufw"
-  local sudoers_src="$PROJECT_ROOT/templates/sudoers/dwm-setup-ufw.in"
-  local sudoers_dst="/etc/sudoers.d/dwm-setup-ufw"
-  local ufw="${DWM_SETUP_UFW_BIN:-/usr/sbin/ufw}"
+  local helper_src="$PROJECT_ROOT/bin/luc-workspace-ufw"
+  local helper_dst="/usr/local/bin/luc-workspace-ufw"
+  local sudoers_src="$PROJECT_ROOT/templates/sudoers/luc-workspace-ufw.in"
+  local sudoers_dst="/etc/sudoers.d/luc-workspace-ufw"
+  local ufw="${LUC_WORKSPACE_UFW_BIN:-/usr/sbin/ufw}"
 
   if dry_run; then
     log "[dry-run] instalar helper root $helper_dst (0755)"
@@ -34,8 +34,8 @@ install_ufw() {
   # Sudoers: fragmento con el usuario real. Se valida con visudo en un
   # archivo provisional (nombre con punto: sudoers.d lo ignora hasta que
   # se mueve a su destino definitivo).
-  local tmp pending="/etc/sudoers.d/.dwm-setup-ufw.check"
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-sudoers.XXXXXX")
+  local tmp pending="/etc/sudoers.d/.luc-workspace-ufw.check"
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-sudoers.XXXXXX")
   sed "s|@USER@|$TARGET_USER|g" "$sudoers_src" >"$tmp"
   run_root install -D -m 0440 "$tmp" "$pending"
   if ! run_root visudo -cf "$pending" >/dev/null 2>&1; then

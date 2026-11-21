@@ -10,7 +10,7 @@
 #   DISPLAY_REFRESH=auto|max|preferred|<Hz>  tasa (auto por defecto)
 #   DISPLAY_SETUP_DRY_RUN=1        solo imprime lo que haría
 #
-# Config: ~/.config/dwm-setup/display.conf (layout=, refresh=).
+# Config: ~/.config/luc-workspace/display.conf (layout=, refresh=).
 # Las variables de entorno tienen prioridad sobre el archivo.
 #
 # Uso:
@@ -25,8 +25,8 @@ xset s off 2>/dev/null || true
 xset s noblank 2>/dev/null || true
 xset -dpms 2>/dev/null || true
 
-conf="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup/display.conf"
-state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/dwm-setup"
+conf="${XDG_CONFIG_HOME:-$HOME/.config}/luc-workspace/display.conf"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/luc-workspace"
 dry=${DISPLAY_SETUP_DRY_RUN:-0}
 
 conf_layout=""
@@ -211,7 +211,7 @@ apply_layout() {
 # consultar xrandr (en algunos monitores HDMI eso fuerza un EDID/DDC y la
 # pantalla parpadea unos segundos).
 write_monitor_cache() {
-  cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup"
+  cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/luc-workspace"
   cache="$cache_dir/monitors"
   mkdir -p "$cache_dir" 2>/dev/null || return 0
   printf '%s\n' "$xrandr_query" |

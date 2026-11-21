@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Grupos de paquetes de la fase 1b. Debian 13 (trixie).
+# Grupos de paquetes del escritorio. Debian 13 (trixie).
 
 BASE_PKGS=(
   build-essential git curl ca-certificates xz-utils unzip tar file pkg-config
@@ -212,7 +212,7 @@ add_components_list_file() {
   local -a add=("$@") tokens=()
   local tmp line idx uri suite component
   [[ -r "$file" ]] || return 1
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-sources.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-sources.XXXXXX")
   while IFS= read -r line || [[ -n "$line" ]]; do
     if [[ "$line" =~ ^[[:space:]]*deb[[:space:]] ]]; then
       tokens=()
@@ -248,8 +248,8 @@ add_components_sources_file() {
   local -a add=("$@")
   local tmp status
   [[ -r "$file" ]] || return 1
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-sources.XXXXXX")
-  status=$(mktemp "${TMPDIR:-/tmp}/dwm-sources-status.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-sources.XXXXXX")
+  status=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-sources-status.XXXXXX")
   awk -v add="${add[*]}" -v status_file="$status" '
     BEGIN { RS = ""; FS = "\n"; n = split(add, wanted, " "); changed = 0 }
     function has_token(s, t) { return index(" " s " ", " " t " ") > 0 }
@@ -607,15 +607,15 @@ install_gpu_packages() {
 }
 
 font_fallback() {
-  if [[ "${DWM_FONT_EXPLICIT:-0}" == "1" ]]; then
+  if [[ "${LUC_WORKSPACE_FONT_EXPLICIT:-0}" == "1" ]]; then
     return 0
   fi
   if fc-list 2>/dev/null | grep -qi 'JetBrains Mono'; then
-    DWM_FONT="JetBrains Mono"
+    LUC_WORKSPACE_FONT="JetBrains Mono"
   else
-    DWM_FONT="monospace"
+    LUC_WORKSPACE_FONT="monospace"
   fi
-  warn "Se usará la fuente '$DWM_FONT' en bspwm porque la Nerd Font no está disponible."
+  warn "Se usará la fuente '$LUC_WORKSPACE_FONT' en bspwm porque la Nerd Font no está disponible."
 }
 
 install_nerd_font() {
@@ -629,7 +629,7 @@ install_nerd_font() {
     ok "JetBrainsMono Nerd Font ya está instalada"
     return 0
   fi
-  local cache="/var/cache/dwm-setup"
+  local cache="/var/cache/luc-workspace"
   local archive="$cache/JetBrainsMono-${NERD_FONT_VERSION}.tar.xz"
   local target="/usr/local/share/fonts/JetBrainsMonoNerd"
   run_root install -d -m 0755 "$cache"

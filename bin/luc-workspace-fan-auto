@@ -1,16 +1,16 @@
 #!/bin/sh
-# dwm-setup-fan-auto — modo del ventilador automático por temperatura/carga.
+# luc-workspace-fan-auto — modo del ventilador automático por temperatura/carga.
 #
-# Solo actúa si el estado es "auto" (~/.config/dwm-setup/fan-mode).
+# Solo actúa si el estado es "auto" (~/.config/luc-workspace/fan-mode).
 #   sube a overboost si temp >= FAN_TEMP_HIGH o cpu >= FAN_LOAD_HIGH
 #   baja a normal     si temp <= FAN_TEMP_LOW  y cpu <  FAN_LOAD_LOW
 # con histéresis y ventanas de confirmación por muestras.
 set -u
 
-HELPER=${DWM_SETUP_FAN_HELPER:-/usr/local/bin/dwm-setup-fan-mode}
-CONF_DIR=${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup
+HELPER=${LUC_WORKSPACE_FAN_HELPER:-/usr/local/bin/luc-workspace-fan-mode}
+CONF_DIR=${XDG_CONFIG_HOME:-$HOME/.config}/luc-workspace
 STATE=$CONF_DIR/fan-mode
-CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/dwm-setup
+CACHE_DIR=${XDG_CACHE_HOME:-$HOME/.cache}/luc-workspace
 EFFECTIVE=$CACHE_DIR/fan-effective
 
 POLL=${FAN_POLL:-5}

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Instalación de configuraciones de usuario y de sesión (fase 1b: bspwm+polybar).
+# Instalación de configuraciones de usuario y de sesión (bspwm + polybar).
 
 # Crea los directorios XDG del usuario (Descargas, Documentos, Imágenes...).
 ensure_user_dirs() {
@@ -35,9 +35,9 @@ install_user_configs() {
     log "[dry-run] preparar ~/.local/share/xorg (0700) para el log de Xorg sin root"
     log "[dry-run] instalar /usr/local/bin/desktop-safe, desktop-doctor y theme-mode"
     log "[dry-run] instalar ~/.local/bin/herdr-close si Herdr está instalado"
-    log "[dry-run] instalar plantillas y paletas en ~/.local/share/dwm-setup"
-    log "[dry-run] crear ~/.config/dwm-setup/recording.conf si no existe (audio mix/system/mic)"
-    log "[dry-run] crear ~/.config/dwm-setup/display.conf si no existe (layout, refresh auto)"
+    log "[dry-run] instalar plantillas y paletas en ~/.local/share/luc-workspace"
+    log "[dry-run] crear ~/.config/luc-workspace/recording.conf si no existe (audio mix/system/mic)"
+    log "[dry-run] crear ~/.config/luc-workspace/display.conf si no existe (layout, refresh auto)"
     log "[dry-run] corregir propietario de ~/.config, ~/.local y ~/.config-backup"
     log "[dry-run] asociar PDF→zathura, imágenes→feh y vídeo→VLC (xdg-mime)"
     return 0
@@ -59,16 +59,16 @@ install_user_configs() {
 
   # Config de grabación y pantalla: se crean una vez y no se pisan si el
   # usuario las edita.
-  make_user_dir "$home/.config/dwm-setup"
-  if [[ ! -f "$home/.config/dwm-setup/recording.conf" ]]; then
+  make_user_dir "$home/.config/luc-workspace"
+  if [[ ! -f "$home/.config/luc-workspace/recording.conf" ]]; then
     run_root install -D -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" \
       "$PROJECT_ROOT/templates/recording/recording.conf" \
-      "$home/.config/dwm-setup/recording.conf"
+      "$home/.config/luc-workspace/recording.conf"
   fi
-  if [[ ! -f "$home/.config/dwm-setup/display.conf" ]]; then
+  if [[ ! -f "$home/.config/luc-workspace/display.conf" ]]; then
     run_root install -D -m 0644 -o "$TARGET_USER" -g "$TARGET_GROUP" \
       "$PROJECT_ROOT/templates/display/display.conf" \
-      "$home/.config/dwm-setup/display.conf"
+      "$home/.config/luc-workspace/display.conf"
   fi
   # Xorg log dir (para startx sin root)
   run_root install -d -m 0700 -o "$TARGET_USER" -g "$TARGET_GROUP" \
@@ -98,7 +98,7 @@ install_user_configs() {
   install_file_associations
 
   # Restos de la barra anterior: ya no se usan (el backup ya se hizo antes).
-  run_root rm -rf "/usr/local/share/fonts/dwm-setup"
+  run_root rm -rf "/usr/local/share/fonts/luc-workspace"
   run_root rm -rf "$home/.local/share/fonts/DesktopLogo"
   run_user fc-cache -f "$home/.local/share/fonts" >/dev/null 2>&1 || true
   run_root fc-cache -f /usr/local/share/fonts >/dev/null 2>&1 || true
@@ -159,17 +159,17 @@ write_user_file() {
     return 0
   fi
 
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-write.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-write.XXXXXX")
   printf '%s\n' "$content" >"$tmp"
   run_root install -D -m "$perms" -o "$TARGET_USER" -g "$TARGET_GROUP" "$tmp" "$dst"
   rm -f -- "$tmp"
 }
 
-# Instala en ~/.local/share/dwm-setup lo que necesita theme-mode para
+# Instala en ~/.local/share/luc-workspace lo que necesita theme-mode para
 # re-renderizar sin acceso al repo ni a sudo.
 install_theme_store() {
   local home="$TARGET_HOME"
-  local store="$home/.local/share/dwm-setup"
+  local store="$home/.local/share/luc-workspace"
   local rel profile
   local -a template_files=(
     "templates/polybar/config.ini.in"
@@ -217,7 +217,7 @@ install_theme_store() {
   local mode="dark" tmp
   [[ "$THEME_NAME" == "latte" ]] && mode="light"
 
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-render-env.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-render-env.XXXXXX")
   {
     polybar_common_vars
   } >"$tmp"
@@ -225,14 +225,14 @@ install_theme_store() {
     "$tmp" "$store/render.env"
   rm -f -- "$tmp"
 
-  make_user_dir "$home/.config/dwm-setup"
-  write_user_file "$mode" "$home/.config/dwm-setup/mode" 0644
+  make_user_dir "$home/.config/luc-workspace"
+  write_user_file "$mode" "$home/.config/luc-workspace/mode" 0644
   write_user_file "$(
     printf 'GTK_THEME=%s\n' "$THEME_GTK"
     printf 'ICON_THEME=%s\n' "$THEME_ICONS"
     printf 'MODE=%s\n' "$mode"
     printf 'THEME=%s\n' "$THEME_NAME"
-  )" "$home/.config/dwm-setup/gtk.env" 0644
+  )" "$home/.config/luc-workspace/gtk.env" 0644
 
   run_root chown -R "$TARGET_USER:$TARGET_GROUP" "$store"
   ok "theme-mode: plantillas y paletas en $store"

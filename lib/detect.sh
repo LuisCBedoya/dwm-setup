@@ -24,11 +24,11 @@ BACKLIGHT=""
 HAS_WIFI=0
 HAS_AUDIO=0
 ROOT_FSTYPE="unknown"
-DWM_KEYMAP="${DWM_KEYMAP:-latam}"
-DWM_FONT="${DWM_FONT:-JetBrainsMono Nerd Font}"
-DWM_FONT_EXPLICIT="${DWM_FONT_EXPLICIT:-0}"
-DWM_FONT_SIZE="${DWM_FONT_SIZE:-10}"
-DWM_RESOLUTION="${DWM_RESOLUTION:-}"
+LUC_WORKSPACE_KEYMAP="${LUC_WORKSPACE_KEYMAP:-latam}"
+LUC_WORKSPACE_FONT="${LUC_WORKSPACE_FONT:-JetBrainsMono Nerd Font}"
+LUC_WORKSPACE_FONT_EXPLICIT="${LUC_WORKSPACE_FONT_EXPLICIT:-0}"
+LUC_WORKSPACE_FONT_SIZE="${LUC_WORKSPACE_FONT_SIZE:-10}"
+LUC_WORKSPACE_RESOLUTION="${LUC_WORKSPACE_RESOLUTION:-}"
 
 detect_os() {
   if [[ ! -r /etc/os-release ]]; then
@@ -148,8 +148,8 @@ detect_secure_boot() {
 }
 
 detect_resolution() {
-  if [[ -n "$DWM_RESOLUTION" ]]; then
-    RESOLUTION="$DWM_RESOLUTION"
+  if [[ -n "$LUC_WORKSPACE_RESOLUTION" ]]; then
+    RESOLUTION="$LUC_WORKSPACE_RESOLUTION"
     return 0
   fi
   local status modes first
@@ -160,7 +160,7 @@ detect_resolution() {
     if [[ -r "$modes" ]]; then
       first=$(head -n 1 "$modes" 2>/dev/null || true)
       if [[ -n "$first" ]]; then
-        DWM_RESOLUTION="$first"
+        LUC_WORKSPACE_RESOLUTION="$first"
         RESOLUTION="$first"
         return 0
       fi
@@ -169,7 +169,7 @@ detect_resolution() {
   if command -v xrandr >/dev/null 2>&1 && [[ -n "${DISPLAY:-}" ]]; then
     first=$(xrandr --current 2>/dev/null | awk '/ connected/ {getline; print $1; exit}')
     if [[ -n "$first" ]]; then
-      DWM_RESOLUTION="$first"
+      LUC_WORKSPACE_RESOLUTION="$first"
       RESOLUTION="$first"
     fi
   fi

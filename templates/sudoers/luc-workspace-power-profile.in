@@ -1,0 +1,3 @@
+# luc-workspace: perfil de energía (gobernador + EPP + suelo) para el daemon
+# de energía y el clic del módulo governor. Solo este binario exacto.
+@USER@ ALL=(root) NOPASSWD: /usr/local/bin/luc-workspace-power-profile

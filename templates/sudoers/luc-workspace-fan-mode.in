@@ -1,0 +1,3 @@
+# luc-workspace: el módulo polybar "fan" cambia el modo del ventilador.
+# Solo este binario exacto; no ampliar.
+@USER@ ALL=(root) NOPASSWD: /usr/local/bin/luc-workspace-fan-mode

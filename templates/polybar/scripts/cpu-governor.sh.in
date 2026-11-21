@@ -4,11 +4,11 @@
 # re-renderizado por theme-mode).
 set -u
 
-CPUDIR=${DWM_SETUP_CPU_SYS:-/sys/devices/system/cpu}
-HELPER=${DWM_SETUP_CPU_HELPER:-/usr/local/bin/dwm-setup-cpu-governor}
-POWER_HELPER=${DWM_SETUP_POWER_HELPER:-/usr/local/bin/dwm-setup-power-profile}
+CPUDIR=${LUC_WORKSPACE_CPU_SYS:-/sys/devices/system/cpu}
+HELPER=${LUC_WORKSPACE_CPU_HELPER:-/usr/local/bin/luc-workspace-cpu-governor}
+POWER_HELPER=${LUC_WORKSPACE_POWER_HELPER:-/usr/local/bin/luc-workspace-power-profile}
 ACCENT='@COLOR_BAR_ACCENT@'
-NOTIFY=${DWM_SETUP_NOTIFY:-notify-send}
+NOTIFY=${LUC_WORKSPACE_NOTIFY:-notify-send}
 
 # Iconos de la fuente (JetBrainsMono Nerd Font), verificados por charmap.
 ICON_PERF="󰢚 "     # alien (U+F089A)

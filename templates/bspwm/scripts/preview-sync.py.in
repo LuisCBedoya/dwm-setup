@@ -3,14 +3,14 @@
 #
 # Herdr no recorta las ventanas X11 de ueberzug (ranger/ytwatch): al cambiar
 # de pestaña, la imagen de la pestaña anterior se queda encima. Los wrappers
-# de ueberzug etiquetan sus ventanas con _DWM_SETUP_TAB (la pestaña real que
+# de ueberzug etiquetan sus ventanas con _LUC_WORKSPACE_TAB (la pestaña real que
 # las creó, aunque esté oculta); este proceso las mapea/desmapea al cambiar
 # de pestaña. El contenido se conserva al volver (X11 mantiene el backing
 # store de la ventana).
 #
 # Si el daemon ve una ventana antes de que el wrapper la etiquete, le pone
-# _DWM_SETUP_TAB_FALLBACK con la pestaña enfocada; el wrapper la sobrescribe
-# con su HERDR_TAB_ID y borra el marcador. _DWM_SETUP_HIDDEN distingue las
+# _LUC_WORKSPACE_TAB_FALLBACK con la pestaña enfocada; el wrapper la sobrescribe
+# con su HERDR_TAB_ID y borra el marcador. _LUC_WORKSPACE_HIDDEN distingue las
 # ventanas que ocultó el daemon de las que el cliente desmapeó a propósito.
 #
 # Solo gestiona overlays que descienden de la ventana de kitty que ejecuta
@@ -27,9 +27,9 @@ import shutil
 import subprocess
 import time
 
-PROP = "_DWM_SETUP_TAB"
-FALLBACK = "_DWM_SETUP_TAB_FALLBACK"
-HIDDEN = "_DWM_SETUP_HIDDEN"
+PROP = "_LUC_WORKSPACE_TAB"
+FALLBACK = "_LUC_WORKSPACE_TAB_FALLBACK"
+HIDDEN = "_LUC_WORKSPACE_HIDDEN"
 POLL = 0.2
 KITTY_CACHE_TTL = 5.0
 WINDOW_RE = re.compile(

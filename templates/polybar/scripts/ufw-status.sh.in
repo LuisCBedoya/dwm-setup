@@ -6,7 +6,7 @@
 LC_ALL=C
 export LC_ALL
 
-UFW_HELPER=${UFW_HELPER:-/usr/local/bin/dwm-setup-ufw}
+UFW_HELPER=${UFW_HELPER:-/usr/local/bin/luc-workspace-ufw}
 UFW_BIN=${UFW_BIN:-/usr/sbin/ufw}
 
 [ -x "$UFW_BIN" ] || exit 0

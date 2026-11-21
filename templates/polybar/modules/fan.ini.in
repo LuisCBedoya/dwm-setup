@@ -3,7 +3,7 @@
 type = custom/script
 exec = @HOME@/.config/polybar/scripts/fan-mode.sh status
 interval = 5
-exec-if = /usr/local/bin/dwm-setup-fan-mode supported
+exec-if = /usr/local/bin/luc-workspace-fan-mode supported
 format = <label>
 format-padding = 1
 format-font = 1

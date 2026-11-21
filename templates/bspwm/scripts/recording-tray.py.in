@@ -14,7 +14,7 @@ try:
 except Exception:
     sys.exit(1)
 
-STATE = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "dwm-screen-record")
+STATE = os.path.join(os.environ.get("XDG_RUNTIME_DIR", "/tmp"), "luc-workspace-screen-record")
 PIDFILE = os.path.join(STATE, "ffmpeg.pid")
 STARTFILE = os.path.join(STATE, "start")
 OUTFILE = os.path.join(STATE, "output")

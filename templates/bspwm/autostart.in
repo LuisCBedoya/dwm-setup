@@ -4,7 +4,7 @@
 
 set -u
 
-LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dwm-setup"
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/luc-workspace"
 mkdir -p "$LOG_DIR" 2>/dev/null || true
 LOG_FILE="$LOG_DIR/session.log"
 exec >>"$LOG_FILE" 2>&1
@@ -92,11 +92,11 @@ fi
 # --- Teclado ---
 setxkbmap @KEYMAP@ 2>/dev/null || true
 
-# --- Tema GTK e iconos (según el modo activo en ~/.config/dwm-setup/gtk.env) ---
+# --- Tema GTK e iconos (según el modo activo en ~/.config/luc-workspace/gtk.env) ---
 if command -v gsettings >/dev/null 2>&1; then
   gtk_theme="catppuccin-mocha-black"
   icon_theme="Catppuccin-Mocha"
-  gtk_env_file="$HOME/.config/dwm-setup/gtk.env"
+  gtk_env_file="$HOME/.config/luc-workspace/gtk.env"
   if [ -f "$gtk_env_file" ]; then
     gtk_theme=$(sed -n 's/^GTK_THEME=//p' "$gtk_env_file" | head -1)
     icon_theme=$(sed -n 's/^ICON_THEME=//p' "$gtk_env_file" | head -1)
@@ -114,13 +114,13 @@ fi
 xsetroot -cursor_name left_ptr &
 
 # --- Daemons de energía y ventilador (perfiles automáticos) ---
-if [ -x "$HOME/.local/bin/dwm-setup-power-auto" ] &&
-   ! pgrep -f "$HOME/.local/bin/dwm-setup-power-auto" >/dev/null 2>&1; then
-  "$HOME/.local/bin/dwm-setup-power-auto" &
+if [ -x "$HOME/.local/bin/luc-workspace-power-auto" ] &&
+   ! pgrep -f "$HOME/.local/bin/luc-workspace-power-auto" >/dev/null 2>&1; then
+  "$HOME/.local/bin/luc-workspace-power-auto" &
 fi
-if [ -x "$HOME/.local/bin/dwm-setup-fan-auto" ] &&
-   ! pgrep -f "$HOME/.local/bin/dwm-setup-fan-auto" >/dev/null 2>&1; then
-  "$HOME/.local/bin/dwm-setup-fan-auto" &
+if [ -x "$HOME/.local/bin/luc-workspace-fan-auto" ] &&
+   ! pgrep -f "$HOME/.local/bin/luc-workspace-fan-auto" >/dev/null 2>&1; then
+  "$HOME/.local/bin/luc-workspace-fan-auto" &
 fi
 
 # --- Previews de ueberzug (ranger/ytwatch) en su pestaña de Herdr ---

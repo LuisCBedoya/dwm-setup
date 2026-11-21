@@ -8,7 +8,7 @@
 install_bluetooth_defaults() {
   section "Bluetooth (apagado por defecto)"
 
-  local conf="${DWM_SETUP_BLUETOOTH_CONF:-/etc/bluetooth/main.conf}"
+  local conf="${LUC_WORKSPACE_BLUETOOTH_CONF:-/etc/bluetooth/main.conf}"
   local tmp
 
   if dry_run; then
@@ -23,7 +23,7 @@ install_bluetooth_defaults() {
   fi
 
   backup_root "$conf"
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-bluetooth.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-bluetooth.XXXXXX")
   awk '
     BEGIN { policy = 0; done = 0 }
     /^\[Policy\]/ { policy = 1; print; next }

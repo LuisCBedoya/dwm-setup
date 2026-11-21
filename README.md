@@ -1,13 +1,13 @@
-# bspwm + polybar · Debian 13 (fase 1b)
+# luc-workspace · bspwm + polybar · Debian 13
 
 Instalador reproducible de un escritorio mínimo sobre **Debian 13 (trixie)**:
 Xorg, bspwm, sxhkd, polybar, dunst, rofi, kitty, xwallpaper,
 flameshot, i3lock/xss-lock, PipeWire, cámara UVC y montaje de discos
 extraíbles con notificación.
 
-> **Estado:** fase 1b implementada y validada en la sesión viva del
-> 2026-10-24 (Debian 13, Intel + NVIDIA, 1920x1080). Falta la validación
-> desde cero en una VM Debian 13 minimal y subir el repositorio.
+> **Estado:** escritorio implementado y validado en la sesión viva del
+> 2026-10-24 (Debian 13, Intel + NVIDIA, 1920x1080). Versión 1.0.0.
+> Falta la validación desde cero en una VM Debian 13 minimal.
 >
 > La sesión se inicia **a mano** con `startx` desde TTY. No se instala
 > display manager ni auto-login.
@@ -37,7 +37,7 @@ Incluido:
 - **Pantallas**: `display-setup.sh` detecta los monitores conectados y usa
   su **resolución preferida (EDID)**; dentro de ella aplica la política
   `auto`: **120 Hz** (o 119.88) si el monitor lo ofrece, si no **60 Hz**
-  (o 59.94), y si no la máxima disponible. `~/.config/dwm-setup/display.conf`
+  (o 59.94), y si no la máxima disponible. `~/.config/luc-workspace/display.conf`
   permite fijar `layout=extend|mirror` y `refresh=auto|max|preferred|<Hz>`.
   Un watcher sobre `/sys/class/drm` re-aplica la política al conectar o
   desconectar un monitor (sin sondeo DDC) y refuerza el no-blanqueo. Brave usa **VA-API** para decodificar vídeo
@@ -70,7 +70,7 @@ Incluido:
   sistema con el micrófono**, usando el sink y el source por defecto
   (misma prioridad que `audio-watch`: jack > USB/BT > HDMI > interno).
   Guarda `grabacion-YYYY-MM-DD_HH-MM-SS.mkv`. El modo se cambia en
-  `~/.config/dwm-setup/recording.conf` (`mix`, `system` o `mic`). Muestra
+  `~/.config/luc-workspace/recording.conf` (`mix`, `system` o `mic`). Muestra
   un `● REC` (punto rojo, texto normal) en el módulo `recording` de
   polybar, que solo aparece mientras grabas.
 - Pantalla siempre encendida: sin salvapantallas ni DPMS por inactividad.
@@ -103,11 +103,11 @@ Incluido:
   (Alt+Q cierra pane → pestaña); ranger y ytwatch muestran sus previews
   reales dentro de sus panes.
 - **Avisos de YouTube por dunst**: timer de usuario
-  (`dwm-setup-yt-update-notify.timer`, 13:00 diario; si el PC estaba
+  (`luc-workspace-yt-update-notify.timer`, 13:00 diario; si el PC estaba
   apagado, corre al encender) que
   avisa con un solo toast si yt-dlp, ytwatch o ueberzugpp están viejos.
   No toca APT ni el módulo `updates` de la barra.
-- `vm.swappiness = 10` por `/etc/sysctl.d/99-dwm-setup-swappiness.conf`
+- `vm.swappiness = 10` por `/etc/sysctl.d/99-luc-workspace-swappiness.conf`
   (23 GB de RAM: menos swap y SSD más tranquilo).
 - Arranque más corto (`lib/boot.sh`): `GRUB_TIMEOUT=0` +
   `GRUB_TIMEOUT_STYLE=hidden` (Shift/Esc muestra el menú), nvidia fuera
@@ -118,7 +118,7 @@ Incluido:
   `apt-get clean` al final para no dejar GB en `/var/cache/apt`.
 - Límite de carga de la batería al **80 %** (`lib/power.sh`): unidad
   `battery-charge-threshold.service` + helper
-  `dwm-setup-battery-limit`; solo se instala si el hardware expone
+  `luc-workspace-battery-limit`; solo se instala si el hardware expone
   `charge_control_end_threshold` (ASUS/TUF y similares).
   `desktop-doctor` avisa si la salud de la batería baja del 60 %.
 - La barra usa `COLOR_BAR_ACCENT` (mocha `#89b4fa`, latte lavanda
@@ -132,9 +132,9 @@ Incluido:
   o `platform_profile` genérico (quiet/balanced/performance). Se oculta en
   equipos sin soporte y usa un sudoers acotado para el helper. El clic
   cicla `auto → normal → overboost → silent → auto`; en `auto` el daemon
-  `dwm-setup-fan-auto` sube a overboost a 80 °C/80 % (10 s) y baja a
+  `luc-workspace-fan-auto` sube a overboost a 80 °C/80 % (10 s) y baja a
   normal a 70 °C/<40 % (30 s).
-- Perfil de energía automático (`dwm-setup-power-auto`): con cargador
+- Perfil de energía automático (`luc-workspace-power-auto`): con cargador
   `performance` + EPP performance; con batería `powersave` + EPP
   `balance_performance` + suelo de 1.2 GHz (sin la lentitud del powersave
   puro). El clic del módulo `governor` aplica el mismo perfil completo.
@@ -168,8 +168,8 @@ No incluido todavía:
 sudo apt update
 sudo apt install -y git
 
-git clone <URL_DEL_REPOSITORIO> dwm-setup
-cd dwm-setup
+git clone <URL_DEL_REPOSITORIO> luc-workspace
+cd luc-workspace
 chmod +x install.sh
 
 # 1. Ver el plan sin tocar nada
@@ -191,6 +191,24 @@ pide `sudo -v` una vez y usa `sudo` para las operaciones de sistema.
 de `sudo` caduca durante una instalación larga, vuelve a pedir la
 contraseña; nunca se almacena.
 
+## Migrar desde `dwm-setup`
+
+Si ya tienes una instalación anterior con el nombre viejo:
+
+```sh
+cd luc-workspace
+sudo ./bin/luc-workspace-migrate --dry-run
+sudo ./bin/luc-workspace-migrate
+sudo reboot
+```
+
+El script mueve configuraciones, logs, cachés y backups a `luc-workspace`,
+conserva los backups antiguos en `luc-workspace/legacy/`, elimina helpers,
+units, sudoers, modprobe, sysctl, WirePlumber y policy de Brave con el
+nombre viejo, y ejecuta el instalador nuevo. Es idempotente. Cierra Brave
+antes de migrar. Después del reinicio, entra con `startx` y comprueba con
+`desktop-doctor`.
+
 ## Opciones
 
 | Opción | Efecto |
@@ -205,7 +223,7 @@ contraseña; nunca se almacena.
 | `./install.sh --help` | Ayuda |
 | `./install.sh --version` | Versión |
 
-Si ya existe `~/.config/dwm-setup/mode`, el instalador conserva el modo
+Si ya existe `~/.config/luc-workspace/mode`, el instalador conserva el modo
 guardado (`dark`/`light`) y no lo cambia; `--theme` lo fuerza.
 
 Opciones avanzadas: `--user`, `--home`, `--nvidia`, `--no-nvidia`,
@@ -244,11 +262,11 @@ y `--debug`.
 
 ### Backups y logs
 
-- Sistema: `/var/backups/dwm-setup/<timestamp>/`
-- Usuario: `~/.config-backup/dwm-setup/<timestamp>/`
-- Log: `~/.local/state/dwm-setup/install-<timestamp>.log`
-  (fallback a `~/.cache/dwm-setup/`)
-- Log de sesión (autostart): `~/.local/state/dwm-setup/session.log`
+- Sistema: `/var/backups/luc-workspace/<timestamp>/`
+- Usuario: `~/.config-backup/luc-workspace/<timestamp>/`
+- Log: `~/.local/state/luc-workspace/install-<timestamp>.log`
+  (fallback a `~/.cache/luc-workspace/`)
+- Log de sesión (autostart): `~/.local/state/luc-workspace/session.log`
 
 Los backups de usuario se hacen antes de renderizar. Si algo falla, la
 versión anterior está en `~/.config-backup/`.
@@ -260,7 +278,7 @@ hace `exec bspwm`; `bspwmrc` lanza sxhkd y el `autostart` interno, que
 levanta picom (vsync), polybar, dunst, xwallpaper, udiskie, xss-lock,
 lxpolkit y el notificador de batería baja, y desactiva el
 salvapantallas/DPMS con `xset s off` y `xset -dpms`. La CPU arranca en
-`performance` con la unidad `dwm-setup-cpu-governor.service` y se alterna
+`performance` con la unidad `luc-workspace-cpu-governor.service` y se alterna
 desde la barra.
 
 ```sh
@@ -272,7 +290,7 @@ Si algo falla, entra por `Ctrl+Alt+F3` y revisa:
 
 ```sh
 desktop-doctor
-less ~/.local/state/dwm-setup/session.log
+less ~/.local/state/luc-workspace/session.log
 ```
 
 ### Almacenamiento extraíble
@@ -388,7 +406,7 @@ Si algo falla:
 
 1. Entra por una TTY (`Ctrl+Alt+F3`).
 2. Ejecuta `startx`.
-3. Revisa `journalctl -b` y `~/.local/state/dwm-setup/`.
+3. Revisa `journalctl -b` y `~/.local/state/luc-workspace/`.
 4. Comprueba que `~/.config/bspwm/bspwmrc` tiene permiso de ejecución.
 
 ## Uso diario
@@ -473,7 +491,7 @@ de audio de confianza (`Icon: audio*`). Con el perfil automático, el
 micrófono del headset se activa solo mientras una aplicación graba y
 vuelve a A2DP al terminar. El audio Bluetooth usa `libspa-0.2-bluetooth` y
 `rtkit`; si el pareo falla, el error real queda en
-`~/.local/state/dwm-setup/bluetooth.log`. UFW
+`~/.local/state/luc-workspace/bluetooth.log`. UFW
 muestra `on`/`off` y el número de reglas; su menú permite ver estado y
 reglas, activar, desactivar y recargar. UFW mantiene `22/tcp` permitido
 para no cambiar el acceso SSH.
@@ -567,7 +585,7 @@ herdr
 en una kitty; `Super+Return` sigue abriendo kitty. El instalador deja
 `~/.config/herdr/config.toml` con los atajos actuales (`Alt+K/N/Q`,
 `Ctrl+Alt+D`; `Alt+Q` cierra pane → pestaña con `herdr-close`), el tema
-de la paleta activa y `~/.local/lib/dwm-setup/preview_tag.py`, que ata
+de la paleta activa y `~/.local/lib/luc-workspace/preview_tag.py`, que ata
 cada preview a su pestaña real. `theme-mode` actualiza el tema en
 caliente y ranger/ytwatch muestran sus previews reales dentro de Herdr.
 Con `--no-herdr` se omite el bloque.
@@ -634,7 +652,7 @@ brave-theme status     # comprueba que Brave usa «Usar GTK»
 ```
 
 `theme-mode` re-renderiza polybar A/B, kitty, dunst, rofi, zathura, bspwm,
-GTK, xsettingsd y VLC desde `~/.local/share/dwm-setup/`, y recarga en
+GTK, xsettingsd y VLC desde `~/.local/share/luc-workspace/`, y recarga en
 caliente polybar, dunst, los bordes de bspwm, el **wallpaper del modo**,
 kitty y **xsettingsd** (`SIGHUP`). **No pide sudo**: los temas ya están
 instalados. `xsettingsd` publica el `Net/ThemeName` del modo y así **Brave
@@ -710,7 +728,7 @@ Chromium **no soporta `userChrome`/CSS de UI**:
 el aspecto es el del tema GTK y no replica el minimalismo que tenía
 Firefox; algunos controles legacy de Chromium siguen en azul Google.
 
-La telemetría se apaga por `/etc/brave/policies/managed/dwm-setup.json`
+La telemetría se apaga por `/etc/brave/policies/managed/luc-workspace.json`
 (P3A, stats ping, Web Discovery, Rewards, Wallet, News, Talk, VPN, Leo,
 metrics/crash, UKM, sugerencias y surveys) y `BookmarkBarEnabled: false`
 quita la barra de marcadores.
@@ -719,8 +737,8 @@ La interfaz va limpia (`lib/brave.sh` → `install_brave_minimal`): NTP sin
 reloj, estadísticas, noticias, Rewards, VPN, patrocinados ni fondos; sin
 iconos de Rewards/Wallet/Leo/Today/marcadores/sidebar/tab-search; pestañas
 verticales sin scrollbar ni botón de plegado y con la × oculta. Además la
-NTP se sustituye por `/usr/share/dwm-setup/newtab.html`, un symlink a
-`~/.local/share/dwm-setup/newtab.html` (fondo liso del modo activo: Mocha
+NTP se sustituye por `/usr/share/luc-workspace/newtab.html`, un symlink a
+`~/.local/share/luc-workspace/newtab.html` (fondo liso del modo activo: Mocha
 Black en oscuro y Latte en claro, sin buscador ni sitios) con la policy
 `NewTabPageLocation`. `theme-mode` re-renderiza la NTP sin `sudo`; las
 pestañas ya abiertas necesitan recarga, las nuevas salen con el color
@@ -728,7 +746,7 @@ correcto. Chromium no permite CSS de UI, así que el puzzle de extensiones,
 el avatar y el escudo de Shields siguen ahí.
 
 SurfingKeys viene `force_installed` desde las policies. Su configuración vive
-en `~/.config/dwm-setup/surfingkeys.js`; se pega **una vez** en SurfingKeys →
+en `~/.config/luc-workspace/surfingkeys.js`; se pega **una vez** en SurfingKeys →
 Ajustes → Advanced mode → editor → Save. No se puede automatizar: la
 extensión no lee archivos locales sin native host. Conserva el mapa de
 siempre: `o` (búsqueda Google, alias `go`), `O` (pestaña nueva), `b`
@@ -787,7 +805,8 @@ lib/theme.sh               Paletas (Mocha Black, Latte) y render
 lib/audio.sh               Quirk ALC255 condicionado por hardware
 bin/desktop-safe           Acciones de sesión
 bin/desktop-doctor         Diagnóstico y cámara (POSIX sh)
-bin/dwm-setup-ufw          Helper root acotado del módulo UFW
+bin/luc-workspace-ufw      Helper root acotado del módulo UFW
+bin/luc-workspace-migrate  Migración de dwm-setup a luc-workspace
 bin/theme-mode             Cambio dark/light en caliente
 bin/brave-theme            Asegura «Usar GTK» en Brave (sin sudo)
 bin/yt-play                Audio o vídeo de YouTube (URL o búsqueda con fzf)
@@ -846,7 +865,7 @@ docs/                      Hardware y testing
 - Se instala Brave como navegador del escritorio; no se instalan IDE,
   cliente de correo ni reproductores de música locales. El streaming de
   YouTube se hace con `yt-play` y, opcionalmente, `ytwatch` (TUI).
-- `/etc/brave/policies/managed/dwm-setup.json` apaga la telemetría de Brave y
+- `/etc/brave/policies/managed/luc-workspace.json` apaga la telemetría de Brave y
   fuerza SurfingKeys; los temas Catppuccin Mocha y Latte quedan instalados
   (`normal_installed`) como opcionales. Brave usa «Usar GTK» y sigue el
   tema del modo por `xsettingsd`.

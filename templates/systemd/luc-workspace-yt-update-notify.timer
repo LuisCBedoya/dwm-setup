@@ -1,5 +1,5 @@
 [Unit]
-Description=dwm-setup: chequeo diario de yt-dlp/ytwatch (aviso por dunst)
+Description=luc-workspace: chequeo diario de yt-dlp/ytwatch (aviso por dunst)
 
 [Timer]
 OnCalendar=*-*-* 13:00:00

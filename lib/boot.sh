@@ -66,7 +66,7 @@ drop_nvidia_boot_module() {
 # La limpieza de /tmp no corre en el arranque, sino una hora después.
 defer_tmpfiles_clean() {
   local dir=/etc/systemd/system/systemd-tmpfiles-clean.timer.d
-  local conf="$dir/10-dwm-setup.conf"
+  local conf="$dir/10-luc-workspace.conf"
   local tmp
 
   if [[ -f "$conf" ]] && grep -qx 'OnBootSec=1h' "$conf"; then
@@ -74,7 +74,7 @@ defer_tmpfiles_clean() {
     return 0
   fi
 
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-setup-tmpfiles.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-tmpfiles.XXXXXX")
   cat >"$tmp" <<'EOF'
 [Timer]
 OnBootSec=1h

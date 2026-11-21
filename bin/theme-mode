@@ -9,14 +9,14 @@
 #   theme-mode --no-reload dark   solo re-renderiza, sin recargar servicios
 #
 # Re-renderiza las configuraciones desde las plantillas instaladas en
-# ~/.local/share/dwm-setup y recarga lo que se puede en caliente.
+# ~/.local/share/luc-workspace y recarga lo que se puede en caliente.
 # No necesita sudo: los temas GTK e iconos ya están en /usr/share.
 set -Eeuo pipefail
 
 PROG="theme-mode"
 
-STORE="${DWM_THEME_STORE:-${XDG_DATA_HOME:-$HOME/.local/share}/dwm-setup}"
-CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup"
+STORE="${LUC_WORKSPACE_THEME_STORE:-${XDG_DATA_HOME:-$HOME/.local/share}/luc-workspace}"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/luc-workspace"
 MODE_FILE="$CONFIG_DIR/mode"
 GTK_ENV="$CONFIG_DIR/gtk.env"
 RENDER_ENV="$STORE/render.env"
@@ -150,7 +150,7 @@ render_mode() {
   render_one "xsettingsd/xsettingsd.conf.in" \
     "$h/.config/xsettingsd/xsettingsd.conf" 0644
   render_one "brave/newtab.html.in" \
-    "$h/.local/share/dwm-setup/newtab.html" 0644
+    "$h/.local/share/luc-workspace/newtab.html" 0644
   render_one "vlc/vlcrc.in" "$h/.config/vlc/vlcrc" 0600
 
 }
@@ -417,7 +417,7 @@ update_opencode_theme() {
 
   # Tema custom: Catppuccin con las superficies de mocha-black.
   theme_dir="$HOME_DIR/.config/opencode/themes"
-  theme_src="$HOME_DIR/.local/share/dwm-setup/templates/opencode/mocha-black.json"
+  theme_src="$HOME_DIR/.local/share/luc-workspace/templates/opencode/mocha-black.json"
   if [[ -f "$theme_src" ]]; then
     mkdir -p "$theme_dir" 2>/dev/null || true
     cp "$theme_src" "$theme_dir/mocha-black.json" 2>/dev/null || true
@@ -478,7 +478,7 @@ notify_mode() {
   local mode="$1" theme="$2" brave_rc="${3:-0}" title label
 
   command -v notify-send >/dev/null 2>&1 || return 0
-  [[ "${DWM_THEME_NO_NOTIFY:-0}" == "1" ]] && return 0
+  [[ "${LUC_WORKSPACE_THEME_NO_NOTIFY:-0}" == "1" ]] && return 0
 
   case "$mode" in
     dark) title="Modo oscuro" ;;

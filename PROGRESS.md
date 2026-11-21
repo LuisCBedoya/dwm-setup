@@ -1,10 +1,13 @@
-# Progreso — fase 1b (bspwm + polybar)
+# Progreso — bspwm + polybar
 
-Última actualización: 2026-11-14
+Última actualización: 2026-11-21
+
+> Las entradas anteriores a 2026-11-21 usan el nombre histórico
+> `dwm-setup`. El proyecto actual se llama `luc-workspace`.
 
 ## Resumen
 
-La fase 1b está implementada y validada en la sesión viva del host de
+El escritorio está implementado y validado en la sesión viva del host de
 referencia (Debian 13, Intel UHD 630 + NVIDIA GTX 1050 Ti Mobile,
 1920x1080). El instalador se ha corregido para que los backups se hagan
 antes de escribir, el home quede con el propietario correcto, `bspwmrc` sea
@@ -15,8 +18,9 @@ ejecutable, la barra arranque y la verificación final no falle.
 - Estado de validación real: **sesión viva validada**; falta la instalación
   desde cero en VM Debian 13 minimal.
 - Sesión: `startx` manual desde TTY; sin display manager ni auto-login.
-- Barra A: 12 módulos; B: 14 módulos. Logo StumbleUpon, 5 workspaces,
-  red unificada, servicios systemd y fecha al final.
+- Barra A: 16 módulos (17 con backlight); B: 18 (19 con backlight).
+  Logo StumbleUpon, escritorios dinámicos, red unificada, servicios
+  systemd y fecha al final.
 
 ## Validación viva (2026-10-24)
 
@@ -127,7 +131,7 @@ y movieron `updates` al inicio de la derecha:
 - Apps: `Super+Return` kitty, `Super+Shift+s` scrot región+portapapeles,
   `Super+Shift+p` pcmanfm, `Super+Shift+b` chromium, `Super+Shift+v`
   codium, `Super+Shift+i` ristretto, `Super+Shift+a` lxappearance y
-  `Super+Shift+d` rofi run. Las apps que no están en fase 1 quedan como
+  `Super+Shift+d` rofi run. Las apps no incluidas quedan como
   bindings no-op.
 - `Super+Shift+e` pasa a logout; el editor se mueve a `Super+Shift+v`.
 - `Alt+Tab` / `Alt+Shift+Tab` ciclan ventanas visibles del escritorio.
@@ -564,7 +568,7 @@ Se aplicó una paleta global carbón cálido + azul grisáceo + beige:
 - **Documentación**: `AGENTS.md`, `README.md`, `PROGRESS.md`,
   `docs/testing.md` actualizados; capturas movidas a `docs/images/`.
 
-## Checklist de implementación — fase 1b
+## Checklist de implementación
 
 - [x] Estructura del proyecto (`install.sh`, `lib/`, `bin/`, `templates/`).
 - [x] Detección de Debian/arquitectura/VM/CPU/GPU/Secure Boot/resolución.
@@ -2638,3 +2642,24 @@ UHD 630; sin servicios ni configuración extra.
 - Pestaña temporal cerrada y `/tmp/opencode/preview-test` eliminado.
 - Pendiente: `sudo ./install.sh` para instalar el módulo desde el
   instalador y una instalación desde cero en VM.
+
+### Renombrado a `luc-workspace` — 2026-11-21
+
+- `dwm-setup` pasa a `luc-workspace` en repo, archivos, binarios,
+  unidades systemd, sudoers, modprobe, sysctl, WirePlumber, Brave,
+  rutas de usuario, logs, cachés, backups, notificaciones y variables
+  (`DWM_*`/`DWM_SETUP_*` → `LUC_WORKSPACE_*`).
+- Los átomos X11 de las previews pasan a `_LUC_WORKSPACE_*`.
+- `PROJECT_NAME`, `PROJECT_SLUG` y `PROJECT_VERSION` se centralizan en
+  `lib/common.sh`; `--version` informa `luc-workspace 1.0.0
+  (bspwm+polybar+catppuccin)`.
+- `prune_backup_dir` solo poda directorios `YYYYMMDD-HHMMSS`; los
+  backups viejos se conservan en `luc-workspace/legacy/`.
+- Se añade `bin/luc-workspace-migrate` para migrar una instalación
+  existente con `--dry-run`, mover datos, limpiar artefactos viejos y
+  ejecutar el instalador nuevo.
+- Los ADRs y las entradas antiguas de este archivo conservan el nombre
+  histórico; las instrucciones actuales usan `luc-workspace`.
+- Pendiente: checks estáticos, `--dry-run`, migración en VM, migración
+  en vivo con reinicio, renombrado del repo de GitHub y de la carpeta
+  local.

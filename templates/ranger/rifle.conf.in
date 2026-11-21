@@ -1,4 +1,4 @@
-# Reglas del escritorio dwm-setup
+# Reglas del escritorio luc-workspace
 mime ^text, has nvim = nvim -- "$@"
 ext md|markdown|rst|org|tex|txt|py|js|ts|tsx|jsx|json|yaml|yml|toml|ini|conf|cfg|sh|bash|zsh|fish|rs|go|c|h|cpp|hpp|java|css|scss|html|xml|sql|lua|vim|nix, has nvim = nvim -- "$@"
 ext pdf|djvu|ps|cbz|cbr|epub|mobi|azw3|fb2|fb2.zip, X, flag f = zathura -- "$@"

@@ -65,15 +65,18 @@ check_file "$CONFIG/bspwm/scripts/dunst-position.sh"
 check_file "$CONFIG/bspwm/scripts/wallpaper.sh"
 check_file "$CONFIG/bspwm/scripts/resize-mode.sh"
 check_file "$CONFIG/sxhkd/resize-mode.sxhkdrc"
-check_file "/etc/brave/policies/managed/dwm-setup.json"
-if [ -f /etc/brave/policies/managed/dwm-setup.json ]; then
-  if grep -q '"BraveP3AEnabled": false' /etc/brave/policies/managed/dwm-setup.json; then
+check_file "$CONFIG/luc-workspace/mode"
+check_file "$CONFIG/luc-workspace/recording.conf"
+check_file "$CONFIG/luc-workspace/display.conf"
+check_file "/etc/brave/policies/managed/luc-workspace.json"
+if [ -f /etc/brave/policies/managed/luc-workspace.json ]; then
+  if grep -q '"BraveP3AEnabled": false' /etc/brave/policies/managed/luc-workspace.json; then
     printf '  [OK] telemetría de Brave desactivada por policy\n'
   else
     printf '  [MAL] falta BraveP3AEnabled=false en la política\n'
   fi
-  if grep -q 'gfbliohnnapiefjpjlpjnehglfpaknnc' /etc/brave/policies/managed/dwm-setup.json &&
-     grep -q '"force_installed"' /etc/brave/policies/managed/dwm-setup.json; then
+  if grep -q 'gfbliohnnapiefjpjlpjnehglfpaknnc' /etc/brave/policies/managed/luc-workspace.json &&
+     grep -q '"force_installed"' /etc/brave/policies/managed/luc-workspace.json; then
     printf '  [OK] SurfingKeys force-installed\n'
   else
     printf '  [MAL] SurfingKeys no está forzada en la política\n'

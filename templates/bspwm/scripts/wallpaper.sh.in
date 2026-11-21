@@ -9,7 +9,7 @@ set -u
 
 STATE_DIR="$HOME/.config/bspwm"
 STATE_FILE="$STATE_DIR/wallpaper"
-MODE_FILE="$HOME/.config/dwm-setup/mode"
+MODE_FILE="$HOME/.config/luc-workspace/mode"
 PRIMARY="$HOME/.local/share/wallpapers/wallpaper.png"        # sistema, dark
 ALT="$HOME/.local/share/wallpapers/wallpaper-alt.png"        # sistema, light
 LOCAL_DARK="$HOME/.local/share/wallpapers/local-dark.png"

@@ -1,6 +1,6 @@
 #!/bin/sh
-# dwm-setup-battery-limit — fija el umbral de fin de carga de la batería.
-# Uso: dwm-setup-battery-limit [porcentaje]   (por defecto 80)
+# luc-workspace-battery-limit — fija el umbral de fin de carga de la batería.
+# Uso: luc-workspace-battery-limit [porcentaje]   (por defecto 80)
 # Solo escribe en baterías que expongan charge_control_end_threshold.
 # Sale 1 si no encontró ninguna batería compatible (no rompe nada).
 set -u

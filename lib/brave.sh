@@ -11,13 +11,13 @@ install_brave() {
   if dry_run; then
     log "[dry-run] configurar repo APT oficial de Brave"
     log "[dry-run] instalar brave-browser"
-    log "[dry-run] escribir /etc/brave/policies/managed/dwm-setup.json"
+    log "[dry-run] escribir /etc/brave/policies/managed/luc-workspace.json"
     log "[dry-run] instalar el helper ~/.local/bin/brave-theme"
     log "[dry-run] escribir atajos en el perfil de Brave"
     log "[dry-run] limpiar la interfaz de Brave (NTP, iconos, verticales)"
     log "[dry-run] activar VA-API en Brave (VaapiVideoDecoder)"
-    log "[dry-run] instalar ~/.local/share/dwm-setup/newtab.html y su symlink (NTP del modo)"
-    log "[dry-run] generar ~/.config/dwm-setup/surfingkeys.js (si falta)"
+    log "[dry-run] instalar ~/.local/share/luc-workspace/newtab.html y su symlink (NTP del modo)"
+    log "[dry-run] generar ~/.config/luc-workspace/surfingkeys.js (si falta)"
     log "[dry-run] purgar firefox-esr y limpiar su configuración"
     return 0
   fi
@@ -67,12 +67,12 @@ install_brave_repo() {
 }
 
 # Página de nueva pestaña propia: fondo liso del modo activo, sin buscador
-# ni sitios. Se instala en ~/.local/share/dwm-setup/newtab.html (usuario) y
-# /usr/share/dwm-setup/newtab.html es un symlink; theme-mode la re-renderiza
+# ni sitios. Se instala en ~/.local/share/luc-workspace/newtab.html (usuario) y
+# /usr/share/luc-workspace/newtab.html es un symlink; theme-mode la re-renderiza
 # sin sudo al cambiar de modo. Las pestañas ya abiertas necesitan recarga.
 install_brave_newtab() {
-  local user_target="$TARGET_HOME/.local/share/dwm-setup/newtab.html"
-  local link=/usr/share/dwm-setup/newtab.html
+  local user_target="$TARGET_HOME/.local/share/luc-workspace/newtab.html"
+  local link=/usr/share/luc-workspace/newtab.html
 
   make_user_dir "$(dirname "$user_target")"
   render_theme_template "$PROJECT_ROOT/templates/brave/newtab.html.in" \
@@ -89,7 +89,7 @@ install_brave_newtab() {
 # Catppuccin quedan normal_installed como opcionales: el escritorio usa
 # «Usar GTK» y no depende de los packs de la CWS (ADR-115).
 install_brave_policies() {
-  local policy=/etc/brave/policies/managed/dwm-setup.json
+  local policy=/etc/brave/policies/managed/luc-workspace.json
   local tmp
   tmp=$(mktemp "${TMPDIR:-/tmp}/brave-policy.XXXXXX")
 
@@ -110,7 +110,7 @@ install_brave_policies() {
   "FeedbackSurveysEnabled": false,
   "DomainReliabilityAllowed": false,
   "BookmarkBarEnabled": false,
-  "NewTabPageLocation": "file:///usr/share/dwm-setup/newtab.html",
+  "NewTabPageLocation": "file:///usr/share/luc-workspace/newtab.html",
   "ExtensionSettings": {
     "gfbliohnnapiefjpjlpjnehglfpaknnc": {
       "installation_mode": "force_installed",
@@ -149,7 +149,7 @@ install_brave_theme_helper() {
 }
 
 # Aplica «Usar GTK» al perfil. Se llama después de install_user_configs
-# para que ~/.config/dwm-setup/mode ya exista (status y validación).
+# para que ~/.config/luc-workspace/mode ya exista (status y validación).
 install_brave_theme_state() {
   local helper="$TARGET_HOME/.local/bin/brave-theme"
 
@@ -336,7 +336,7 @@ install_brave_vaapi() {
   tmp=$(mktemp "${TMPDIR:-/tmp}/brave-wrapper.XXXXXX")
   cat >"$tmp" <<'EOF'
 #!/bin/sh
-# Wrapper de dwm-setup: asegura «Usar GTK» y VA-API en la iGPU.
+# Wrapper de luc-workspace: asegura «Usar GTK» y VA-API en la iGPU.
 if [ -x "$HOME/.local/bin/brave-theme" ]; then
   "$HOME/.local/bin/brave-theme" apply --quiet || :
 fi
@@ -365,10 +365,10 @@ EOF
 # Config de SurfingKeys (se pega a mano: sin native host no se puede automatizar).
 install_surfingkeys_config() {
   local home="$TARGET_HOME"
-  local target="$home/.config/dwm-setup/surfingkeys.js"
+  local target="$home/.config/luc-workspace/surfingkeys.js"
   local sk_theme
 
-  make_user_dir "$home/.config/dwm-setup"
+  make_user_dir "$home/.config/luc-workspace"
   if [[ -f "$target" ]]; then
     info "SurfingKeys: se conserva $target"
     return 0
@@ -376,7 +376,7 @@ install_surfingkeys_config() {
 
   sk_theme=$(build_surfingkeys_theme)
   render_theme_template "$PROJECT_ROOT/templates/brave/surfingkeys.js.in" \
-    "$target" 0644 "FONT=$DWM_FONT" "SK_THEME=$sk_theme"
+    "$target" 0644 "FONT=$LUC_WORKSPACE_FONT" "SK_THEME=$sk_theme"
   ok "SurfingKeys: configuración en $target (pégala en la extensión)"
 }
 
@@ -395,7 +395,7 @@ remove_firefox() {
   run_root rm -rf /etc/firefox /etc/firefox-esr /usr/lib/firefox-esr
   rm -f -- "$home/.config/bspwm/scripts/firefox-sidebar.sh"
   rm -rf -- "$home/.config/mozilla" "$home/.mozilla"
-  info "Firefox retirado (backup del perfil en ~/.config-backup/dwm-setup)"
+  info "Firefox retirado (backup del perfil en ~/.config-backup/luc-workspace)"
 }
 
 # Lee una paleta en un subshell y emite sus colores como KEY=VALUE.

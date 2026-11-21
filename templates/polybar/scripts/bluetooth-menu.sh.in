@@ -9,7 +9,7 @@ export LC_ALL
 BT=${BLUETOOTHCTL:-bluetoothctl}
 PACTL=${PACTL:-pactl}
 NOTIFY_SEND=${NOTIFY_SEND:-notify-send}
-LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dwm-setup"
+LOG_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/luc-workspace"
 LOG_FILE="$LOG_DIR/bluetooth.log"
 
 mkdir -p "$LOG_DIR" 2>/dev/null || true

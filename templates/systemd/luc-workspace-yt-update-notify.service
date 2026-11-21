@@ -1,5 +1,5 @@
 [Unit]
-Description=dwm-setup: aviso por dunst de yt-dlp/ytwatch desactualizados
+Description=luc-workspace: aviso por dunst de yt-dlp/ytwatch desactualizados
 Documentation=file://@HOME@/.config/ytwatch/config.toml
 
 [Service]

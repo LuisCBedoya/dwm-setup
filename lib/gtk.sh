@@ -147,7 +147,7 @@ build_icon_theme() {
   run_root install -d -m 0755 "$dst"
   run_root cp -a "$src"/. "$dst"/
 
-  tmp=$(mktemp "${TMPDIR:-/tmp}/dwm-index.XXXXXX")
+  tmp=$(mktemp "${TMPDIR:-/tmp}/luc-workspace-index.XXXXXX")
   sed -e "s/^Name=.*/Name=$name/" \
       -e "s/^Inherits=.*/Inherits=$base/" \
       -e "s|^Directories=.*|Directories=22x22/places,24x24/places,32x32/places,48x48/places,64x64/places|" \

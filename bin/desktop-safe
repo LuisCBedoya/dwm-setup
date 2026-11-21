@@ -16,8 +16,8 @@ case "$action" in
 
     # Respaldo: color de fondo desde la paleta activa; si no, Mocha Black.
     bg="#0d0d14"
-    store="${XDG_DATA_HOME:-$HOME/.local/share}/dwm-setup"
-    mode_file="${XDG_CONFIG_HOME:-$HOME/.config}/dwm-setup/mode"
+    store="${XDG_DATA_HOME:-$HOME/.local/share}/luc-workspace"
+    mode_file="${XDG_CONFIG_HOME:-$HOME/.config}/luc-workspace/mode"
     mode=dark
     if [ -r "$mode_file" ]; then
       mode=$(cat "$mode_file" 2>/dev/null || printf 'dark')

@@ -2,10 +2,10 @@
 # recording-status — indicador de grabación para el módulo polybar recording.
 set -u
 
-state="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record"
+state="${XDG_RUNTIME_DIR:-/tmp}/luc-workspace-screen-record"
 pidfile="$state/ffmpeg.pid"
 startfile="$state/start"
-hidden="${XDG_RUNTIME_DIR:-/tmp}/dwm-screen-record-hidden"
+hidden="${XDG_RUNTIME_DIR:-/tmp}/luc-workspace-screen-record-hidden"
 
 hide_module() {
   [ -e "$hidden" ] && return 0

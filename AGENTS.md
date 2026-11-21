@@ -41,7 +41,7 @@ red, Bluetooth, UFW, volumen y batería. Barra de 30 px con fondo del modo activ
 bloque; temperatura conserva fondo en warning. Se cambia con
 `~/.config/polybar/polybar-variant referencia` o `... actual`.
 
-La fase 1 termina en el escritorio. No implementar todavía:
+El escritorio está terminado. No implementar todavía:
 
 - VS Code y Node/nvm. Neovim sí se usa para editar archivos.
 - Firefox ESR, OpenH264 y \`userChrome\` (sustituidos por Brave, ADR-113).
@@ -64,8 +64,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 4. **No guardar contraseñas.** El instalador usa `sudo -v` y `sudo`; nunca
    escribe credenciales. Debian 13 y x86_64 se validan antes de pedir `sudo`.
 5. **Backups antes de reemplazar.** Sistema:
-   `/var/backups/dwm-setup/<timestamp>/`; usuario:
-   `~/.config-backup/dwm-setup/<timestamp>/`. El backup debe contener la
+   `/var/backups/luc-workspace/<timestamp>/`; usuario:
+   `~/.config-backup/luc-workspace/<timestamp>/`. El backup debe contener la
    versión **anterior**, no la recién renderizada.
 6. **Propiedad correcta del home.** `~/.config`, `~/.local`,
    `~/.config-backup` y los logs pertenecen al usuario, no a root. Usar
@@ -92,8 +92,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 11. **No abrir gestores de archivos automáticamente** al montar USB.
     `udiskie` solo monta y notifica; Thunar se abre con `Super+Shift+f`.
 12. **Mantener las rutas portables.** Las plantillas usan `@HOME@`, `@FONT@`,
-    `@FONT_SIZE@`, `@KEYMAP@`, `@WALLPAPER@`, `@RESOLUTION@`. No hardcodear
-    `/home/luc`.
+    `@FONT_SIZE@`, `@KEYMAP@` y `@WALLPAPER@`. La resolución real la
+    negocia `display-setup.sh` en cada sesión. No hardcodear `/home/luc`.
 13. **No renderizar `@DEFAULT_SINK@`.** Es una cadena literal de `pactl`.
 14. **`bspwmrc` debe ser ejecutable.** bspwm no lo ejecuta si no tiene `+x`;
     sin él no hay sxhkd, polybar ni autostart.
@@ -109,7 +109,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     (`Super+Return`, `Super+Shift+s` scrot región+portapapeles,
     `Super+Shift+d` rofi drun y `Super+d` rofi run, `Super+Shift+p/b/v/i/a`,
     `Alt+Tab`, etc.). Las
-    apps que no están en fase 1 se dejan como bindings no-op. `Super+r`
+    apps no incluidas se dejan como bindings no-op. `Super+r`
     abre el modo resize: `resize-mode.sh` arranca un sxhkd hijo que captura
     solo `h/j/k/l` y `Escape`; `Escape` o 6 s sin teclas lo cierran.
     `Print` captura pantalla completa al portapapeles; `Super+Print` abre el
@@ -146,7 +146,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `pavucontrol` hasta el siguiente cambio. El modo Bluetooth pone el
     sink `bluez_output.*` y el source loopback `bluez_input.*`; con
     `bluetooth.autoswitch-to-headset-profile = true`
-    (`~/.config/wireplumber/wireplumber.conf.d/50-dwm-setup.conf`) HFP se
+    (`~/.config/wireplumber/wireplumber.conf.d/50-luc-workspace.conf`) HFP se
     activa solo mientras una app graba y vuelve a A2DP al terminar. En
     HDMI se usa `output:hdmi-stereo+input:analog-stereo` para conservar el
     micro interno. No arrastrar el volumen de un sink a otro; solo se
@@ -167,7 +167,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `--no-headset-quirk` desactiva. El sonido de dunst usa `sound-theme-freedesktop` y
     `paplay`/`pw-play`; `stack_duplicates = false` hace que cada mensaje
     suene, `gap_size = 6` los separa y `flock` serializa sonidos
-    simultáneos. Las correcciones de modo usan `dwm-setup-silent` (sin
+    simultáneos. Las correcciones de modo usan `luc-workspace-silent` (sin
     sonido); el aviso de inicio se reproduce antes de ffmpeg y el de
     parada después. Las capturas de región usan
     `scrot -s --line mode=edge,color=#FF00FF,width=2,opacity=255` y un
@@ -192,14 +192,14 @@ La fase 1 termina en el escritorio. No implementar todavía:
 
 20b. **Modo de color en caliente.** `theme-mode dark|light|toggle|status`
     cambia entre las dos paletas re-renderizando desde
-    `~/.local/share/dwm-setup` (plantillas y paletas instaladas) y recargando
+    `~/.local/share/luc-workspace` (plantillas y paletas instaladas) y recargando
     polybar, dunst, bspwm, kitty y `xsettingsd`. No debe pedir sudo. Si se
     añade una plantilla con color, hay que incluirla en el store de
     `lib/config.sh` y en `bin/theme-mode`. `i3lock-fancy.sh` es la
     excepción: no tiene colores de tema, no va al store ni a
     `theme-mode`; el instalador lo renderiza y elige el wallpaper en el
     bloqueo. En una reinstalación,
-    `install.sh` conserva `~/.config/dwm-setup/mode` si no se pasa
+    `install.sh` conserva `~/.config/luc-workspace/mode` si no se pasa
     `--theme` (`light`→Latte, `dark`→Mocha Black); así no cambia el
     escritorio ni falla `verify.sh` por paleta. `--theme` lo fuerza.
     kitty se recolorea con
@@ -244,7 +244,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     oficial** de Brave (llave en
     `/usr/share/keyrings/brave-browser-archive-keyring.gpg`, fuente
     `brave-browser-release.list`; autorizado por el usuario, regla 8).
-    `/etc/brave/policies/managed/dwm-setup.json` apaga telemetría
+    `/etc/brave/policies/managed/luc-workspace.json` apaga telemetría
     (P3A, stats ping, Web Discovery, Rewards, Wallet, News, Talk, VPN,
     Leo, metrics/crash, UKM, sugerencias y surveys) y fuerza por
     `ExtensionSettings` SurfingKeys (`gfbliohnnapiefjpjlpjnehglfpaknnc`);
@@ -277,7 +277,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     siguiente). Con Brave abierto ese paso se omite (se pide cerrarlo y
     repetir). `verify.sh` exige las policies y los atajos.
     La config de SurfingKeys se genera en
-    `~/.config/dwm-setup/surfingkeys.js` y se pega una vez a mano: la
+    `~/.config/luc-workspace/surfingkeys.js` y se pega una vez a mano: la
     extensión no lee archivos locales sin native host. Mantiene el mapa
     heredado (`o` = búsqueda Google por el alias `go`, `O` = pestaña
     nueva, `b` = elegir pestaña, `H`/`L` = atrás/adelante). Los
@@ -288,8 +288,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
     root). La interfaz se limpia con `install_brave_minimal`
     (`brave.new_tab_page.*`, iconos de la barra y pestañas verticales);
     `BookmarkBarEnabled: false` quita la barra de marcadores y
-    `NewTabPageLocation` apunta a `/usr/share/dwm-setup/newtab.html`, un
-    symlink a `~/.local/share/dwm-setup/newtab.html` (renderizado desde
+    `NewTabPageLocation` apunta a `/usr/share/luc-workspace/newtab.html`, un
+    symlink a `~/.local/share/luc-workspace/newtab.html` (renderizado desde
     `templates/brave/newtab.html.in` con la paleta activa; sin
     `prefers-color-scheme`, que Chromium 157 no actualiza con GTK para
     contenido web). `theme-mode` la re-renderiza sin sudo; las pestañas
@@ -315,7 +315,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     lock` llama a `i3lock-fancy.sh`, que elige el wallpaper del
     modo/estado (`local-light.png`/`local-dark.png` o los assets), lo
     desenfoca una vez con ImageMagick (`-blur 0x18`) y lo cachea en
-    `~/.cache/dwm-setup/lockscreen-<modo>-0x18.png`; luego usa `i3lock
+    `~/.cache/luc-workspace/lockscreen-<modo>-0x18.png`; luego usa `i3lock
     -i`, sin captura por bloqueo. `theme-mode` no lo re-renderiza; se
     instala desde `templates/` y elige el wallpaper en el bloqueo. Si el
     wallpaper o `convert` fallan,
@@ -351,29 +351,29 @@ La fase 1 termina en el escritorio. No implementar todavía:
     justo tras `cpu` en `modules-right` y en la B en `modules-left`
     tras `day`; cicla la lista leída de `scaling_available_governors`
     (nada hardcodeado): clic → helper
-    `/usr/local/bin/dwm-setup-cpu-governor` vía `sudo -n` + toast dunst.
+    `/usr/local/bin/luc-workspace-cpu-governor` vía `sudo -n` + toast dunst.
     Esa escritura de raíz solo está admitida con el fragmento
-    `/etc/sudoers.d/dwm-setup-cpu-governor` (`NOPASSWD` para ese binario
+    `/etc/sudoers.d/luc-workspace-cpu-governor` (`NOPASSWD` para ese binario
     exacto, validado con `visudo -cf` antes de instalar); no ampliar el
-    sudoers. La unidad `dwm-setup-cpu-governor.service` aplica
+    sudoers. La unidad `luc-workspace-cpu-governor.service` aplica
     `performance` al boot. La carga de la batería se limita al 80 % con
-    `battery-charge-threshold.service` + `dwm-setup-battery-limit`
+    `battery-charge-threshold.service` + `luc-workspace-battery-limit`
     (`lib/power.sh`), solo si existe
     `/sys/class/power_supply/BAT*/charge_control_end_threshold`;
     `desktop-doctor` avisa si la salud cae por debajo del 60 %. El modo
     del ventilador se cicla desde el módulo `fan` (tras `governor` en A,
-    tras `cpu` en B): `dwm-setup-fan-mode` detecta
+    tras `cpu` en B): `luc-workspace-fan-mode` detecta
     `fan_boost_mode`/`throttle_thermal_policy` (normal/overboost/silent)
     o `platform_profile` (quiet/balanced/performance); sin backend el
     módulo se oculta con `exec-if` y no se escribe sudoers. Iconos:
     `U+F0210` normal, `U+F0241` overboost, `U+F0717` silent. Estado en
-    `~/.config/dwm-setup/fan-mode` (`auto` por defecto o `manual:<modo>`);
+    `~/.config/luc-workspace/fan-mode` (`auto` por defecto o `manual:<modo>`);
     el clic cicla `auto → normal → overboost → silent → auto` y
-    `dwm-setup-fan-auto` solo actúa en `auto` (80 °C/80 % 10 s para subir,
+    `luc-workspace-fan-auto` solo actúa en `auto` (80 °C/80 % 10 s para subir,
     70 °C/<40 % 30 s para bajar). Energía:
-    `dwm-setup-power-auto` aplica `performance` con cargador y `powersave`
+    `luc-workspace-power-auto` aplica `performance` con cargador y `powersave`
     + EPP `balance_performance` + suelo 1.2 GHz con batería; el clic del
-    gobernador usa el mismo helper `dwm-setup-power-profile`. Iconos del módulo: `U+F10CB`
+    gobernador usa el mismo helper `luc-workspace-power-profile`. Iconos del módulo: `U+F10CB`
     performance, `U+F0F86` powersave (font-3); el acento performance
     sale de `@COLOR_ACCENT@` en `scripts/cpu-governor.sh` (re-render de
     `theme-mode`, regla 20b). EPP/balanceado queda fuera hasta decisión
@@ -403,7 +403,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     instala ambos en `~/.local/bin` (usuario, sin sudo) — sin ellos el
     timer de avisos no puede revisar ytwatch. **Sin binding de
     sxhkd**: se lanza tecleando `ytwatch`. Un **timer de usuario**
-    `dwm-setup-yt-update-notify.timer` (13:00 diario; `Persistent`
+    `luc-workspace-yt-update-notify.timer` (13:00 diario; `Persistent`
     cubre el arranque después de esa hora) ejecuta
     `bin/yt-update-notify`: corre los dos checkers con
     `--quiet --no-notify` y manda un único toast de dunst; no toca APT
@@ -427,7 +427,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     `ufw` va tras `bluetooth`/`network` en `modules-right` de A y B;
     muestra `on/off` + número de reglas y su menú permite estado,
     reglas, activar, desactivar y recargar. Solo escribe por root con
-    `/usr/local/bin/dwm-setup-ufw` y `/etc/sudoers.d/dwm-setup-ufw`
+    `/usr/local/bin/luc-workspace-ufw` y `/etc/sudoers.d/luc-workspace-ufw`
     (`NOPASSWD` para ese binario exacto, validado con `visudo -cf`);
     no ampliar el sudoers ni aceptar argumentos arbitrarios. El helper
     y `verify.sh` leen el estado real con `ufw status` (`LC_ALL=C`) y
@@ -444,7 +444,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     Antes de conectar se verifica `Paired: yes` y después
     `Connected: yes`, con reintentos (~3 s) porque BlueZ puede tardar en
     reflejarlo; los errores reales se muestran en la notificación
-    y en `~/.local/state/dwm-setup/bluetooth.log`. El menú incluye
+    y en `~/.local/state/luc-workspace/bluetooth.log`. El menú incluye
     `Perfil de audio`: automático (A2DP y micro al grabar), A2DP SBC-XQ
     o HFP/HSP forzado; en todos fija el source loopback
     `bluez_input.*` por defecto. El estado del módulo trunca el nombre a
@@ -477,14 +477,14 @@ La fase 1 termina en el escritorio. No implementar todavía:
     escritorio) el monitor elegido: con uno empieza
     directo y con varios abre un menú rofi con nombre/resolución y
     «Todas». La geometría se lee de
-    `~/.cache/dwm-setup/monitors`, que escribe `display-setup.sh` al
+    `~/.cache/luc-workspace/monitors`, que escribe `display-setup.sh` al
     iniciar la sesión; **no se llama a `xrandr` al grabar** porque en
     algunos HDMI fuerza una lectura EDID/DDC y la pantalla parpadea. Si
     no hay caché, graba “Todas” con `xdpyinfo`. El audio es el monitor del **sink por defecto**, así que
     hereda la política de `audio-watch.sh` (jack > USB/BT > HDMI >
     interno); si el audio falla, reintenta solo vídeo y lo avisa. El
     archivo va a `~/Vídeos/Grabaciones/grabacion-YYYY-MM-DD_HH-MM-SS.mkv`
-    y el estado a `$XDG_RUNTIME_DIR/dwm-screen-record`. El indicador es
+    y el estado a `$XDG_RUNTIME_DIR/luc-workspace-screen-record`. El indicador es
     el módulo `recording` de polybar (`● REC` + tiempo) en A y B; solo el
     punto va en rojo y el módulo se oculta con `module_hide` al parar y se
     muestra con `module_show` al empezar (también desde `launch.sh`). En B
@@ -493,13 +493,13 @@ La fase 1 termina en el escritorio. No implementar todavía:
     defecto** (la política de `audio-watch`: jack > USB/BT > HDMI >
     interno) y los mezcla con `amix`; al micro se le aplica
     `highpass=f=80` antes de mezclar para quitar el DC/rumble del
-    ALC255. `~/.config/dwm-setup/recording.conf`
+    ALC255. `~/.config/luc-workspace/recording.conf`
     elige `mix` (defecto), `system` o `mic`. Si el micro o el sistema
     fallan, cae a solo sistema o solo vídeo. El aviso de inicio se manda
     **antes** de lanzar ffmpeg y se espera ~1,2 s a que termine el chime,
     para que no entre en la grabación; el de parada suena después de
     cerrar ffmpeg. Las correcciones de modo usan la app
-    `dwm-setup-silent` (sin sonido). El
+    `luc-workspace-silent` (sin sonido). El
     `Gtk.StatusIcon` de `recording-tray.py` es opcional y solo arranca si
     existe `_NET_SYSTEM_TRAY_S*` (el tray de polybar no está activo por
     `override-redirect = true`). Atajo único `Super+Shift+G`.
@@ -510,7 +510,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
 31. **Pantalla automática.** `display-setup.sh` lee las salidas con
     `xrandr` y usa la resolución preferida del EDID; dentro de ella
     aplica `refresh=auto`: **120 Hz** (o 119.88) si existe, si no **60 Hz**
-    (o 59.94), y si no la máxima. `~/.config/dwm-setup/display.conf`
+    (o 59.94), y si no la máxima. `~/.config/luc-workspace/display.conf`
     (`layout=extend|mirror`, `refresh=auto|max|preferred|<Hz>`) manda
     salvo que `DISPLAY_LAYOUT`/`DISPLAY_REFRESH` estén en el entorno.
     `autostart` lanza `apply` y un `watch` en segundo plano que vigila
@@ -518,7 +518,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     desconectar un monitor. No se re-hace el modeset si la resolución,
     la tasa, la posición y el `primary` ya coinciden. Tras aplicar se
     relee la tasa real y se anota un aviso en
-    `~/.local/state/dwm-setup/display.log` si no coincide. No usar
+    `~/.local/state/luc-workspace/display.log` si no coincide. No usar
     `xrandr --current` en bucles: puede forzar lecturas DDC y parpadear
     el HDMI.
 
@@ -535,17 +535,17 @@ La fase 1 termina en el escritorio. No implementar todavía:
     Así ranger (`preview_images_method ueberzug`) y ytwatch
     (`output = "x11"`) muestran imágenes reales dentro de Herdr.
     Los overlays X11 no los recorta Herdr. `templates/herdr/preview_tag.py`
-    (instalado en `~/.local/lib/dwm-setup/preview_tag.py`) lo importan los
+    (instalado en `~/.local/lib/luc-workspace/preview_tag.py`) lo importan los
     wrappers dentro de Herdr: observan las ventanas nuevas, aprenden la
     base X11 de su hijo y las etiquetan con `HERDR_TAB_ID` en
-    `_DWM_SETUP_TAB`, así una preview actualizada en una pestaña oculta no
+    `_LUC_WORKSPACE_TAB`, así una preview actualizada en una pestaña oculta no
     se atribuye a la pestaña con foco. `preview-sync.py` (autostart) lee
     `herdr api snapshot` (`focused_tab_id`) y mapea/desmapea las ventanas
     de la pestaña activa; solo gestiona overlays que cuelgan de la ventana
     de kitty que ejecuta Herdr (`kitty @ ls`), nunca una kitty normal. Si
     ve una ventana antes que el wrapper, le pone
-    `_DWM_SETUP_TAB_FALLBACK` con el foco actual; el wrapper la sobrescribe
-    y borra el marcador. `_DWM_SETUP_HIDDEN` distingue las ventanas que
+    `_LUC_WORKSPACE_TAB_FALLBACK` con el foco actual; el wrapper la sobrescribe
+    y borra el marcador. `_LUC_WORKSPACE_HIDDEN` distingue las ventanas que
     ocultó el daemon de las que el cliente desmapeó. Al volver, X11
     conserva el contenido. Sin Herdr el daemon no hace nada.
     `templates/ytwatch/ueberzugpp.in` se instala en `~/.local/bin/ueberzugpp`
@@ -562,7 +562,7 @@ La fase 1 termina en el escritorio. No implementar todavía:
     el SHA-256 fijado (`x86_64` `14d9e8…`, `aarch64` `17d753…`);
     `--no-herdr` lo omite. La release es un binario suelto, no un
     tarball. También instala `templates/herdr/preview_tag.py` en
-    `~/.local/lib/dwm-setup/preview_tag.py` (0644) para que los wrappers
+    `~/.local/lib/luc-workspace/preview_tag.py` (0644) para que los wrappers
     de ueberzug etiqueten sus ventanas con la pestaña real. Se instala
     antes de `install_user_configs` para que `herdr-close` exista.
     `templates/herdr/config.toml.in` reproduce los atajos actuales
@@ -608,8 +608,9 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/audio.sh` | Quirk ALC255 y autoswitch A2DP/HFP de WirePlumber |
 | `bin/desktop-safe` | Acciones de sesión (lock/suspend/logout/poweroff) |
 | `bin/desktop-doctor` | Diagnóstico y cámara (POSIX sh) |
-| `bin/dwm-setup-cpu-governor` | Helper root del módulo governor: valida y escribe `scaling_governor` |
-| `bin/dwm-setup-ufw` | Helper root acotado del módulo UFW (`status/enable/disable/reload/rules`) |
+| `bin/luc-workspace-cpu-governor` | Helper root del módulo governor: valida y escribe `scaling_governor` |
+| `bin/luc-workspace-ufw` | Helper root acotado del módulo UFW (`status/enable/disable/reload/rules`) |
+| `bin/luc-workspace-migrate` | Migración de una instalación `dwm-setup` a `luc-workspace` |
 | `templates/bspwm/` | bspwmrc, autostart (con picom) y scripts de sesión (incl. thunar-defaults, workspace.sh ADR-112, screen-record.sh, recording-tray.py ADR-124 y preview-sync.py ADR-141) |
 | `templates/sxhkd/` | sxhkdrc |
 | `templates/polybar/` | config.ini, modules/ (governor, ufw, bluetooth, recording), scripts/ (incl. temp-status y recording-status) y variants/ |
@@ -621,8 +622,8 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `templates/ranger/` | rc.conf, rifle.conf, previews y `ueberzug.in` (inset de Herdr) |
 | `templates/xorg/` | 20-modesetting.conf |
 | `templates/picom/` | picom.conf.in (libconfig: comentarios `#`) |
-| `templates/sudoers/` | Fragmentos de sudoers del gobernador y UFW (`@USER@`) |
-| `templates/systemd/` | `dwm-setup-cpu-governor.service` (performance al boot) |
+| `templates/sudoers/` | Fragmentos de sudoers del gobernador, UFW, ventilador y energía (`@USER@`) |
+| `templates/systemd/` | `luc-workspace-cpu-governor.service`, avisos de YouTube y límite de batería |
 | `templates/gtk/` | settings GTK2/3/4 y CSS |
 | `templates/xsettingsd/` | `xsettingsd.conf.in` (tema GTK del modo) |
 | `templates/brave/` | `surfingkeys.js.in` (config para pegar a mano) |
@@ -649,12 +650,12 @@ La fase 1 termina en el escritorio. No implementar todavía:
 | `lib/boot.sh` | Arranque: GRUB 0 s, nvidia fuera del boot, tmpfiles diferido, sin wait-online ni apt-daily-upgrade |
 | `lib/power.sh` | Límite de carga de batería (80 %) vía sysfs + unidad systemd |
 | `lib/fans.sh` | Modo del ventilador: helper root y sudoers acotado |
-| `lib/sysctl.sh` | Instala `/etc/sysctl.d/99-dwm-setup-swappiness.conf` |
+| `lib/sysctl.sh` | Instala `/etc/sysctl.d/99-luc-workspace-swappiness.conf` |
 | `templates/ytwatch/` | `config.toml.in` (tema `terminal`, audio default, preview `x11`) y `ueberzugpp.in` (wrapper de offset para Herdr) |
 | `templates/herdr/` | `config.toml.in` (atajos y tema de la TUI) y `preview_tag.py` (etiqueta de pestaña) |
 | `templates/mpv/` | `mpv.conf` (VA-API) y wrapper `mpv` que fuerza la iGPU salvo `prime-run` |
-| `templates/sysctl/` | `99-dwm-setup-swappiness.conf` (vm.swappiness=10) |
-| `templates/wireplumber/` | `50-dwm-setup.conf` (autoswitch A2DP/HFP) |
+| `templates/sysctl/` | `99-luc-workspace-swappiness.conf` (vm.swappiness=10) |
+| `templates/wireplumber/` | `50-luc-workspace.conf` (autoswitch A2DP/HFP) |
 | `templates/modprobe/` | i915.conf, nvidia.conf y alsa-fx504.conf (quirk ALC255) |
 | `templates/recording/` | `recording.conf` con el modo de audio (`mix`/`system`/`mic`) |
 | `templates/display/` | `display.conf` con `layout` (extend/mirror) y `refresh` (auto/max/preferred/Hz) |
@@ -670,12 +671,16 @@ externos. No reañadirlos sin una decisión nueva en `DECISIONS.md`.
 ## Comandos de validación
 
 ```sh
-cd ~/dwm-setup
+cd ~/luc-workspace
 
 # Sintaxis
 for f in install.sh lib/*.sh; do bash -n "$f" || exit 1; done
-for f in bin/desktop-safe bin/desktop-doctor bin/dwm-setup-cpu-governor \
-  bin/dwm-setup-ufw bin/herdr-close; do sh -n "$f" || exit 1; done
+for f in bin/desktop-safe bin/desktop-doctor bin/herdr-close \
+  bin/luc-workspace-cpu-governor bin/luc-workspace-ufw \
+  bin/luc-workspace-battery-limit bin/luc-workspace-fan-auto \
+  bin/luc-workspace-fan-mode bin/luc-workspace-power-auto \
+  bin/luc-workspace-power-profile; do sh -n "$f" || exit 1; done
+bash -n bin/luc-workspace-migrate
 sh -n templates/polybar/scripts/cpu-governor.sh.in
 sh -n templates/polybar/scripts/ufw-status.sh.in \
   templates/polybar/scripts/ufw-menu.sh.in \
@@ -701,12 +706,15 @@ python3 -c "compile(open('templates/ranger/ueberzug.in', encoding='utf-8').read(
 zsh -n templates/zsh/zshrc.in
 
 # Gobernador: lista oficial y sudoers renderizado (sin tocar el sistema)
-sh -n bin/dwm-setup-cpu-governor bin/dwm-setup-ufw
-sed "s/@USER@/$(id -un)/g" templates/sudoers/dwm-setup-cpu-governor.in > /tmp/opencode/sudoers-render
-visudo -cf /tmp/opencode/sudoers-render
-sed "s/@USER@/$(id -un)/g" templates/sudoers/dwm-setup-ufw.in > /tmp/opencode/sudoers-ufw-render
-visudo -cf /tmp/opencode/sudoers-ufw-render
-systemd-analyze verify templates/systemd/dwm-setup-cpu-governor.service
+sh -n bin/luc-workspace-cpu-governor bin/luc-workspace-ufw
+for s in cpu-governor ufw fan-mode power-profile; do
+  sed "s/@USER@/$(id -un)/g" "templates/sudoers/luc-workspace-$s.in" \
+    > "/tmp/opencode/sudoers-$s-render"
+  visudo -cf "/tmp/opencode/sudoers-$s-render"
+done
+systemd-analyze verify templates/systemd/luc-workspace-cpu-governor.service \
+  templates/systemd/luc-workspace-yt-update-notify.service \
+  templates/systemd/luc-workspace-yt-update-notify.timer
 # (el aviso "Command ... is not executable" es normal: falta hasta sudo ./install.sh)
 
 # Plan sin cambios (incluye apt-mark manual + autoremove simulados)
@@ -715,13 +723,17 @@ systemd-analyze verify templates/systemd/dwm-setup-cpu-governor.service
 # Comprobar restos y coherencia de la barra
 grep -RInE '@[A-Z][A-Z0-9_]*@' ~/.config/bspwm ~/.config/sxhkd \
   ~/.config/polybar ~/.config/dunst ~/.config/rofi \
-  ~/.config/kitty ~/.xinitrc
+  ~/.config/kitty ~/.config/luc-workspace ~/.xinitrc
 grep -nE 'modules-(left|right)' ~/.config/polybar/config.ini
 stat -c '%A %n' ~/.config/bspwm/bspwmrc ~/.xinitrc
 
 # ShellCheck (si está instalado)
 shellcheck install.sh lib/*.sh bin/desktop-safe bin/desktop-doctor \
-  bin/dwm-setup-cpu-governor bin/dwm-setup-ufw bin/theme-mode bin/brave-theme bin/yt-play bin/yt-preview \
+  bin/luc-workspace-cpu-governor bin/luc-workspace-ufw \
+  bin/luc-workspace-battery-limit bin/luc-workspace-fan-auto \
+  bin/luc-workspace-fan-mode bin/luc-workspace-power-auto \
+  bin/luc-workspace-power-profile bin/luc-workspace-migrate \
+  bin/theme-mode bin/brave-theme bin/yt-play bin/yt-preview \
   bin/ytdlp-check bin/ytdlp-update bin/ytdlp-rollback bin/music-ctl \
   bin/ytwatch-check bin/ytwatch-update bin/herdr-close
 
@@ -751,7 +763,10 @@ desktop-doctor --camera
 
 ## Estado esperado al retomar
 
-- El código de fase 1b está implementado y los checks estáticos pasan.
+- El código está implementado y los checks estáticos pasan.
+- Renombrado a `luc-workspace` (2026-11-21): repo, sistema, rutas,
+  unidades, sudoers, variables y átomos X11. Versión 1.0.0. La migración
+  en vivo y la instalación desde cero en VM quedan pendientes.
 - Herdr (2026-11-17): `lib/herdr.sh` instala v0.9.5 con SHA-256 y el
   config se renderiza desde `templates/herdr/config.toml.in`; `--no-herdr`
   lo omite. La instalación desde cero en VM queda pendiente.
@@ -760,8 +775,8 @@ desktop-doctor --camera
   `bash -n`, `--dry-run` con ambas paletas y `theme-mode --no-reload` en un
   HOME simulado. Pendiente probar el cambio de modo en la sesión viva
   (la instalación ya está aplicada).
-- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 15 /
-  B 17 módulos), dunst, lxpolkit, udiskie, xss-lock y picom activos;
+- La sesión viva se validó el 2026-10-24: bspwm, sxhkd, polybar (A 16 /
+  B 18 módulos), dunst, lxpolkit, udiskie, xss-lock y picom activos;
   `startx` manual. picom es el compositor de la sesión (ADR-107) y la
   barra B usa su fondo transparente frente al compositor.
 - Pantalla siempre encendida (2026-11-02): `autostart` aplica `xset s off`

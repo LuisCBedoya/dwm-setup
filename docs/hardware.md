@@ -1,4 +1,4 @@
-# Hardware y detección — fase 1b
+# Hardware y detección
 
 ## Host de referencia (2026-10-24)
 
@@ -65,9 +65,10 @@ el driver salvo `--nvidia`; hace falta configurar MOK.
   `scripts/autostart`.
 - `~/.local/share/xorg` se crea con modo `0700` y propietario del usuario
   para que Xorg escriba su log sin root.
-- `autostart` levanta polybar, dunst, xwallpaper, udiskie, xss-lock,
-  lxpolkit y el notificador de batería. Sin compositor.
-- Log de sesión: `~/.local/state/dwm-setup/session.log`.
+- `autostart` levanta picom, polybar, dunst, xwallpaper, udiskie, xss-lock,
+  lxpolkit y el notificador de batería. picom aporta vsync, fade y sombras
+  sutiles, sin blur ni transparencias.
+- Log de sesión: `~/.local/state/luc-workspace/session.log`.
 
 ## Almacenamiento extraíble
 
@@ -91,9 +92,9 @@ En el host de referencia la tarjeta Intel HDA expone:
 - Jack de auriculares combo 3.5 mm; perfil
   `output:analog-stereo+input:analog-stereo`.
 
-`audio-watch.sh` aplica la prioridad auriculares > HDMI > altavoces
-detectando perfiles/puertos con `pactl`. Respeta sinks/sources USB/Bluetooth.
-No hardcodea tarjeta ni monitor.
+`audio-watch.sh` aplica la prioridad auriculares de cable > USB >
+Bluetooth > HDMI > altavoces internos, detectando perfiles/puertos con
+`pactl`. No hardcodea tarjeta ni monitor.
 
 El codec es **Realtek ALC255**. En el FX504GE el micrófono del jack combo no
 aparece por defecto; el instalador detecta DMI + códec y ofrece el fixup
@@ -125,8 +126,9 @@ acaba de entrar al grupo `video`, debe cerrar sesión y volver a entrar.
   antes de dormir.
 - En equipos sin batería, el módulo `battery` no se añade a la barra.
 
-## Hardware fuera de fase 1
+## Hardware no cubierto
 
-Bluetooth, lector de huellas, cámaras IR/Windows Hello, teclados RGB,
-impresoras y cualquier periférico que requiera software propietario quedan
-fuera. No se instala CUDA ni se configura Bluetooth.
+Bluetooth está incluido (adaptador, audio A2DP/HFP y menú de la barra).
+CUDA es opcional con `--cuda` y no se instala por defecto. Lector de
+huellas, cámaras IR/Windows Hello, teclados RGB, impresoras y cualquier
+periférico que requiera software propietario quedan fuera.

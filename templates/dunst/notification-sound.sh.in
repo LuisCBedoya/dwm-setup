@@ -6,7 +6,7 @@ set -u
 
 # Correcciones silenciosas del grabador (no deben sonar ni entrar en el vídeo).
 case "${DUNST_APP_NAME:-}" in
-  dwm-setup-silent) exit 0 ;;
+  luc-workspace-silent) exit 0 ;;
 esac
 
 # Serializa los sonidos: si llegan dos notificaciones a la vez, el segundo

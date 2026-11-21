@@ -1,7 +1,7 @@
 #!/bin/sh
-# dwm-setup-cpu-governor — helper root del módulo polybar "governor".
+# luc-workspace-cpu-governor — helper root del módulo polybar "governor".
 #
-# Uso: dwm-setup-cpu-governor <governor>
+# Uso: luc-workspace-cpu-governor <governor>
 #
 # Valida el gobernador pedido contra
 # /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors y lo
@@ -9,8 +9,8 @@
 # el kernel ofrece otro gobernador, se cicla/acepta igual.
 #
 # Está pensado para ejecutarse vía sudo con el fragmento de sudoers de
-# dwm-setup (NOPASSWD limitado a este binario exacto). El override de
-# DWM_SETUP_CPU_SYS sirve para pruebas ejecutando el binario a mano:
+# luc-workspace (NOPASSWD limitado a este binario exacto). El override de
+# LUC_WORKSPACE_CPU_SYS sirve para pruebas ejecutando el binario a mano:
 # sudo con env_reset no lo propaga y no cruza un sudo real.
 #
 # Códigos de salida:
@@ -21,7 +21,7 @@
 
 set -u
 
-CPUDIR=${DWM_SETUP_CPU_SYS:-/sys/devices/system/cpu}
+CPUDIR=${LUC_WORKSPACE_CPU_SYS:-/sys/devices/system/cpu}
 
 usage() {
   printf 'Uso: %s <governor>\n' "${0##*/}"
